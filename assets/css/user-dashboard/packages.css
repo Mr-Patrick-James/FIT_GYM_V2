@@ -1,0 +1,215 @@
+/* Packages-specific styles */
+
+/* Packages Grid */
+.packages-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 20px;
+    padding: 20px;
+}
+
+.package-card-large {
+    background: var(--glass);
+    border: 2px solid var(--dark-border);
+    border-radius: var(--radius-lg);
+    padding: 18px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+}
+
+.package-card-large::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--primary);
+    border-top-left-radius: var(--radius-lg);
+    border-bottom-left-radius: var(--radius-lg);
+    z-index: 1;
+    pointer-events: none;
+    box-sizing: border-box;
+}
+
+.package-card-large:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--primary);
+    transform: translateY(-6px);
+    box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.package-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+    position: relative;
+    z-index: 2;
+}
+
+.package-header h3 {
+    font-weight: 900;
+    font-size: 1.1rem;
+    color: var(--primary);
+    letter-spacing: -0.3px;
+    margin: 0;
+    flex: 1;
+}
+
+.package-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    background: linear-gradient(135deg, var(--primary), rgba(255, 255, 255, 0.2));
+    color: var(--dark-bg);
+    border-radius: var(--radius-full);
+    font-size: 0.7rem;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    box-shadow: 0 2px 8px rgba(255, 255, 255, 0.15);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.package-description {
+    color: var(--dark-text-secondary);
+    font-size: 0.8rem;
+    line-height: 1.5;
+    margin: 0;
+    position: relative;
+    z-index: 2;
+}
+
+.package-details {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: relative;
+    z-index: 2;
+}
+
+.package-detail-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--dark-text);
+    font-size: 0.85rem;
+    font-weight: 500;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--dark-border);
+    transition: all 0.2s ease;
+}
+
+.package-detail-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: var(--primary);
+    transform: translateX(4px);
+}
+
+.package-detail-item i {
+    color: var(--primary);
+    width: 18px;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.package-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 16px;
+    border-top: 1px solid var(--dark-border);
+    margin-top: auto;
+    position: relative;
+    z-index: 2;
+    gap: 12px;
+}
+
+.package-price-large {
+    font-weight: 900;
+    font-size: 1.3rem;
+    color: var(--primary);
+    letter-spacing: -0.5px;
+    line-height: 1;
+    display: flex;
+    align-items: baseline;
+    gap: 2px;
+}
+
+.package-price-large::before {
+    content: '';
+    width: 3px;
+    height: 3px;
+    background: var(--primary);
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 2px;
+}
+
+.package-footer .btn-primary {
+    flex-shrink: 0;
+    padding: 10px 20px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15);
+}
+
+.package-footer .btn-primary:hover {
+    box-shadow: 0 12px 28px rgba(255, 255, 255, 0.25);
+    transform: translateY(-3px) scale(1.02);
+}
+
+/* Mobile responsiveness for packages */
+@media (max-width: 992px) {
+    .packages-grid {
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 16px;
+    }
+}
+
+@media (max-width: 768px) {
+    .packages-grid {
+        grid-template-columns: 1fr;
+        padding: 16px;
+    }
+    
+    .package-footer {
+        flex-direction: column;
+        gap: 16px;
+    }
+    
+    .package-price-large {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .package-card-large {
+        padding: 16px;
+    }
+    
+    .package-header h3 {
+        font-size: 1rem;
+    }
+    
+    .package-description {
+        font-size: 0.75rem;
+    }
+    
+    .package-detail-item {
+        font-size: 0.8rem;
+        padding: 6px 10px;
+    }
+}

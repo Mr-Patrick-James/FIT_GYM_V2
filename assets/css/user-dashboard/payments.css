@@ -1,0 +1,132 @@
+/* Payments-specific styles */
+
+/* Mobile responsiveness for payments - Table layout adjustments */
+@media (max-width: 768px) {
+    /* Card-style Table Layout (Facebook/GCash/YouTube Style) */
+    .table-container {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        overflow-x: visible;
+        background: transparent;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0 12px;
+    }
+    
+    thead {
+        display: none;
+    }
+    
+    tbody, tr {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        background: transparent;
+    }
+
+    tr {
+        background: var(--dark-card);
+        border: 1px solid var(--dark-border);
+        border-radius: var(--radius-lg);
+        margin-bottom: 12px;
+        padding: 20px;
+        transition: var(--transition);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    tr:hover {
+        border-color: var(--primary);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+    }
+
+    td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        border: none;
+        border-bottom: 1px solid var(--glass-border);
+        position: relative;
+        font-size: 0.95rem;
+        white-space: normal;
+        min-height: 30px;
+    }
+    
+    td:first-child {
+        padding-top: 0;
+    }
+    
+    td:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+
+    td::before {
+        content: attr(data-label) ":";
+        position: relative;
+        left: 0;
+        width: auto;
+        padding-right: 15px;
+        white-space: nowrap;
+        text-align: left;
+        font-weight: 700;
+        color: var(--dark-text-secondary);
+        text-transform: capitalize;
+        font-size: 0.9rem;
+    }
+    
+    /* Make the actual data more prominent */
+    td:not(:before) {
+        font-weight: 500;
+        color: var(--dark-text);
+        flex: 1;
+        text-align: right;
+    }
+    
+    /* Special handling for action buttons */
+    .table-actions {
+        display: flex;
+        justify-content: flex-end;
+        padding-top: 12px;
+        margin-top: 12px;
+        border-top: 1px solid var(--glass-border);
+        gap: 8px; /* Add gap between buttons for better touch experience */
+    }
+    
+    /* Make action buttons larger for touch devices */
+    .icon-btn {
+        width: 44px;
+        height: 44px;
+        font-size: 1.2rem;
+    }
+    
+    /* Status badges should remain as is */
+    .status-badge {
+        margin-left: auto;
+        font-size: 0.8rem;
+        padding: 6px 12px;
+    }
+    
+    /* Amount cells should be more prominent */
+    td[data-label="Amount"] {
+        font-weight: 800;
+        color: var(--primary);
+        font-size: 1.1rem;
+    }
+    
+    .table-actions {
+        justify-content: flex-end;
+    }
+}
+
+/* Small Phones */
+@media (max-width: 480px) {
+    .table-container {
+        padding: 0 12px 20px;
+    }
+}

@@ -1,0 +1,92 @@
+# InfinityFree Deployment Guide for FitPay Dashboard
+
+## Pre-deployment Checklist:
+
+1. Database Configuration:
+   - InfinityFree provides a MySQL database with credentials
+   - Update .env file with InfinityFree database details
+   - Export your current database and import it to InfinityFree
+
+2. File Structure:
+   - Upload all files to the public_html directory
+   - Maintain the same folder structure
+
+3. Environment Variables (.env):
+   - DB_HOST: Will be provided by InfinityFree (usually localhost)
+   - DB_USER: Provided by InfinityFree
+   - DB_PASS: Provided by InfinityFree
+   - DB_NAME: Provided by InfinityFree
+
+4. Email Configuration:
+   - Update SMTP settings in email_configs table with your email provider
+   - Or update the .env file with working SMTP settings
+
+5. Upload Directory:
+   - Make sure the uploads directory has proper write permissions
+   - InfinityFree has restrictions on file uploads
+
+## Steps to Deploy:
+
+1. Export your current database:
+   - Go to phpMyAdmin in WAMP
+   - Select your 'fitpay_gym' database
+   - Click Export and save the SQL file
+
+2. Create an InfinityFree Account:
+   - Go to https://infinityfree.net/
+   - Sign up for a free account
+   - Create a new website
+
+3. Get Database Credentials:
+   - In your InfinityFree control panel
+   - Go to Databases section
+   - Create a new MySQL database
+   - Note down the hostname, username, password and database name
+
+4. Import Database:
+   - Use phpMyAdmin provided by InfinityFree
+   - Import the exported SQL file
+
+5. Update Configuration:
+   - Edit the .env file with new database credentials
+   - Update email settings if needed
+
+6. Upload Files:
+   - Use FTP client or InfinityFree's file manager
+   - Upload all files to public_html directory
+
+## Common Issues and Solutions:
+
+1. Database Connection:
+   - If getting connection errors, verify database credentials
+   - Check if the database name is correct
+
+2. File Permissions:
+   - Make sure uploads/ directory has 755 or 777 permissions
+   - Check if session directory is writable
+
+3. URL Issues:
+   - The BASE_URL is auto-detected, but if there are issues,
+   - Check if the application loads properly from the root URL
+
+4. Email Issues:
+   - Free hosts often restrict SMTP usage
+   - Consider using the database email configuration method
+
+## Security Recommendations:
+
+1. Change default passwords
+2. Update the admin email and password
+3. Use strong passwords for database and application
+4. Regularly backup your database
+
+## Testing Checklist:
+
+- [ ] Homepage loads correctly
+- [ ] User registration works
+- [ ] User login works
+- [ ] Admin login works (admin@martinezfitness.com / admin123)
+- [ ] Package management works
+- [ ] Booking system works
+- [ ] Payment processing works
+- [ ] Responsive design works on mobile

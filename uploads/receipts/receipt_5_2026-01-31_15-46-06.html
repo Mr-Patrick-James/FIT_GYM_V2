@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Receipt #5</title>
+    <style>
+        @media print {
+            body { 
+                margin: 0; 
+                padding: 10px; 
+                font-family: "Courier New", monospace;
+            }
+            .no-print { 
+                display: none !important; 
+            }
+            .thermal-receipt { 
+                box-shadow: none !important; 
+                margin: 0 !important;
+                width: 300px !important;
+            }
+        }
+        @media screen {
+            body { 
+                background: #f0f0f0; 
+                padding: 20px; 
+                font-family: Arial, sans-serif;
+            }
+            .thermal-receipt { 
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                margin: 20px auto;
+                background: white;
+            }
+        }
+        
+        .thermal-receipt {
+            font-family: "Courier New", monospace;
+            width: 300px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        
+        .header {
+            text-align: center;
+            border-bottom: 2px dashed #000;
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .company-name {
+            font-size: 18px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin: 0;
+        }
+        
+        .company-info {
+            font-size: 11px;
+            margin: 5px 0;
+            white-space: pre-line;
+        }
+        
+        .receipt-title {
+            font-size: 10px;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+        
+        .section {
+            margin-bottom: 15px;
+        }
+        
+        .section-title {
+            font-weight: bold;
+            font-size: 10px;
+            margin-bottom: 5px;
+        }
+        
+        .detail {
+            font-size: 9px;
+            margin: 2px 0;
+        }
+        
+        .total-section {
+            border-top: 1px dashed #000;
+            border-bottom: 1px dashed #000;
+            padding: 10px 0;
+            margin: 15px 0;
+        }
+        
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 5px 0;
+            font-size: 10px;
+        }
+        
+        .total-row.bold {
+            font-weight: bold;
+            font-size: 11px;
+        }
+        
+        .footer {
+            text-align: center;
+            border-top: 2px dashed #000;
+            padding-top: 15px;
+            margin-top: 15px;
+        }
+        
+        .thank-you {
+            font-weight: bold;
+            font-size: 10px;
+            margin: 5px 0;
+        }
+        
+        .footer-text {
+            font-size: 9px;
+            margin: 3px 0;
+            color: #666;
+        }
+        
+        .print-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px;
+            font-size: 14px;
+        }
+        
+        .print-button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="thermal-receipt">
+        <div class="header">
+            <div class="company-name">MARTINEZ FITNESS</div>
+            <div class="company-info">123 Fitness Street
+Gym City, 1234
+Tel: (123) 456-7890</div>
+            <div class="receipt-title">*** GYM RECEIPT ***</div>
+        </div>
+        
+        <div class="section">
+            <div class="detail"><strong>Receipt #TXN697E23BE935E8</strong></div>
+            <div class="detail">Date: Jan 31, 2026 11:46 PM</div>
+            <div class="detail">Customer Type: Walk-in Customer</div>
+        </div>
+        
+        <div class="section">
+            <div class="section-title">Customer Details:</div>
+            <div class="detail">Name: try</div>
+            <div class="detail">Email: text2@gmail.com</div>
+            <div class="detail">Contact: 09989134598</div>
+        </div>
+        
+        <div class="section">
+            <div class="section-title">Booking Details:</div>
+            <div class="detail">Package: 3-Month Package</div>
+            <div class="detail">Booking Date: Jan 31, 2026</div><div class="detail">Notes: m</div>
+        </div>
+        
+        <div class="total-section">
+            <div class="total-row">
+                <span>Subtotal:</span>
+                <span>₱4,000.00</span>
+            </div>
+            <div class="total-row">
+                <span>Tax (0%):</span>
+                <span>₱0.00</span>
+            </div>
+            <div class="total-row bold">
+                <span>TOTAL:</span>
+                <span>₱4,000.00</span>
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-title">Payment:</div>
+            <div class="detail">Method: Cash</div>
+            <div class="detail">Status: Completed</div>
+        </div>
+        
+        <div class="footer">
+            <div class="thank-you">THANK YOU FOR YOUR BUSINESS!</div>
+            <div class="footer-text">Please keep this receipt for your records</div>
+            <div class="footer-text">Questions? Call us at (123) 456-7890</div>
+            <div class="footer-text">Powered by FitPay Gym Management System</div>
+        </div>
+    </div>
+    
+    <div class="no-print" style="text-align: center; margin: 20px 0;">
+        <button class="print-button" onclick="window.print()">
+            <i class="fas fa-print"></i> Print Receipt
+        </button>
+        <button class="print-button" onclick="window.close()" style="background: #6c757d;">
+            <i class="fas fa-times"></i> Close
+        </button>
+    </div>
+    
+    <script>
+        // Auto-focus on print button when page loads
+        window.onload = function() {
+            setTimeout(() => {
+                const printBtn = document.querySelector(".print-button");
+                if (printBtn) {
+                    printBtn.focus();
+                }
+            }, 100);
+        };
+    </script>
+</body>
+</html>

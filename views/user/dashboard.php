@@ -1,0 +1,491 @@
+<?php
+require_once '../../api/session.php';
+requireLogin();
+$user = getCurrentUser();
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Dashboard | Martinez Fitness</title>
+    
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Dashboard Styles -->
+    <link rel="stylesheet" href="../../assets/css/user-dashboard/base.css?v=1.6">
+    <link rel="stylesheet" href="../../assets/css/user-dashboard/dashboard.css?v=1.6">
+    <link rel="stylesheet" href="../../assets/css/user-dashboard/packages.css?v=1.6">
+    <link rel="stylesheet" href="../../assets/css/user-dashboard/bookings.css?v=1.6">
+    <link rel="stylesheet" href="../../assets/css/user-dashboard/payments.css?v=1.6">
+    <link rel="stylesheet" href="../../assets/css/user-dashboard/profile.css?v=1.6">
+</head>
+<body class="dark-mode">
+    <!-- Mobile Menu Toggle Button -->
+    <button class="mobile-menu-btn" id="mobileMenuToggle">
+        <i class="fas fa-bars"></i>
+    </button>
+    
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="logo">
+            <h1>MARTINEZ</h1>
+            <p>FITNESS GYM</p>
+        </div>
+        
+        <ul class="nav-links">
+            <li><a href="#" class="active" onclick="showSection('dashboard', event)"><i class="fas fa-home"></i> <span>Dashboard</span></a></li>
+            <li><a href="#" onclick="showSection('packages', event)"><i class="fas fa-dumbbell"></i> <span>Packages</span></a></li>
+            <li><a href="#" onclick="showSection('bookings', event)"><i class="fas fa-calendar-check"></i> <span>My Bookings</span> <span class="badge" id="bookingsBadge">0</span></a></li>
+            <li><a href="#" onclick="showSection('payments', event)"><i class="fas fa-money-check"></i> <span>Payments</span></a></li>
+            <li><a href="#" onclick="showSection('profile', event)"><i class="fas fa-user"></i> <span>Profile</span></a></li>
+        </ul>
+        
+        <div class="user-profile">
+            <div class="user-avatar" id="userAvatar">JD</div>
+            <div class="user-info">
+                <div class="user-name-wrapper">
+                    <h4 id="userName">Juan Dela Cruz</h4>
+                    <span id="sidebarMemberBadge" class="member-badge" style="display: none;" title="Active Member">
+                        <i class="fas fa-crown"></i>
+                    </span>
+                </div>
+                <p id="userEmail">juan.delacruz@email.com</p>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <div class="page-title">
+                <h1 id="pageTitle">Dashboard</h1>
+                <p id="pageSubtitle">Welcome back! Manage your gym membership and bookings</p>
+            </div>
+            
+            <div class="header-actions">
+                <button class="action-btn notification-btn" onclick="showNotifications()">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-badge" id="notificationCount">2</span>
+                </button>
+                
+                <button class="action-btn" onclick="logout()" title="Logout">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Dashboard Section -->
+        <div id="dashboardSection" class="content-section active">
+            <div class="dashboard-grid-layout">
+                <div class="dashboard-main-col">
+                    <!-- Stats Grid -->
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <div class="stat-icon">
+                                    <i class="fas fa-calendar-check"></i>
+                                </div>
+                            </div>
+                            <div class="stat-value" id="activeBookingsCount">0</div>
+                            <div class="stat-label">Active Bookings</div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <div class="stat-icon">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                            </div>
+                            <div class="stat-value" id="pendingBookingsCount">0</div>
+                            <div class="stat-label">Pending Verifications</div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <div class="stat-icon">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                            </div>
+                            <div class="stat-value" id="verifiedBookingsCount">0</div>
+                            <div class="stat-label">Verified Bookings</div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <div class="stat-icon">
+                                    <i class="fas fa-id-card"></i>
+                                </div>
+                            </div>
+                            <div class="stat-value" id="membershipStatus">None</div>
+                            <div class="stat-label">Membership Status</div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="content-card">
+                        <div class="card-header">
+                            <h3>Quick Actions</h3>
+                        </div>
+                        <div class="quick-actions-grid">
+                            <button class="quick-action-card" onclick="showSection('packages', event)">
+                                <i class="fas fa-dumbbell"></i>
+                                <h4>Browse Packages</h4>
+                                <p>View available membership plans</p>
+                            </button>
+                            <button class="quick-action-card" onclick="openBookingModal()">
+                                <i class="fas fa-plus-circle"></i>
+                                <h4>New Booking</h4>
+                                <p>Create a new booking request</p>
+                            </button>
+                            <button class="quick-action-card" onclick="showSection('bookings', event)">
+                                <i class="fas fa-list"></i>
+                                <h4>View Bookings</h4>
+                                <p>Check your booking status</p>
+                            </button>
+                            <button class="quick-action-card" onclick="showSection('payments', event)">
+                                <i class="fas fa-receipt"></i>
+                                <h4>Payment History</h4>
+                                <p>View past transactions</p>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-side-col">
+                    <!-- GCash QR Code Card -->
+                    <div class="content-card gcash-qr-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-wallet" style="color: #22c55e;"></i> GCash Payment</h3>
+                        </div>
+                        <div class="qr-container-dash">
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=GCash:09171234567" alt="GCash QR Code" class="qr-image-dash">
+                        </div>
+                        <div class="qr-info-dash">
+                            <p><strong>Account Name:</strong> Martinez Fitness</p>
+                            <p><strong>GCash Number:</strong> 0917-123-4567</p>
+                            <span class="qr-instruction-dash">Scan this QR code using your GCash app to pay for your membership.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Bookings -->
+            <div class="content-card" style="margin-top: 32px;">
+                <div class="card-header">
+                    <h3>Recent Bookings</h3>
+                    <button class="card-btn" onclick="showSection('bookings', event)">
+                        <span>View All</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Package</th>
+                                <th>Date</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentBookingsTable">
+                            <tr>
+                                <td colspan="5" style="text-align: center; padding: 40px; color: var(--dark-text-secondary);" data-label="Info">
+                                    No bookings yet. <a href="#" onclick="showSection('packages')" style="color: var(--primary); text-decoration: underline;">Browse packages</a> to get started!
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Packages Section -->
+        <div id="packagesSection" class="content-section">
+            <div class="content-card">
+                <div class="card-header">
+                    <h3>Available Packages</h3>
+                    <p style="color: var(--dark-text-secondary);">Choose a membership plan that fits your fitness goals</p>
+                </div>
+                <div class="packages-grid" id="packagesGrid">
+                    <!-- Populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Bookings Section -->
+        <div id="bookingsSection" class="content-section">
+            <div class="content-card">
+                <div class="card-header">
+                    <h3>My Bookings</h3>
+                    <button class="card-btn primary" onclick="openBookingModal()">
+                        <i class="fas fa-plus"></i>
+                        <span>New Booking</span>
+                    </button>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Package</th>
+                                <th>Booking Date</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bookingsTable">
+                            <!-- Populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payments Section -->
+        <div id="paymentsSection" class="content-section">
+            <div class="content-card">
+                <div class="card-header">
+                    <h3>Payment History</h3>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Transaction ID</th>
+                                <th>Package</th>
+                                <th>Date</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="paymentsTable">
+                            <!-- Populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Section -->
+        <div id="profileSection" class="content-section">
+            <div class="content-grid">
+                <div class="content-card">
+                    <div class="card-header">
+                        <h3>Profile Information</h3>
+                    </div>
+                    <div class="profile-form">
+                        <!-- Membership Status Badge -->
+                        <div id="profileMembershipBadge" class="membership-badge-container" style="display: none;">
+                            <div class="membership-status-card">
+                                <div class="membership-icon">
+                                    <i class="fas fa-crown"></i>
+                                </div>
+                                <div class="membership-details">
+                                    <span class="membership-label">MEMBERSHIP STATUS</span>
+                                    <div class="membership-value-row">
+                                        <h4 id="profileMembershipValue">Active Member</h4>
+                                        <span class="status-badge status-verified" id="profileMembershipStatus">Active</span>
+                                    </div>
+                                    <p id="profileMembershipPlan">Monthly Membership Plan</p>
+                                    <div class="membership-expiry" id="profileMembershipExpiryRow" style="margin-top: 8px; font-size: 0.85rem; color: var(--text-muted);">
+                                        <i class="far fa-calendar-alt" style="margin-right: 6px;"></i>
+                                        <span>Expires on: <strong id="profileMembershipExpiryDate" style="color: var(--text-main);">--</strong></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Full Name</label>
+                            <input type="text" id="profileName" value="Juan Dela Cruz">
+                        </div>
+                        <div class="form-group">
+                            <label>Email Address</label>
+                            <input type="email" id="profileEmail" value="juan.delacruz@email.com">
+                        </div>
+                        <div class="form-group">
+                            <label>Contact Number</label>
+                            <input type="tel" id="profileContact" value="0917-123-4567">
+                        </div>
+                        <div class="form-group">
+                            <label>Address</label>
+                            <textarea id="profileAddress" rows="3">Manila, Philippines</textarea>
+                        </div>
+                        <button class="btn btn-primary" onclick="updateProfile()">
+                            <i class="fas fa-save"></i>
+                            <span>Save Changes</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="content-card">
+                    <div class="card-header">
+                        <h3>GCash Payment Info</h3>
+                    </div>
+                    <div class="gcash-info">
+                        <div class="qr-container">
+                            <div class="qr-code">
+                                <i class="fas fa-qrcode"></i>
+                            </div>
+                        </div>
+                        <div class="qr-info">
+                            <p><strong>GCash Number:</strong> 0917-123-4567</p>
+                            <p><strong>Account Name:</strong> Martinez Fitness</p>
+                            <p style="margin-top: 16px; font-size: 0.9rem; color: var(--dark-text-secondary);">
+                                Send payment to this GCash number and upload your receipt when making a booking.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Booking Modal -->
+    <div class="modal-overlay" id="bookingModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Create New Booking</h3>
+                <button class="close-modal" onclick="closeBookingModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="modal-layout">
+                    <div class="modal-form-col">
+                        <form id="bookingForm" onsubmit="submitBooking(event)">
+                            <div class="form-group">
+                                <label>Select Package <span style="color: var(--warning);">*</span></label>
+                                <select id="bookingPackage" required>
+                                    <option value="">Choose a package...</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Booking Date <span style="color: var(--warning);">*</span></label>
+                                <input type="date" id="bookingDate" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Contact Number <span style="color: var(--warning);">*</span></label>
+                                <input type="tel" id="bookingContact" placeholder="0917-123-4567" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Payment Receipt (GCash) <span style="color: var(--warning);">*</span></label>
+                                <div class="file-upload-area" id="fileUploadArea">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                    <p>Click to upload or drag and drop</p>
+                                    <span>PNG, JPG, PDF up to 5MB</span>
+                                    <input type="file" id="receiptFile" accept="image/*,.pdf" required style="display: none;" onchange="handleFileSelect(event)">
+                                </div>
+                                <div id="filePreview" style="display: none; margin-top: 16px;">
+                                    <div class="file-preview-item">
+                                        <i class="fas fa-file-image"></i>
+                                        <span id="fileName"></span>
+                                        <button type="button" onclick="removeFile()" class="remove-file-btn">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Additional Notes (Optional)</label>
+                                <textarea id="bookingNotes" rows="3" placeholder="Any special requests or notes..."></textarea>
+                            </div>
+                            
+                            <div class="modal-actions">
+                                <button type="button" class="btn btn-secondary" onclick="closeBookingModal()">
+                                    <i class="fas fa-times"></i>
+                                    <span>Cancel</span>
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-check"></i>
+                                    <span>Submit Booking</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="modal-side-col">
+                        <div class="payment-instruction-card">
+                            <h4><i class="fas fa-info-circle"></i> Payment Instructions</h4>
+                            <p>1. Scan the QR code below using your GCash app.</p>
+                            <p>2. Enter the amount for your package.</p>
+                            <p>3. Take a screenshot of the receipt.</p>
+                            <p>4. Upload the receipt below.</p>
+                            
+                            <div class="qr-container-dash" style="margin: 20px auto; width: 180px; height: 180px; border-radius: 15px;">
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=GCash:09171234567" alt="GCash QR Code" class="qr-image-dash">
+                            </div>
+                            
+                            <div class="payment-details" style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 12px; margin-top: 10px;">
+                                <p style="font-size: 0.85rem; margin-bottom: 5px;"><strong>GCash:</strong> 0917-123-4567</p>
+                                <p style="font-size: 0.85rem;"><strong>Name:</strong> Martinez Fitness</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Booking Details Modal -->
+    <div class="modal-overlay" id="bookingDetailsModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Booking Details</h3>
+                <button class="close-modal" onclick="closeBookingDetailsModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="detail-grid">
+                    <div class="detail-group">
+                        <label>Package</label>
+                        <div class="value" id="detailPackage">-</div>
+                    </div>
+                    <div class="detail-group">
+                        <label>Booking Date</label>
+                        <div class="value" id="detailDate">-</div>
+                    </div>
+                    <div class="detail-group">
+                        <label>Amount</label>
+                        <div class="value" id="detailAmount">-</div>
+                    </div>
+                    <div class="detail-group">
+                        <label>Status</label>
+                        <div class="value" id="detailStatus">-</div>
+                    </div>
+                </div>
+                
+                <div class="receipt-section" id="receiptSection" style="display: none;">
+                    <h4><i class="fas fa-receipt"></i> Payment Receipt</h4>
+                    <img id="detailReceipt" src="" alt="Payment Receipt" class="receipt-image">
+                </div>
+                
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" onclick="closeBookingDetailsModal()">
+                        <i class="fas fa-times"></i>
+                        <span>Close</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Scripts -->
+    <script src="../../assets/js/user-dashboard.js"></script>
+</body>
+</html>

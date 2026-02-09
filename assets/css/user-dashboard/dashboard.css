@@ -1,0 +1,546 @@
+/* Dashboard-specific styles */
+
+/* Dashboard Grid Layout */
+.dashboard-grid-layout {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 32px;
+}
+
+.dashboard-side-col {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+@media (max-width: 1200px) {
+    .dashboard-grid-layout {
+        grid-template-columns: 1fr;
+    }
+    
+    .dashboard-side-col {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+}
+
+.stat-card:nth-child(1) .stat-icon { color: #3b82f6; background: rgba(59, 130, 246, 0.1); }
+.stat-card:nth-child(2) .stat-icon { color: #f59e0b; background: rgba(245, 158, 11, 0.1); }
+.stat-card:nth-child(3) .stat-icon { color: #22c55e; background: rgba(34, 197, 94, 0.1); }
+.stat-card:nth-child(4) .stat-icon { color: #ffffff; background: rgba(255, 255, 255, 0.1); }
+
+.stat-card:hover:nth-child(1) { border-color: #3b82f6; }
+.stat-card:hover:nth-child(2) { border-color: #f59e0b; }
+.stat-card:hover:nth-child(3) { border-color: #22c55e; }
+.stat-card:hover:nth-child(4) { border-color: #ffffff; }
+
+.stat-card::before {
+    display: none; /* Removing the top bar for a cleaner look */
+}
+
+/* Overrides for stat-value status colors to remove highlights */
+.stat-value.status-verified,
+.stat-value.status-pending,
+.stat-value.status-rejected,
+.stat-value.status-expired {
+    background: none !important;
+    border: none !important;
+    padding: 0 !important;
+}
+
+.stat-value.status-verified { color: var(--success); }
+.stat-value.status-pending { color: var(--warning); }
+.stat-value.status-rejected { color: #ff4444; }
+.stat-value.status-expired { color: var(--dark-text-secondary); }
+
+/* Mobile responsiveness for dashboard */
+@media (max-width: 1200px) {
+    .content-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Tablets (iPad, etc.) */
+@media (max-width: 992px) {
+    .dashboard-grid-layout {
+        grid-template-columns: 1fr;
+    }
+    
+    .dashboard-side-col {
+        gap: 20px;
+    }
+    
+    .quick-actions-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        padding: 16px;
+    }
+
+    .quick-action-card {
+        padding: 16px;
+    }
+
+    .quick-action-card i {
+        font-size: 1.8rem;
+        margin-bottom: 8px;
+    }
+
+    .quick-action-card h4 {
+        font-size: 1rem;
+    }
+
+    .quick-action-card p {
+        font-size: 0.75rem;
+    }
+    
+    /* Tablet table styles */
+    .table-container {
+        padding: 0 16px 16px;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    td {
+        font-size: 0.9rem;
+    }
+    
+    td::before {
+        font-size: 0.8rem;
+    }
+    
+    .status-badge {
+        font-size: 0.75rem;
+        padding: 5px 10px;
+    }
+}
+
+/* Mobile Devices */
+@media (max-width: 768px) {
+    .dashboard-grid-layout {
+        gap: 20px;
+    }
+    
+    .quick-actions-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        padding: 16px;
+    }
+
+    .quick-action-card {
+        padding: 16px;
+    }
+
+    .quick-action-card i {
+        font-size: 1.8rem;
+        margin-bottom: 8px;
+    }
+
+    .quick-action-card h4 {
+        font-size: 1rem;
+    }
+
+    .quick-action-card p {
+        font-size: 0.75rem;
+    }
+    
+    .content-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    /* Card-style Table Layout (Facebook/GCash/YouTube Style) */
+    .table-container {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        overflow-x: visible;
+        background: transparent;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0 12px;
+    }
+    
+    thead {
+        display: none;
+    }
+    
+    tbody, tr {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        background: transparent;
+    }
+
+    tr {
+        background: var(--dark-card);
+        border: 1px solid var(--dark-border);
+        border-radius: var(--radius-lg);
+        margin-bottom: 12px;
+        padding: 20px;
+        transition: var(--transition);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    tr:hover {
+        border-color: var(--primary);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+    }
+
+    td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        border: none;
+        border-bottom: 1px solid var(--glass-border);
+        position: relative;
+        font-size: 0.95rem;
+        white-space: normal;
+        min-height: 30px;
+    }
+    
+    td:first-child {
+        padding-top: 0;
+    }
+    
+    td:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+
+    td::before {
+        content: attr(data-label) ":";
+        position: relative;
+        left: 0;
+        width: auto;
+        padding-right: 15px;
+        white-space: nowrap;
+        text-align: left;
+        font-weight: 700;
+        color: var(--dark-text-secondary);
+        text-transform: capitalize;
+        font-size: 0.9rem;
+    }
+    
+    /* Make the actual data more prominent */
+    td:not(:before) {
+        font-weight: 500;
+        color: var(--dark-text);
+        flex: 1;
+        text-align: right;
+    }
+    
+    /* Special handling for action buttons */
+    .table-actions {
+        display: flex;
+        justify-content: flex-end;
+        padding-top: 12px;
+        margin-top: 12px;
+        border-top: 1px solid var(--glass-border);
+        gap: 8px; /* Add gap between buttons for better touch experience */
+    }
+    
+    /* Make action buttons larger for touch devices */
+    .icon-btn {
+        width: 44px;
+        height: 44px;
+        font-size: 1.2rem;
+    }
+    
+    /* Status badges should remain as is */
+    .status-badge {
+        margin-left: auto;
+        font-size: 0.8rem;
+        padding: 6px 12px;
+    }
+    
+    /* Amount cells should be more prominent */
+    td[data-label="Amount"] {
+        font-weight: 800;
+        color: var(--primary);
+        font-size: 1.1rem;
+    }
+    
+    .table-actions {
+        justify-content: flex-end;
+    }
+}
+
+/* Small Phones */
+@media (max-width: 480px) {
+    .quick-actions-grid {
+        grid-template-columns: repeat(1, 1fr);
+        gap: 10px;
+    }
+    
+    /* Adjust table container for smaller screens */
+    .table-container {
+        padding: 0 12px 20px;
+    }
+}
+
+/* GCash QR Card in Dashboard */
+.gcash-qr-card {
+    text-align: center;
+    background: var(--dark-card);
+    padding-bottom: 32px;
+    border: 2px solid var(--dark-border);
+    transition: var(--transition);
+}
+
+.gcash-qr-card:hover {
+    border-color: #22c55e;
+    box-shadow: 0 15px 35px rgba(34, 197, 94, 0.1);
+}
+
+.qr-container-dash {
+    width: 220px;
+    height: 220px;
+    padding: 12px;
+    background: white;
+    border-radius: 20px;
+    margin: 20px auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+    position: relative;
+}
+
+.qr-container-dash::after {
+    content: 'SCAN TO PAY';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #22c55e;
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 900;
+    padding: 4px 12px;
+    border-radius: 99px;
+    white-space: nowrap;
+    letter-spacing: 1px;
+    z-index: 1;
+}
+
+.qr-image-dash {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: contain;
+}
+
+.qr-info-dash p {
+    margin: 6px 0;
+    font-size: 0.9rem;
+    color: var(--dark-text);
+}
+
+.qr-info-dash strong {
+    color: #22c55e;
+}
+
+.qr-instruction-dash {
+    display: block;
+    margin-top: 20px;
+    font-size: 0.8rem;
+    color: var(--dark-text-secondary);
+    font-style: normal;
+    padding: 0 24px;
+    line-height: 1.4;
+}
+
+/* Quick Actions Grid */
+.quick-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 24px;
+    padding: 28px;
+}
+
+.quick-action-card {
+    background: var(--glass);
+    border: 2px solid var(--dark-border);
+    border-radius: var(--radius-lg);
+    padding: 32px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.quick-action-card i {
+    font-size: 2.5rem;
+    color: var(--primary);
+    margin-bottom: 8px;
+}
+
+.quick-action-card h4 {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--primary);
+    margin-bottom: 8px;
+}
+
+.quick-action-card p {
+    color: var(--dark-text-secondary);
+    font-size: 0.9rem;
+}
+
+.quick-action-card:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--primary);
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+/* Content Grid */
+.content-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+}
+
+/* GCash Info */
+.gcash-info {
+    padding: 28px;
+    text-align: center;
+}
+
+.qr-container {
+    width: 220px;
+    height: 220px;
+    margin: 0 auto 24px;
+    background: white;
+    border-radius: var(--radius-lg);
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-lg);
+    border: 4px solid var(--primary);
+    transition: var(--transition);
+}
+
+.qr-container:hover {
+    transform: rotate(5deg) scale(1.05);
+    box-shadow: var(--shadow-xl);
+}
+
+.qr-code {
+    font-size: 5.5rem;
+    color: var(--dark-bg);
+}
+
+.qr-info {
+    margin-top: 24px;
+}
+
+.qr-info p {
+    margin-bottom: 10px;
+    color: var(--dark-text-secondary);
+    font-size: 0.95rem;
+}
+
+.qr-info strong {
+    color: var(--primary);
+    font-weight: 700;
+}
+
+/* Mobile responsiveness for dashboard */
+@media (max-width: 1200px) {
+    .content-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Tablets (iPad, etc.) */
+@media (max-width: 992px) {
+    .dashboard-grid-layout {
+        grid-template-columns: 1fr;
+    }
+    
+    .dashboard-side-col {
+        gap: 20px;
+    }
+    
+    .quick-actions-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        padding: 16px;
+    }
+
+    .quick-action-card {
+        padding: 16px;
+    }
+
+    .quick-action-card i {
+        font-size: 1.8rem;
+        margin-bottom: 8px;
+    }
+
+    .quick-action-card h4 {
+        font-size: 1rem;
+    }
+
+    .quick-action-card p {
+        font-size: 0.75rem;
+    }
+}
+
+/* Mobile Devices */
+@media (max-width: 768px) {
+    .dashboard-grid-layout {
+        gap: 20px;
+    }
+    
+    .quick-actions-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        padding: 16px;
+    }
+
+    .quick-action-card {
+        padding: 16px;
+    }
+
+    .quick-action-card i {
+        font-size: 1.8rem;
+        margin-bottom: 8px;
+    }
+
+    .quick-action-card h4 {
+        font-size: 1rem;
+    }
+
+    .quick-action-card p {
+        font-size: 0.75rem;
+    }
+    
+    .content-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Small Phones */
+@media (max-width: 480px) {
+    .quick-actions-grid {
+        grid-template-columns: repeat(1, 1fr);
+        gap: 10px;
+    }
+}

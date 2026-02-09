@@ -1,0 +1,15 @@
+{
+    "name": "fitpay-gym/email-service",
+    "description": "FitPay Gym Management System",
+    "type": "project",
+    "license": "proprietary",
+    "require": {
+        "php": ">=7.4",
+        "phpmailer/phpmailer": "^6.9"
+    },
+    "autoload": {
+        "psr-4": {
+            "FitPay\\": "api/"
+        }
+    }
+}
