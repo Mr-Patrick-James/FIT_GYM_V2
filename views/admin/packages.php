@@ -226,8 +226,9 @@ $user = getCurrentUser();
                     </div>
                     
                     <div class="form-group">
-                        <label>Description</label>
-                        <textarea id="packageDescription" rows="3" placeholder="Describe the package benefits..."></textarea>
+                        <label>Description / Features</label>
+                        <textarea id="packageDescription" rows="4" placeholder="Enter features line by line (e.g.,&#10;Full Equipment Access&#10;Locker Room Access&#10;Expert Guidance)"></textarea>
+                        <p style="font-size: 0.75rem; color: var(--dark-text-secondary); margin-top: 4px;">Each line will appear as a bullet point with a checkmark on the landing page.</p>
                     </div>
                     
                     <div class="modal-actions">

@@ -303,7 +303,7 @@ function populatePackages() {
         packageCard.innerHTML = `
             <div class="package-info">
                 <h4>${pkg.name}</h4>
-                <p>${pkg.duration} • Full gym access with all facilities</p>
+                <p>${pkg.duration} • ${pkg.description ? pkg.description.split('\n')[0] : 'Full gym access with all facilities'}</p>
                 <span class="package-tag">${pkg.tag}</span>
             </div>
             <div class="package-price">${pkg.price}</div>

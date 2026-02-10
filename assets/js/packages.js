@@ -12,11 +12,17 @@ async function loadPackages() {
         const data = await response.json();
         
         if (data.success) {
-            const newPackagesJSON = JSON.stringify(data.data);
+            // Format prices to include ₱ if they are numbers
+            const formattedData = data.data.map(pkg => ({
+                ...pkg,
+                price: typeof pkg.price === 'number' ? `₱${pkg.price.toLocaleString()}` : pkg.price
+            }));
+            
+            const newPackagesJSON = JSON.stringify(formattedData);
             const hasChanged = newPackagesJSON !== lastPackagesJSON;
             
             if (hasChanged) {
-                allPackages = data.data;
+                allPackages = formattedData;
                 lastPackagesJSON = newPackagesJSON;
                 return true; // Data changed
             }

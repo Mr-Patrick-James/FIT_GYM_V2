@@ -123,11 +123,29 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
                                 <span class="amount"><?php echo number_format($package['price'], 0); ?></span>
                                 <span class="duration">/ <?php echo htmlspecialchars($package['duration']); ?></span>
                             </div>
-                            <p class="package-desc"><?php echo htmlspecialchars($package['description']); ?></p>
                             <ul class="package-features">
-                                <li><i class="fas fa-check"></i> Full Equipment Access</li>
-                                <li><i class="fas fa-check"></i> Locker Room Access</li>
-                                <li><i class="fas fa-check"></i> Expert Guidance</li>
+                                <?php 
+                                $description = $package['description'] ?? '';
+                                if (!empty($description)) {
+                                    // Split by newline and filter out empty lines
+                                    $features = array_filter(array_map('trim', explode("\n", $description)));
+                                    if (!empty($features)) {
+                                        foreach ($features as $feature): ?>
+                                            <li><i class="fas fa-check"></i> <?php echo htmlspecialchars($feature); ?></li>
+                                        <?php endforeach;
+                                    } else {
+                                        // Fallback if description is just empty spaces
+                                        echo '<li><i class="fas fa-check"></i> Full Equipment Access</li>';
+                                        echo '<li><i class="fas fa-check"></i> Locker Room Access</li>';
+                                        echo '<li><i class="fas fa-check"></i> Expert Guidance</li>';
+                                    }
+                                } else {
+                                    // Default features if no description provided
+                                    echo '<li><i class="fas fa-check"></i> Full Equipment Access</li>';
+                                    echo '<li><i class="fas fa-check"></i> Locker Room Access</li>';
+                                    echo '<li><i class="fas fa-check"></i> Expert Guidance</li>';
+                                }
+                                ?>
                             </ul>
                             <button class="package-btn" onclick="openModal('signup')">Get Started</button>
                         </div>

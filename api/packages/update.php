@@ -52,7 +52,7 @@ $checkStmt->close();
 
 // Update package
 $stmt = $conn->prepare("UPDATE packages SET name = ?, duration = ?, price = ?, tag = ?, description = ?, updated_at = NOW() WHERE id = ?");
-$stmt->bind_param("ssdsii", $name, $duration, $priceValue, $tag, $description, $id);
+$stmt->bind_param("ssdssi", $name, $duration, $priceValue, $tag, $description, $id);
 
 if ($stmt->execute()) {
     $stmt->close();

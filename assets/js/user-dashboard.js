@@ -283,6 +283,13 @@ function populatePackages() {
                     <i class="fas fa-clock"></i>
                     <span>${pkg.duration}</span>
                 </div>
+                ${pkg.description.split('\n').filter(line => line.trim() !== '').map(line => `
+                <div class="package-detail-item">
+                    <i class="fas fa-check-circle"></i>
+                    <span>${line.trim()}</span>
+                </div>
+                `).join('')}
+                ${pkg.description.trim() === '' ? `
                 <div class="package-detail-item">
                     <i class="fas fa-check-circle"></i>
                     <span>Full gym access</span>
@@ -291,6 +298,7 @@ function populatePackages() {
                     <i class="fas fa-dumbbell"></i>
                     <span>All facilities</span>
                 </div>
+                ` : ''}
             </div>
             <div class="package-footer">
                 <div class="package-price-large">${pkg.price}</div>
