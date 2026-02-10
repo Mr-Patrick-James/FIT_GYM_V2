@@ -267,6 +267,7 @@ $user = getCurrentUser();
                             <th>Booking Type</th>
                             <th>Package</th>
                             <th>Date</th>
+                            <th>Expiry</th>
                             <th>Amount</th>
                             <th>Contact</th>
                             <th>Status</th>

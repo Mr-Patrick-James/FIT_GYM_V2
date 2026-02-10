@@ -51,6 +51,7 @@ async function loadAllBookings() {
                 status: booking.status,
                 createdAt: booking.created_at,
                 notes: booking.notes,
+                expires_at: booking.expires_at,
                 is_walkin: booking.is_walkin || false
             }));
         } else {
@@ -241,6 +242,9 @@ function populateBookingsTable() {
                 ` : ''}
             </td>
             <td data-label="Date">${displayDate}</td>
+            <td data-label="Expiry">
+                <div style="font-weight: 500;">${formatDateForDisplay(booking.expires_at)}</div>
+            </td>
             <td data-label="Amount" style="font-weight: 800;">${booking.amount || '₱0'}</td>
             <td data-label="Contact">${booking.contact || 'N/A'}</td>
             <td data-label="Status"><span class="status-badge status-${booking.status || 'pending'}">${(booking.status || 'pending').charAt(0).toUpperCase() + (booking.status || 'pending').slice(1)}</span></td>
@@ -1046,6 +1050,9 @@ function renderBookingRow(booking) {
                     <div class="package-name">${booking.package}</div>
                     <div class="booking-date">${booking.date}</div>
                 </div>
+            </td>
+            <td>
+                <div class="expiry-date">${formatDateForDisplay(booking.expires_at)}</div>
             </td>
             <td class="amount">${booking.amount}</td>
             <td>${booking.contact}</td>
