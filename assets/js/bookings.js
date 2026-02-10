@@ -257,10 +257,10 @@ function populateBookingsTable() {
                         <i class="fas fa-eye"></i>
                     </button>
                     ${booking.status === 'pending' ? `
-                        <button class="icon-btn success" onclick="verifyBooking('${booking.id}')" title="Verify Payment">
+                        <button class="icon-btn success" onclick="verifyBooking('${booking.id}', event)" title="Verify Payment">
                             <i class="fas fa-check"></i>
                         </button>
-                        <button class="icon-btn danger" onclick="rejectBooking('${booking.id}')" title="Reject Payment">
+                        <button class="icon-btn danger" onclick="rejectBooking('${booking.id}', event)" title="Reject Payment">
                             <i class="fas fa-times"></i>
                         </button>
                     ` : ''}
@@ -422,7 +422,10 @@ function viewBooking(id) {
 }
 
 // Verify booking
-async function verifyBooking(id) {
+async function verifyBooking(id, event) {
+    const btn = event ? event.currentTarget : null;
+    const originalContent = btn ? btn.innerHTML : '';
+    
     try {
         const booking = allBookings.find(b => String(b.id) === String(id));
         if (!booking) {
@@ -432,6 +435,12 @@ async function verifyBooking(id) {
         
         if (booking.status === 'pending') {
             if (confirm(`Verify payment for ${booking.name || 'this user'}?`)) {
+                // Show loading state
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                }
+                
                 // Update booking status via API
                 const response = await fetch(`../../api/bookings/update.php?id=${id}`, {
                     method: 'PUT',
@@ -458,6 +467,10 @@ async function verifyBooking(id) {
                     }
                 } else {
                     showNotification('Error verifying booking: ' + data.message, 'warning');
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = originalContent;
+                    }
                 }
             }
         } else {
@@ -466,11 +479,18 @@ async function verifyBooking(id) {
     } catch (error) {
         console.error('Error verifying booking:', error);
         showNotification('Error verifying booking. Please try again.', 'warning');
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalContent;
+        }
     }
 }
 
 // Reject booking from table
-async function rejectBooking(id) {
+async function rejectBooking(id, event) {
+    const btn = event ? event.currentTarget : null;
+    const originalContent = btn ? btn.innerHTML : '';
+    
     try {
         const booking = allBookings.find(b => String(b.id) === String(id));
         if (!booking) {
@@ -480,6 +500,12 @@ async function rejectBooking(id) {
         
         if (booking.status === 'pending') {
             if (confirm(`Reject payment for ${booking.name || 'this user'}? The client will be notified.`)) {
+                // Show loading state
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                }
+                
                 // Update booking status via API
                 const response = await fetch(`../../api/bookings/update.php?id=${id}`, {
                     method: 'PUT',
@@ -506,6 +532,10 @@ async function rejectBooking(id) {
                     }
                 } else {
                     showNotification('Error rejecting booking: ' + data.message, 'warning');
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = originalContent;
+                    }
                 }
             }
         } else {
@@ -514,6 +544,10 @@ async function rejectBooking(id) {
     } catch (error) {
         console.error('Error rejecting booking:', error);
         showNotification('Error rejecting booking. Please try again.', 'warning');
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalContent;
+        }
     }
 }
 
@@ -564,10 +598,17 @@ async function verifyPayment() {
         return;
     }
     
+    const verifyBtn = document.getElementById('verifyPaymentBtn');
+    const originalContent = verifyBtn.innerHTML;
+    
     try {
         const booking = currentViewingBooking;
         if (booking.status === 'pending') {
             if (confirm(`Verify payment for ${booking.name || 'this user'}?`)) {
+                // Show loading state
+                verifyBtn.disabled = true;
+                verifyBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
+                
                 // Update booking status via API
                 const response = await fetch(`../../api/bookings/update.php?id=${booking.id}`, {
                     method: 'PUT',
@@ -591,6 +632,9 @@ async function verifyPayment() {
                     closeModal();
                 } else {
                     showNotification('Error verifying payment: ' + data.message, 'warning');
+                    // Reset button if error
+                    verifyBtn.disabled = false;
+                    verifyBtn.innerHTML = originalContent;
                 }
             }
         } else {
@@ -599,6 +643,9 @@ async function verifyPayment() {
     } catch (error) {
         console.error('Error verifying payment:', error);
         showNotification('Error verifying payment. Please try again.', 'warning');
+        // Reset button if error
+        verifyBtn.disabled = false;
+        verifyBtn.innerHTML = originalContent;
     }
 }
 
@@ -609,10 +656,17 @@ async function rejectPayment() {
         return;
     }
     
+    const rejectBtn = document.getElementById('rejectPaymentBtn');
+    const originalContent = rejectBtn.innerHTML;
+    
     try {
         const booking = currentViewingBooking;
         if (booking.status === 'pending') {
             if (confirm(`Reject payment for ${booking.name || 'this user'}? The client will be notified.`)) {
+                // Show loading state
+                rejectBtn.disabled = true;
+                rejectBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Rejecting...';
+                
                 // Update booking status via API
                 const response = await fetch(`../../api/bookings/update.php?id=${booking.id}`, {
                     method: 'PUT',
@@ -636,6 +690,9 @@ async function rejectPayment() {
                     closeModal();
                 } else {
                     showNotification('Error rejecting payment: ' + data.message, 'warning');
+                    // Reset button if error
+                    rejectBtn.disabled = false;
+                    rejectBtn.innerHTML = originalContent;
                 }
             }
         } else {
@@ -644,6 +701,9 @@ async function rejectPayment() {
     } catch (error) {
         console.error('Error rejecting payment:', error);
         showNotification('Error rejecting payment. Please try again.', 'warning');
+        // Reset button if error
+        rejectBtn.disabled = false;
+        rejectBtn.innerHTML = originalContent;
     }
 }
 

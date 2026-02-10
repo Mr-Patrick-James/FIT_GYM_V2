@@ -384,11 +384,11 @@ $user = getCurrentUser();
                 </div>
                 
                 <div class="modal-actions">
-                    <button class="btn btn-secondary" onclick="rejectPayment()">
+                    <button class="btn btn-secondary" id="rejectPaymentBtn" onclick="rejectPayment()">
                         <i class="fas fa-times"></i>
                         Reject Payment
                     </button>
-                    <button class="btn btn-primary" onclick="verifyPayment()">
+                    <button class="btn btn-primary" id="verifyPaymentBtn" onclick="verifyPayment()">
                         <i class="fas fa-check"></i>
                         Verify Payment
                     </button>
