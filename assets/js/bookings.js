@@ -867,6 +867,18 @@ async function loadPackages() {
 
 // Handle walk-in form submission
 document.addEventListener('DOMContentLoaded', function() {
+    // Check for action=walkin in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('action') === 'walkin') {
+        // Small delay to ensure everything is loaded
+        setTimeout(() => {
+            openWalkinModal();
+            // Clean up the URL without refreshing
+            const newUrl = window.location.pathname;
+            window.history.replaceState({}, document.title, newUrl);
+        }, 500);
+    }
+
     const walkinForm = document.getElementById('walkinForm');
     if (walkinForm) {
         walkinForm.addEventListener('submit', async function(e) {

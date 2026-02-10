@@ -163,7 +163,7 @@ $user = getCurrentUser();
                 <h3>Quick Actions</h3>
             </div>
             <div class="quick-actions-grid">
-                <a href="walkin-bookings.php" class="quick-action-card">
+                <a href="bookings.php?action=walkin" class="quick-action-card">
                     <i class="fas fa-person-walking"></i>
                     <h4>New Walk-in</h4>
                     <p>Register a walk-in client</p>
