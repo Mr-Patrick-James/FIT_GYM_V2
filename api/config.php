@@ -162,4 +162,45 @@ function getRequestData() {
     return $data ? $data : [];
 }
 
+/**
+ * AUTOMATIC EXPIRY CHECK TRIGGER
+ * This runs the check-expiry logic once per day automatically 
+ * when any non-API page is visited.
+ */
+if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'GET') {
+    $currentScript = $_SERVER['SCRIPT_NAME'] ?? '';
+    // Only trigger on main pages, not on every single API call or asset load
+    if (strpos($currentScript, 'views/') !== false || strpos($currentScript, 'index.php') !== false) {
+        try {
+            $conn = getDBConnection();
+            $today = date('Y-m-d');
+            
+            // Check when the last check was performed
+            $stmt = $conn->prepare("SELECT setting_value FROM gym_settings WHERE setting_key = 'last_expiry_check' LIMIT 1");
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $lastCheck = $result->fetch_assoc();
+            
+            if (!$lastCheck || $lastCheck['setting_value'] !== $today) {
+                // It's a new day! Run the check
+                require_once __DIR__ . '/email.php';
+                processExpiringBookings();
+                
+                // Update the last check date
+                if (!$lastCheck) {
+                    $stmt = $conn->prepare("INSERT INTO gym_settings (setting_key, setting_value) VALUES ('last_expiry_check', ?)");
+                } else {
+                    $stmt = $conn->prepare("UPDATE gym_settings SET setting_value = ? WHERE setting_key = 'last_expiry_check'");
+                }
+                $stmt->bind_param("s", $today);
+                $stmt->execute();
+            }
+            $conn->close();
+        } catch (Exception $e) {
+            // Silently fail to not interrupt user experience
+            error_log("Auto-expiry trigger failed: " . $e->getMessage());
+        }
+    }
+}
+
 ?>
