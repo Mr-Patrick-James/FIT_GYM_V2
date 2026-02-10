@@ -84,8 +84,9 @@ if ($cleanHost === 'localhost.') {
     $cleanHost = 'localhost';
 }
 
-// Define BASE_URL - Fix for localhost WAMP setup
-$fullBaseUrl = 'http://localhost/Fit';
+// Define BASE_URL - Automatically detect the base URL
+$fullBaseUrl = $protocol . "://" . $host . $baseDir;
+
 // Remove trailing slash if exists
 $fullBaseUrl = rtrim($fullBaseUrl, '/');
 
@@ -111,11 +112,11 @@ if (!headers_sent()) {
     header("Access-Control-Allow-Origin: *");
     header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
     header("Access-Control-Allow-Headers: Content-Type, Authorization");
-    header("Content-Type: application/json");
 }
 
 // Handle preflight requests
 if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    header("Content-Type: application/json");
     http_response_code(200);
     exit();
 }
@@ -136,6 +137,9 @@ if (isset($_SERVER['REQUEST_METHOD']) && in_array($_SERVER['REQUEST_METHOD'], ['
 
 // Helper function to send JSON response
 function sendResponse($success, $message, $data = null, $statusCode = 200) {
+    if (!headers_sent()) {
+        header("Content-Type: application/json");
+    }
     http_response_code($statusCode);
     echo json_encode([
         'success' => $success,

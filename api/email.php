@@ -184,7 +184,7 @@ function sendOTPEmail($email, $otp, $name = '') {
                             <p style="margin-top: 30px;">Welcome to Martinez Fitness! We\'re excited to have you join our community.</p>
                         </div>
                         <div class="footer">
-                            <p>© 2023 Martinez Fitness Gym. All rights reserved.</p>
+                            <p>© ' . date('Y') . ' Martinez Fitness Gym. All rights reserved.</p>
                             <p>This is an automated email, please do not reply.</p>
                         </div>
                     </div>

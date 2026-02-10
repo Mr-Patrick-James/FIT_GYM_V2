@@ -15,8 +15,18 @@ try {
     // Handle text settings
     $settings = $_POST;
     unset($settings['qr_image']); // Handled separately
+    
+    // We'll handle existing_gallery separately as well
+    $existingGallery = [];
+    if (isset($settings['existing_gallery'])) {
+        $existingGallery = json_decode($settings['existing_gallery'], true);
+        unset($settings['existing_gallery']);
+    }
 
     foreach ($settings as $key => $value) {
+        // Skip keys that are handled by file uploads below
+        if (strpos($key, 'gallery_file_') === 0) continue;
+        
         $stmt = $conn->prepare("INSERT INTO gym_settings (setting_key, setting_value) VALUES (?, ?) 
                                 ON DUPLICATE KEY UPDATE setting_value = ?");
         $stmt->bind_param("sss", $key, $value, $value);
@@ -67,6 +77,43 @@ try {
             throw new Exception("Invalid file type.");
         }
     }
+
+    // Handle Gallery Image Uploads
+    $newGalleryPaths = [];
+    foreach ($_FILES as $key => $file) {
+        if (strpos($key, 'gallery_file_') === 0 && $file['error'] === UPLOAD_ERR_OK) {
+            $fileName = $file['name'];
+            $fileTmpName = $file['tmp_name'];
+            $fileSize = $file['size'];
+            $fileExt = explode('.', $fileName);
+            $fileActualExt = strtolower(end($fileExt));
+
+            $allowed = ['jpg', 'jpeg', 'png', 'webp'];
+
+            if (in_array($fileActualExt, $allowed) && $fileSize < 5000000) {
+                $fileNameNew = "about_gallery_" . uniqid('', true) . "." . $fileActualExt;
+                $uploadDir = '../../uploads/settings/';
+                
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0777, true);
+                }
+                
+                if (move_uploaded_file($fileTmpName, $uploadDir . $fileNameNew)) {
+                    $newGalleryPaths[] = 'uploads/settings/' . $fileNameNew;
+                }
+            }
+        }
+    }
+
+    // Merge existing and new paths, then save as JSON
+    $finalGallery = array_merge($existingGallery, $newGalleryPaths);
+    $galleryJson = json_encode($finalGallery);
+    
+    $key = 'about_images';
+    $stmt = $conn->prepare("INSERT INTO gym_settings (setting_key, setting_value) VALUES (?, ?) 
+                            ON DUPLICATE KEY UPDATE setting_value = ?");
+    $stmt->bind_param("sss", $key, $galleryJson, $galleryJson);
+    $stmt->execute();
 
     sendResponse(true, 'Settings updated successfully');
 

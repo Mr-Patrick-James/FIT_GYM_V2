@@ -108,8 +108,12 @@ $user = getCurrentUser();
                         <span>Notifications</span>
                     </button>
                     <button class="settings-nav-item" onclick="showSettingsTab('appearance')" id="nav-appearance">
-                        <i class="fas fa-palette"></i>
+                        <i class="fas fa-paint-brush"></i>
                         <span>Appearance</span>
+                    </button>
+                    <button class="settings-nav-item" onclick="showSettingsTab('landing')" id="nav-landing">
+                        <i class="fas fa-home"></i>
+                        <span>Landing Page</span>
                     </button>
                     <button class="settings-nav-item" onclick="showSettingsTab('account')" id="nav-account">
                         <i class="fas fa-user"></i>
@@ -405,6 +409,75 @@ $user = getCurrentUser();
                     </div>
                 </div>
 
+                <!-- Landing Page Settings -->
+                <div id="settings-landing" class="settings-section" style="display: none;">
+                    <div class="settings-section-header">
+                        <div>
+                            <h2>Landing Page</h2>
+                            <p>Customize the content of your public landing page</p>
+                        </div>
+                    </div>
+
+                    <div class="settings-group">
+                        <div class="settings-item">
+                            <div class="settings-item-label">
+                                <label>About Us Text</label>
+                                <span class="settings-hint">The main description in the About section</span>
+                            </div>
+                            <textarea id="aboutText" class="settings-input" rows="4" placeholder="Enter gym description..."></textarea>
+                        </div>
+
+                        <div class="settings-item">
+                            <div class="settings-item-label">
+                                <label>Our Mission</label>
+                                <span class="settings-hint">Your gym's mission statement</span>
+                            </div>
+                            <textarea id="missionText" class="settings-input" rows="3" placeholder="Enter mission statement..."></textarea>
+                        </div>
+
+                        <div class="settings-item">
+                            <div class="settings-item-label">
+                                <label>Years of Experience</label>
+                                <span class="settings-hint">Displayed in the stats section (e.g., 10+)</span>
+                            </div>
+                            <input type="text" id="yearsExperience" class="settings-input" placeholder="10+">
+                        </div>
+
+                        <div class="settings-item">
+                            <div class="settings-item-label">
+                                <label>Gym Interior Gallery</label>
+                                <span class="settings-hint">Multiple images for the About section slider</span>
+                            </div>
+                            <div class="gallery-container">
+                                <div class="gallery-grid" id="about-gallery-grid">
+                                    <!-- Gallery items will be injected here by JS -->
+                                    <div class="gallery-add-btn" onclick="document.getElementById('aboutImageInput').click()">
+                                        <i class="fas fa-plus"></i>
+                                        <span>Add Image</span>
+                                    </div>
+                                </div>
+                                <input type="file" id="aboutImageInput" accept="image/*" multiple style="display: none;" onchange="handleGalleryUpload(this)">
+                                <p class="file-info" style="margin-top: 10px;">Recommended size: 800x600px. Max 5MB per image.</p>
+                            </div>
+                        </div>
+
+                        <div class="settings-item">
+                            <div class="settings-item-label">
+                                <label>Footer Tagline</label>
+                                <span class="settings-hint">Brief description shown in the footer</span>
+                            </div>
+                            <input type="text" id="footerTagline" class="settings-input" placeholder="Pushing your limits since 2014...">
+                        </div>
+
+                        <div class="settings-actions">
+                            <button class="btn btn-primary" onclick="saveLandingSettings()">
+                                <i class="fas fa-save"></i>
+                                Save Changes
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Account Settings -->
                 <div id="settings-account" class="settings-section" style="display: none;">
                     <div class="settings-section-header">
@@ -507,7 +580,7 @@ $user = getCurrentUser();
         <div class="footer" style="margin-top: 48px;">
             <p>
                 <i class="fas fa-heart" style="color: var(--primary);"></i>
-                © 2023 Martinez Fitness Gym • FitPay Management System v2.0
+                © <?php echo date('Y'); ?> Martinez Fitness Gym • FitPay Management System v2.0
                 <i class="fas fa-bolt" style="color: var(--primary);"></i>
             </p>
         </div>

@@ -297,7 +297,7 @@ $user = getCurrentUser();
         <div class="footer">
             <p>
                 <i class="fas fa-heart" style="color: var(--primary);"></i>
-                © 2023 Martinez Fitness Gym • FitPay Management System v2.0
+                © <?php echo date('Y'); ?> Martinez Fitness Gym • FitPay Management System v2.0
                 <i class="fas fa-bolt" style="color: var(--primary);"></i>
             </p>
         </div>
@@ -333,7 +333,7 @@ $user = getCurrentUser();
                     </div>
                     <div class="detail-group">
                         <label>Booking Date</label>
-                        <div class="value" id="modalDate">November 15, 2023</div>
+                        <div class="value" id="modalDate">February 10, 2026</div>
                     </div>
                     <div class="detail-group">
                         <label>Payment Amount</label>

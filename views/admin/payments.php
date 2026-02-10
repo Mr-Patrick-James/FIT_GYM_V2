@@ -266,7 +266,7 @@ $user = getCurrentUser();
         <div class="footer">
             <p>
                 <i class="fas fa-heart" style="color: var(--primary);"></i>
-                © 2023 Martinez Fitness Gym • FitPay Management System v2.0
+                © <?php echo date('Y'); ?> Martinez Fitness Gym • FitPay Management System v2.0
                 <i class="fas fa-bolt" style="color: var(--primary);"></i>
             </p>
         </div>

@@ -1087,6 +1087,90 @@ document.querySelector('#otpVerificationForm form').addEventListener('submit', a
 document.addEventListener('DOMContentLoaded', function() {
     setupOTPInputs();
     
+    // Scroll Spy for active navigation state
+    const sections = document.querySelectorAll('section[id]');
+    const navLinks = document.querySelectorAll('.nav-links a');
+
+    function updateActiveNav() {
+        let scrollY = window.pageYOffset;
+
+        sections.forEach(current => {
+            const sectionHeight = current.offsetHeight;
+            const sectionTop = current.offsetTop - 100; // Offset for header height
+            const sectionId = current.getAttribute('id');
+
+            if (scrollY > sectionTop && scrollY <= sectionTop + sectionHeight) {
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href') === `#${sectionId}`) {
+                        link.classList.add('active');
+                    }
+                });
+            }
+        });
+    }
+
+    // Gallery Slider Logic
+    let currentSlide = 0;
+    let slideInterval;
+
+    function initSlider() {
+        const slider = document.getElementById('aboutSlider');
+        if (!slider) return;
+
+        const slides = slider.querySelectorAll('.slide');
+        if (slides.length <= 1) return;
+
+        // Start auto-rotation
+        startSlideTimer();
+
+        // Pause on hover
+        slider.addEventListener('mouseenter', () => clearInterval(slideInterval));
+        slider.addEventListener('mouseleave', () => startSlideTimer());
+
+        // Export functions to window for global access
+        window.changeSlide = (direction) => {
+            const slides = slider.querySelectorAll('.slide');
+            const dots = slider.querySelectorAll('.slider-dot');
+            
+            slides[currentSlide].classList.remove('active');
+            if (dots.length > 0) dots[currentSlide].classList.remove('active');
+            
+            currentSlide = (currentSlide + direction + slides.length) % slides.length;
+            
+            slides[currentSlide].classList.add('active');
+            if (dots.length > 0) dots[currentSlide].classList.add('active');
+        };
+
+        window.goToSlide = (index) => {
+            const slides = slider.querySelectorAll('.slide');
+            const dots = slider.querySelectorAll('.slider-dot');
+            
+            if (index === currentSlide) return;
+            
+            slides[currentSlide].classList.remove('active');
+            if (dots.length > 0) dots[currentSlide].classList.remove('active');
+            
+            currentSlide = index;
+            
+            slides[currentSlide].classList.add('active');
+            if (dots.length > 0) dots[currentSlide].classList.add('active');
+            
+            clearInterval(slideInterval);
+            startSlideTimer();
+        };
+    }
+
+    function startSlideTimer() {
+        slideInterval = setInterval(() => {
+            if (window.changeSlide) window.changeSlide(1);
+        }, 5000);
+    }
+
+    window.addEventListener('scroll', updateActiveNav);
+    updateActiveNav(); // Initial check
+    initSlider(); // Initialize gallery slider
+
     // Check if user is already logged in
     const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
     if (isLoggedIn) {

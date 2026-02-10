@@ -3,8 +3,14 @@ let settingsData = {
     general: {},
     payment: {},
     notifications: {},
+    landing: {
+        gallery: []
+    },
     account: {}
 };
+
+// State for new gallery uploads
+let pendingGalleryFiles = [];
 
 // QR Preview Function
 function previewQR(input) {
@@ -16,6 +22,72 @@ function previewQR(input) {
         };
         reader.readAsDataURL(input.files[0]);
     }
+}
+
+// Handle Gallery Uploads
+function handleGalleryUpload(input) {
+    if (input.files) {
+        Array.from(input.files).forEach(file => {
+            pendingGalleryFiles.push(file);
+        });
+        renderGallery();
+    }
+}
+
+// Remove Gallery Item
+function removeGalleryItem(index, isExisting = false) {
+    if (isExisting) {
+        settingsData.landing.gallery.splice(index, 1);
+    } else {
+        pendingGalleryFiles.splice(index, 1);
+    }
+    renderGallery();
+}
+
+// Render Gallery Grid
+function renderGallery() {
+    const grid = document.getElementById('about-gallery-grid');
+    if (!grid) return;
+
+    // Clear existing items but keep the add button
+    const addBtn = grid.querySelector('.gallery-add-btn');
+    grid.innerHTML = '';
+
+    // Render existing images from server
+    settingsData.landing.gallery.forEach((path, index) => {
+        const fullPath = path.startsWith('http') ? path : `../../${path}`;
+        const item = document.createElement('div');
+        item.className = 'gallery-item';
+        item.innerHTML = `
+            <img src="${fullPath}" alt="Gym Interior">
+            <button class="remove-btn" onclick="removeGalleryItem(${index}, true)">
+                <i class="fas fa-trash"></i>
+            </button>
+        `;
+        grid.appendChild(item);
+    });
+
+    // Render pending uploads
+    pendingGalleryFiles.forEach((file, index) => {
+        const reader = new FileReader();
+        const item = document.createElement('div');
+        item.className = 'gallery-item';
+        item.innerHTML = `
+            <img src="" alt="Pending Upload">
+            <button class="remove-btn" onclick="removeGalleryItem(${index}, false)">
+                <i class="fas fa-trash"></i>
+            </button>
+        `;
+        grid.appendChild(item);
+
+        reader.onload = (e) => {
+            item.querySelector('img').src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+
+    // Add the "Add" button back
+    grid.appendChild(addBtn);
 }
 
 // Load settings from Database
@@ -47,7 +119,15 @@ async function loadSettings() {
                 paymentInstructions: data.payment_instructions || '',
                 autoVerify: data.auto_verify === 'true'
             };
+            settingsData.landing = {
+                aboutText: data.about_text || '',
+                missionText: data.mission_text || '',
+                yearsExperience: data.years_experience || '',
+                gallery: JSON.parse(data.about_images || '[]'),
+                footerTagline: data.footer_tagline || ''
+            };
             
+            pendingGalleryFiles = []; // Reset pending uploads
             populateSettings();
         } else {
             showNotification('Error loading settings: ' + result.message, 'error');
@@ -91,6 +171,19 @@ function populateSettings() {
             preview.innerHTML = `<img src="../../${settingsData.payment.gcashQRPath}" style="width: 100%; height: 100%; object-fit: cover;">`;
         }
     }
+
+    // Landing settings
+    const aboutTextEl = document.getElementById('aboutText');
+    if (aboutTextEl) aboutTextEl.value = settingsData.landing.aboutText;
+    const missionTextEl = document.getElementById('missionText');
+    if (missionTextEl) missionTextEl.value = settingsData.landing.missionText;
+    const yearsExperienceEl = document.getElementById('yearsExperience');
+    if (yearsExperienceEl) yearsExperienceEl.value = settingsData.landing.yearsExperience;
+    const footerTaglineEl = document.getElementById('footerTagline');
+    if (footerTaglineEl) footerTaglineEl.value = settingsData.landing.footerTagline;
+
+    // Render gallery
+    renderGallery();
 }
 
 // Show settings tab
@@ -152,6 +245,25 @@ function savePaymentSettings() {
     if (qrFile) {
         formData.append('qr_image', qrFile);
     }
+    
+    saveToDB(formData);
+}
+
+// Save landing page settings
+function saveLandingSettings() {
+    const formData = new FormData();
+    formData.append('about_text', document.getElementById('aboutText').value.trim());
+    formData.append('mission_text', document.getElementById('missionText').value.trim());
+    formData.append('years_experience', document.getElementById('yearsExperience').value.trim());
+    formData.append('footer_tagline', document.getElementById('footerTagline').value.trim());
+    
+    // Send existing gallery paths as JSON
+    formData.append('existing_gallery', JSON.stringify(settingsData.landing.gallery));
+    
+    // Append new files
+    pendingGalleryFiles.forEach((file, index) => {
+        formData.append(`gallery_file_${index}`, file);
+    });
     
     saveToDB(formData);
 }

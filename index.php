@@ -1,5 +1,44 @@
 <?php
 require_once 'api/session.php';
+require_once 'api/config.php';
+
+// Fetch active packages for the landing page
+$packages = [];
+$settings = [];
+$activeMemberCount = 0;
+try {
+    $conn = getDBConnection();
+    
+    // Fetch packages
+    $result = $conn->query("SELECT * FROM packages WHERE is_active = 1 ORDER BY price ASC");
+    if ($result) {
+        while ($row = $result->fetch_assoc()) {
+            $packages[] = $row;
+        }
+    }
+    
+    // Fetch gym settings
+    $result = $conn->query("SELECT setting_key, setting_value FROM gym_settings");
+    if ($result) {
+        while ($row = $result->fetch_assoc()) {
+            $settings[$row['setting_key']] = $row['setting_value'];
+        }
+    }
+
+    // Fetch real active members count (users with role 'user')
+    $countResult = $conn->query("SELECT COUNT(*) as total FROM users WHERE role = 'user'");
+    if ($countResult) {
+        $row = $countResult->fetch_assoc();
+        $activeMemberCount = $row['total'];
+    }
+} catch (Exception $e) {
+    error_log("Error fetching data for index: " . $e->getMessage());
+}
+
+// Helper to get setting with fallback
+function getSetting($key, $default = '', $settings = []) {
+    return $settings[$key] ?? $default;
+}
 
 // If user is already logged in, redirect to appropriate dashboard
 // But only if we're not in the middle of a login/signup process
@@ -26,25 +65,33 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
 
     <header>
         <div class="logo-circle">
-            MARTINEZ<br>GYM
+            <?php 
+            $nameParts = explode(' ', getSetting('gym_name', 'MARTINEZ GYM', $settings));
+            echo htmlspecialchars($nameParts[0]);
+            if (isset($nameParts[1])) echo '<br>' . htmlspecialchars($nameParts[1]);
+            ?>
         </div>
         <div class="nav-group">
             <nav>
                 <ul class="nav-links">
-                    <li><a href="#">Home</a></li>
-                    <li><a href="#">Classes</a></li>
-                    <li><a href="#">Trainers</a></li>
+                    <li><a href="#home">Home</a></li>
+                    <li><a href="#packages">Packages</a></li>
+                    <li><a href="#about">About</a></li>
                 </ul>
             </nav>
             <button class="login-btn-nav" onclick="openModal('login')">Login</button>
         </div>
     </header>
 
-    <section class="hero">
+    <section class="hero" id="home">
         <div class="hero-content">
-            <h1 class="big-text">MARTINEZ</h1>
-            <div class="script-text">Fitness</div>
-            <h1 class="big-text">GYM</h1>
+            <?php 
+            $gymName = getSetting('gym_name', 'MARTINEZ Fitness GYM', $settings);
+            $nameParts = explode(' ', $gymName);
+            ?>
+            <h1 class="big-text"><?php echo htmlspecialchars($nameParts[0] ?? 'MARTINEZ'); ?></h1>
+            <div class="script-text"><?php echo htmlspecialchars($nameParts[1] ?? 'Fitness'); ?></div>
+            <h1 class="big-text"><?php echo htmlspecialchars($nameParts[2] ?? ($nameParts[1] ?? 'GYM')); ?></h1>
             
             <button class="main-cta" onclick="openModal('signup')">
                 Join Now 
@@ -52,6 +99,136 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
             </button>
         </div>
     </section>
+
+    <!-- Packages Section -->
+    <section class="packages-section" id="packages">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Membership Plans</h2>
+                <p class="section-subtitle">Choose the perfect plan for your fitness goals</p>
+            </div>
+
+            <div class="packages-grid">
+                <?php if (empty($packages)): ?>
+                    <p>No active packages available at the moment.</p>
+                <?php else: ?>
+                    <?php foreach ($packages as $package): ?>
+                        <div class="package-card <?php echo $package['tag'] === 'Popular' ? 'popular' : ''; ?>">
+                            <?php if ($package['tag']): ?>
+                                <span class="package-tag"><?php echo htmlspecialchars($package['tag']); ?></span>
+                            <?php endif; ?>
+                            <h3 class="package-name"><?php echo htmlspecialchars($package['name']); ?></h3>
+                            <div class="package-price">
+                                <span class="currency">₱</span>
+                                <span class="amount"><?php echo number_format($package['price'], 0); ?></span>
+                                <span class="duration">/ <?php echo htmlspecialchars($package['duration']); ?></span>
+                            </div>
+                            <p class="package-desc"><?php echo htmlspecialchars($package['description']); ?></p>
+                            <ul class="package-features">
+                                <li><i class="fas fa-check"></i> Full Equipment Access</li>
+                                <li><i class="fas fa-check"></i> Locker Room Access</li>
+                                <li><i class="fas fa-check"></i> Expert Guidance</li>
+                            </ul>
+                            <button class="package-btn" onclick="openModal('signup')">Get Started</button>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section class="about-section" id="about">
+        <div class="container">
+            <div class="about-content">
+                <div class="about-text">
+                    <h2 class="section-title">About <?php echo htmlspecialchars(getSetting('gym_name', 'Martinez Fitness', $settings)); ?></h2>
+                    <p><?php echo htmlspecialchars(getSetting('about_text', 'Martinez Fitness Gym is more than just a place to work out. We are a community dedicated to helping you reach your peak physical condition through elite training, state-of-the-art equipment, and a supportive environment.', $settings)); ?></p>
+                    <p><?php echo htmlspecialchars(getSetting('mission_text', 'Founded with the mission to provide high-quality fitness access to everyone, we offer flexible membership plans and expert guidance to ensure you get the most out of every session.', $settings)); ?></p>
+                    
+                    <div class="stats-mini">
+                        <div class="stat-item">
+                            <h4><?php echo htmlspecialchars(getSetting('years_experience', '10+', $settings)); ?></h4>
+                            <p>Years Experience</p>
+                        </div>
+                        <div class="stat-item">
+                            <h4><?php echo number_format($activeMemberCount); ?>+</h4>
+                            <p>Active Members</p>
+                        </div>
+                        <div class="stat-item">
+                            <h4>24/7</h4>
+                            <p>Support</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="about-image">
+                    <?php 
+                    $galleryJson = getSetting('about_images', '[]', $settings);
+                    $gallery = json_decode($galleryJson, true);
+                    
+                    if (empty($gallery)) {
+                        $gallery = ['https://images.unsplash.com/photo-1540497077202-7c8a3999166f?q=80&w=2070&auto=format&fit=crop'];
+                    }
+                    ?>
+                    <div class="slider-container" id="aboutSlider">
+                        <?php foreach ($gallery as $index => $imagePath): ?>
+                            <div class="slide <?php echo $index === 0 ? 'active' : ''; ?>">
+                                <img src="<?php echo htmlspecialchars(strpos($imagePath, 'http') === 0 ? $imagePath : $imagePath); ?>" alt="Gym Interior">
+                            </div>
+                        <?php endforeach; ?>
+                        
+                        <?php if (count($gallery) > 1): ?>
+                            <button class="slider-btn prev" onclick="changeSlide(-1)"><i class="fas fa-chevron-left"></i></button>
+                            <button class="slider-btn next" onclick="changeSlide(1)"><i class="fas fa-chevron-right"></i></button>
+                            
+                            <div class="slider-nav">
+                                <?php foreach ($gallery as $index => $imagePath): ?>
+                                    <div class="slider-dot <?php echo $index === 0 ? 'active' : ''; ?>" onclick="goToSlide(<?php echo $index; ?>)"></div>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <div class="logo-circle">
+                        <?php 
+                        $nameParts = explode(' ', getSetting('gym_name', 'MARTINEZ GYM', $settings));
+                        echo htmlspecialchars($nameParts[0]);
+                        if (isset($nameParts[1])) echo '<br>' . htmlspecialchars($nameParts[1]);
+                        ?>
+                    </div>
+                    <p><?php echo htmlspecialchars(getSetting('footer_tagline', 'Pushing your limits since 2014. Join the elite fitness community today.', $settings)); ?></p>
+                </div>
+                <div class="footer-links">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="#home">Home</a></li>
+                        <li><a href="#packages">Packages</a></li>
+                        <li><a href="#about">About</a></li>
+                    </ul>
+                </div>
+                <div class="footer-contact">
+                    <h4>Contact Us</h4>
+                    <ul>
+                        <li><i class="fas fa-location-dot"></i> <?php echo htmlspecialchars(getSetting('gym_address', '123 Fitness Ave, Metro Manila', $settings)); ?></li>
+                        <li><i class="fas fa-phone"></i> <?php echo htmlspecialchars(getSetting('gym_contact', '+63 917 123 4567', $settings)); ?></li>
+                        <li><i class="fas fa-envelope"></i> <?php echo htmlspecialchars(getSetting('gym_email', 'info@martinezfitness.com', $settings)); ?></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; <?php echo date('Y'); ?> <?php echo htmlspecialchars(getSetting('gym_name', 'Martinez Fitness Gym', $settings)); ?>. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
 
     <div class="floating-socials">
         <a href="#" class="social-icon"><i class="fa-solid fa-envelope"></i></a>
