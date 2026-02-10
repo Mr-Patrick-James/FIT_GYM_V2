@@ -126,6 +126,10 @@ async function loadSettings() {
                 gallery: JSON.parse(data.about_images || '[]'),
                 footerTagline: data.footer_tagline || ''
             };
+            settingsData.account = {
+                adminName: data.admin_name || '',
+                adminEmail: data.admin_email || ''
+            };
             
             pendingGalleryFiles = []; // Reset pending uploads
             populateSettings();
@@ -181,6 +185,12 @@ function populateSettings() {
     if (yearsExperienceEl) yearsExperienceEl.value = settingsData.landing.yearsExperience;
     const footerTaglineEl = document.getElementById('footerTagline');
     if (footerTaglineEl) footerTaglineEl.value = settingsData.landing.footerTagline;
+
+    // Account settings
+    const adminNameEl = document.getElementById('adminName');
+    if (adminNameEl) adminNameEl.value = settingsData.account.adminName;
+    const adminEmailEl = document.getElementById('adminEmail');
+    if (adminEmailEl) adminEmailEl.value = settingsData.account.adminEmail;
 
     // Render gallery
     renderGallery();
@@ -264,6 +274,121 @@ function saveLandingSettings() {
     pendingGalleryFiles.forEach((file, index) => {
         formData.append(`gallery_file_${index}`, file);
     });
+    
+    saveToDB(formData);
+}
+
+// Save account settings
+async function saveAccountSettings() {
+    const adminName = document.getElementById('adminName').value.trim();
+    const adminEmail = document.getElementById('adminEmail').value.trim();
+    const currentPassword = document.getElementById('currentPassword').value;
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+
+    const formData = new FormData();
+    formData.append('admin_name', adminName);
+    formData.append('admin_email', adminEmail);
+
+    // Only include password fields if user is trying to change it
+    if (currentPassword || newPassword || confirmPassword) {
+        if (!currentPassword) {
+            showNotification('Current password is required to change password', 'warning');
+            return;
+        }
+        if (newPassword !== confirmPassword) {
+            showNotification('New passwords do not match', 'warning');
+            return;
+        }
+        if (newPassword.length < 6) {
+            showNotification('New password must be at least 6 characters', 'warning');
+            return;
+        }
+        formData.append('current_password', currentPassword);
+        formData.append('new_password', newPassword);
+    }
+
+    saveToDB(formData);
+    
+    // Clear password fields after attempt
+    document.getElementById('currentPassword').value = '';
+    document.getElementById('newPassword').value = '';
+    document.getElementById('confirmPassword').value = '';
+}
+
+// Clear all data
+async function clearAllData() {
+    if (!confirm('CRITICAL ACTION: This will permanently delete all bookings, payments, and member data. Are you absolutely sure?')) {
+        return;
+    }
+
+    if (!confirm('FINAL WARNING: This action cannot be undone. All gym records will be lost. Proceed?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch('../../api/settings/clear-data.php', { method: 'POST' });
+        const result = await response.json();
+        if (result.success) {
+            showNotification('All data cleared successfully', 'success');
+        } else {
+            showNotification('Error: ' + result.message, 'error');
+        }
+    } catch (e) {
+        console.error('Error clearing data:', e);
+        showNotification('Failed to connect to server', 'error');
+    }
+}
+
+// Reset settings
+async function resetSettings() {
+    if (!confirm('Are you sure you want to reset all settings to default values? Your gym data (members, bookings) will not be affected.')) {
+        return;
+    }
+
+    try {
+        const response = await fetch('../../api/settings/reset.php', { method: 'POST' });
+        const result = await response.json();
+        if (result.success) {
+            showNotification('Settings reset to defaults', 'success');
+            loadSettings();
+        } else {
+            showNotification('Error: ' + result.message, 'error');
+        }
+    } catch (e) {
+        console.error('Error resetting settings:', e);
+        showNotification('Failed to connect to server', 'error');
+    }
+}
+
+// Save appearance settings
+function saveAppearanceSettings() {
+    const activeThemeBtn = document.querySelector('.theme-option.active');
+    if (activeThemeBtn) {
+        const theme = activeThemeBtn.dataset.theme;
+        localStorage.setItem('theme', theme);
+        
+        if (theme === 'light') {
+            document.documentElement.classList.add('light-mode');
+            document.body.classList.add('light-mode');
+        } else {
+            document.documentElement.classList.remove('light-mode');
+            document.body.classList.remove('light-mode');
+        }
+        
+        showNotification('Appearance settings saved locally', 'success');
+    }
+}
+
+// Save notification settings
+function saveNotificationSettings() {
+    const formData = new FormData();
+    formData.append('email_new_booking', document.getElementById('emailNewBooking').checked);
+    formData.append('email_payment_verified', document.getElementById('emailPaymentVerified').checked);
+    formData.append('email_daily_report', document.getElementById('emailDailyReport').checked);
+    formData.append('browser_new_booking', document.getElementById('browserNewBooking').checked);
+    formData.append('browser_payment_verified', document.getElementById('browserPaymentVerified').checked);
+    formData.append('notification_sound', document.getElementById('notificationSound').checked);
     
     saveToDB(formData);
 }

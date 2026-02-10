@@ -24,13 +24,39 @@ try {
     }
 
     foreach ($settings as $key => $value) {
-        // Skip keys that are handled by file uploads below
-        if (strpos($key, 'gallery_file_') === 0) continue;
+        // Skip keys that are handled by file uploads or special logic
+        if (strpos($key, 'gallery_file_') === 0 || $key === 'current_password' || $key === 'new_password') continue;
         
         $stmt = $conn->prepare("INSERT INTO gym_settings (setting_key, setting_value) VALUES (?, ?) 
                                 ON DUPLICATE KEY UPDATE setting_value = ?");
         $stmt->bind_param("sss", $key, $value, $value);
         $stmt->execute();
+    }
+
+    // Handle Password Change
+    if (isset($_POST['current_password']) && isset($_POST['new_password'])) {
+        $user = getCurrentUser();
+        $userId = $user['id'];
+        $currentPassword = $_POST['current_password'];
+        $newPassword = $_POST['new_password'];
+
+        // Verify current password
+        $stmt = $conn->prepare("SELECT password FROM users WHERE id = ?");
+        $stmt->bind_param("i", $userId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $userData = $result->fetch_assoc();
+
+        if ($userData && password_verify($currentPassword, $userData['password'])) {
+            $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+            $updateStmt = $conn->prepare("UPDATE users SET password = ? WHERE id = ?");
+            $updateStmt->bind_param("si", $hashedPassword, $userId);
+            if (!$updateStmt->execute()) {
+                throw new Exception("Failed to update password in database.");
+            }
+        } else {
+            throw new Exception("Incorrect current password.");
+        }
     }
 
     // Handle QR Image Upload

@@ -249,9 +249,9 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
     </footer>
 
     <div class="floating-socials">
-        <a href="#" class="social-icon"><i class="fa-solid fa-envelope"></i></a>
-        <a href="#" class="social-icon"><i class="fa-solid fa-location-dot"></i></a>
-        <a href="#" class="social-icon"><i class="fa-solid fa-phone"></i></a>
+        <a href="mailto:<?php echo htmlspecialchars(getSetting('gym_email', 'info@martinezfitness.com', $settings)); ?>" class="social-icon" title="Email Us"><i class="fa-solid fa-envelope"></i></a>
+        <a href="https://maps.google.com/?q=<?php echo urlencode(getSetting('gym_address', '123 Fitness Ave, Metro Manila', $settings)); ?>" target="_blank" class="social-icon" title="Our Location"><i class="fa-solid fa-location-dot"></i></a>
+        <a href="tel:<?php echo htmlspecialchars(getSetting('gym_contact', '0917-123-4567', $settings)); ?>" class="social-icon" title="Call Us"><i class="fa-solid fa-phone"></i></a>
     </div>
 
     <div class="modal-overlay" id="authModal">

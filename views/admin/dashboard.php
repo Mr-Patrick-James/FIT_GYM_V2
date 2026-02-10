@@ -1,14 +1,34 @@
 <?php
 require_once '../../api/session.php';
+require_once '../../api/config.php';
 requireAdmin();
 $user = getCurrentUser();
+
+// Fetch gym settings
+$settings = [];
+try {
+    $conn = getDBConnection();
+    $result = $conn->query("SELECT setting_key, setting_value FROM gym_settings");
+    if ($result) {
+        while ($row = $result->fetch_assoc()) {
+            $settings[$row['setting_key']] = $row['setting_value'];
+        }
+    }
+} catch (Exception $e) {
+    error_log("Error fetching settings: " . $e->getMessage());
+}
+
+// Helper to get setting with fallback
+function getSetting($key, $default = '', $settings = []) {
+    return $settings[$key] ?? $default;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FitPay Admin | Martinez Fitness</title>
+    <title>FitPay Admin | <?php echo htmlspecialchars(getSetting('gym_name', 'Martinez Fitness', $settings)); ?></title>
     
     <!-- Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -64,9 +84,14 @@ $user = getCurrentUser();
         </ul>
         
         <div class="admin-profile">
-            <div class="admin-avatar">AM</div>
+            <div class="admin-avatar"><?php 
+                $adminName = getSetting('admin_name', 'Admin Martinez', $settings);
+                $initials = '';
+                foreach(explode(' ', $adminName) as $word) $initials .= strtoupper($word[0]);
+                echo htmlspecialchars(substr($initials, 0, 2));
+            ?></div>
             <div class="admin-info">
-                <h4>Admin Martinez</h4>
+                <h4><?php echo htmlspecialchars(getSetting('admin_name', 'Admin Martinez', $settings)); ?></h4>
                 <p>Gym Owner / Manager</p>
             </div>
         </div>

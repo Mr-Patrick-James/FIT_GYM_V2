@@ -36,7 +36,15 @@ try {
         'about_text' => 'Martinez Fitness Gym is more than just a place to work out. We are a community dedicated to helping you reach your peak physical condition through elite training, state-of-the-art equipment, and a supportive environment.',
         'mission_text' => 'Founded with the mission to provide high-quality fitness access to everyone, we offer flexible membership plans and expert guidance to ensure you get the most out of every session.',
         'years_experience' => '10+',
-        'footer_tagline' => 'Pushing your limits since 2014. Join the elite fitness community today.'
+        'footer_tagline' => 'Pushing your limits since 2014. Join the elite fitness community today.',
+        'admin_name' => 'Admin Martinez',
+        'admin_email' => 'admin@martinezfitness.com',
+        'email_new_booking' => 'true',
+        'email_payment_verified' => 'true',
+        'email_daily_report' => 'false',
+        'browser_new_booking' => 'true',
+        'browser_payment_verified' => 'true',
+        'notification_sound' => 'true'
     ];
 
     foreach ($defaults as $key => $value) {

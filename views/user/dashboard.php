@@ -1,14 +1,34 @@
 <?php
 require_once '../../api/session.php';
+require_once '../../api/config.php';
 requireLogin();
 $user = getCurrentUser();
+
+// Fetch gym settings
+$settings = [];
+try {
+    $conn = getDBConnection();
+    $result = $conn->query("SELECT setting_key, setting_value FROM gym_settings");
+    if ($result) {
+        while ($row = $result->fetch_assoc()) {
+            $settings[$row['setting_key']] = $row['setting_value'];
+        }
+    }
+} catch (Exception $e) {
+    error_log("Error fetching settings: " . $e->getMessage());
+}
+
+// Helper to get setting with fallback
+function getSetting($key, $default = '', $settings = []) {
+    return $settings[$key] ?? $default;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Dashboard | Martinez Fitness</title>
+    <title>My Dashboard | <?php echo htmlspecialchars(getSetting('gym_name', 'Martinez Fitness', $settings)); ?></title>
     
     <!-- Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -33,8 +53,12 @@ $user = getCurrentUser();
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
         <div class="logo">
-            <h1>MARTINEZ</h1>
-            <p>FITNESS GYM</p>
+            <?php 
+                $gymName = getSetting('gym_name', 'MARTINEZ FITNESS GYM', $settings);
+                $nameParts = explode(' ', $gymName);
+            ?>
+            <h1><?php echo htmlspecialchars($nameParts[0]); ?></h1>
+            <p><?php echo htmlspecialchars(implode(' ', array_slice($nameParts, 1)) ?: 'FITNESS GYM'); ?></p>
         </div>
         
         <ul class="nav-links">
