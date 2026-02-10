@@ -83,6 +83,23 @@ try {
     // Get the ID of the newly created booking
     $booking_id = $conn->insert_id;
     
+    // Send email notification to admin
+    try {
+        require_once '../email.php';
+        sendBookingNotificationEmail([
+            'user_name' => $user['name'],
+            'user_email' => $user['email'],
+            'contact' => $contact,
+            'package_name' => $package_name,
+            'amount' => $package['price'],
+            'booking_date' => $booking_date,
+            'notes' => $notes
+        ]);
+    } catch (Exception $e) {
+        error_log("Failed to send booking notification email: " . $e->getMessage());
+        // Don't fail the booking creation if email fails
+    }
+    
     sendResponse(true, 'Booking created successfully', ['id' => $booking_id]);
 
 } catch (Exception $e) {

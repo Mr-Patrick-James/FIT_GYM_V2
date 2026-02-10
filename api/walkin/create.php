@@ -142,6 +142,22 @@ try {
         // Don't fail the whole operation if payment record fails
     }
     
+    // Send email notification to admin for walk-in booking
+    try {
+        require_once '../email.php';
+        sendBookingNotificationEmail([
+            'user_name' => $customer_name . ' (Walk-in)',
+            'user_email' => $customer_email ?: 'N/A',
+            'contact' => $customer_phone ?: 'N/A',
+            'package_name' => $package_name,
+            'amount' => $package['price'],
+            'booking_date' => date('Y-m-d'), // Walk-in is today
+            'notes' => $notes ?: 'Walk-in booking'
+        ]);
+    } catch (Exception $e) {
+        error_log("Failed to send walk-in booking notification email: " . $e->getMessage());
+    }
+    
     sendResponse(true, 'Walk-in booking created successfully', [
         'id' => $booking_id,
         'customer_name' => $customer_name,

@@ -212,4 +212,125 @@ function sendOTPEmail($email, $otp, $name = '') {
     return sendOTPEmailSimple($email, $otp, $name);
 }
 
+/**
+ * Send booking notification email to gym admin
+ */
+function sendBookingNotificationEmail($bookingData) {
+    global $phpmailerInstalled;
+    
+    // Get general gym email from settings
+    $adminEmail = 'noreply@martinezfitness.com'; // Default fallback
+    try {
+        $conn = getDBConnection();
+        $result = $conn->query("SELECT setting_value FROM gym_settings WHERE setting_key = 'gym_email' LIMIT 1");
+        if ($result && $row = $result->fetch_assoc()) {
+            $adminEmail = $row['setting_value'];
+        }
+        $conn->close();
+    } catch (Exception $e) {
+        error_log("Error fetching gym_email: " . $e->getMessage());
+    }
+
+    $subject = 'New Gym Booking - ' . ($bookingData['package_name'] ?? 'Booking');
+    
+    $htmlMessage = '
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: #111827; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+            .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
+            .detail-row { margin-bottom: 10px; border-bottom: 1px solid #e5e7eb; padding-bottom: 5px; }
+            .detail-label { font-weight: bold; color: #4b5563; }
+            .footer { text-align: center; margin-top: 20px; color: #6b7280; font-size: 12px; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>NEW BOOKING</h1>
+                <p>Martinez Fitness Gym Management</p>
+            </div>
+            <div class="content">
+                <h2>Hello Admin!</h2>
+                <p>A new booking request has been submitted. Here are the details:</p>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Member Name:</span> ' . htmlspecialchars($bookingData['user_name']) . '
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Member Email:</span> ' . htmlspecialchars($bookingData['user_email']) . '
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Contact Number:</span> ' . htmlspecialchars($bookingData['contact']) . '
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Package:</span> ' . htmlspecialchars($bookingData['package_name']) . '
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Amount:</span> ₱' . number_format($bookingData['amount'], 2) . '
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Booking Date:</span> ' . htmlspecialchars($bookingData['booking_date']) . '
+                </div>
+                ' . (!empty($bookingData['notes']) ? '<div class="detail-row"><span class="detail-label">Notes:</span> ' . htmlspecialchars($bookingData['notes']) . '</div>' : '') . '
+                
+                <p style="margin-top: 30px;">Please log in to the admin dashboard to verify the payment and confirm the booking.</p>
+            </div>
+            <div class="footer">
+                <p>© ' . date('Y') . ' Martinez Fitness Gym. All rights reserved.</p>
+            </div>
+        </div>
+    </body>
+    </html>';
+
+    // Try PHPMailer first
+    if ($phpmailerInstalled) {
+        try {
+            $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
+            $config = getEmailConfig();
+            
+            if (!empty($config['smtp_username']) && !empty($config['smtp_password'])) {
+                $mail->isSMTP();
+                $mail->Host       = $config['smtp_host'];
+                $mail->SMTPAuth   = true;
+                $mail->Username   = $config['smtp_username'];
+                $mail->Password   = $config['smtp_password'];
+                $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+                $mail->Port       = $config['smtp_port'];
+                $mail->CharSet    = 'UTF-8';
+                $mail->SMTPOptions = array(
+                    'ssl' => array(
+                        'verify_peer' => false,
+                        'verify_peer_name' => false,
+                        'allow_self_signed' => true
+                    )
+                );
+                
+                $mail->setFrom($config['from_email'], $config['from_name']);
+                $mail->addAddress($adminEmail, 'Gym Admin');
+                
+                $mail->isHTML(true);
+                $mail->Subject = $subject;
+                $mail->Body = $htmlMessage;
+                $mail->AltBody = "New booking request from " . $bookingData['user_name'] . " for package " . $bookingData['package_name'];
+                
+                $mail->send();
+                return true;
+            }
+        } catch (Exception $e) {
+            error_log("PHPMailer failed for booking notification: " . $e->getMessage());
+        }
+    }
+    
+    // Fallback to simple mail()
+    $headers = "MIME-Version: 1.0\r\n";
+    $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
+    $headers .= "From: Martinez Fitness <noreply@martinezfitness.com>\r\n";
+    
+    return mail($adminEmail, $subject, $htmlMessage, $headers);
+}
+
 ?>
