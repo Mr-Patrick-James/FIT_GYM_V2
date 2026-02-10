@@ -157,6 +157,35 @@ $user = getCurrentUser();
             </div>
         </div>
 
+        <!-- Quick Actions -->
+        <div class="content-card" style="margin-top: 24px; margin-bottom: 32px;">
+            <div class="card-header">
+                <h3>Quick Actions</h3>
+            </div>
+            <div class="quick-actions-grid">
+                <a href="walkin-bookings.php" class="quick-action-card">
+                    <i class="fas fa-person-walking"></i>
+                    <h4>New Walk-in</h4>
+                    <p>Register a walk-in client</p>
+                </a>
+                <a href="bookings.php?status=pending" class="quick-action-card">
+                    <i class="fas fa-check-circle"></i>
+                    <h4>Verify Payments</h4>
+                    <p id="pendingVerificationsText">0 pending verifications</p>
+                </a>
+                <a href="packages.php" class="quick-action-card">
+                    <i class="fas fa-dumbbell"></i>
+                    <h4>Manage Packages</h4>
+                    <p>Edit gym membership plans</p>
+                </a>
+                <a href="report.php" class="quick-action-card">
+                    <i class="fas fa-chart-bar"></i>
+                    <h4>Generate Report</h4>
+                    <p>View gym performance</p>
+                </a>
+            </div>
+        </div>
+
         <!-- Main Content Grid -->
         <div class="content-grid">
             <!-- Left Column -->
@@ -258,66 +287,7 @@ $user = getCurrentUser();
                     </div>
                 </div>
                 
-                <!-- Quick Actions -->
-                <div class="content-card" style="margin-top: 32px;">
-                    <div class="card-header">
-                        <h3>Quick Actions</h3>
-                    </div>
-                    
-                    <div class="packages-list">
-                        <a href="walkin-bookings.php" class="package-card quick-action">
-                            <div class="quick-action-content">
-                                <div class="quick-action-icon" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6;">
-                                    <i class="fas fa-person-walking"></i>
-                                </div>
-                                <div>
-                                    <h4>New Walk-in</h4>
-                                    <p>Register a walk-in client</p>
-                                </div>
-                            </div>
-                            <i class="fas fa-chevron-right"></i>
-                        </a>
-
-                        <a href="bookings.php?status=pending" class="package-card quick-action">
-                            <div class="quick-action-content">
-                                <div class="quick-action-icon" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">
-                                    <i class="fas fa-check-circle"></i>
-                                </div>
-                                <div>
-                                    <h4>Verify Payments</h4>
-                                    <p id="pendingVerificationsText">0 pending verifications</p>
-                                </div>
-                            </div>
-                            <i class="fas fa-chevron-right"></i>
-                        </a>
-                        
-                        <a href="packages.php" class="package-card quick-action">
-                            <div class="quick-action-content">
-                                <div class="quick-action-icon" style="background: rgba(34, 197, 94, 0.1); color: #22c55e;">
-                                    <i class="fas fa-dumbbell"></i>
-                                </div>
-                                <div>
-                                    <h4>Manage Packages</h4>
-                                    <p>Edit gym membership plans</p>
-                                </div>
-                            </div>
-                            <i class="fas fa-chevron-right"></i>
-                        </a>
-
-                        <a href="report.php" class="package-card quick-action">
-                            <div class="quick-action-content">
-                                <div class="quick-action-icon" style="background: rgba(168, 85, 247, 0.1); color: #a855f7;">
-                                    <i class="fas fa-chart-bar"></i>
-                                </div>
-                                <div>
-                                    <h4>Generate Report</h4>
-                                    <p>View gym performance</p>
-                                </div>
-                            </div>
-                            <i class="fas fa-chevron-right"></i>
-                        </a>
-                    </div>
-                </div>
+                <!-- Quick Actions moved to top; section removed here -->
             </div>
         </div>
         

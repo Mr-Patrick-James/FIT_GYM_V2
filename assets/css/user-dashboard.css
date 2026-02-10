@@ -643,6 +643,29 @@ tr:hover td {
     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
     gap: 20px;
     padding: 20px;
+    max-height: 600px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.packages-grid::-webkit-scrollbar {
+    width: 6px;
+}
+
+.packages-grid::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.packages-grid::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    transition: background-color 0.3s;
+}
+
+.packages-grid:hover::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.2);
 }
 
 .package-card-large {

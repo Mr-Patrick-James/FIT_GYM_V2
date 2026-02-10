@@ -710,7 +710,7 @@ body.light-mode {
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 20px;
+    gap: 28px;
     margin-bottom: 32px;
 }
 
@@ -1399,20 +1399,44 @@ tr:hover td {
 
 /* Packages */
 .packages-list {
-    padding: 0 28px 28px;
+    padding: 10px 20px 20px;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 16px;
+    max-height: 500px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.packages-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.packages-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.packages-list::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    transition: background-color 0.3s;
+}
+
+.packages-list:hover::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.2);
 }
 
 .package-card {
+    flex-shrink: 0;
     background: var(--glass);
     border: 2px solid var(--dark-border);
     border-radius: var(--radius-lg);
-    padding: 18px;
+    padding: 20px;
     display: flex;
     flex-direction: column;
-    transition: transform 0.3s, background-color 0s, border-color 0s;
+    transition: transform 0.3s, background-color 0.3s, border-color 0.3s, box-shadow 0.3s;
     position: relative;
     overflow: hidden;
     isolation: isolate;
@@ -1519,6 +1543,53 @@ tr:hover td {
 .quick-action:hover i.fa-chevron-right {
     transform: translateX(4px);
     color: var(--primary);
+}
+
+/* Quick Actions Grid (User-style) */
+.quick-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 24px;
+    padding: 28px;
+}
+
+.quick-action-card {
+    background: var(--glass);
+    border: 2px solid var(--dark-border);
+    border-radius: var(--radius-lg);
+    padding: 32px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    text-decoration: none;
+}
+
+.quick-action-card i {
+    font-size: 2.5rem;
+    color: var(--primary);
+    margin-bottom: 8px;
+}
+
+.quick-action-card h4 {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--primary);
+    margin-bottom: 8px;
+}
+
+.quick-action-card p {
+    color: var(--dark-text-secondary);
+    font-size: 0.9rem;
+}
+
+.quick-action-card:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
 }
 
 /* QR Section */
