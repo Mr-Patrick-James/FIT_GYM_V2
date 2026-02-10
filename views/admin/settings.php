@@ -61,9 +61,16 @@ $user = getCurrentUser();
         </ul>
         
         <div class="admin-profile">
-            <div class="admin-avatar">AM</div>
+            <div class="admin-avatar"><?php 
+                $adminName = $user['name'] ?? 'Admin';
+                $initials = '';
+                foreach(explode(' ', $adminName) as $word) {
+                    if (!empty($word)) $initials .= strtoupper($word[0]);
+                }
+                echo htmlspecialchars(substr($initials, 0, 2));
+            ?></div>
             <div class="admin-info">
-                <h4>Admin Martinez</h4>
+                <h4><?php echo htmlspecialchars($adminName); ?></h4>
                 <p>Gym Owner / Manager</p>
             </div>
         </div>

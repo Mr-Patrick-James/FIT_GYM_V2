@@ -85,13 +85,15 @@ function getSetting($key, $default = '', $settings = []) {
         
         <div class="admin-profile">
             <div class="admin-avatar"><?php 
-                $adminName = getSetting('admin_name', 'Admin Martinez', $settings);
+                $adminName = $user['name'] ?? 'Admin';
                 $initials = '';
-                foreach(explode(' ', $adminName) as $word) $initials .= strtoupper($word[0]);
+                foreach(explode(' ', $adminName) as $word) {
+                    if (!empty($word)) $initials .= strtoupper($word[0]);
+                }
                 echo htmlspecialchars(substr($initials, 0, 2));
             ?></div>
             <div class="admin-info">
-                <h4><?php echo htmlspecialchars(getSetting('admin_name', 'Admin Martinez', $settings)); ?></h4>
+                <h4><?php echo htmlspecialchars($adminName); ?></h4>
                 <p>Gym Owner / Manager</p>
             </div>
         </div>

@@ -25,12 +25,36 @@ try {
 
     foreach ($settings as $key => $value) {
         // Skip keys that are handled by file uploads or special logic
-        if (strpos($key, 'gallery_file_') === 0 || $key === 'current_password' || $key === 'new_password') continue;
+        if (strpos($key, 'gallery_file_') === 0 || 
+            $key === 'current_password' || 
+            $key === 'new_password' || 
+            $key === 'admin_name' || 
+            $key === 'admin_email') continue;
         
         $stmt = $conn->prepare("INSERT INTO gym_settings (setting_key, setting_value) VALUES (?, ?) 
                                 ON DUPLICATE KEY UPDATE setting_value = ?");
         $stmt->bind_param("sss", $key, $value, $value);
         $stmt->execute();
+    }
+
+    // Handle Admin Profile Update (Name & Email)
+    if (isset($_POST['admin_name']) || isset($_POST['admin_email'])) {
+        $user = getCurrentUser();
+        $userId = $user['id'];
+        $newName = $_POST['admin_name'] ?? $user['name'];
+        $newEmail = $_POST['admin_email'] ?? $user['email'];
+
+        // Update user in database
+        $updateStmt = $conn->prepare("UPDATE users SET name = ?, email = ? WHERE id = ?");
+        $updateStmt->bind_param("ssi", $newName, $newEmail, $userId);
+        if (!$updateStmt->execute()) {
+            throw new Exception("Failed to update admin profile.");
+        }
+
+        // Update session data
+        if (session_status() === PHP_SESSION_NONE) session_start();
+        $_SESSION['user_name'] = $newName;
+        $_SESSION['user_email'] = $newEmail;
     }
 
     // Handle Password Change

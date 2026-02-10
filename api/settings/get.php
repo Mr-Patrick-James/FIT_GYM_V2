@@ -57,6 +57,14 @@ try {
         }
     }
 
+    // Override admin_name and admin_email with current user's data if logged in
+    require_once '../session.php';
+    if (isLoggedIn()) {
+        $user = getCurrentUser();
+        $raw_settings['admin_name'] = $user['name'];
+        $raw_settings['admin_email'] = $user['email'];
+    }
+
     // Convert to array of objects for frontend consistency if needed, 
     // or just return as object map. The frontend seems to expect both ways in different places.
     // Let's return as a list of {setting_key, setting_value} for the user dashboard 
