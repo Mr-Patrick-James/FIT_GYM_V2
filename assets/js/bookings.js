@@ -49,6 +49,9 @@ async function loadAllBookings() {
                 date: booking.date_formatted,
                 amount: booking.amount_formatted,
                 status: booking.status,
+                payment_method: booking.payment_method || 'GCash',
+                duration: booking.duration || 'N/A',
+                verified_at: booking.verified_at,
                 createdAt: booking.created_at,
                 notes: booking.notes,
                 expires_at: booking.expires_at,
@@ -331,12 +334,32 @@ function viewBooking(id) {
         currentViewingBooking = booking;
         
         // Populate modal
+        document.getElementById('modalBookingId').textContent = `#${booking.id}`;
+        document.getElementById('modalBookingType').innerHTML = booking.is_walkin 
+            ? '<span class="walkin-badge"><i class="fas fa-person-walking"></i> Walk-in</span>' 
+            : '<span class="regular-badge"><i class="fas fa-user-check"></i> Member</span>';
+        
+        const statusBadge = `<span class="status-badge status-${booking.status || 'pending'}">${(booking.status || 'pending').charAt(0).toUpperCase() + (booking.status || 'pending').slice(1)}</span>`;
+        document.getElementById('modalStatus').innerHTML = statusBadge;
+        
         document.getElementById('modalClientName').textContent = booking.name || 'Unknown User';
         document.getElementById('modalContact').textContent = booking.contact || 'N/A';
         document.getElementById('modalEmail').textContent = booking.email || 'No email';
         document.getElementById('modalPackage').textContent = booking.package || 'N/A';
+        document.getElementById('modalDuration').textContent = booking.duration || 'N/A';
         document.getElementById('modalDate').textContent = formatDateForDisplay(booking.date || booking.createdAt);
+        document.getElementById('modalExpiry').textContent = formatDateForDisplay(booking.expires_at);
         document.getElementById('modalAmount').textContent = booking.amount || '₱0';
+        document.getElementById('modalPaymentMethod').textContent = (booking.payment_method || 'N/A').toUpperCase();
+        document.getElementById('modalCreatedAt').textContent = formatDateForDisplay(booking.createdAt);
+        
+        // Show verified at if available
+        if (booking.verified_at) {
+            document.getElementById('verifiedAtGroup').style.display = 'block';
+            document.getElementById('modalVerifiedAt').textContent = formatDateForDisplay(booking.verified_at);
+        } else {
+            document.getElementById('verifiedAtGroup').style.display = 'none';
+        }
         
         // Show notes if available
         if (booking.notes) {

@@ -310,6 +310,18 @@ $user = getCurrentUser();
             <div class="modal-body">
                 <div class="detail-grid">
                     <div class="detail-group">
+                        <label>Booking ID</label>
+                        <div class="value" id="modalBookingId">-</div>
+                    </div>
+                    <div class="detail-group">
+                        <label>Booking Type</label>
+                        <div class="value" id="modalBookingType">-</div>
+                    </div>
+                    <div class="detail-group">
+                        <label>Status</label>
+                        <div class="value" id="modalStatus">-</div>
+                    </div>
+                    <div class="detail-group">
                         <label>Client Name</label>
                         <div class="value" id="modalClientName">-</div>
                     </div>
@@ -326,12 +338,32 @@ $user = getCurrentUser();
                         <div class="value" id="modalPackage">-</div>
                     </div>
                     <div class="detail-group">
+                        <label>Duration</label>
+                        <div class="value" id="modalDuration">-</div>
+                    </div>
+                    <div class="detail-group">
                         <label>Booking Date</label>
                         <div class="value" id="modalDate">-</div>
                     </div>
                     <div class="detail-group">
+                        <label>Expiry Date</label>
+                        <div class="value" id="modalExpiry">-</div>
+                    </div>
+                    <div class="detail-group">
                         <label>Payment Amount</label>
                         <div class="value" id="modalAmount">-</div>
+                    </div>
+                    <div class="detail-group">
+                        <label>Payment Method</label>
+                        <div class="value" id="modalPaymentMethod">-</div>
+                    </div>
+                    <div class="detail-group">
+                        <label>Created At</label>
+                        <div class="value" id="modalCreatedAt">-</div>
+                    </div>
+                    <div class="detail-group" id="verifiedAtGroup" style="display: none;">
+                        <label>Verified At</label>
+                        <div class="value" id="modalVerifiedAt">-</div>
                     </div>
                     <div class="detail-group" id="notesGroup" style="display: none;">
                         <label>Notes</label>
