@@ -333,4 +333,110 @@ function sendBookingNotificationEmail($bookingData) {
     return mail($adminEmail, $subject, $htmlMessage, $headers);
 }
 
+/**
+ * Send booking verification email to the member
+ */
+function sendBookingVerificationEmail($bookingData) {
+    global $phpmailerInstalled;
+    
+    $userEmail = $bookingData['user_email'];
+    $userName = $bookingData['user_name'];
+    $packageName = $bookingData['package_name'];
+    $expiryDate = $bookingData['expiry_date'];
+
+    $subject = 'Booking Verified - Martinez Fitness';
+    
+    $htmlMessage = '
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: #22c55e; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+            .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
+            .success-icon { font-size: 48px; color: #22c55e; text-align: center; margin-bottom: 20px; }
+            .detail-row { margin-bottom: 10px; border-bottom: 1px solid #e5e7eb; padding-bottom: 5px; }
+            .detail-label { font-weight: bold; color: #4b5563; }
+            .footer { text-align: center; margin-top: 20px; color: #6b7280; font-size: 12px; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>BOOKING VERIFIED</h1>
+                <p>Martinez Fitness Gym</p>
+            </div>
+            <div class="content">
+                <div class="success-icon">✓</div>
+                <h2>Hello ' . htmlspecialchars($userName) . '!</h2>
+                <p>Great news! Your booking has been verified by our team. Your gym access is now active.</p>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Package:</span> ' . htmlspecialchars($packageName) . '
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Status:</span> Verified & Active
+                </div>
+                ' . ($expiryDate ? '<div class="detail-row"><span class="detail-label">Access Until:</span> ' . date('F j, Y', strtotime($expiryDate)) . '</div>' : '') . '
+                
+                <p style="margin-top: 30px;">You can now start using the gym facilities. Please show your profile in the dashboard when you visit.</p>
+                
+                <p>Stay fit and healthy!</p>
+            </div>
+            <div class="footer">
+                <p>© ' . date('Y') . ' Martinez Fitness Gym. All rights reserved.</p>
+                <p>This is an automated email, please do not reply.</p>
+            </div>
+        </div>
+    </body>
+    </html>';
+
+    // Try PHPMailer first
+    if ($phpmailerInstalled) {
+        try {
+            $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
+            $config = getEmailConfig();
+            
+            if (!empty($config['smtp_username']) && !empty($config['smtp_password'])) {
+                $mail->isSMTP();
+                $mail->Host       = $config['smtp_host'];
+                $mail->SMTPAuth   = true;
+                $mail->Username   = $config['smtp_username'];
+                $mail->Password   = $config['smtp_password'];
+                $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+                $mail->Port       = $config['smtp_port'];
+                $mail->CharSet    = 'UTF-8';
+                $mail->SMTPOptions = array(
+                    'ssl' => array(
+                        'verify_peer' => false,
+                        'verify_peer_name' => false,
+                        'allow_self_signed' => true
+                    )
+                );
+                
+                $mail->setFrom($config['from_email'], $config['from_name']);
+                $mail->addAddress($userEmail, $userName);
+                
+                $mail->isHTML(true);
+                $mail->Subject = $subject;
+                $mail->Body = $htmlMessage;
+                $mail->AltBody = "Hello $userName, your booking for $packageName has been verified!";
+                
+                $mail->send();
+                return true;
+            }
+        } catch (Exception $e) {
+            error_log("PHPMailer failed for booking verification notification: " . $e->getMessage());
+        }
+    }
+    
+    // Fallback to simple mail()
+    $headers = "MIME-Version: 1.0\r\n";
+    $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
+    $headers .= "From: Martinez Fitness <noreply@martinezfitness.com>\r\n";
+    
+    return mail($userEmail, $subject, $htmlMessage, $headers);
+}
+
 ?>

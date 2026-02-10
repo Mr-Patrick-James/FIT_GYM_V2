@@ -103,6 +103,19 @@ try {
                 $booking['receipt_url']
             );
             $paymentStmt->execute();
+
+            // Send verification email to user
+            try {
+                require_once '../email.php';
+                sendBookingVerificationEmail([
+                    'user_email' => $booking['email'],
+                    'user_name' => $booking['name'],
+                    'package_name' => $booking['package_name'],
+                    'expiry_date' => $expiresAt ?? null
+                ]);
+            } catch (Exception $e) {
+                error_log("Failed to send booking verification email: " . $e->getMessage());
+            }
         }
     }
     
