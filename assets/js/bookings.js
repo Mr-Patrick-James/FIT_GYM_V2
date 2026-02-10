@@ -1011,9 +1011,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }, 600);
                     
                     // Generate receipt for walk-in booking
-                    setTimeout(() => {
-                        generateWalkinReceipt(result.data.id);
-                    }, 1000);
+                    generateWalkinReceipt(result.data.id);
                 } else {
                     showNotification(result.message || 'Error creating booking', 'error');
                 }
@@ -1080,6 +1078,18 @@ async function uploadReceipt(file) {
 
 // Generate receipt for walk-in booking
 async function generateWalkinReceipt(bookingId) {
+    // Open receipt in new window immediately for printing while we have user gesture context
+    // This prevents browser popup blockers from stopping the window
+    const printWindow = window.open('', '_blank', 'width=450,height=600,scrollbars=yes');
+    
+    if (printWindow) {
+        printWindow.document.write('<html><body style="font-family:sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;margin:0;background:#f8f9fa;color:#333;">' +
+            '<div style="text-align:center;padding:20px;border-radius:8px;background:white;box-shadow:0 2px 10px rgba(0,0,0,0.1);">' +
+            '<div style="font-size:24px;margin-bottom:15px;color:#007bff;">Generating Receipt...</div>' +
+            '<div style="font-size:14px;color:#666;">Please wait while we prepare your receipt for printing.</div>' +
+            '</div></body></html>');
+    }
+
     try {
         showNotification('Generating receipt...', 'info');
         
@@ -1094,18 +1104,28 @@ async function generateWalkinReceipt(bookingId) {
         const result = await response.json();
         
         if (result.success) {
-            // Open receipt in new window for printing
-            const printWindow = window.open('', '_blank', 'width=400,height=600,scrollbars=yes');
-            printWindow.document.write(result.data.receipt_html);
-            printWindow.document.close();
-            
-            showNotification('Receipt ready for printing!', 'success');
+            if (printWindow) {
+                printWindow.document.open();
+                printWindow.document.write(result.data.receipt_html);
+                printWindow.document.close();
+                showNotification('Receipt ready for printing!', 'success');
+            } else {
+                // If popup was blocked despite our efforts, provide a fallback
+                showNotification('Receipt generated! Click "View Receipt" in the table to print (Popup was blocked).', 'warning');
+            }
         } else {
+            if (printWindow) printWindow.close();
             showNotification(result.message || 'Error generating receipt', 'error');
         }
     } catch (error) {
+        if (printWindow) printWindow.close();
         console.error('Error generating receipt:', error);
-        showNotification('Error generating receipt', 'error');
+        // Check if it's a JSON parsing error which often means PHP outputted a warning
+        if (error instanceof SyntaxError) {
+            showNotification('Error: Unexpected response from server. Receipt may still have been generated.', 'error');
+        } else {
+            showNotification('Error generating receipt', 'error');
+        }
     }
 }
 

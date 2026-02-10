@@ -148,7 +148,7 @@ try {
         sendBookingNotificationEmail([
             'user_name' => $customer_name . ' (Walk-in)',
             'user_email' => $customer_email ?: 'N/A',
-            'contact' => $customer_phone ?: 'N/A',
+            'contact' => $customer_contact ?: 'N/A',
             'package_name' => $package_name,
             'amount' => $package['price'],
             'booking_date' => date('Y-m-d'), // Walk-in is today

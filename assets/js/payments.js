@@ -539,9 +539,13 @@ function printReceipt() {
     `;
     
     const printWindow = window.open('', '_blank');
-    printWindow.document.write(receiptContent);
-    printWindow.document.close();
-    printWindow.print();
+    if (printWindow) {
+        printWindow.document.write(receiptContent);
+        printWindow.document.close();
+        printWindow.print();
+    } else {
+        showNotification('Popup blocked! Please allow popups to print receipts.', 'warning');
+    }
 }
 
 // Export payments

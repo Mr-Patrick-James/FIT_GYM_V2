@@ -1,8 +1,12 @@
 <?php
 require_once '../config.php';
 
+// Start output buffering to catch any accidental output
+ob_start();
+
 // Allow POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    ob_end_clean();
     sendResponse(false, 'Method not allowed', null, 405);
 }
 
@@ -11,17 +15,20 @@ try {
     $input = json_decode(file_get_contents('php://input'), true);
     
     if (!$input) {
+        ob_end_clean();
         sendResponse(false, 'Invalid request data', null, 400);
     }
     
     $bookingId = $input['booking_id'] ?? null;
     
     if (!$bookingId) {
+        ob_end_clean();
         sendResponse(false, 'Booking ID is required', null, 400);
     }
     
-    // Get booking details
-    $sql = "SELECT b.*, p.name as package_name, p.price as package_price 
+    // Get booking details - use COALESCE to ensure we get a package name even if the join fails
+    $sql = "SELECT b.*, COALESCE(p.name, b.package_name) as package_display_name, 
+            COALESCE(b.amount, p.price, 0) as booking_amount
             FROM bookings b 
             LEFT JOIN packages p ON b.package_id = p.id 
             WHERE b.id = ?";
@@ -32,10 +39,15 @@ try {
     $result = $stmt->get_result();
     
     if ($result->num_rows === 0) {
+        ob_end_clean();
         sendResponse(false, 'Booking not found', null, 404);
     }
     
     $booking = $result->fetch_assoc();
+    
+    // Use the display name and amount we selected
+    $booking['package_name'] = $booking['package_display_name'] ?? $booking['package_name'] ?? 'Unknown Package';
+    $booking['amount'] = $booking['booking_amount'] ?? $booking['amount'] ?? 0;
     
     // Get payment details
     $paymentSql = "SELECT * FROM payments WHERE booking_id = ? ORDER BY id DESC LIMIT 1";
@@ -55,17 +67,20 @@ try {
     // Create receipts directory if it doesn't exist
     $receiptsDir = __DIR__ . '/../../uploads/receipts';
     if (!is_dir($receiptsDir)) {
-        mkdir($receiptsDir, 0755, true);
+        @mkdir($receiptsDir, 0755, true);
     }
     
     // Save the receipt HTML file
-    if (file_put_contents($receiptPath, $receiptHtml)) {
+    if (@file_put_contents($receiptPath, $receiptHtml)) {
         // Update booking record with receipt URL
         $updateSql = "UPDATE bookings SET receipt_url = ? WHERE id = ?";
         $updateStmt = $conn->prepare($updateSql);
         $dbReceiptPath = 'uploads/receipts/' . $receiptFilename;
         $updateStmt->bind_param("si", $dbReceiptPath, $bookingId);
         $updateStmt->execute();
+        
+        // Clear buffer before sending JSON
+        if (ob_get_length()) ob_end_clean();
         
         sendResponse(true, 'Walk-in receipt generated successfully', [
             'receipt_html' => $receiptHtml,
@@ -74,21 +89,36 @@ try {
             'booking_id' => $bookingId
         ]);
     } else {
-        sendResponse(false, 'Failed to save receipt file', null, 500);
+        if (ob_get_length()) ob_end_clean();
+        sendResponse(false, 'Failed to save receipt file. Check folder permissions.', null, 500);
     }
     
 } catch (Exception $e) {
+    if (ob_get_length()) ob_end_clean();
     sendResponse(false, 'Error generating receipt: ' . $e->getMessage(), null, 500);
 }
 
 function generateWalkinReceiptHTML($booking, $payment) {
-    $bookingId = $booking['id'];
-    $date = new DateTime($booking['created_at']);
-    $receiptDate = $date->format('M d, Y h:i A');
-    $bookingDate = new DateTime($booking['booking_date']);
-    $formattedBookingDate = $bookingDate->format('M d, Y');
+    $bookingId = $booking['id'] ?? 'N/A';
     
-    $isWalkin = is_null($booking['user_id']);
+    // Handle dates safely
+    try {
+        $createdAt = !empty($booking['created_at']) ? $booking['created_at'] : 'now';
+        $date = new DateTime($createdAt);
+        $receiptDate = $date->format('M d, Y h:i A');
+    } catch (Exception $e) {
+        $receiptDate = date('M d, Y h:i A');
+    }
+
+    try {
+        $bookingDateStr = !empty($booking['booking_date']) ? $booking['booking_date'] : 'now';
+        $bookingDate = new DateTime($bookingDateStr);
+        $formattedBookingDate = $bookingDate->format('M d, Y');
+    } catch (Exception $e) {
+        $formattedBookingDate = date('M d, Y');
+    }
+    
+    $isWalkin = !isset($booking['user_id']) || is_null($booking['user_id']);
     $customerType = $isWalkin ? 'Walk-in Customer' : 'Member';
     
     $paymentMethod = $payment['payment_method'] ?? 'Cash';
@@ -97,6 +127,13 @@ function generateWalkinReceiptHTML($booking, $payment) {
     
     $companyName = "MARTINEZ FITNESS";
     $companyAddress = "123 Fitness Street\nGym City, 1234\nTel: (123) 456-7890";
+    
+    // Safely get booking details with defaults
+    $customerName = htmlspecialchars($booking['name'] ?? 'Guest');
+    $customerEmail = htmlspecialchars($booking['email'] ?? 'N/A');
+    $customerContact = htmlspecialchars($booking['contact'] ?? 'N/A');
+    $packageName = htmlspecialchars($booking['package_name'] ?? 'Standard Package');
+    $bookingAmount = isset($booking['amount']) ? (float)$booking['amount'] : 0.0;
     
     // Generate complete HTML for printing
     $html = '<!DOCTYPE html>
@@ -252,14 +289,14 @@ function generateWalkinReceiptHTML($booking, $payment) {
         
         <div class="section">
             <div class="section-title">Customer Details:</div>
-            <div class="detail">Name: ' . htmlspecialchars($booking['name']) . '</div>
-            <div class="detail">Email: ' . htmlspecialchars($booking['email']) . '</div>
-            <div class="detail">Contact: ' . htmlspecialchars($booking['contact']) . '</div>
+            <div class="detail">Name: ' . $customerName . '</div>
+            <div class="detail">Email: ' . $customerEmail . '</div>
+            <div class="detail">Contact: ' . $customerContact . '</div>
         </div>
         
         <div class="section">
             <div class="section-title">Booking Details:</div>
-            <div class="detail">Package: ' . htmlspecialchars($booking['package_name']) . '</div>
+            <div class="detail">Package: ' . $packageName . '</div>
             <div class="detail">Booking Date: ' . $formattedBookingDate . '</div>';
     
     if (!empty($booking['notes'])) {
@@ -272,7 +309,7 @@ function generateWalkinReceiptHTML($booking, $payment) {
         <div class="total-section">
             <div class="total-row">
                 <span>Subtotal:</span>
-                <span>₱' . number_format($booking['amount'], 2) . '</span>
+                <span>₱' . number_format($bookingAmount, 2) . '</span>
             </div>
             <div class="total-row">
                 <span>Tax (0%):</span>
@@ -280,7 +317,7 @@ function generateWalkinReceiptHTML($booking, $payment) {
             </div>
             <div class="total-row bold">
                 <span>TOTAL:</span>
-                <span>₱' . number_format($booking['amount'], 2) . '</span>
+                <span>₱' . number_format($bookingAmount, 2) . '</span>
             </div>
         </div>
         
