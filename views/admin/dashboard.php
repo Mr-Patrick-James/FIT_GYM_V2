@@ -265,29 +265,57 @@ $user = getCurrentUser();
                     </div>
                     
                     <div class="packages-list">
-                        <div class="package-card quick-action" onclick="openModal()">
-                            <div>
-                                <h4><i class="fas fa-check-circle"></i> Verify Payments</h4>
-                                <p>8 pending verifications</p>
+                        <a href="walkin-bookings.php" class="package-card quick-action">
+                            <div class="quick-action-content">
+                                <div class="quick-action-icon" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6;">
+                                    <i class="fas fa-person-walking"></i>
+                                </div>
+                                <div>
+                                    <h4>New Walk-in</h4>
+                                    <p>Register a walk-in client</p>
+                                </div>
                             </div>
                             <i class="fas fa-chevron-right"></i>
-                        </div>
+                        </a>
+
+                        <a href="bookings.php?status=pending" class="package-card quick-action">
+                            <div class="quick-action-content">
+                                <div class="quick-action-icon" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <div>
+                                    <h4>Verify Payments</h4>
+                                    <p id="pendingVerificationsText">0 pending verifications</p>
+                                </div>
+                            </div>
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
                         
-                        <div class="package-card quick-action">
-                            <div>
-                                <h4><i class="fas fa-chart-bar"></i> Generate Report</h4>
-                                <p>Monthly performance report</p>
+                        <a href="packages.php" class="package-card quick-action">
+                            <div class="quick-action-content">
+                                <div class="quick-action-icon" style="background: rgba(34, 197, 94, 0.1); color: #22c55e;">
+                                    <i class="fas fa-dumbbell"></i>
+                                </div>
+                                <div>
+                                    <h4>Manage Packages</h4>
+                                    <p>Edit gym membership plans</p>
+                                </div>
                             </div>
                             <i class="fas fa-chevron-right"></i>
-                        </div>
-                        
-                        <div class="package-card quick-action">
-                            <div>
-                                <h4><i class="fas fa-edit"></i> Update Packages</h4>
-                                <p>Edit gym membership plans</p>
+                        </a>
+
+                        <a href="report.php" class="package-card quick-action">
+                            <div class="quick-action-content">
+                                <div class="quick-action-icon" style="background: rgba(168, 85, 247, 0.1); color: #a855f7;">
+                                    <i class="fas fa-chart-bar"></i>
+                                </div>
+                                <div>
+                                    <h4>Generate Report</h4>
+                                    <p>View gym performance</p>
+                                </div>
                             </div>
                             <i class="fas fa-chevron-right"></i>
-                        </div>
+                        </a>
                     </div>
                 </div>
             </div>

@@ -1,5 +1,7 @@
 // All packages data
 let allPackages = [];
+let lastPackagesJSON = '';
+let lastStatsJSON = '';
 let currentEditingPackage = null;
 let packageToDelete = null;
 
@@ -10,17 +12,27 @@ async function loadPackages() {
         const data = await response.json();
         
         if (data.success) {
-            allPackages = data.data;
+            const newPackagesJSON = JSON.stringify(data.data);
+            const hasChanged = newPackagesJSON !== lastPackagesJSON;
+            
+            if (hasChanged) {
+                allPackages = data.data;
+                lastPackagesJSON = newPackagesJSON;
+                return true; // Data changed
+            }
+            return false; // Data unchanged
         } else {
             console.error('Error loading packages:', data.message);
             allPackages = [];
+            lastPackagesJSON = '';
+            return true;
         }
     } catch (error) {
         console.error('Network error loading packages:', error);
         allPackages = [];
+        lastPackagesJSON = '';
+        return true;
     }
-    
-    return allPackages;
 }
 
 // Save packages to database
@@ -76,11 +88,13 @@ async function getPackageStats() {
         const data = await response.json();
         
         if (data.success) {
-            return data.data;
+            const newStatsJSON = JSON.stringify(data.data);
+            const hasChanged = newStatsJSON !== lastStatsJSON;
+            lastStatsJSON = newStatsJSON;
+            return { data: data.data, changed: hasChanged };
         } else {
             console.error('Error loading package stats:', data.message);
-            // Return default values
-            return {
+            const defaultStats = {
                 totalBookings: 0,
                 totalRevenue: 0,
                 packageBookings: {},
@@ -88,11 +102,11 @@ async function getPackageStats() {
                 popularPackage: '-',
                 pendingBookings: 0
             };
+            return { data: defaultStats, changed: true };
         }
     } catch (error) {
         console.error('Network error loading package stats:', error);
-        // Return default values
-        return {
+        const defaultStats = {
             totalBookings: 0,
             totalRevenue: 0,
             packageBookings: {},
@@ -100,11 +114,12 @@ async function getPackageStats() {
             popularPackage: '-',
             pendingBookings: 0
         };
+        return { data: defaultStats, changed: true };
     }
 }
 
 // Populate packages grid
-async function populatePackagesGrid() {
+async function populatePackagesGrid(forcedStats = null) {
     const grid = document.getElementById('packagesGrid');
     const noPackagesMessage = document.getElementById('noPackagesMessage');
     
@@ -133,7 +148,8 @@ async function populatePackagesGrid() {
     grid.style.display = 'grid';
     noPackagesMessage.style.display = 'none';
     
-    const stats = await getPackageStats();
+    const statsResult = forcedStats || await getPackageStats();
+    const stats = statsResult.data;
     
     allPackages.forEach(pkg => {
         const packageCard = document.createElement('div');
@@ -194,8 +210,9 @@ async function populatePackagesGrid() {
 }
 
 // Update stats
-async function updateStats() {
-    const stats = await getPackageStats();
+async function updateStats(forcedStats = null) {
+    const statsResult = forcedStats || await getPackageStats();
+    const stats = statsResult.data;
     
     document.getElementById('totalPackages').textContent = allPackages.length;
     document.getElementById('totalBookings').textContent = stats.totalBookings;
@@ -450,7 +467,7 @@ async function initPage() {
     console.log('Packages page initializing...');
     
     try {
-        await loadPackages();
+        const changed = await loadPackages();
         console.log('Packages loaded:', allPackages.length, allPackages);
         
         await populatePackagesGrid();
@@ -480,18 +497,24 @@ async function initPage() {
     const notificationBtn = document.querySelector('.notification-btn');
     if (notificationBtn) {
         notificationBtn.addEventListener('click', async function() {
-            const stats = await getPackageStats();
+            const statsResult = await getPackageStats();
+            const stats = statsResult.data;
             const pendingCount = stats.pendingBookings || 0;
             showNotification(`You have ${pendingCount} pending booking${pendingCount !== 1 ? 's' : ''} to verify`, 'info');
         });
     }
     
-    // Refresh packages every 3 seconds
+    // Refresh packages every 3 seconds - ONLY if data changed
     setInterval(async () => {
         try {
-            await loadPackages();
-            await populatePackagesGrid();
-            await updateStats();
+            const packagesChanged = await loadPackages();
+            const statsResult = await getPackageStats();
+            
+            if (packagesChanged || statsResult.changed) {
+                console.log('Data changed, re-rendering packages grid...');
+                await populatePackagesGrid(statsResult);
+                await updateStats(statsResult);
+            }
         } catch (error) {
             console.error('Error refreshing packages:', error);
         }

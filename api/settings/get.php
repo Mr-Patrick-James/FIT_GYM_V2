@@ -26,13 +26,17 @@ try {
     // Default values if empty
     $defaults = [
         'gym_name' => 'Martinez Fitness Gym',
-        'gym_address' => '',
+        'gym_address' => '123 Fitness Ave, Metro Manila',
         'gym_contact' => '0917-123-4567',
         'gym_email' => 'info@martinezfitness.com',
         'gcash_number' => '0917-123-4567',
         'gcash_name' => 'Martinez Fitness',
         'gcash_qr_path' => '',
-        'payment_instructions' => 'Please send payment via GCash to the number above. Include your name and booking reference in the payment notes.'
+        'payment_instructions' => 'Please send payment via GCash to the number above. Include your name and booking reference in the payment notes.',
+        'about_text' => 'Martinez Fitness Gym is more than just a place to work out. We are a community dedicated to helping you reach your peak physical condition through elite training, state-of-the-art equipment, and a supportive environment.',
+        'mission_text' => 'Founded with the mission to provide high-quality fitness access to everyone, we offer flexible membership plans and expert guidance to ensure you get the most out of every session.',
+        'years_experience' => '10+',
+        'footer_tagline' => 'Pushing your limits since 2014. Join the elite fitness community today.'
     ];
 
     foreach ($defaults as $key => $value) {

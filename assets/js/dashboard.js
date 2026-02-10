@@ -1,5 +1,8 @@
 // All bookings data - loaded from localStorage
 let allBookings = [];
+let lastBookingsJSON = '';
+let lastPackagesJSON = '';
+let packagesData = [];
 
 // Load all bookings from database
 async function loadAllBookings() {
@@ -8,17 +11,27 @@ async function loadAllBookings() {
         const data = await response.json();
         
         if (data.success) {
-            allBookings = data.data;
+            const newBookingsJSON = JSON.stringify(data.data);
+            const hasChanged = newBookingsJSON !== lastBookingsJSON;
+            
+            if (hasChanged) {
+                allBookings = data.data;
+                lastBookingsJSON = newBookingsJSON;
+                return true; // Data changed
+            }
+            return false; // Data unchanged
         } else {
             console.error('Error loading bookings:', data.message);
             allBookings = [];
+            lastBookingsJSON = '';
+            return true;
         }
     } catch (error) {
         console.error('Network error loading bookings:', error);
         allBookings = [];
+        lastBookingsJSON = '';
+        return true;
     }
-    
-    return allBookings;
 }
 
 // Load packages data from database
@@ -28,20 +41,32 @@ async function loadPackagesData() {
         const data = await response.json();
         
         if (data.success) {
-            packagesData = data.data.map(pkg => ({
-                id: pkg.id,
-                name: pkg.name,
-                duration: pkg.duration,
-                price: '₱' + parseFloat(pkg.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
-                tag: pkg.tag || 'Standard'
-            }));
+            const newPackagesJSON = JSON.stringify(data.data);
+            const hasChanged = newPackagesJSON !== lastPackagesJSON;
+            
+            if (hasChanged) {
+                packagesData = data.data.map(pkg => ({
+                    id: pkg.id,
+                    name: pkg.name,
+                    duration: pkg.duration,
+                    price: '₱' + parseFloat(pkg.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+                    tag: pkg.tag || 'Standard'
+                }));
+                lastPackagesJSON = newPackagesJSON;
+                return true; // Data changed
+            }
+            return false; // Data unchanged
         } else {
             console.error('Error loading packages:', data.message);
             packagesData = getDefaultPackages();
+            lastPackagesJSON = '';
+            return true;
         }
     } catch (error) {
         console.error('Network error loading packages:', error);
         packagesData = getDefaultPackages();
+        lastPackagesJSON = '';
+        return true;
     }
 }
 
@@ -58,15 +83,21 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     // Refresh bookings every 3 seconds
     setInterval(async () => {
-        await loadAllBookings();
-        populateBookingsTable();
-        updateStats();
+        const changed = await loadAllBookings();
+        if (changed) {
+            console.log('Bookings data changed, re-rendering...');
+            populateBookingsTable();
+            updateStats();
+        }
     }, 3000);
     
     // Refresh packages every 10 seconds
     setInterval(async () => {
-        await loadPackagesData();
-        populatePackages();
+        const changed = await loadPackagesData();
+        if (changed) {
+            console.log('Packages data changed, re-rendering...');
+            populatePackages();
+        }
     }, 10000);
     
     // Refresh payment settings every 30 seconds
@@ -595,6 +626,12 @@ async function updateStats() {
     const notificationBadge = document.querySelector('.notification-badge');
     if (notificationBadge) {
         notificationBadge.textContent = pendingBookings || '0';
+    }
+
+    // Update Quick Actions pending text
+    const pendingText = document.getElementById('pendingVerificationsText');
+    if (pendingText) {
+        pendingText.textContent = `${pendingBookings} pending verification${pendingBookings !== 1 ? 's' : ''}`;
     }
 }
 
