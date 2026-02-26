@@ -43,6 +43,212 @@ function getSetting($key, $default = '', $settings = []) {
     <link rel="stylesheet" href="../../assets/css/user-dashboard/bookings.css?v=1.6">
     <link rel="stylesheet" href="../../assets/css/user-dashboard/payments.css?v=1.6">
     <link rel="stylesheet" href="../../assets/css/user-dashboard/profile.css?v=1.6">
+
+    <style>
+        /* Survey & Recommendation Modal Styles */
+        .survey-modal .modal, .recommendation-modal .modal {
+            max-width: 600px;
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+            border-radius: var(--radius-xl);
+            overflow: hidden;
+            animation: modalFadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .survey-header, .recommendation-header {
+            padding: 40px 40px 20px;
+            text-align: center;
+        }
+
+        .survey-header i, .recommendation-header i {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 20px;
+            filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.3));
+        }
+
+        .survey-header h2, .recommendation-header h2 {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #fff 0%, #888 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .survey-header p, .recommendation-header p {
+            color: var(--dark-text-secondary);
+            font-size: 1rem;
+        }
+
+        .survey-body, .recommendation-body {
+            padding: 0 40px 40px;
+        }
+
+        .survey-step {
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .survey-step.active {
+            display: block;
+        }
+
+        .question-label {
+            display: block;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 24px;
+            color: #fff;
+            text-align: center;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .option-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--dark-border);
+            padding: 24px 16px;
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            transition: var(--transition);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .option-card i {
+            font-size: 1.5rem;
+            color: var(--dark-text-secondary);
+            transition: var(--transition);
+        }
+
+        .option-card span {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .option-card:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: #666;
+            transform: translateY(-4px);
+        }
+
+        .option-card.selected {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: var(--dark-bg);
+        }
+
+        .option-card.selected i {
+            color: var(--dark-bg);
+        }
+
+        .survey-footer {
+            margin-top: 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .progress-bar {
+            flex: 1;
+            height: 6px;
+            background: var(--dark-border);
+            border-radius: 3px;
+            margin-right: 24px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary);
+            width: 33%;
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .survey-nav-btn {
+            padding: 12px 24px;
+            border-radius: var(--radius-md);
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: none;
+        }
+
+        .btn-next {
+            background: var(--primary);
+            color: var(--dark-bg);
+        }
+
+        .btn-next:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-next:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Recommendation Specific */
+        .recommended-package-preview {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid var(--primary);
+            border-radius: var(--radius-lg);
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .recommended-package-preview h3 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+        }
+
+        .recommended-package-preview .price {
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+
+        .recommended-package-preview .duration {
+            color: var(--dark-text-secondary);
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .recommended-actions {
+            display: flex;
+            gap: 16px;
+        }
+
+        .recommended-actions button {
+            flex: 1;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: scale(0.95) translateY(20px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
 </head>
 <body class="dark-mode">
     <!-- Mobile Menu Toggle Button -->
@@ -503,6 +709,132 @@ function getSetting($key, $default = '', $settings = []) {
                     <button class="btn btn-secondary" onclick="closeBookingDetailsModal()">
                         <i class="fas fa-times"></i>
                         <span>Close</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Survey Modal -->
+    <div class="modal-overlay survey-modal" id="surveyModal">
+        <div class="modal">
+            <button class="close-modal" onclick="skipSurvey()" style="top: 20px; right: 20px;">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="survey-header">
+                <i class="fas fa-dumbbell"></i>
+                <h2>Personalize Your Journey</h2>
+                <p>Help us find the perfect package for your fitness goals!</p>
+            </div>
+            
+            <div class="survey-body">
+                <!-- Step 1: Goal -->
+                <div class="survey-step active" data-step="1">
+                    <label class="question-label">What is your primary fitness goal?</label>
+                    <div class="options-grid">
+                        <div class="option-card" onclick="selectSurveyOption(this, 'goal', 'weight_loss')">
+                            <i class="fas fa-weight"></i>
+                            <span>Weight Loss</span>
+                        </div>
+                        <div class="option-card" onclick="selectSurveyOption(this, 'goal', 'muscle_gain')">
+                            <i class="fas fa-fist-raised"></i>
+                            <span>Muscle Gain</span>
+                        </div>
+                        <div class="option-card" onclick="selectSurveyOption(this, 'goal', 'endurance')">
+                            <i class="fas fa-running"></i>
+                            <span>Endurance</span>
+                        </div>
+                        <div class="option-card" onclick="selectSurveyOption(this, 'goal', 'general')">
+                            <i class="fas fa-heartbeat"></i>
+                            <span>General Fitness</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2: Frequency -->
+                <div class="survey-step" data-step="2">
+                    <label class="question-label">How often do you plan to work out?</label>
+                    <div class="options-grid">
+                        <div class="option-card" onclick="selectSurveyOption(this, 'frequency', 'daily')">
+                            <i class="fas fa-calendar-day"></i>
+                            <span>Almost Daily</span>
+                        </div>
+                        <div class="option-card" onclick="selectSurveyOption(this, 'frequency', 'few_times')">
+                            <i class="fas fa-calendar-week"></i>
+                            <span>3-4 Times / Week</span>
+                        </div>
+                        <div class="option-card" onclick="selectSurveyOption(this, 'frequency', 'weekends')">
+                            <i class="fas fa-calendar-plus"></i>
+                            <span>Weekends Only</span>
+                        </div>
+                        <div class="option-card" onclick="selectSurveyOption(this, 'frequency', 'occasional')">
+                            <i class="fas fa-clock"></i>
+                            <span>Occasional</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3: Commitment -->
+                <div class="survey-step" data-step="3">
+                    <label class="question-label">What's your preferred commitment length?</label>
+                    <div class="options-grid">
+                        <div class="option-card" onclick="selectSurveyOption(this, 'commitment', 'long_term')">
+                            <i class="fas fa-award"></i>
+                            <span>1 Year (VIP)</span>
+                        </div>
+                        <div class="option-card" onclick="selectSurveyOption(this, 'commitment', 'medium_term')">
+                            <i class="fas fa-calendar-check"></i>
+                            <span>30-90 Days</span>
+                        </div>
+                        <div class="option-card" onclick="selectSurveyOption(this, 'commitment', 'short_term')">
+                            <i class="fas fa-hourglass-half"></i>
+                            <span>Weekly</span>
+                        </div>
+                        <div class="option-card" onclick="selectSurveyOption(this, 'commitment', 'trial')">
+                            <i class="fas fa-ticket-alt"></i>
+                            <span>One-time / Trial</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="survey-footer">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="surveyProgress"></div>
+                    </div>
+                    <button class="survey-nav-btn btn-next" id="surveyNextBtn" disabled onclick="nextSurveyStep()">
+                        <span>Next Step</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recommendation Modal -->
+    <div class="modal-overlay recommendation-modal" id="recommendationModal">
+        <div class="modal">
+            <div class="recommendation-header">
+                <i class="fas fa-star"></i>
+                <h2>Your Perfect Match!</h2>
+                <p>Based on your survey, we recommend this package for you:</p>
+            </div>
+            
+            <div class="recommendation-body">
+                <div class="recommended-package-preview" id="recommendedPackagePreview">
+                    <h3 id="recPackageName">-</h3>
+                    <div class="price" id="recPackagePrice">-</div>
+                    <div class="duration" id="recPackageDuration">-</div>
+                    <p id="recPackageDesc" style="color: var(--dark-text-secondary); margin-bottom: 0;">-</p>
+                </div>
+
+                <div class="recommended-actions">
+                    <button class="btn btn-secondary" onclick="closeRecommendationModal()">
+                        <i class="fas fa-times"></i>
+                        <span>Maybe Later</span>
+                    </button>
+                    <button class="btn btn-primary" id="bookRecommendedBtn">
+                        <i class="fas fa-calendar-plus"></i>
+                        <span>Book This Now</span>
                     </button>
                 </div>
             </div>

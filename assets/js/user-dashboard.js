@@ -78,28 +78,101 @@ function getDefaultPackages() {
 
 // Initialize Dashboard
 async function initDashboard() {
-    await loadPackagesData();
-    await loadUserData(); // Await this to ensure bookings are loaded before populating UI
-    await loadPaymentSettings(); // Load dynamic GCash settings
-    populatePackages();
-    updateStats();
-    populateBookings();
-    populatePayments();
-    setupEventListeners();
-    
-    // Set today as minimum date for booking
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('bookingDate').setAttribute('min', today);
-    
-    // Update booking package select on initial load
-    updateBookingPackageSelect();
-    
-    // Refresh packages every 3 seconds to catch updates
-    setInterval(async () => {
+    try {
         await loadPackagesData();
+        await loadUserData(); // Await this to ensure bookings are loaded before populating UI
+        await loadPaymentSettings(); // Load dynamic GCash settings
         populatePackages();
+        updateStats();
+        populateBookings();
+        populatePayments();
+        setupEventListeners();
+        
+        // Set today as minimum date for booking
+        const today = new Date().toISOString().split('T')[0];
+        const bookingDateInput = document.getElementById('bookingDate');
+        if (bookingDateInput) {
+            bookingDateInput.setAttribute('min', today);
+        }
+        
+        // Update booking package select on initial load
         updateBookingPackageSelect();
-    }, 3000);
+        
+        // Refresh packages every 3 seconds to catch updates
+        setInterval(async () => {
+            try {
+                await loadPackagesData();
+                populatePackages();
+                updateBookingPackageSelect();
+            } catch (err) {
+                console.error('Interval package refresh error:', err);
+            }
+        }, 3000);
+
+        // Check if survey needs to be shown
+        checkSurveyStatus();
+    } catch (error) {
+        console.error('Dashboard initialization error:', error);
+        // Still try to show survey if possible
+        checkSurveyStatus();
+    }
+}
+
+// Survey State
+let surveyData = {
+    goal: null,
+    frequency: null,
+    commitment: null
+};
+let currentSurveyStep = 1;
+
+function checkSurveyStatus() {
+    // We check if the survey has been completed for the current user
+    let userId = 'guest';
+    try {
+        const userData = JSON.parse(localStorage.getItem('userData'));
+        if (userData) {
+            userId = userData.id || userData.email || 'guest';
+        }
+    } catch (e) {
+        console.error('Error getting user identifier for survey:', e);
+    }
+    
+    // NOTE: For testing purposes, we always show the survey even if completed
+    const surveyCompleted = false; // localStorage.getItem('gym_survey_completed_' + userId);
+    
+    if (!surveyCompleted) {
+        // Reset survey state just in case
+        currentSurveyStep = 1;
+        surveyData = { goal: null, frequency: null, commitment: null };
+        
+        setTimeout(() => {
+            const modal = document.getElementById('surveyModal');
+            if (modal) {
+                // Ensure first step is active and others are hidden
+                document.querySelectorAll('.survey-step').forEach(step => step.classList.remove('active'));
+                const firstStep = document.querySelector('.survey-step[data-step="1"]');
+                if (firstStep) firstStep.classList.add('active');
+                
+                // Reset progress bar
+                const progressBar = document.getElementById('surveyProgress');
+                if (progressBar) progressBar.style.width = '33%';
+                
+                // Reset next button
+                const nextBtn = document.getElementById('surveyNextBtn');
+                if (nextBtn) {
+                    nextBtn.disabled = true;
+                    nextBtn.innerHTML = '<span>Next Step</span> <i class="fas fa-arrow-right"></i>';
+                }
+                
+                // Reset all selected options
+                document.querySelectorAll('.option-card').forEach(card => card.classList.remove('selected'));
+                
+                modal.classList.add('active');
+                console.log('Showing survey for user:', userId);
+            }
+        }, 1500);
+    }
 }
 
 // Load dynamic payment settings from database
@@ -830,6 +903,169 @@ async function logout() {
         localStorage.removeItem('userData');
         window.location.href = '../../index.php';
     }
+}
+
+function selectSurveyOption(element, category, value) {
+    // Remove selected class from all options in the same grid
+    const grid = element.parentElement;
+    grid.querySelectorAll('.option-card').forEach(card => card.classList.remove('selected'));
+    
+    // Add selected class to clicked card
+    element.classList.add('selected');
+    
+    // Update survey data
+    surveyData[category] = value;
+    
+    // Enable next button
+    document.getElementById('surveyNextBtn').disabled = false;
+}
+
+function nextSurveyStep() {
+    if (currentSurveyStep < 3) {
+        // Move to next step
+        document.querySelector(`.survey-step[data-step="${currentSurveyStep}"]`).classList.remove('active');
+        currentSurveyStep++;
+        document.querySelector(`.survey-step[data-step="${currentSurveyStep}"]`).classList.add('active');
+        
+        // Update progress bar
+        const progress = (currentSurveyStep / 3) * 100;
+        document.getElementById('surveyProgress').style.width = `${progress}%`;
+        
+        // Update button text for last step
+        if (currentSurveyStep === 3) {
+            document.getElementById('surveyNextBtn').innerHTML = '<span>Get My Plan</span> <i class="fas fa-check"></i>';
+        }
+        
+        // Disable next button until option is selected for the new step
+        document.getElementById('surveyNextBtn').disabled = true;
+    } else {
+        // Survey complete - calculate recommendation
+        finishSurvey();
+    }
+}
+
+function skipSurvey() {
+    let userId = 'guest';
+    try {
+        const userData = JSON.parse(localStorage.getItem('userData'));
+        if (userData) {
+            userId = userData.id || userData.email || 'guest';
+        }
+    } catch (e) {
+        console.error('Error getting user identifier for survey:', e);
+    }
+    
+    // Set as completed even if skipped so it doesn't pop up again
+    localStorage.setItem('gym_survey_completed_' + userId, 'true');
+    document.getElementById('surveyModal').classList.remove('active');
+    showNotification('Survey skipped. You can always view our packages in the sidebar!', 'info');
+}
+
+function finishSurvey() {
+    let userId = 'guest';
+    try {
+        const userData = JSON.parse(localStorage.getItem('userData'));
+        if (userData) {
+            userId = userData.id || userData.email || 'guest';
+        }
+    } catch (e) {
+        console.error('Error getting user identifier for survey:', e);
+    }
+    
+    localStorage.setItem('gym_survey_completed_' + userId, 'true');
+    document.getElementById('surveyModal').classList.remove('active');
+    
+    // Recommendation Logic based on Active Packages
+    let recommendedPackage = null;
+    
+    // Helper to check if a package exists in our active packages list
+    const getPackageByName = (name) => {
+        return packagesData.find(pkg => pkg.name === name);
+    };
+
+    // Determine preferred package based on survey
+    let preferredName = "";
+    if (surveyData.commitment === 'long_term') {
+        preferredName = "Annual Membership";
+    } else if (surveyData.commitment === 'medium_term') {
+        if (surveyData.goal === 'muscle_gain' || surveyData.frequency === 'daily') {
+            preferredName = "3-Month Package";
+        } else {
+            preferredName = "Monthly Membership";
+        }
+    } else if (surveyData.commitment === 'short_term') {
+        preferredName = "Weekly Pass";
+    } else {
+        preferredName = "Walk-in Pass";
+    }
+
+    // Fallback logic: if preferred isn't active, find the next best available
+    recommendedPackage = getPackageByName(preferredName);
+    
+    if (!recommendedPackage) {
+        // Fallback hierarchy if preferred is disabled
+        const fallbackOrder = [
+            "Monthly Membership", 
+            "Weekly Pass", 
+            "3-Month Package", 
+            "Walk-in Pass", 
+            "Annual Membership"
+        ];
+        
+        for (const name of fallbackOrder) {
+            recommendedPackage = getPackageByName(name);
+            if (recommendedPackage) break;
+        }
+    }
+    
+    if (!recommendedPackage && packagesData.length > 0) {
+        recommendedPackage = packagesData[0];
+    }
+    
+    if (recommendedPackage) {
+        showRecommendationModal(recommendedPackage);
+    } else {
+        showNotification("Thanks for completing the survey! Check out our available packages.", "info");
+        showSection('packages');
+    }
+}
+
+function showRecommendationModal(pkg) {
+    document.getElementById('recPackageName').textContent = pkg.name;
+    document.getElementById('recPackagePrice').textContent = pkg.price;
+    document.getElementById('recPackageDuration').textContent = pkg.duration;
+    document.getElementById('recPackageDesc').textContent = pkg.description || 'Full gym access with all facilities';
+    
+    const bookBtn = document.getElementById('bookRecommendedBtn');
+    bookBtn.onclick = () => {
+        closeRecommendationModal();
+        openBookingModal(pkg.name, pkg.price);
+    };
+    
+    setTimeout(() => {
+        document.getElementById('recommendationModal').classList.add('active');
+    }, 500);
+}
+
+function closeRecommendationModal() {
+    document.getElementById('recommendationModal').classList.remove('active');
+    // Still redirect to packages section so they can see everything
+    showSection('packages');
+    
+    // Highlight the recommended package in the list too
+    const recName = document.getElementById('recPackageName').textContent;
+    setTimeout(() => {
+        const packageCards = document.querySelectorAll('.package-card');
+        packageCards.forEach(card => {
+            const nameHeader = card.querySelector('h3');
+            if (nameHeader && nameHeader.textContent === recName) {
+                card.style.transform = 'scale(1.05)';
+                card.style.borderColor = 'var(--primary)';
+                card.style.boxShadow = '0 0 30px rgba(255, 255, 255, 0.2)';
+                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        });
+    }, 500);
 }
 
 // Mobile menu toggle function
