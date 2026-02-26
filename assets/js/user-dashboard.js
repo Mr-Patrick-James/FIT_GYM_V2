@@ -852,27 +852,100 @@ function closeBookingDetailsModal() {
 }
 
 // Update profile
-function updateProfile() {
-    const name = document.getElementById('profileName').value;
-    const email = document.getElementById('profileEmail').value;
-    const contact = document.getElementById('profileContact').value;
-    const address = document.getElementById('profileAddress').value;
+async function updateProfile() {
+    const name = document.getElementById('profileName').value.trim();
+    const email = document.getElementById('profileEmail').value.trim();
+    const contact = document.getElementById('profileContact').value.trim();
+    const address = document.getElementById('profileAddress').value.trim();
+    const updateBtn = document.getElementById('updateProfileBtn');
     
-    const userData = {
-        name: name,
-        email: email,
-        contact: contact,
-        address: address
-    };
+    if (!name) {
+        showNotification('Name is required', 'warning');
+        return;
+    }
     
-    localStorage.setItem('userData', JSON.stringify(userData));
+    try {
+        const originalBtnHtml = updateBtn.innerHTML;
+        updateBtn.disabled = true;
+        updateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+        
+        const response = await fetch('../../api/users/update-profile.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, contact, address })
+        });
+        
+        const result = await response.json();
+        
+        updateBtn.disabled = false;
+        updateBtn.innerHTML = originalBtnHtml;
+        
+        if (result.success) {
+            // Update localStorage
+            localStorage.setItem('userData', JSON.stringify(result.data));
+            
+            // Update UI
+            document.getElementById('userName').textContent = result.data.name;
+            document.getElementById('userEmail').textContent = result.data.email;
+            document.getElementById('userAvatar').textContent = getInitials(result.data.name);
+            
+            showNotification('Profile updated successfully!', 'success');
+        } else {
+            showNotification(result.message || 'Failed to update profile', 'warning');
+        }
+    } catch (error) {
+        console.error('Update profile error:', error);
+        updateBtn.disabled = false;
+        showNotification('Server error occurred', 'warning');
+    }
+}
+
+// Change password
+async function changePassword(event) {
+    event.preventDefault();
     
-    // Update UI
-    document.getElementById('userName').textContent = name;
-    document.getElementById('userEmail').textContent = email;
-    document.getElementById('userAvatar').textContent = getInitials(name);
+    const currentPassword = document.getElementById('currentPassword').value;
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmNewPassword = document.getElementById('confirmNewPassword').value;
+    const changeBtn = document.getElementById('changePasswordBtn');
     
-    showNotification('Profile updated successfully!', 'success');
+    if (newPassword !== confirmNewPassword) {
+        showNotification('New passwords do not match', 'warning');
+        return;
+    }
+    
+    if (newPassword.length < 6) {
+        showNotification('New password must be at least 6 characters', 'warning');
+        return;
+    }
+    
+    try {
+        const originalBtnHtml = changeBtn.innerHTML;
+        changeBtn.disabled = true;
+        changeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Changing...';
+        
+        const response = await fetch('../../api/users/change-password.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ currentPassword, newPassword })
+        });
+        
+        const result = await response.json();
+        
+        changeBtn.disabled = false;
+        changeBtn.innerHTML = originalBtnHtml;
+        
+        if (result.success) {
+            document.getElementById('changePasswordForm').reset();
+            showNotification('Password changed successfully!', 'success');
+        } else {
+            showNotification(result.message || 'Failed to change password', 'warning');
+        }
+    } catch (error) {
+        console.error('Change password error:', error);
+        changeBtn.disabled = false;
+        showNotification('Server error occurred', 'warning');
+    }
 }
 
 // Logout

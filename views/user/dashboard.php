@@ -506,72 +506,126 @@ function getSetting($key, $default = '', $settings = []) {
 
         <!-- Profile Section -->
         <div id="profileSection" class="content-section">
-            <div class="content-grid">
-                <div class="content-card">
-                    <div class="card-header">
-                        <h3>Profile Information</h3>
-                    </div>
-                    <div class="profile-form">
-                        <!-- Membership Status Badge -->
-                        <div id="profileMembershipBadge" class="membership-badge-container" style="display: none;">
-                            <div class="membership-status-card">
-                                <div class="membership-icon">
-                                    <i class="fas fa-crown"></i>
-                                </div>
-                                <div class="membership-details">
-                                    <span class="membership-label">MEMBERSHIP STATUS</span>
-                                    <div class="membership-value-row">
-                                        <h4 id="profileMembershipValue">Active Member</h4>
-                                        <span class="status-badge status-verified" id="profileMembershipStatus">Active</span>
+            <div class="profile-layout-grid">
+                <!-- Left Column: User Profile Info -->
+                <div class="profile-main-col">
+                    <div class="content-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-user-circle" style="margin-right: 12px; color: var(--primary);"></i>Profile Information</h3>
+                        </div>
+                        <div class="profile-form">
+                            <!-- Membership Status Badge -->
+                            <div id="profileMembershipBadge" class="membership-badge-container" style="display: none;">
+                                <div class="membership-status-card">
+                                    <div class="membership-icon">
+                                        <i class="fas fa-crown"></i>
                                     </div>
-                                    <p id="profileMembershipPlan">Monthly Membership Plan</p>
-                                    <div class="membership-expiry" id="profileMembershipExpiryRow" style="margin-top: 8px; font-size: 0.85rem; color: var(--text-muted);">
-                                        <i class="far fa-calendar-alt" style="margin-right: 6px;"></i>
-                                        <span>Expires on: <strong id="profileMembershipExpiryDate" style="color: var(--text-main);">--</strong></span>
+                                    <div class="membership-details">
+                                        <span class="membership-label">MEMBERSHIP STATUS</span>
+                                        <div class="membership-value-row">
+                                            <h4 id="profileMembershipValue">Active Member</h4>
+                                            <span class="status-badge status-verified" id="profileMembershipStatus">Active</span>
+                                        </div>
+                                        <p id="profileMembershipPlan">Monthly Membership Plan</p>
+                                        <div class="membership-expiry" id="profileMembershipExpiryRow" style="margin-top: 8px; font-size: 0.85rem; color: var(--dark-text-secondary);">
+                                            <i class="far fa-calendar-alt" style="margin-right: 6px;"></i>
+                                            <span>Expires on: <strong id="profileMembershipExpiryDate" style="color: var(--primary);">--</strong></span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div class="form-group">
-                            <label>Full Name</label>
-                            <input type="text" id="profileName" value="Juan Dela Cruz">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Full Name</label>
+                                    <input type="text" id="profileName" value="Juan Dela Cruz" placeholder="Enter your full name">
+                                </div>
+                                <div class="form-group">
+                                    <label>Email Address</label>
+                                    <input type="email" id="profileEmail" value="juan.delacruz@email.com" placeholder="Enter your email">
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Contact Number</label>
+                                    <input type="tel" id="profileContact" value="0917-123-4567" placeholder="09XX-XXX-XXXX">
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Address</label>
+                                <textarea id="profileAddress" rows="3" placeholder="Enter your complete address">Manila, Philippines</textarea>
+                            </div>
+                            
+                            <div class="form-actions">
+                                <button class="btn btn-primary" id="updateProfileBtn" onclick="updateProfile()">
+                                    <i class="fas fa-save"></i>
+                                    <span>Save Profile Changes</span>
+                                </button>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label>Email Address</label>
-                            <input type="email" id="profileEmail" value="juan.delacruz@email.com">
-                        </div>
-                        <div class="form-group">
-                            <label>Contact Number</label>
-                            <input type="tel" id="profileContact" value="0917-123-4567">
-                        </div>
-                        <div class="form-group">
-                            <label>Address</label>
-                            <textarea id="profileAddress" rows="3">Manila, Philippines</textarea>
-                        </div>
-                        <button class="btn btn-primary" onclick="updateProfile()">
-                            <i class="fas fa-save"></i>
-                            <span>Save Changes</span>
-                        </button>
                     </div>
                 </div>
                 
-                <div class="content-card">
-                    <div class="card-header">
-                        <h3>GCash Payment Info</h3>
-                    </div>
-                    <div class="gcash-info">
-                        <div class="qr-container">
-                            <div class="qr-code">
-                                <i class="fas fa-qrcode"></i>
-                            </div>
+                <!-- Right Column: Security & Payment Info -->
+                <div class="profile-side-col">
+                    <div class="content-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-shield-alt" style="margin-right: 12px; color: var(--primary);"></i>Security</h3>
                         </div>
-                        <div class="qr-info">
-                            <p><strong>GCash Number:</strong> 0917-123-4567</p>
-                            <p><strong>Account Name:</strong> Martinez Fitness</p>
-                            <p style="margin-top: 16px; font-size: 0.9rem; color: var(--dark-text-secondary);">
-                                Send payment to this GCash number and upload your receipt when making a booking.
+                        <div class="security-form" style="padding: 28px;">
+                            <p style="color: var(--dark-text-secondary); margin-bottom: 24px; font-size: 0.9rem; line-height: 1.5;">
+                                Ensure your account is secure by using a strong password.
                             </p>
+                            <form id="changePasswordForm" onsubmit="changePassword(event)">
+                                <div class="form-group">
+                                    <label>Current Password</label>
+                                    <div class="password-input-wrapper">
+                                        <input type="password" id="currentPassword" required placeholder="••••••••">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>New Password</label>
+                                    <div class="password-input-wrapper">
+                                        <input type="password" id="newPassword" required minlength="6" placeholder="At least 6 characters">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Confirm New Password</label>
+                                    <div class="password-input-wrapper">
+                                        <input type="password" id="confirmNewPassword" required minlength="6" placeholder="Repeat new password">
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-secondary" id="changePasswordBtn" style="width: 100%; justify-content: center;">
+                                    <i class="fas fa-key"></i>
+                                    <span>Update Password</span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="content-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-qrcode" style="margin-right: 12px; color: var(--primary);"></i>GCash Payment</h3>
+                        </div>
+                        <div class="gcash-info">
+                            <div class="qr-container">
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=GCash:09171234567" alt="GCash QR Code" style="width: 100%; height: 100%; object-fit: contain;">
+                            </div>
+                            <div class="qr-info">
+                                <div class="payment-detail-item">
+                                    <span class="detail-label">ACCOUNT NAME</span>
+                                    <span class="detail-value">Martinez Fitness</span>
+                                </div>
+                                <div class="payment-detail-item">
+                                    <span class="detail-label">GCASH NUMBER</span>
+                                    <span class="detail-value">0917-123-4567</span>
+                                </div>
+                                <p style="margin-top: 20px; font-size: 0.85rem; color: var(--dark-text-secondary); line-height: 1.4;">
+                                    Scan to pay for bookings. Don't forget to save your receipt for verification!
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>
