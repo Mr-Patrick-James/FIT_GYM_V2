@@ -238,17 +238,6 @@ $user = getCurrentUser();
                     <textarea id="walkinNotes" name="notes" rows="3" placeholder="Additional notes..."></textarea>
                 </div>
                 
-                <div class="form-group">
-                    <label for="receiptUpload">Receipt (Optional)</label>
-                    <input type="file" id="receiptUpload" accept="image/*">
-                    <div class="file-preview" id="receiptPreview" style="display: none;">
-                        <img id="receiptImage" src="" alt="Receipt">
-                        <button type="button" class="btn btn-sm btn-danger" id="removeReceipt">
-                            <i class="fas fa-trash"></i> Remove
-                        </button>
-                    </div>
-                </div>
-                
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" id="cancelWalkin">Cancel</button>
                     <button type="submit" class="btn btn-primary" id="saveWalkin">

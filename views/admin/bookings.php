@@ -19,6 +19,128 @@ $user = getCurrentUser();
     <!-- Dashboard Styles -->
     <link rel="stylesheet" href="../../assets/css/dashboard.css?v=1.6">
     
+    <!-- FullCalendar CDN -->
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
+    
+    <style>
+        /* Modern Calendar Styles */
+        .view-toggle {
+            display: flex;
+            background: var(--dark-card);
+            padding: 4px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--dark-border);
+            margin-right: 12px;
+        }
+        
+        .view-btn {
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            border: none;
+            background: transparent;
+            color: var(--dark-text-secondary);
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        
+        .view-btn.active {
+            background: var(--primary);
+            color: var(--dark-bg);
+        }
+        
+        #calendar-view {
+            display: none;
+            margin-top: 32px;
+            background: var(--dark-card);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            border: 1px solid var(--dark-border);
+        }
+        
+        /* FullCalendar Customization */
+        .fc {
+            --fc-border-color: var(--dark-border);
+            --fc-daygrid-event-dot-width: 8px;
+            --fc-list-event-dot-width: 10px;
+            --fc-neutral-bg-color: var(--dark-card);
+            --fc-page-bg-color: var(--dark-bg);
+            --fc-today-bg-color: rgba(255, 255, 255, 0.05);
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .fc .fc-toolbar-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--dark-text);
+        }
+        
+        .fc .fc-button-primary {
+            background-color: var(--dark-card);
+            border-color: var(--dark-border);
+            color: var(--dark-text);
+            font-weight: 600;
+            text-transform: capitalize;
+            padding: 8px 16px;
+        }
+        
+        .fc .fc-button-primary:hover {
+            background-color: var(--dark-border);
+            border-color: var(--dark-text-secondary);
+        }
+        
+        .fc .fc-button-primary:not(:disabled).fc-button-active,
+        .fc .fc-button-primary:not(:disabled):active {
+            background-color: var(--primary);
+            border-color: var(--primary);
+            color: var(--dark-bg);
+        }
+        
+        .fc-theme-standard td, .fc-theme-standard th {
+            border: 1px solid var(--dark-border);
+        }
+        
+        .fc-daygrid-event {
+            border-radius: 6px;
+            padding: 2px 4px;
+            font-size: 0.85rem;
+            border: none;
+        }
+        
+        .fc-v-event {
+            background-color: var(--primary);
+            border: none;
+        }
+        
+        .fc-event-title {
+            font-weight: 600;
+        }
+        
+        .booking-event {
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .booking-event:hover {
+            transform: scale(1.02);
+        }
+        
+        .event-status-pending { background-color: var(--warning) !important; color: #000 !important; }
+        .event-status-verified { background-color: var(--success) !important; color: #fff !important; }
+        .event-status-rejected { background-color: var(--danger) !important; color: #fff !important; }
+        
+        .light-mode .fc {
+            --fc-border-color: #e5e7eb;
+            --fc-neutral-bg-color: #f8f9fa;
+            --fc-page-bg-color: #ffffff;
+            --fc-today-bg-color: rgba(0, 0, 0, 0.05);
+        }
+    </style>
+    
     <!-- Apply theme immediately before page renders to prevent flash -->
     <script>
         (function() {
@@ -86,6 +208,17 @@ $user = getCurrentUser();
             </div>
             
             <div class="header-actions">
+                <div class="view-toggle">
+                    <button class="view-btn active" id="tableViewBtn" title="Table View">
+                        <i class="fas fa-table"></i>
+                        <span>Table</span>
+                    </button>
+                    <button class="view-btn" id="calendarViewBtn" title="Calendar View">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span>Calendar</span>
+                    </button>
+                </div>
+                
                 <button class="action-btn primary" onclick="openWalkinModal()">
                     <i class="fas fa-walking"></i>
                     <span>Walk-in Booking</span>
@@ -194,8 +327,13 @@ $user = getCurrentUser();
             </div>
         </div>
 
+        <!-- Calendar View -->
+        <div id="calendar-view">
+            <div id="calendar"></div>
+        </div>
+
         <!-- Filters and Actions -->
-        <div class="content-card" style="margin-top: 32px;">
+        <div class="content-card" id="table-filters" style="margin-top: 32px;">
             <div class="card-header">
                 <h3>Filter & Sort</h3>
                 <div class="card-actions">
@@ -256,7 +394,7 @@ $user = getCurrentUser();
         </div>
 
         <!-- Bookings Table -->
-        <div class="content-card" style="margin-top: 32px;">
+        <div class="content-card" id="bookings-table-container" style="margin-top: 32px;">
             <div class="card-header">
                 <h3>All Bookings</h3>
                 <div class="card-actions">
@@ -453,17 +591,6 @@ $user = getCurrentUser();
                     <div class="form-group">
                         <label for="walkinNotes">Notes</label>
                         <textarea id="walkinNotes" name="notes" rows="3" placeholder="Additional notes..."></textarea>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="receiptUpload">Receipt (Optional)</label>
-                        <input type="file" id="receiptUpload" accept="image/*">
-                        <div class="file-preview" id="receiptPreview" style="display: none;">
-                            <img id="receiptImage" src="" alt="Receipt">
-                            <button type="button" class="btn btn-sm btn-danger" onclick="removeReceipt()">
-                                <i class="fas fa-trash"></i> Remove
-                            </button>
-                        </div>
                     </div>
                 </div>
                 

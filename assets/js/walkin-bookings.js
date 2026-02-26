@@ -94,9 +94,8 @@ class WalkinBookingsManager {
             th.addEventListener('click', () => this.handleSort(th.dataset.sort));
         });
         
-        // Receipt upload
-        document.getElementById('receiptUpload').addEventListener('change', (e) => this.handleReceiptUpload(e));
-        document.getElementById('removeReceipt').addEventListener('click', () => this.removeReceipt());
+        // Mobile menu toggle
+        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
         
         // Package selection
         document.getElementById('packageSelect').addEventListener('change', () => this.updatePackageInfo());
@@ -381,7 +380,6 @@ class WalkinBookingsManager {
         document.getElementById('walkinModal').classList.add('active');
         document.getElementById('walkinForm').reset();
         this.setDefaultDate();
-        this.removeReceipt();
         // Reset payment method details display
         this.handlePaymentMethodChange(document.getElementById('paymentMethod').value);
     }
@@ -411,12 +409,6 @@ class WalkinBookingsManager {
         
         const formData = new FormData(e.target);
         const data = Object.fromEntries(formData.entries());
-        
-        // Add receipt URL if uploaded
-        const receiptInput = document.getElementById('receiptUpload');
-        if (receiptInput.files.length > 0) {
-            data.receipt = await this.uploadReceipt(receiptInput.files[0]);
-        }
         
         try {
             this.showLoading();
@@ -487,47 +479,6 @@ class WalkinBookingsManager {
     
     updateStatus(bookingId, currentStatus) {
         this.openStatusModal(bookingId, currentStatus);
-    }
-    
-    async uploadReceipt(file) {
-        const formData = new FormData();
-        formData.append('receipt', file);
-        
-        try {
-            const response = await fetch('../api/upload/receipt.php', {
-                method: 'POST',
-                body: formData
-            });
-            
-            const result = await response.json();
-            
-            if (result.success) {
-                return result.data.file_path;
-            } else {
-                throw new Error(result.message || 'Upload failed');
-            }
-        } catch (error) {
-            console.error('Error uploading receipt:', error);
-            throw error;
-        }
-    }
-    
-    handleReceiptUpload(e) {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                document.getElementById('receiptImage').src = e.target.result;
-                document.getElementById('receiptPreview').style.display = 'block';
-            };
-            reader.readAsDataURL(file);
-        }
-    }
-    
-    removeReceipt() {
-        document.getElementById('receiptUpload').value = '';
-        document.getElementById('receiptPreview').style.display = 'none';
-        document.getElementById('receiptImage').src = '';
     }
     
     updatePackageInfo() {

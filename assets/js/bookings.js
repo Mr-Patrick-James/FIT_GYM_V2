@@ -2,6 +2,8 @@
 let allBookings = [];
 let filteredBookings = [];
 let currentViewingBooking = null;
+let calendar = null;
+let viewMode = 'table'; // 'table' or 'calendar'
 
 // Current filter values
 let currentFilters = {
@@ -158,6 +160,11 @@ async function applyFilters() {
     
     populateBookingsTable();
     updateStats();
+    
+    // Refresh calendar if it exists
+    if (calendar) {
+        updateCalendarEvents();
+    }
 }
 
 // Parse duration string (e.g., "30 Days", "1 Year") to number of days
@@ -868,8 +875,108 @@ async function initPage() {
 }
 
 // Initialize the page
+// Calendar View Functions
+function initCalendar() {
+    const calendarEl = document.getElementById('calendar');
+    if (!calendarEl) return;
+    
+    calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        },
+        themeSystem: 'standard',
+        height: 'auto',
+        events: getCalendarEvents(),
+        eventClick: function(info) {
+            viewBooking(info.event.id);
+        },
+        eventClassNames: function(arg) {
+            const status = arg.event.extendedProps.status;
+            return ['booking-event', `event-status-${status}`];
+        },
+        noEventsContent: 'No bookings for this period',
+        dayMaxEvents: true
+    });
+    
+    calendar.render();
+}
+
+function getCalendarEvents() {
+    return filteredBookings.map(booking => {
+        // Use booking_date if available, otherwise createdAt
+        const startDate = booking.booking_date || booking.createdAt;
+        
+        return {
+            id: booking.id,
+            title: `${booking.name} - ${booking.package}`,
+            start: startDate,
+            extendedProps: {
+                status: booking.status,
+                is_walkin: booking.is_walkin
+            }
+        };
+    });
+}
+
+function updateCalendarEvents() {
+    if (calendar) {
+        calendar.removeAllEvents();
+        calendar.addEventSource(getCalendarEvents());
+    }
+}
+
+function toggleView(mode) {
+    const tableViewBtn = document.getElementById('tableViewBtn');
+    const calendarViewBtn = document.getElementById('calendarViewBtn');
+    const calendarView = document.getElementById('calendar-view');
+    const tableViewContainer = document.getElementById('bookings-table-container');
+    const tableFilters = document.getElementById('table-filters');
+    
+    viewMode = mode;
+    
+    if (mode === 'calendar') {
+        tableViewBtn.classList.remove('active');
+        calendarViewBtn.classList.add('active');
+        tableViewContainer.style.display = 'none';
+        calendarView.style.display = 'block';
+        
+        // Hide table filters as calendar has its own
+        // tableFilters.style.display = 'none';
+        
+        if (!calendar) {
+            initCalendar();
+        } else {
+            calendar.render();
+            updateCalendarEvents();
+        }
+    } else {
+        tableViewBtn.classList.add('active');
+        calendarViewBtn.classList.remove('active');
+        tableViewContainer.style.display = 'block';
+        calendarView.style.display = 'none';
+        
+        // tableFilters.style.display = 'block';
+        populateBookingsTable();
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     initPage();
+    
+    // Toggle between table and calendar view
+    const tableViewBtn = document.getElementById('tableViewBtn');
+    const calendarViewBtn = document.getElementById('calendarViewBtn');
+    
+    if (tableViewBtn) {
+        tableViewBtn.addEventListener('click', () => toggleView('table'));
+    }
+    
+    if (calendarViewBtn) {
+        calendarViewBtn.addEventListener('click', () => toggleView('calendar'));
+    }
     
     // Mobile menu toggle functionality
     const mobileMenuToggle = document.getElementById('mobileMenuToggle');
@@ -920,7 +1027,6 @@ function closeWalkinModal() {
 
 function resetWalkinForm() {
     document.getElementById('walkinForm').reset();
-    removeReceipt();
 }
 
 function setDefaultDate() {
@@ -971,14 +1077,27 @@ document.addEventListener('DOMContentLoaded', function() {
         walkinForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             
+            // Open receipt window immediately to ensure user gesture context
+            // This prevents popup blockers since it's called directly in the submit handler
+            const printWindow = window.open('', '_blank', 'width=450,height=600,scrollbars=yes');
+            if (printWindow) {
+                printWindow.document.write(`
+                    <html>
+                    <head><title>Processing Receipt...</title></head>
+                    <body style="font-family: 'Inter', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #0a0a0a; color: #fff;">
+                        <div style="text-align: center; padding: 40px; border-radius: 24px; background: #111; border: 1px solid #333; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);">
+                            <div style="font-size: 40px; margin-bottom: 20px; color: #fff;"><i class="fas fa-spinner fa-spin"></i></div>
+                            <div style="font-size: 24px; font-weight: 700; margin-bottom: 10px;">Creating Booking...</div>
+                            <div style="font-size: 14px; color: #888;">Please wait while we process your request.</div>
+                        </div>
+                        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+                    </body>
+                    </html>
+                `);
+            }
+            
             const formData = new FormData(walkinForm);
             const data = Object.fromEntries(formData.entries());
-            
-            // Add receipt URL if uploaded
-            const receiptInput = document.getElementById('receiptUpload');
-            if (receiptInput.files.length > 0) {
-                data.receipt = await uploadReceipt(receiptInput.files[0]);
-            }
             
             try {
                 // Show loading state
@@ -1010,12 +1129,14 @@ document.addEventListener('DOMContentLoaded', function() {
                         document.getElementById('walkinModal').classList.remove('success');
                     }, 600);
                     
-                    // Generate receipt for walk-in booking
-                    generateWalkinReceipt(result.data.id);
+                    // Update print window with the receipt
+                    generateWalkinReceipt(result.data.id, printWindow);
                 } else {
+                    if (printWindow) printWindow.close();
                     showNotification(result.message || 'Error creating booking', 'error');
                 }
             } catch (error) {
+                if (printWindow) printWindow.close();
                 console.error('Error creating booking:', error);
                 showNotification('Error creating booking. Please try again.', 'error');
             } finally {
@@ -1029,60 +1150,15 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Receipt upload handling
-    const receiptUpload = document.getElementById('receiptUpload');
-    if (receiptUpload) {
-        receiptUpload.addEventListener('change', handleReceiptUpload);
-    }
 });
 
-function handleReceiptUpload(e) {
-    const file = e.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            document.getElementById('receiptImage').src = e.target.result;
-            document.getElementById('receiptPreview').style.display = 'block';
-        };
-        reader.readAsDataURL(file);
-    }
-}
-
-function removeReceipt() {
-    document.getElementById('receiptUpload').value = '';
-    document.getElementById('receiptPreview').style.display = 'none';
-    document.getElementById('receiptImage').src = '';
-}
-
-async function uploadReceipt(file) {
-    const formData = new FormData();
-    formData.append('receipt', file);
-    
-    try {
-        const response = await fetch('../../api/upload/receipt.php', {
-            method: 'POST',
-            body: formData
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-            return result.data.file_path;
-        } else {
-            throw new Error(result.message || 'Upload failed');
-        }
-    } catch (error) {
-        console.error('Error uploading receipt:', error);
-        throw error;
-    }
-}
-
 // Generate receipt for walk-in booking
-async function generateWalkinReceipt(bookingId) {
-    // Open receipt in new window immediately for printing while we have user gesture context
-    // This prevents browser popup blockers from stopping the window
-    const printWindow = window.open('', '_blank', 'width=450,height=600,scrollbars=yes');
+async function generateWalkinReceipt(bookingId, existingWindow = null) {
+    // Use existing window if provided (to avoid popup blockers during async flow)
+    // Otherwise open a new one (e.g., when clicking "View Receipt" in the table)
+    const printWindow = existingWindow || window.open('', '_blank', 'width=450,height=600,scrollbars=yes');
     
-    if (printWindow) {
+    if (printWindow && !existingWindow) {
         printWindow.document.write('<html><body style="font-family:sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;margin:0;background:#f8f9fa;color:#333;">' +
             '<div style="text-align:center;padding:20px;border-radius:8px;background:white;box-shadow:0 2px 10px rgba(0,0,0,0.1);">' +
             '<div style="font-size:24px;margin-bottom:15px;color:#007bff;">Generating Receipt...</div>' +
@@ -1091,7 +1167,7 @@ async function generateWalkinReceipt(bookingId) {
     }
 
     try {
-        showNotification('Generating receipt...', 'info');
+        if (!existingWindow) showNotification('Generating receipt...', 'info');
         
         const response = await fetch('../../api/receipt/generate-walkin.php', {
             method: 'POST',
