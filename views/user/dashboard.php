@@ -44,6 +44,9 @@ function getSetting($key, $default = '', $settings = []) {
     <link rel="stylesheet" href="../../assets/css/user-dashboard/payments.css?v=1.6">
     <link rel="stylesheet" href="../../assets/css/user-dashboard/profile.css?v=1.6">
 
+    <!-- FullCalendar CDN for user calendar -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+
     <style>
         /* Survey & Recommendation Modal Styles */
         .survey-modal .modal, .recommendation-modal .modal {
@@ -248,6 +251,80 @@ function getSetting($key, $default = '', $settings = []) {
             from { opacity: 0; }
             to { opacity: 1; }
         }
+
+        /* User Calendar View */
+        .user-view-toggle {
+            display: flex;
+            background: var(--dark-card);
+            padding: 4px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--dark-border);
+            margin-left: auto;
+            gap: 6px;
+        }
+        .user-view-btn {
+            padding: 8px 14px;
+            border-radius: var(--radius-sm);
+            border: none;
+            background: transparent;
+            color: var(--dark-text-secondary);
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        .user-view-btn.active {
+            background: var(--primary);
+            color: var(--dark-bg);
+        }
+        #userCalendarView {
+            display: none;
+            margin: 16px 24px 24px;
+            background: var(--dark-card);
+            border-radius: var(--radius-lg);
+            padding: 12px;
+            border: 1px solid var(--dark-border);
+        }
+        /* FullCalendar Dark Theme Tweaks */
+        .fc {
+            --fc-border-color: var(--dark-border);
+            --fc-daygrid-event-dot-width: 8px;
+            --fc-neutral-bg-color: var(--dark-card);
+            --fc-page-bg-color: var(--dark-card);
+            --fc-today-bg-color: rgba(255, 255, 255, 0.05);
+            font-family: 'Inter', sans-serif;
+        }
+        .fc .fc-toolbar-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--dark-text);
+        }
+        .fc .fc-button-primary {
+            background-color: var(--dark-card);
+            border-color: var(--dark-border);
+            color: var(--dark-text);
+            font-weight: 600;
+            padding: 6px 12px;
+        }
+        .fc .fc-button-primary:hover {
+            background-color: var(--dark-border);
+            border-color: var(--dark-text-secondary);
+        }
+        .fc .fc-button-primary:not(:disabled).fc-button-active,
+        .fc .fc-button-primary:not(:disabled):active {
+            background-color: var(--primary);
+            border-color: var(--primary);
+            color: var(--dark-bg);
+        }
+        .fc-theme-standard td, .fc-theme-standard th {
+            border: 1px solid var(--dark-border);
+        }
+        .event-status-pending { background-color: var(--warning) !important; color: #000 !important; }
+        .event-status-verified { background-color: var(--success) !important; color: #fff !important; }
+        .event-status-rejected { background-color: #ef4444 !important; color: #fff !important; }
     </style>
 </head>
 <body class="dark-mode">
@@ -455,10 +532,25 @@ function getSetting($key, $default = '', $settings = []) {
             <div class="content-card">
                 <div class="card-header">
                     <h3>My Bookings</h3>
-                    <button class="card-btn primary" onclick="openBookingModal()">
-                        <i class="fas fa-plus"></i>
-                        <span>New Booking</span>
-                    </button>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div class="user-view-toggle">
+                            <button class="user-view-btn active" id="userTableViewBtn" title="Table View">
+                                <i class="fas fa-table"></i>
+                                <span>Table</span>
+                            </button>
+                            <button class="user-view-btn" id="userCalendarViewBtn" title="Calendar View">
+                                <i class="fas fa-calendar-alt"></i>
+                                <span>Calendar</span>
+                            </button>
+                        </div>
+                        <button class="card-btn primary" onclick="openBookingModal()">
+                            <i class="fas fa-plus"></i>
+                            <span>New Booking</span>
+                        </button>
+                    </div>
+                </div>
+                <div id="userCalendarView">
+                    <div id="userCalendar"></div>
                 </div>
                 <div class="table-container">
                     <table>

@@ -279,6 +279,92 @@ async function loadUserData() {
     await loadUserBookings();
 }
 
+// ===== User Calendar (Subscriptions) =====
+let userCalendar = null;
+let userViewMode = 'table';
+
+function getUserCalendarEvents() {
+    return userBookings.map(b => {
+        const start = b.booking_date || b.date || b.createdAt;
+        let end = b.expires_at || null;
+        if (!end && b.status === 'verified' && b.duration) {
+            const days = parseDurationToDays(b.duration);
+            if (days > 0 && start) {
+                const d = new Date(start);
+                d.setDate(d.getDate() + days);
+                end = d.toISOString();
+            }
+        }
+        const title = `${b.package_name || b.package}${b.status === 'verified' ? ' (Active)' : b.status === 'pending' ? ' (Pending)' : ''}`;
+        return {
+            id: String(b.id),
+            title,
+            start,
+            end: end || start,
+            allDay: true,
+            classNames: [`event-status-${b.status || 'pending'}`],
+            extendedProps: { status: b.status || 'pending' }
+        };
+    });
+}
+
+function initUserCalendar() {
+    const el = document.getElementById('userCalendar');
+    if (!el || userCalendar) return;
+    userCalendar = new FullCalendar.Calendar(el, {
+        initialView: 'dayGridMonth',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        },
+        height: 'auto',
+        events: getUserCalendarEvents(),
+        eventClick: (info) => {
+            const id = info.event.id;
+            const booking = userBookings.find(b => String(b.id) === String(id));
+            if (booking) {
+                viewBookingDetails(booking.id);
+            }
+        }
+    });
+    userCalendar.render();
+}
+
+function updateUserCalendarEvents() {
+    if (userCalendar) {
+        userCalendar.removeAllEvents();
+        userCalendar.addEventSource(getUserCalendarEvents());
+    }
+}
+
+function toggleUserView(mode) {
+    userViewMode = mode;
+    const tableContainer = document.querySelector('#bookingsSection .table-container');
+    const calendarView = document.getElementById('userCalendarView');
+    const tableBtn = document.getElementById('userTableViewBtn');
+    const calBtn = document.getElementById('userCalendarViewBtn');
+    if (!tableContainer || !calendarView || !tableBtn || !calBtn) return;
+    
+    if (mode === 'calendar') {
+        tableContainer.style.display = 'none';
+        calendarView.style.display = 'block';
+        tableBtn.classList.remove('active');
+        calBtn.classList.add('active');
+        if (!userCalendar) {
+            initUserCalendar();
+        } else {
+            userCalendar.render();
+            updateUserCalendarEvents();
+        }
+    } else {
+        tableContainer.style.display = 'block';
+        calendarView.style.display = 'none';
+        tableBtn.classList.add('active');
+        calBtn.classList.remove('active');
+    }
+}
+
 // Get user initials for avatar
 function getInitials(name) {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
@@ -696,19 +782,28 @@ function handleFileSelect(event) {
         const uploadArea = document.getElementById('fileUploadArea');
         
         fileName.textContent = file.name;
-        preview.style.display = 'block';
-        uploadArea.style.borderColor = 'var(--primary)';
-        uploadArea.style.background = 'var(--glass)';
+        if (preview) preview.style.display = 'block';
+        if (uploadArea) {
+            uploadArea.style.borderColor = 'var(--primary)';
+            uploadArea.style.background = 'var(--glass)';
+            uploadArea.style.display = 'none';
+        }
     }
 }
 
 // Remove file
 function removeFile() {
     selectedFile = null;
-    document.getElementById('filePreview').style.display = 'none';
-    document.getElementById('receiptFile').value = '';
-    document.getElementById('fileUploadArea').style.borderColor = '';
-    document.getElementById('fileUploadArea').style.background = '';
+    const preview = document.getElementById('filePreview');
+    const input = document.getElementById('receiptFile');
+    const uploadArea = document.getElementById('fileUploadArea');
+    if (preview) preview.style.display = 'none';
+    if (input) input.value = '';
+    if (uploadArea) {
+        uploadArea.style.borderColor = '';
+        uploadArea.style.background = '';
+        uploadArea.style.display = 'block';
+    }
 }
 
 // Submit booking
@@ -1303,12 +1398,23 @@ function setupEventListeners() {
         updateStats();
         populateBookings();
         populatePayments();
+        updateUserCalendarEvents();
         
         // Update notification count
         const pendingCount = userBookings.filter(b => b.status === 'pending').length;
         document.getElementById('notificationCount').textContent = pendingCount || '';
         document.getElementById('bookingsBadge').textContent = pendingCount || '0';
     }, 3000); // 3 seconds interval is better for performance than 1 second
+
+    // View toggle buttons
+    const userTableBtn = document.getElementById('userTableViewBtn');
+    const userCalendarBtn = document.getElementById('userCalendarViewBtn');
+    if (userTableBtn) {
+        userTableBtn.addEventListener('click', () => toggleUserView('table'));
+    }
+    if (userCalendarBtn) {
+        userCalendarBtn.addEventListener('click', () => toggleUserView('calendar'));
+    }
 }
 
 // Add CSS animation
