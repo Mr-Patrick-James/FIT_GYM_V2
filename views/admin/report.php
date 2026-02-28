@@ -22,6 +22,9 @@ $user = getCurrentUser();
     <!-- PDF and Excel Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-pdfmake/2.5.5/html-to-pdfmake.min.js"></script>
     
     <!-- Dashboard Styles -->
     <link rel="stylesheet" href="../../assets/css/dashboard.css?v=1.6">

@@ -732,10 +732,238 @@ function showNotification(message, type = 'info') {
     }, 5000);
 }
 
+// Generate professional report HTML for PDF/Word
+function generateProfessionalReportHTML(data, periodText) {
+    const { bookings, payments, members } = data;
+    const filteredPayments = filterByPeriod(payments, currentPeriod);
+    const filteredBookings = filterByPeriod(bookings, currentPeriod);
+    
+    let totalRevenue = 0;
+    filteredPayments.forEach(p => totalRevenue += parseFloat(p.amount) || 0);
+    
+    const now = new Date().toLocaleString();
+    
+    return `
+        <div style="font-family: 'Inter', Arial, sans-serif; color: #333; padding: 40px; max-width: 1000px; margin: 0 auto; background: #fff;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 20px; margin-bottom: 30px;">
+                <div>
+                    <h1 style="margin: 0; color: #000; font-size: 28px; font-weight: 800; letter-spacing: -0.5px;">MARTINEZ FITNESS</h1>
+                    <p style="margin: 5px 0 0 0; color: #666; font-size: 14px;">Gym Management Performance Report</p>
+                </div>
+                <div style="text-align: right;">
+                    <p style="margin: 0; font-weight: 600; font-size: 14px;">Report Period: ${periodText}</p>
+                    <p style="margin: 5px 0 0 0; color: #888; font-size: 12px;">Generated on: ${now}</p>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 40px;">
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; border: 1px solid #eee; text-align: center;">
+                    <p style="margin: 0 0 10px 0; color: #666; font-size: 12px; font-weight: 600; text-transform: uppercase;">Total Revenue</p>
+                    <h2 style="margin: 0; color: #000; font-size: 20px;">₱${Math.round(totalRevenue).toLocaleString()}</h2>
+                </div>
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; border: 1px solid #eee; text-align: center;">
+                    <p style="margin: 0 0 10px 0; color: #666; font-size: 12px; font-weight: 600; text-transform: uppercase;">Total Bookings</p>
+                    <h2 style="margin: 0; color: #000; font-size: 20px;">${filteredBookings.length}</h2>
+                </div>
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; border: 1px solid #eee; text-align: center;">
+                    <p style="margin: 0 0 10px 0; color: #666; font-size: 12px; font-weight: 600; text-transform: uppercase;">Active Members</p>
+                    <h2 style="margin: 0; color: #000; font-size: 20px;">${document.getElementById('totalMembers').textContent}</h2>
+                </div>
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; border: 1px solid #eee; text-align: center;">
+                    <p style="margin: 0 0 10px 0; color: #666; font-size: 12px; font-weight: 600; text-transform: uppercase;">Avg. Daily</p>
+                    <h2 style="margin: 0; color: #000; font-size: 20px;">₱${Math.round(totalRevenue / getDaysInPeriod(currentPeriod)).toLocaleString()}</h2>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 40px;">
+                <h3 style="border-left: 4px solid #000; padding-left: 15px; margin-bottom: 20px; font-size: 18px;">Revenue Breakdown</h3>
+                <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                    <thead>
+                        <tr style="background: #f8f9fa;">
+                            <th style="padding: 12px; text-align: left; border-bottom: 2px solid #eee;">Date</th>
+                            <th style="padding: 12px; text-align: left; border-bottom: 2px solid #eee;">Client</th>
+                            <th style="padding: 12px; text-align: left; border-bottom: 2px solid #eee;">Package</th>
+                            <th style="padding: 12px; text-align: right; border-bottom: 2px solid #eee;">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${filteredPayments.length > 0 ? filteredPayments.map(p => `
+                            <tr>
+                                <td style="padding: 10px 12px; border-bottom: 1px solid #eee;">${new Date(p.created_at).toLocaleDateString()}</td>
+                                <td style="padding: 10px 12px; border-bottom: 1px solid #eee;">${p.user_name || 'Walk-in'}</td>
+                                <td style="padding: 10px 12px; border-bottom: 1px solid #eee;">${p.package_name || 'N/A'}</td>
+                                <td style="padding: 10px 12px; border-bottom: 1px solid #eee; text-align: right; font-weight: 600;">₱${parseFloat(p.amount).toLocaleString()}</td>
+                            </tr>
+                        `).join('') : '<tr><td colspan="4" style="padding: 20px; text-align: center; color: #999;">No revenue records for this period</td></tr>'}
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="margin-bottom: 40px;">
+                <h3 style="border-left: 4px solid #000; padding-left: 15px; margin-bottom: 20px; font-size: 18px;">Package Performance</h3>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 30px;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                        <thead>
+                            <tr style="background: #f8f9fa;">
+                                <th style="padding: 12px; text-align: left; border-bottom: 2px solid #eee;">Package Name</th>
+                                <th style="padding: 12px; text-align: right; border-bottom: 2px solid #eee;">Sales</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${Object.entries(filteredPayments.reduce((acc, p) => {
+                                const pkg = p.package_name || 'Unknown';
+                                acc[pkg] = (acc[pkg] || 0) + 1;
+                                return acc;
+                            }, {})).map(([name, count]) => `
+                                <tr>
+                                    <td style="padding: 10px 12px; border-bottom: 1px solid #eee;">${name}</td>
+                                    <td style="padding: 10px 12px; border-bottom: 1px solid #eee; text-align: right;">${count}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; border: 1px solid #eee;">
+                        <p style="margin: 0 0 15px 0; font-weight: 600; font-size: 14px;">Summary Notes</p>
+                        <p style="margin: 0; font-size: 12px; line-height: 1.6; color: #555;">
+                            This report provides a comprehensive overview of gym operations during the selected period. 
+                            Revenue is calculated based on verified payments only. Active members count includes all users 
+                            with non-expired subscriptions as of the report generation date.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 60px; border-top: 1px solid #eee; padding-top: 20px; text-align: center; color: #999; font-size: 11px;">
+                <p>© ${new Date().getFullYear()} Martinez Fitness Gym • Generated by FitPay Management System</p>
+            </div>
+        </div>
+    `;
+}
+
+function generatePdfDocDefinition(data, periodText) {
+    const { bookings, payments } = data;
+    const filteredPayments = filterByPeriod(payments, currentPeriod);
+    const filteredBookings = filterByPeriod(bookings, currentPeriod);
+    let totalRevenue = 0;
+    filteredPayments.forEach(p => totalRevenue += parseFloat(p.amount) || 0);
+    const days = getDaysInPeriod(currentPeriod);
+    const avgDaily = days > 0 ? totalRevenue / days : 0;
+    const activeMemberIdentifiers = new Set();
+    bookings.forEach(booking => {
+        if (isBookingActive(booking)) {
+            activeMemberIdentifiers.add(booking.user_id || booking.email || booking.name);
+        }
+    });
+    const activeMembersCount = activeMemberIdentifiers.size;
+    const now = new Date().toLocaleString();
+    const revenueRows = filteredPayments.length > 0 ? filteredPayments.map(p => ([
+        { text: new Date(p.created_at).toLocaleDateString(), margin: [0, 6, 0, 6] },
+        { text: p.user_name || 'Walk-in', margin: [0, 6, 0, 6] },
+        { text: p.package_name || 'N/A', margin: [0, 6, 0, 6] },
+        { text: `₱${(parseFloat(p.amount) || 0).toLocaleString()}`, alignment: 'right', margin: [0, 6, 0, 6] }
+    ])) : [[{ text: 'No revenue records for this period', colSpan: 4, alignment: 'center', margin: [0, 10, 0, 10] }, {}, {}, {}]];
+    const packageStats = filteredPayments.reduce((acc, p) => {
+        const pkg = p.package_name || 'Unknown';
+        acc[pkg] = (acc[pkg] || 0) + 1;
+        return acc;
+    }, {});
+    const packageRows = Object.entries(packageStats).map(([name, count]) => ([
+        { text: name, margin: [0, 6, 0, 6] },
+        { text: String(count), alignment: 'right', margin: [0, 6, 0, 6] }
+    ]));
+    return {
+        pageMargins: [30, 30, 30, 40],
+        content: [
+            {
+                columns: [
+                    [
+                        { text: 'MARTINEZ FITNESS', style: 'title' },
+                        { text: 'Gym Management Performance Report', style: 'subtitle' }
+                    ],
+                    [
+                        { text: `Report Period: ${periodText}`, alignment: 'right', style: 'label' },
+                        { text: `Generated on: ${now}`, alignment: 'right', style: 'small' }
+                    ]
+                ]
+            },
+            {
+                table: {
+                    widths: ['*', '*', '*', '*'],
+                    body: [
+                        [
+                            { stack: [{ text: 'Total Revenue', style: 'metricLabel' }, { text: `₱${Math.round(totalRevenue).toLocaleString()}`, style: 'metricValue' }], fillColor: '#f8f9fa' },
+                            { stack: [{ text: 'Total Bookings', style: 'metricLabel' }, { text: String(filteredBookings.length), style: 'metricValue' }], fillColor: '#f8f9fa' },
+                            { stack: [{ text: 'Active Members', style: 'metricLabel' }, { text: String(activeMembersCount), style: 'metricValue' }], fillColor: '#f8f9fa' },
+                            { stack: [{ text: 'Avg. Daily', style: 'metricLabel' }, { text: `₱${Math.round(avgDaily).toLocaleString()}`, style: 'metricValue' }], fillColor: '#f8f9fa' }
+                        ]
+                    ]
+                },
+                layout: {
+                    hLineWidth: () => 1,
+                    vLineWidth: () => 1,
+                    hLineColor: () => '#eeeeee',
+                    vLineColor: () => '#eeeeee',
+                    paddingLeft: () => 12,
+                    paddingRight: () => 12,
+                    paddingTop: () => 12,
+                    paddingBottom: () => 12
+                },
+                margin: [0, 20, 0, 20]
+            },
+            { text: 'Revenue Breakdown', style: 'sectionTitle', margin: [0, 0, 0, 10] },
+            {
+                table: {
+                    widths: ['auto', '*', '*', 'auto'],
+                    headerRows: 1,
+                    body: [
+                        [
+                            { text: 'Date', style: 'tableHeader' },
+                            { text: 'Client', style: 'tableHeader' },
+                            { text: 'Package', style: 'tableHeader' },
+                            { text: 'Amount', alignment: 'right', style: 'tableHeader' }
+                        ],
+                        ...revenueRows
+                    ]
+                },
+                layout: 'lightHorizontalLines',
+                margin: [0, 0, 0, 20]
+            },
+            { text: 'Package Performance', style: 'sectionTitle', margin: [0, 0, 0, 10] },
+            {
+                table: {
+                    widths: ['*', 'auto'],
+                    headerRows: 1,
+                    body: [
+                        [
+                            { text: 'Package Name', style: 'tableHeader' },
+                            { text: 'Sales', alignment: 'right', style: 'tableHeader' }
+                        ],
+                        ...packageRows
+                    ]
+                },
+                layout: 'lightHorizontalLines',
+                margin: [0, 0, 0, 20]
+            },
+            { text: `© ${new Date().getFullYear()} Martinez Fitness Gym • Generated by FitPay Management System`, alignment: 'center', style: 'small', margin: [0, 20, 0, 0] }
+        ],
+        styles: {
+            title: { fontSize: 18, bold: true, color: '#000' },
+            subtitle: { fontSize: 12, color: '#666', margin: [0, 4, 0, 0] },
+            label: { fontSize: 12, bold: true },
+            small: { fontSize: 10, color: '#888' },
+            sectionTitle: { fontSize: 14, bold: true },
+            tableHeader: { bold: true, fillColor: '#f8f9fa' },
+            metricLabel: { fontSize: 10, color: '#666' },
+            metricValue: { fontSize: 14, bold: true, color: '#000', margin: [0, 6, 0, 0] }
+        }
+    };
+}
+
 // Export Full Report in various formats
 async function exportFullReport(format) {
     try {
-        const { bookings, payments } = await loadReportsData();
+        const reportsData = await loadReportsData();
+        const { bookings, payments } = reportsData;
         const filteredPayments = filterByPeriod(payments, currentPeriod);
         const filteredBookings = filterByPeriod(bookings, currentPeriod);
         
@@ -744,87 +972,105 @@ async function exportFullReport(format) {
 
         if (format === 'pdf') {
             showNotification('Generating PDF report...', 'info');
-            const element = document.querySelector('.main-content');
-            const opt = {
-                margin: 10,
-                filename: `${filename}.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true, backgroundColor: '#0a0a0a' },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            };
-            
-            // Temporary hide sidebar and header for PDF
-            const sidebar = document.querySelector('.sidebar');
-            const topBar = document.querySelector('.top-bar');
-            const dropdown = document.querySelector('.dropdown');
-            
-            if (sidebar) sidebar.style.display = 'none';
-            if (topBar) topBar.style.display = 'none';
-            if (dropdown) dropdown.style.display = 'none';
-            document.querySelector('.main-content').style.margin = '0';
-            document.querySelector('.main-content').style.width = '100%';
-
-            html2pdf().from(element).set(opt).save().then(() => {
-                if (sidebar) sidebar.style.display = 'block';
-                if (topBar) topBar.style.display = 'flex';
-                if (dropdown) dropdown.style.display = 'inline-block';
-                document.querySelector('.main-content').style.margin = '';
-                document.querySelector('.main-content').style.width = '';
+            if (window.pdfMake) {
+                const docDefinition = generatePdfDocDefinition(reportsData, periodText);
+                pdfMake.createPdf(docDefinition).download(`${filename}.pdf`);
                 showNotification('PDF exported successfully!', 'success');
-            });
+            } else {
+                const reportHTML = generateProfessionalReportHTML(reportsData, periodText);
+                const container = document.createElement('div');
+                container.innerHTML = reportHTML;
+                document.body.appendChild(container);
+                const opt = {
+                    margin: 0,
+                    filename: `${filename}.pdf`,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2, useCORS: true, logging: false, letterRendering: true },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                };
+                html2pdf().from(container).set(opt).save().then(() => {
+                    document.body.removeChild(container);
+                    showNotification('PDF exported successfully!', 'success');
+                });
+            }
 
         } else if (format === 'excel') {
             showNotification('Generating Excel report...', 'info');
-            const data = filteredPayments.map(p => ({
+            
+            // Summary Sheet
+            let totalRevenue = 0;
+            filteredPayments.forEach(p => totalRevenue += parseFloat(p.amount) || 0);
+            
+            const summaryData = [
+                ['GYM PERFORMANCE REPORT'],
+                ['Period', periodText],
+                ['Generated On', new Date().toLocaleString()],
+                [],
+                ['METRIC', 'VALUE'],
+                ['Total Revenue', `₱${Math.round(totalRevenue).toLocaleString()}`],
+                ['Total Bookings', filteredBookings.length],
+                ['Active Members', document.getElementById('totalMembers').textContent],
+                ['Avg. Daily Revenue', `₱${Math.round(totalRevenue / getDaysInPeriod(currentPeriod)).toLocaleString()}`]
+            ];
+            
+            const wb = XLSX.utils.book_new();
+            const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
+            XLSX.utils.book_append_sheet(wb, wsSummary, "Summary");
+
+            // Revenue Sheet
+            const revData = filteredPayments.map(p => ({
                 'Date': new Date(p.created_at).toLocaleDateString(),
                 'Client': p.user_name || 'Walk-in',
                 'Package': p.package_name || 'N/A',
-                'Amount': parseFloat(p.amount) || 0,
+                'Amount (PHP)': parseFloat(p.amount) || 0,
                 'Payment Method': p.payment_method || 'N/A'
             }));
+            const wsRevenue = XLSX.utils.json_to_sheet(revData);
+            XLSX.utils.book_append_sheet(wb, wsRevenue, "Revenue Details");
             
-            const ws = XLSX.utils.json_to_sheet(data);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Revenue");
-            
-            // Add bookings sheet
-            const bookingData = filteredBookings.map(b => ({
+            // Bookings Sheet
+            const bookData = filteredBookings.map(b => ({
                 'Date': new Date(b.created_at).toLocaleDateString(),
                 'Client': b.user_name || 'Walk-in',
                 'Package': b.package_name || 'N/A',
-                'Amount': parseFloat(b.amount) || 0,
+                'Amount (PHP)': parseFloat(b.amount) || 0,
                 'Status': b.status
             }));
-            const ws2 = XLSX.utils.json_to_sheet(bookingData);
-            XLSX.utils.book_append_sheet(wb, ws2, "Bookings");
+            const wsBookings = XLSX.utils.json_to_sheet(bookData);
+            XLSX.utils.book_append_sheet(wb, wsBookings, "Bookings Details");
             
             XLSX.writeFile(wb, `${filename}.xlsx`);
             showNotification('Excel exported successfully!', 'success');
 
-        } else if (format === 'docx' || format === 'csv') {
-            // For DOCX we'll use a simplified approach generating a Blob of HTML
-            // For CSV we already have exportData, but let's unify it here
-            if (format === 'csv') {
-                exportData('revenue');
-            } else {
-                showNotification('Generating Word report...', 'info');
-                const content = document.querySelector('.main-content').innerHTML;
-                const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' "+
-                    "xmlns:w='urn:schemas-microsoft-com:office:word' "+
-                    "xmlns='http://www.w3.org/TR/REC-html40'>"+
-                    "<head><meta charset='utf-8'><title>Export HTML to Word</title></head><body>";
-                const footer = "</body></html>";
-                const sourceHTML = header + content + footer;
-                
-                const source = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(sourceHTML);
-                const fileDownload = document.createElement("a");
-                document.body.appendChild(fileDownload);
-                fileDownload.href = source;
-                fileDownload.download = `${filename}.doc`;
-                fileDownload.click();
-                document.body.removeChild(fileDownload);
-                showNotification('Word report exported successfully!', 'success');
-            }
+        } else if (format === 'docx') {
+            showNotification('Generating Word report...', 'info');
+            const reportHTML = generateProfessionalReportHTML(reportsData, periodText);
+            
+            const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' "+
+                "xmlns:w='urn:schemas-microsoft-com:office:word' "+
+                "xmlns='http://www.w3.org/TR/REC-html40'>"+
+                "<head><meta charset='utf-8'><title>Gym Report</title>"+
+                "<style>body { font-family: 'Calibri', Arial, sans-serif; }</style></head><body>";
+            const footer = "</body></html>";
+            const sourceHTML = header + reportHTML + footer;
+            
+            const blob = new Blob(['\ufeff', sourceHTML], {
+                type: 'application/msword'
+            });
+            
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${filename}.doc`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            showNotification('Word report exported successfully!', 'success');
+
+        } else if (format === 'csv') {
+            exportData('revenue');
         }
     } catch (error) {
         console.error('Export error:', error);
