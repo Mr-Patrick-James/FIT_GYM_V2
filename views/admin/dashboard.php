@@ -137,7 +137,7 @@ function getSetting($key, $default = '', $settings = []) {
                         <span>12%</span>
                     </div>
                 </div>
-                <div class="stat-value">24</div>
+                <div class="stat-value" id="totalBookingsStat">24</div>
                 <div class="stat-label">Total Bookings This Month</div>
             </div>
             
@@ -151,7 +151,7 @@ function getSetting($key, $default = '', $settings = []) {
                         <span>8%</span>
                     </div>
                 </div>
-                <div class="stat-value">8</div>
+                <div class="stat-value" id="pendingVerificationsStat">8</div>
                 <div class="stat-label">Pending Verifications</div>
             </div>
             
@@ -165,7 +165,7 @@ function getSetting($key, $default = '', $settings = []) {
                         <span>24%</span>
                     </div>
                 </div>
-                <div class="stat-value">₱12,450</div>
+                <div class="stat-value" id="monthlyRevenueStat">₱12,450</div>
                 <div class="stat-label">Monthly Revenue</div>
             </div>
             
@@ -179,7 +179,7 @@ function getSetting($key, $default = '', $settings = []) {
                         <span>5%</span>
                     </div>
                 </div>
-                <div class="stat-value">156</div>
+                <div class="stat-value" id="activeMembersStat">156</div>
                 <div class="stat-label">Active Members</div>
             </div>
         </div>

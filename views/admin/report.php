@@ -19,8 +19,23 @@ $user = getCurrentUser();
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
+    <!-- PDF and Excel Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
     <!-- Dashboard Styles -->
     <link rel="stylesheet" href="../../assets/css/dashboard.css?v=1.6">
+    <style>
+        .dropdown-content a:hover {
+            background-color: rgba(255, 255, 255, 0.05) !important;
+        }
+        .action-btn i.fa-chevron-down {
+            transition: transform 0.3s;
+        }
+        .dropdown.active i.fa-chevron-down {
+            transform: rotate(180deg);
+        }
+    </style>
     
     <!-- Apply theme immediately before page renders to prevent flash -->
     <script>
@@ -89,10 +104,27 @@ $user = getCurrentUser();
             </div>
             
             <div class="header-actions">
-                <button class="action-btn primary" onclick="generateReport()">
-                    <i class="fas fa-file-pdf"></i>
-                    <span>Generate Report</span>
-                </button>
+                <div class="dropdown" style="position: relative; display: inline-block;">
+                    <button class="action-btn primary" id="generateReportBtn">
+                        <i class="fas fa-file-export"></i>
+                        <span>Generate Report</span>
+                        <i class="fas fa-chevron-down" style="font-size: 0.8rem; margin-left: 8px;"></i>
+                    </button>
+                    <div class="dropdown-content" id="reportDropdown" style="display: none; position: absolute; right: 0; background: var(--dark-bg-secondary); min-width: 180px; box-shadow: 0 8px 16px rgba(0,0,0,0.3); border-radius: 12px; z-index: 1000; padding: 8px 0; border: 1px solid rgba(255,255,255,0.05);">
+                        <a href="#" onclick="exportFullReport('pdf')" style="color: #fff; padding: 12px 16px; text-decoration: none; display: flex; align-items: center; gap: 12px; font-size: 0.9rem; transition: background 0.2s;">
+                            <i class="fas fa-file-pdf" style="color: #ef4444;"></i> Download PDF
+                        </a>
+                        <a href="#" onclick="exportFullReport('excel')" style="color: #fff; padding: 12px 16px; text-decoration: none; display: flex; align-items: center; gap: 12px; font-size: 0.9rem; transition: background 0.2s;">
+                            <i class="fas fa-file-excel" style="color: #22c55e;"></i> Download Excel
+                        </a>
+                        <a href="#" onclick="exportFullReport('docx')" style="color: #fff; padding: 12px 16px; text-decoration: none; display: flex; align-items: center; gap: 12px; font-size: 0.9rem; transition: background 0.2s;">
+                            <i class="fas fa-file-word" style="color: #3b82f6;"></i> Download Word
+                        </a>
+                        <a href="#" onclick="exportFullReport('csv')" style="color: #fff; padding: 12px 16px; text-decoration: none; display: flex; align-items: center; gap: 12px; font-size: 0.9rem; transition: background 0.2s;">
+                            <i class="fas fa-file-csv" style="color: #f59e0b;"></i> Download CSV
+                        </a>
+                    </div>
+                </div>
                 
                 <button class="action-btn notification-btn">
                     <i class="fas fa-bell"></i>

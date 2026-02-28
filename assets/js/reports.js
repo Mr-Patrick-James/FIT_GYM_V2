@@ -46,9 +46,11 @@ function getDateRange(period) {
 
 // Filter data by period
 function filterByPeriod(data, period) {
+    if (period === 'all') return data;
     const startDate = getDateRange(period);
     return data.filter(item => {
-        const itemDate = new Date(item.date || item.createdAt || 0);
+        const rawDate = item.created_at || item.booking_date || item.date || item.createdAt || null;
+        const itemDate = rawDate ? new Date(rawDate) : new Date(0);
         return itemDate >= startDate;
     });
 }
@@ -59,22 +61,149 @@ async function updateKeyMetrics() {
     const filteredPayments = filterByPeriod(payments, currentPeriod);
     const filteredBookings = filterByPeriod(bookings, currentPeriod);
     
-    // Calculate total revenue
+    // Calculate current period metrics
     let totalRevenue = 0;
     filteredPayments.forEach(payment => {
-        const amount = parseFloat(payment.amount) || 0;
-        totalRevenue += amount;
+        totalRevenue += parseFloat(payment.amount) || 0;
     });
     
-    // Calculate average revenue per day
     const days = getDaysInPeriod(currentPeriod);
     const avgRevenue = days > 0 ? totalRevenue / days : 0;
+    
+    // Calculate previous period metrics for growth calculation
+    const prevPeriodData = await getPreviousPeriodMetrics(payments, bookings, members, currentPeriod);
     
     // Update UI
     document.getElementById('totalRevenue').textContent = `₱${Math.round(totalRevenue).toLocaleString()}`;
     document.getElementById('totalBookings').textContent = filteredBookings.length;
-    document.getElementById('totalMembers').textContent = members.length;
+    
+    // Active members = unique users (registered + walk-ins) with at least one verified booking that is NOT expired
+    const activeMemberIdentifiers = new Set();
+    bookings.forEach(booking => {
+        if (isBookingActive(booking)) {
+            activeMemberIdentifiers.add(booking.user_id || booking.email || booking.name);
+        }
+    });
+    
+    const activeMembersCount = activeMemberIdentifiers.size;
+    document.getElementById('totalMembers').textContent = activeMembersCount;
     document.getElementById('avgRevenue').textContent = `₱${Math.round(avgRevenue).toLocaleString()}`;
+
+    // Update Growth Percentages
+    updateGrowthUI('revenueGrowth', totalRevenue, prevPeriodData.revenue);
+    updateGrowthUI('bookingsGrowth', filteredBookings.length, prevPeriodData.bookings);
+    updateGrowthUI('membersGrowth', activeMembersCount, prevPeriodData.members);
+    updateGrowthUI('avgRevenueGrowth', avgRevenue, prevPeriodData.avgRevenue);
+}
+
+// Calculate metrics for the previous period to show growth
+async function getPreviousPeriodMetrics(payments, bookings, members, period) {
+    if (period === 'all') return { revenue: 0, bookings: 0, members: 0, avgRevenue: 0 };
+
+    const now = new Date();
+    const periodDays = getDaysInPeriod(period);
+    const endPrevDate = getDateRange(period);
+    const startPrevDate = new Date(endPrevDate.getTime() - periodDays * 24 * 60 * 60 * 1000);
+
+    const prevPayments = payments.filter(p => {
+        const d = new Date(p.created_at || p.date || 0);
+        return d >= startPrevDate && d < endPrevDate;
+    });
+
+    const prevBookings = bookings.filter(b => {
+        const d = new Date(b.created_at || b.booking_date || 0);
+        return d >= startPrevDate && d < endPrevDate;
+    });
+
+    let prevRevenue = 0;
+    prevPayments.forEach(p => prevRevenue += parseFloat(p.amount) || 0);
+    
+    const prevAvgRevenue = periodDays > 0 ? prevRevenue / periodDays : 0;
+
+    // For active members, we'd need historical data which is complex. 
+    // Let's use a simplified approach or just compare to total members if historical is unavailable.
+    const prevActiveMembers = members.filter(m => {
+        const d = new Date(m.created_at || 0);
+        return d < endPrevDate;
+    }).length;
+
+    return {
+        revenue: prevRevenue,
+        bookings: prevBookings.length,
+        members: prevActiveMembers,
+        avgRevenue: prevAvgRevenue
+    };
+}
+
+// Update growth percentage in UI
+function updateGrowthUI(elementId, current, previous) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+
+    let growth = 0;
+    if (previous > 0) {
+        growth = ((current - previous) / previous) * 100;
+    } else if (current > 0) {
+        growth = 100;
+    }
+
+    const isPositive = growth >= 0;
+    el.innerHTML = `<i class="fas fa-arrow-${isPositive ? 'up' : 'down'}"></i> ${Math.abs(Math.round(growth))}%`;
+    
+    const trendContainer = el.parentElement;
+    if (trendContainer) {
+        trendContainer.className = `trend ${isPositive ? '' : 'down'}`;
+    }
+}
+
+// Parse duration string to days
+function parseDurationToDays(durationStr) {
+    if (!durationStr) return 0;
+    const parts = String(durationStr).toLowerCase().split(' ');
+    const value = parseInt(parts[0], 10);
+    const unit = parts[1] || '';
+    if (isNaN(value)) return 0;
+    if (unit.includes('day')) return value;
+    if (unit.includes('week')) return value * 7;
+    if (unit.includes('month')) return value * 30;
+    if (unit.includes('year')) return value * 365;
+    return value;
+}
+
+// Determine if a booking is currently active (verified and unexpired)
+function isBookingActive(booking) {
+    if (!booking || !booking.status) return false;
+    
+    const status = String(booking.status).toLowerCase();
+    if (status !== 'verified') return false;
+    
+    const now = new Date();
+    
+    // If backend provided expires_at use it
+    if (booking.expires_at) {
+        const exp = new Date(booking.expires_at);
+        if (!isNaN(exp.getTime())) {
+            return now <= exp;
+        }
+    }
+    
+    // Fallback compute from booking_date/created_at and duration
+    const startRaw = booking.booking_date || booking.created_at || booking.createdAt || booking.date;
+    const days = parseDurationToDays(booking.duration);
+    
+    if (!startRaw || !days) return false;
+    
+    const start = new Date(startRaw);
+    if (isNaN(start.getTime())) return false;
+    
+    const expiry = new Date(start);
+    expiry.setDate(expiry.getDate() + days);
+    
+    // Be generous with end-of-day
+    const endOfExpiryDay = new Date(expiry);
+    endOfExpiryDay.setHours(23, 59, 59, 999);
+    
+    return now <= endOfExpiryDay;
 }
 
 // Get days in period
@@ -603,6 +732,106 @@ function showNotification(message, type = 'info') {
     }, 5000);
 }
 
+// Export Full Report in various formats
+async function exportFullReport(format) {
+    try {
+        const { bookings, payments } = await loadReportsData();
+        const filteredPayments = filterByPeriod(payments, currentPeriod);
+        const filteredBookings = filterByPeriod(bookings, currentPeriod);
+        
+        const filename = `Gym_Report_${new Date().toISOString().split('T')[0]}`;
+        const periodText = document.getElementById('periodSelect').selectedOptions[0].text;
+
+        if (format === 'pdf') {
+            showNotification('Generating PDF report...', 'info');
+            const element = document.querySelector('.main-content');
+            const opt = {
+                margin: 10,
+                filename: `${filename}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true, backgroundColor: '#0a0a0a' },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+            
+            // Temporary hide sidebar and header for PDF
+            const sidebar = document.querySelector('.sidebar');
+            const topBar = document.querySelector('.top-bar');
+            const dropdown = document.querySelector('.dropdown');
+            
+            if (sidebar) sidebar.style.display = 'none';
+            if (topBar) topBar.style.display = 'none';
+            if (dropdown) dropdown.style.display = 'none';
+            document.querySelector('.main-content').style.margin = '0';
+            document.querySelector('.main-content').style.width = '100%';
+
+            html2pdf().from(element).set(opt).save().then(() => {
+                if (sidebar) sidebar.style.display = 'block';
+                if (topBar) topBar.style.display = 'flex';
+                if (dropdown) dropdown.style.display = 'inline-block';
+                document.querySelector('.main-content').style.margin = '';
+                document.querySelector('.main-content').style.width = '';
+                showNotification('PDF exported successfully!', 'success');
+            });
+
+        } else if (format === 'excel') {
+            showNotification('Generating Excel report...', 'info');
+            const data = filteredPayments.map(p => ({
+                'Date': new Date(p.created_at).toLocaleDateString(),
+                'Client': p.user_name || 'Walk-in',
+                'Package': p.package_name || 'N/A',
+                'Amount': parseFloat(p.amount) || 0,
+                'Payment Method': p.payment_method || 'N/A'
+            }));
+            
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Revenue");
+            
+            // Add bookings sheet
+            const bookingData = filteredBookings.map(b => ({
+                'Date': new Date(b.created_at).toLocaleDateString(),
+                'Client': b.user_name || 'Walk-in',
+                'Package': b.package_name || 'N/A',
+                'Amount': parseFloat(b.amount) || 0,
+                'Status': b.status
+            }));
+            const ws2 = XLSX.utils.json_to_sheet(bookingData);
+            XLSX.utils.book_append_sheet(wb, ws2, "Bookings");
+            
+            XLSX.writeFile(wb, `${filename}.xlsx`);
+            showNotification('Excel exported successfully!', 'success');
+
+        } else if (format === 'docx' || format === 'csv') {
+            // For DOCX we'll use a simplified approach generating a Blob of HTML
+            // For CSV we already have exportData, but let's unify it here
+            if (format === 'csv') {
+                exportData('revenue');
+            } else {
+                showNotification('Generating Word report...', 'info');
+                const content = document.querySelector('.main-content').innerHTML;
+                const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' "+
+                    "xmlns:w='urn:schemas-microsoft-com:office:word' "+
+                    "xmlns='http://www.w3.org/TR/REC-html40'>"+
+                    "<head><meta charset='utf-8'><title>Export HTML to Word</title></head><body>";
+                const footer = "</body></html>";
+                const sourceHTML = header + content + footer;
+                
+                const source = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(sourceHTML);
+                const fileDownload = document.createElement("a");
+                document.body.appendChild(fileDownload);
+                fileDownload.href = source;
+                fileDownload.download = `${filename}.doc`;
+                fileDownload.click();
+                document.body.removeChild(fileDownload);
+                showNotification('Word report exported successfully!', 'success');
+            }
+        }
+    } catch (error) {
+        console.error('Export error:', error);
+        showNotification('Error exporting report', 'warning');
+    }
+}
+
 // Handle logout
 async function handleLogout() {
     if (!confirm('Are you sure you want to logout?')) {
@@ -671,6 +900,28 @@ if (mobileMenuToggle && sidebar) {
 document.addEventListener('DOMContentLoaded', async function() {
     await updateAllCharts();
     
+    // Dropdown toggle
+    const generateReportBtn = document.getElementById('generateReportBtn');
+    const reportDropdown = document.getElementById('reportDropdown');
+    
+    if (generateReportBtn && reportDropdown) {
+        generateReportBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const parent = this.parentElement;
+            const isVisible = reportDropdown.style.display === 'block';
+            reportDropdown.style.display = isVisible ? 'none' : 'block';
+            if (isVisible) parent.classList.remove('active');
+            else parent.classList.add('active');
+        });
+        
+        document.addEventListener('click', function() {
+            reportDropdown.style.display = 'none';
+            if (generateReportBtn.parentElement) {
+                generateReportBtn.parentElement.classList.remove('active');
+            }
+        });
+    }
+
     // Update pending bookings badge
     async function updatePendingBadge() {
         try {

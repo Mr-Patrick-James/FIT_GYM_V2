@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     await loadPaymentSettings(); // Load dynamic GCash settings
     populateBookingsTable();
     populatePackages();
-    initializeChart();
+    await initializeChart();
     updateStats();
     setupEventListeners();
     
@@ -88,6 +88,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             console.log('Bookings data changed, re-rendering...');
             populateBookingsTable();
             updateStats();
+            await initializeChart();
         }
     }, 3000);
     
@@ -313,23 +314,48 @@ function populatePackages() {
 }
 
 // Initialize revenue chart
-function initializeChart() {
-    const ctx = document.getElementById('revenueChart').getContext('2d');
+async function initializeChart() {
+    const canvas = document.getElementById('revenueChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    
+    // Group revenue by month for the last 6 months
+    const monthlyRevenue = {};
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const key = d.toLocaleDateString('en-US', { month: 'short' });
+        monthlyRevenue[key] = 0;
+    }
+
+    allBookings
+        .filter(b => b.status === 'verified')
+        .forEach(b => {
+            const date = new Date(b.booking_date || b.created_at);
+            const key = date.toLocaleDateString('en-US', { month: 'short' });
+            if (monthlyRevenue.hasOwnProperty(key)) {
+                monthlyRevenue[key] += parseFloat(b.amount) || 0;
+            }
+        });
+
+    const labels = Object.keys(monthlyRevenue);
+    const data = Object.values(monthlyRevenue);
     
     const gradient = ctx.createLinearGradient(0, 0, 0, 400);
     gradient.addColorStop(0, 'rgba(255, 255, 255, 0.3)');
     gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
     
-    const months = ['Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov'];
-    const revenue = [8500, 9200, 10100, 11300, 12450, 13500];
+    if (window.revenueChart instanceof Chart) {
+        window.revenueChart.destroy();
+    }
     
     window.revenueChart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: months,
+            labels: labels,
             datasets: [{
                 label: 'Revenue',
-                data: revenue,
+                data: data,
                 borderColor: '#ffffff',
                 backgroundColor: gradient,
                 borderWidth: 4,
@@ -593,34 +619,61 @@ async function updateStats() {
                 return value;
             };
 
-            // Count users who have at least one verified booking that hasn't expired
-            activeMembersCount = allUsers.filter(user => {
-                const userVerifiedBookings = allBookingsData.filter(b => 
-                    String(b.user_id) === String(user.id) && b.status === 'verified'
-                );
+            // Count unique members (registered + walk-ins) who have at least one active verified booking
+            const activeMemberIdentifiers = new Set();
+            
+            allBookingsData.forEach(booking => {
+                if (!booking || !booking.status) return;
                 
-                return userVerifiedBookings.some(booking => {
+                const status = String(booking.status).toLowerCase();
+                if (status !== 'verified') return;
+                
+                const now = new Date();
+                let isActive = false;
+                
+                // If backend provided expires_at use it
+                if (booking.expires_at) {
+                    const exp = new Date(booking.expires_at);
+                    if (!isNaN(exp.getTime())) {
+                        isActive = now <= exp;
+                    }
+                }
+                
+                if (!isActive) {
                     const bookingDate = new Date(booking.booking_date || booking.created_at);
                     const days = parseDurationToDays(booking.duration);
-                    if (days === 0) return false;
-                    const expiryDate = new Date(bookingDate);
-                    expiryDate.setDate(expiryDate.getDate() + days);
-                    return now <= expiryDate;
-                });
-            }).length;
+                    if (days > 0 && !isNaN(bookingDate.getTime())) {
+                        const expiryDate = new Date(bookingDate);
+                        expiryDate.setDate(expiryDate.getDate() + days);
+                        // Be generous with end-of-day
+                        const endOfExpiryDay = new Date(expiryDate);
+                        endOfExpiryDay.setHours(23, 59, 59, 999);
+                        isActive = now <= endOfExpiryDay;
+                    }
+                }
+                
+                if (isActive) {
+                    // Use user_id if available, otherwise email or name for walk-ins
+                    activeMemberIdentifiers.add(booking.user_id || booking.email || booking.name);
+                }
+            });
+            
+            activeMembersCount = activeMemberIdentifiers.size;
         }
     } catch (e) {
         console.error('Error updating active members stat:', e);
     }
     
-    // Update stat cards if they exist
-    const statCards = document.querySelectorAll('.stat-value');
-    if (statCards.length >= 4) {
-        statCards[0].textContent = totalBookings; // Total Bookings This Month
-        statCards[1].textContent = pendingBookings; // Pending Verifications
-        statCards[2].textContent = `₱${monthlyRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`; // Monthly Revenue
-        statCards[3].textContent = activeMembersCount; // Active Members
-    }
+    // Update stat cards
+    const totalBookingsEl = document.getElementById('totalBookingsStat');
+    const pendingVerificationsEl = document.getElementById('pendingVerificationsStat');
+    const monthlyRevenueEl = document.getElementById('monthlyRevenueStat');
+    const activeMembersEl = document.getElementById('activeMembersStat');
+
+    if (totalBookingsEl) totalBookingsEl.textContent = totalBookings;
+    if (pendingVerificationsEl) pendingVerificationsEl.textContent = pendingBookings;
+    if (monthlyRevenueEl) monthlyRevenueEl.textContent = `₱${monthlyRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    if (activeMembersEl) activeMembersEl.textContent = activeMembersCount;
     
     // Update notification badge
     const notificationBadge = document.querySelector('.notification-badge');
