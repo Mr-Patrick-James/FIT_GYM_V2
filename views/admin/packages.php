@@ -310,10 +310,6 @@ $user = getCurrentUser();
             </div>
         </div>
     </div>
-                </form>
-            </div>
-        </div>
-    </div>
 
     <!-- Delete Confirmation Modal -->
     <div class="modal-overlay" id="deleteModal">

@@ -157,8 +157,20 @@ $user = getCurrentUser();
                     </div>
                     
                     <div class="form-group">
-                        <label>Image URL</label>
-                        <input type="url" id="exerciseImageUrl" placeholder="https://images.unsplash.com/...">
+                        <label>Exercise Image</label>
+                        <div id="imageUploadArea" class="file-upload-area" style="padding: 20px; border: 2px dashed var(--dark-border); border-radius: 12px; text-align: center; cursor: pointer; transition: all 0.3s;" onclick="document.getElementById('exerciseImageFile').click()">
+                            <i class="fas fa-cloud-upload-alt" style="font-size: 2rem; color: var(--primary); margin-bottom: 10px;"></i>
+                            <p style="font-size: 0.9rem; margin-bottom: 5px;">Click to upload exercise image</p>
+                            <span style="font-size: 0.75rem; color: var(--dark-text-secondary);">JPG, PNG or WebP</span>
+                            <input type="file" id="exerciseImageFile" accept="image/*" style="display: none;" onchange="handleImagePreview(event)">
+                        </div>
+                        <div id="imagePreviewContainer" style="display: none; margin-top: 15px; position: relative;">
+                            <img id="imagePreview" src="" style="width: 100%; height: 180px; object-fit: cover; border-radius: 12px; border: 1px solid var(--dark-border);">
+                            <button type="button" onclick="removeImagePreview()" style="position: absolute; top: 10px; right: 10px; background: rgba(239, 68, 68, 0.9); color: white; border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer;">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <input type="hidden" id="exerciseImageUrl">
                     </div>
                     
                     <div class="form-group">

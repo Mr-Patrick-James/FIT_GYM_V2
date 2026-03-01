@@ -99,7 +99,29 @@ function openAddExerciseModal() {
     document.getElementById('exerciseModalTitle').textContent = 'Add New Exercise';
     document.getElementById('exerciseForm').reset();
     document.getElementById('exerciseId').value = '';
+    removeImagePreview();
     document.getElementById('exerciseModal').classList.add('active');
+}
+
+function handleImagePreview(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('imagePreview').src = e.target.result;
+            document.getElementById('imagePreviewContainer').style.display = 'block';
+            document.getElementById('imageUploadArea').style.display = 'none';
+        }
+        reader.readAsDataURL(file);
+    }
+}
+
+function removeImagePreview() {
+    document.getElementById('exerciseImageFile').value = '';
+    document.getElementById('exerciseImageUrl').value = '';
+    document.getElementById('imagePreview').src = '';
+    document.getElementById('imagePreviewContainer').style.display = 'none';
+    document.getElementById('imageUploadArea').style.display = 'block';
 }
 
 function closeExerciseModal() {
@@ -119,6 +141,14 @@ async function editExercise(id) {
     document.getElementById('exerciseDescription').value = ex.description || '';
     document.getElementById('exerciseInstructions').value = ex.instructions || '';
     
+    if (ex.image_url) {
+        document.getElementById('imagePreview').src = ex.image_url;
+        document.getElementById('imagePreviewContainer').style.display = 'block';
+        document.getElementById('imageUploadArea').style.display = 'none';
+    } else {
+        removeImagePreview();
+    }
+    
     document.getElementById('exerciseModal').classList.add('active');
 }
 
@@ -131,9 +161,16 @@ async function saveExercise(event) {
     formData.append('name', document.getElementById('exerciseName').value);
     formData.append('category', document.getElementById('exerciseCategory').value);
     formData.append('equipment_id', document.getElementById('equipmentSelect').value);
-    formData.append('image_url', document.getElementById('exerciseImageUrl').value);
     formData.append('description', document.getElementById('exerciseDescription').value);
     formData.append('instructions', document.getElementById('exerciseInstructions').value);
+    
+    // Handle image - either file upload or existing URL
+    const imageFile = document.getElementById('exerciseImageFile').files[0];
+    if (imageFile) {
+        formData.append('image', imageFile);
+    } else {
+        formData.append('image_url', document.getElementById('exerciseImageUrl').value);
+    }
     
     const url = id ? '../../api/exercises/update.php' : '../../api/exercises/create.php';
     

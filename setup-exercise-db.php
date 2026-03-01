@@ -10,7 +10,7 @@ $conn = getDBConnection();
 $sql1 = "
 CREATE TABLE IF NOT EXISTS equipment (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
+    name VARCHAR(100) UNIQUE NOT NULL,
     category ENUM('Strength', 'Cardio', 'Free Weights', 'Functional', 'Other') DEFAULT 'Strength',
     description TEXT,
     image_url VARCHAR(255),
@@ -54,6 +54,19 @@ else echo "<p>❌ Error creating exercises table: " . $conn->error . "</p>";
 if ($conn->query($sql3) === TRUE) echo "<p>✅ Package Exercises table created</p>";
 else echo "<p>❌ Error creating package_exercises table: " . $conn->error . "</p>";
 
+// 1. Deduplicate equipment FIRST before adding the UNIQUE index
+$conn->query("
+    DELETE e1 FROM equipment e1
+    INNER JOIN equipment e2 
+    WHERE e1.id > e2.id AND e1.name = e2.name
+");
+
+// 2. Now safely add the unique constraint (Check if it exists first to avoid syntax errors)
+$indexCheck = $conn->query("SHOW INDEX FROM equipment WHERE Key_name = 'name_unique'");
+if ($indexCheck && $indexCheck->num_rows == 0) {
+    $conn->query("ALTER TABLE equipment ADD UNIQUE INDEX name_unique (name)");
+}
+
 // Insert Default Equipment for Martinez Fitness Gym
 $equipment = [
     ['Dumbbells (Standard Iron)', 'Free Weights', 'Various iron dumbbells for versatile strength training'],
@@ -70,15 +83,28 @@ $equipment = [
     ['Pull-up / Dip Tower', 'Functional', 'Bodyweight station for upper body strength'],
     ['Treadmill', 'Cardio', 'Modern treadmill for cardiovascular endurance'],
     ['Stationary Bike', 'Cardio', 'For low-impact cardio and leg conditioning'],
-    ['Kettlebells (Iron)', 'Functional', 'Traditional iron kettlebells for functional movements']
+    ['Kettlebells (Iron)', 'Functional', 'Traditional iron kettlebells for functional movements'],
+    ['Rowing Machine', 'Cardio', 'Full-body cardiovascular conditioning'],
+    ['Hack Squat Machine', 'Strength', 'Fixed-angle squat for leg development'],
+    ['Hyperextension Bench', 'Strength', 'For lower back and glute isolation'],
+    ['EZ Bar', 'Free Weights', 'Curved bar for bicep and tricep isolation'],
+    ['Adjustable Bench', 'Free Weights', 'Multi-angle bench for various exercises'],
+    ['Medicine Balls', 'Functional', 'Weighted balls for power and core training'],
+    ['Battle Ropes', 'Functional', 'High-intensity metabolic conditioning'],
+    ['Yoga Mats', 'Other', 'For floor exercises and stretching'],
+    ['Foam Rollers', 'Other', 'For recovery and myofascial release'],
+    ['TRX Suspension Trainer', 'Functional', 'Bodyweight resistance training'],
+    ['Elliptical Trainer', 'Cardio', 'Low-impact total body cardio'],
+    ['Squat Rack (Power Cage)', 'Free Weights', 'For heavy squats and barbell work'],
+    ['Decline Bench Press', 'Strength', 'Targets lower pectoral development']
 ];
 
-$stmt = $conn->prepare("INSERT IGNORE INTO equipment (name, category, description) VALUES (?, ?, ?)");
+$stmt = $conn->prepare("INSERT INTO equipment (name, category, description) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE category=VALUES(category), description=VALUES(description)");
 foreach ($equipment as $item) {
     $stmt->bind_param("sss", $item[0], $item[1], $item[2]);
     $stmt->execute();
 }
-echo "<p>✅ Martinez Fitness Gym equipment inserted</p>";
+echo "<p>✅ Martinez Fitness Gym equipment inserted (deduplicated)</p>";
 
 // Get equipment IDs for exercises
 $equipIds = [];

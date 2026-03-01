@@ -68,10 +68,19 @@ async function loadPackageExercises(packageId) {
                 `;
                 
                 item.innerHTML = `
-                    <div>
-                        <div style="font-weight: 700; color: var(--primary);">${ex.name}</div>
-                        <div style="font-size: 0.8rem; color: var(--dark-text-secondary);">
-                            ${ex.sets} Sets × ${ex.reps}
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        ${ex.image_url ? `
+                            <img src="${ex.image_url}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 6px; border: 1px solid var(--dark-border);">
+                        ` : `
+                            <div style="width: 40px; height: 40px; background: rgba(255,255,255,0.05); border-radius: 6px; display: flex; align-items: center; justify-content: center; border: 1px dashed var(--dark-border);">
+                                <i class="fas fa-image" style="font-size: 0.8rem; opacity: 0.5;"></i>
+                            </div>
+                        `}
+                        <div>
+                            <div style="font-weight: 700; color: var(--primary);">${ex.name}</div>
+                            <div style="font-size: 0.8rem; color: var(--dark-text-secondary);">
+                                ${ex.sets} Sets × ${ex.reps}
+                            </div>
                         </div>
                     </div>
                     <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.75rem; background: rgba(239, 68, 68, 0.1); color: #ef4444;" 
