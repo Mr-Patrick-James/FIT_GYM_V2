@@ -3,6 +3,7 @@
 // Sample data - In a real app, this would come from a backend API
 let userBookings = [];
 let selectedFile = null;
+let activeExercisesByPackage = {}; // Cache for package exercises
 
 // Helper to fix receipt URLs for display
 function fixReceiptUrl(url) {
@@ -33,6 +34,119 @@ async function loadUserBookings() {
         console.error('Network error loading bookings:', error);
         userBookings = [];
     }
+}
+
+// Fetch exercises for active packages
+async function loadActiveExercises() {
+    const allBookedPackages = [...new Set(userBookings
+        .filter(b => b.status === 'verified')
+        .map(b => b.package_id)
+        .filter(id => id !== null))];
+
+    if (allBookedPackages.length === 0) return;
+
+    for (const pkgId of allBookedPackages) {
+        try {
+            const response = await fetch(`../../api/packages/get-exercises.php?package_id=${pkgId}`);
+            const data = await response.json();
+            if (data.success) {
+                activeExercisesByPackage[pkgId] = data.data;
+            }
+        } catch (error) {
+            console.error(`Error loading exercises for package ${pkgId}:`, error);
+        }
+    }
+}
+
+// Randomize array with seed string
+function shuffleWithSeed(array, seedString) {
+    // Better hashing for seed (JS implementation of MurmurHash-style)
+    let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+    for (let i = 0, ch; i < seedString.length; i++) {
+        ch = seedString.charCodeAt(i);
+        h1 = Math.imul(h1 ^ ch, 2654435761);
+        h2 = Math.imul(h2 ^ ch, 1597334677);
+    }
+    h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507);
+    h1 ^= Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+    h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507);
+    h2 ^= Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+    
+    let seed = (h1 >>> 0) + (h2 >>> 0);
+    const shuffled = [...array];
+    
+    // Mulberry32 seeded RNG
+    const mulberry32 = (a) => {
+        return function() {
+          let t = a += 0x6D2B79F5;
+          t = Math.imul(t ^ t >>> 15, t | 1);
+          t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+          return ((t ^ t >>> 14) >>> 0) / 4294967296;
+        }
+    };
+
+    const nextRand = mulberry32(seed);
+
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(nextRand() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+}
+
+// Get a random label and focus category from the exercises in the package based on a seed
+function getSeededWorkout(dateStr, pkgId, exercises = []) {
+    const categoryLabels = {
+        'Chest': "🎯 Chest Focus",
+        'Back': "🦅 Back Day",
+        'Legs': "🦵 Leg Day",
+        'Shoulders': "🛡️ Shoulder Press",
+        'Arms': "🦾 Arms & Biceps",
+        'Core': "💪 Core Strength",
+        'Cardio': "🔥 Cardio Burn",
+        'Full Body': "⚡ Full Body"
+    };
+
+    // Fallback if no specific exercises/categories found
+    const defaultLabels = [
+        { title: "🏋️ Upper Body", category: null },
+        { title: "🦵 Leg Day", category: 'Legs' },
+        { title: "🔥 Cardio Session", category: 'Cardio' },
+        { title: "💪 Core Workout", category: 'Core' },
+        { title: "⚡ Full Body", category: 'Full Body' },
+        { title: "💥 Strength Training", category: null },
+        { title: "🏆 Fitness Routine", category: null }
+    ];
+
+    let availableWorkouts = [];
+    
+    if (exercises && exercises.length > 0) {
+        // Get unique categories present in the package
+        const categories = [...new Set(exercises.map(ex => ex.category))];
+        availableWorkouts = categories.map(cat => ({
+            title: categoryLabels[cat] || `🏋️ ${cat} Routine`,
+            category: cat
+        }));
+    }
+
+    if (availableWorkouts.length === 0) {
+        availableWorkouts = defaultLabels;
+    }
+    
+    // Better hashing for seed
+    let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+    const combined = dateStr + pkgId;
+    for (let i = 0, ch; i < combined.length; i++) {
+        ch = combined.charCodeAt(i);
+        h1 = Math.imul(h1 ^ ch, 2654435761);
+        h2 = Math.imul(h2 ^ ch, 1597334677);
+    }
+    let seed = (h1 >>> 0) + (h2 >>> 0);
+    
+    const t = (seed += 0x6D2B79F5);
+    const rand = ((Math.imul(t ^ t >>> 15, t | 1) ^ t >>> 14) >>> 0) / 4294967296;
+    
+    return availableWorkouts[Math.floor(rand * availableWorkouts.length)];
 }
 
 // Package data - load from database
@@ -81,6 +195,7 @@ async function initDashboard() {
     try {
         await loadPackagesData();
         await loadUserData(); // Await this to ensure bookings are loaded before populating UI
+        await loadActiveExercises(); // Fetch exercises for active packages
         await loadPaymentSettings(); // Load dynamic GCash settings
         populatePackages();
         updateStats();
@@ -283,6 +398,14 @@ async function loadUserData() {
 let userCalendar = null;
 let userViewMode = 'table';
 
+// Helper to format date to YYYY-MM-DD local
+function formatDateISO(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
 function getUserCalendarEvents() {
     const events = [];
     
@@ -290,8 +413,17 @@ function getUserCalendarEvents() {
         const startStr = b.booking_date || b.date || b.created_at;
         if (!startStr) return;
         
-        const startDate = new Date(startStr);
+        // Parse the start date as local midnight
+        const parts = startStr.split('-');
+        let startDate;
+        if (parts.length === 3) {
+            startDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+        } else {
+            startDate = new Date(startStr);
+        }
+        
         const pkgName = b.package_name || b.package || 'Gym Session';
+        const pkgId = b.package_id;
         
         // 1. The main booking event (on the start day)
         events.push({
@@ -314,7 +446,7 @@ function getUserCalendarEvents() {
                 events.push({
                     id: `period-${b.id}`,
                     start: startStr,
-                    end: endDate.toISOString().split('T')[0],
+                    end: formatDateISO(endDate),
                     display: 'background',
                     color: 'rgba(34, 197, 94, 0.05)',
                     allDay: true
@@ -327,10 +459,55 @@ function getUserCalendarEvents() {
                 events.push({
                     id: `expiry-${b.id}`,
                     title: `Ends: ${pkgName}`,
-                    start: endDate.toISOString().split('T')[0],
+                    start: formatDateISO(endDate),
                     allDay: true,
                     classNames: ['event-status-rejected'], // Red-ish to indicate end
                     extendedProps: { ...b, type: 'expiry' }
+                });
+
+                // 3. Add daily routines if exercises are available
+                if (pkgId && activeExercisesByPackage[pkgId]) {
+                    const current = new Date(startDate);
+                    const pkgExercises = activeExercisesByPackage[pkgId];
+                    // Add routines for each day of the active period
+                    for (let i = 0; i < days; i++) {
+                        const dateStr = formatDateISO(current);
+                        const workout = getSeededWorkout(dateStr, pkgId, pkgExercises);
+                        events.push({
+                            id: `routine-${pkgId}-${dateStr}`,
+                            title: workout.title,
+                            start: dateStr,
+                            allDay: true,
+                            classNames: ['event-routine'],
+                            extendedProps: { 
+                                type: 'routine',
+                                package_id: pkgId,
+                                package_name: pkgName,
+                                date: dateStr,
+                                focus_category: workout.category
+                            }
+                        });
+                        current.setDate(current.getDate() + 1);
+                    }
+                }
+            } else if (days === 1 && pkgId && activeExercisesByPackage[pkgId]) {
+                const pkgExercises = activeExercisesByPackage[pkgId];
+                const dateStr = startStr;
+                const workout = getSeededWorkout(dateStr, pkgId, pkgExercises);
+                // For 1-day packages, just add one routine event
+                events.push({
+                    id: `routine-${pkgId}-${dateStr}`,
+                    title: workout.title,
+                    start: dateStr,
+                    allDay: true,
+                    classNames: ['event-routine'],
+                    extendedProps: { 
+                        type: 'routine',
+                        package_id: pkgId,
+                        package_name: pkgName,
+                        date: dateStr,
+                        focus_category: workout.category
+                    }
                 });
             }
         }
@@ -352,10 +529,20 @@ function initUserCalendar() {
         height: 'auto',
         events: getUserCalendarEvents(),
         eventClick: (info) => {
+            const type = info.event.extendedProps.type;
             const eventId = info.event.id;
-            const bookingId = eventId.split('-')[1]; // Get '123' from 'booking-123'
-            if (bookingId) {
-                viewBookingDetails(bookingId);
+            
+            if (type === 'routine') {
+                 const pkgId = info.event.extendedProps.package_id;
+                 const pkgName = info.event.extendedProps.package_name;
+                 const date = info.event.extendedProps.date;
+                 const focusCategory = info.event.extendedProps.focus_category;
+                 showExercisePlan(pkgId, pkgName, date, focusCategory);
+             } else {
+                const bookingId = eventId.split('-')[1]; // Get '123' from 'booking-123'
+                if (bookingId) {
+                    viewBookingDetails(bookingId);
+                }
             }
         }
     });
@@ -508,7 +695,7 @@ function populatePackages() {
 }
 
 // Show exercise plan for a package
-async function showExercisePlan(packageId, packageName) {
+async function showExercisePlan(packageId, packageName, date = null, focusCategory = null) {
     const modal = document.getElementById('exercisePlanModal');
     const content = document.getElementById('exercisePlanContent');
     const title = document.getElementById('exercisePlanTitle');
@@ -516,8 +703,8 @@ async function showExercisePlan(packageId, packageName) {
     
     if (!modal || !content) return;
     
-    title.textContent = `${packageName} - Exercise Plan`;
-    subtitle.textContent = `A curated list of exercises and equipment for this membership`;
+    title.textContent = date ? `Workout for ${formatDate(date)}` : `${packageName} - Exercise Plan`;
+    subtitle.textContent = date ? `Daily focus: ${focusCategory || 'General'} workout` : `A curated list of exercises and equipment for this membership`;
     
     // Show loading state
     content.innerHTML = '<div class="no-exercises"><i class="fas fa-spinner fa-spin"></i><p>Loading exercise plan...</p></div>';
@@ -528,8 +715,29 @@ async function showExercisePlan(packageId, packageName) {
         const data = await response.json();
         
         if (data.success && data.data.length > 0) {
+            let exercises = data.data;
+            
+            // Filter by focus category if provided
+            if (focusCategory) {
+                const filtered = exercises.filter(ex => ex.category === focusCategory);
+                // If we found exercises for this focus, use them
+                if (filtered.length > 0) {
+                    exercises = filtered;
+                }
+                // If no exercises for this specific focus, fallback to full list
+            }
+            
+            // Randomize if date is provided
+            if (date) {
+                exercises = shuffleWithSeed(exercises, date + packageId);
+                // Limit to 6-8 exercises if there are many
+                if (exercises.length > 8) {
+                    exercises = exercises.slice(0, 8);
+                }
+            }
+            
             content.innerHTML = '';
-            data.data.forEach(ex => {
+            exercises.forEach(ex => {
                 const item = document.createElement('div');
                 item.className = 'exercise-item';
                 
@@ -874,8 +1082,17 @@ function updateStats() {
     }
 }
 
-// Format date
+// Format date for display
 function formatDate(dateString) {
+    if (!dateString) return '';
+    
+    // Handle YYYY-MM-DD specifically to avoid timezone shifts
+    const parts = String(dateString).split('-');
+    if (parts.length === 3 && parts[0].length === 4) {
+        const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+        return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    }
+    
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 }
@@ -1033,16 +1250,41 @@ function viewBookingDetails(bookingId) {
     const booking = userBookings.find(b => String(b.id) === String(bookingId));
     if (!booking) return;
     
-    document.getElementById('detailPackage').textContent = booking.package_name || booking.package;
-    document.getElementById('detailDate').textContent = formatDate(booking.booking_date || booking.date || booking.createdAt);
-    document.getElementById('detailAmount').textContent = '₱' + parseFloat(booking.amount).toFixed(2);
+    // Update basic info
+    document.getElementById('detailRef').textContent = `REF: #${String(booking.id).padStart(6, '0')}`;
+    document.getElementById('detailPackage').querySelector('span').textContent = booking.package_name || booking.package;
+    document.getElementById('detailDate').querySelector('span').textContent = formatDate(booking.booking_date || booking.date || booking.createdAt);
+    document.getElementById('detailAmount').querySelector('span').textContent = '₱' + parseFloat(booking.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    document.getElementById('detailContact').querySelector('span').textContent = booking.contact || 'No contact provided';
     
+    // Status Badge
     const statusBadge = document.createElement('span');
     statusBadge.className = `status-badge status-${booking.status}`;
     statusBadge.textContent = booking.status.charAt(0).toUpperCase() + booking.status.slice(1);
     document.getElementById('detailStatus').innerHTML = '';
     document.getElementById('detailStatus').appendChild(statusBadge);
     
+    // Handle Expiry
+    const expiryContainer = document.getElementById('detailExpiryContainer');
+    const expiryValue = document.getElementById('detailExpiry').querySelector('span');
+    if (booking.status === 'verified' && booking.duration) {
+        expiryContainer.style.display = 'block';
+        const expiryDate = booking.expires_at ? new Date(booking.expires_at) : new Date(new Date(booking.booking_date || booking.created_at).getTime() + parseDurationToDays(booking.duration) * 86400000);
+        expiryValue.textContent = formatDate(expiryDate);
+    } else {
+        expiryContainer.style.display = 'none';
+    }
+
+    // Handle Notes
+    const notesSection = document.getElementById('detailNotesSection');
+    if (booking.notes && booking.notes.trim() !== '') {
+        notesSection.style.display = 'block';
+        document.getElementById('detailNotes').textContent = booking.notes;
+    } else {
+        notesSection.style.display = 'none';
+    }
+    
+    // Handle Receipt
     const receiptUrl = booking.receipt_full_url || booking.receipt_url;
     if (receiptUrl) {
         const fixedUrl = fixReceiptUrl(receiptUrl);
@@ -1050,10 +1292,8 @@ function viewBookingDetails(bookingId) {
         document.getElementById('receiptSection').style.display = 'block';
         
         // Make image clickable
-        const receiptImg = document.getElementById('detailReceipt');
-        receiptImg.style.cursor = 'zoom-in';
-        receiptImg.title = 'Click to view full image';
-        receiptImg.onclick = () => window.open(fixedUrl, '_blank');
+        const receiptWrapper = document.getElementById('receiptImgWrapper');
+        receiptWrapper.onclick = () => window.open(fixedUrl, '_blank');
     } else {
         document.getElementById('receiptSection').style.display = 'none';
     }

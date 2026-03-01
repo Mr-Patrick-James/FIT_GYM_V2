@@ -360,31 +360,182 @@ function getSetting($key, $default = '', $settings = []) {
         /* Event Styles */
         .fc-event {
             border: none !important;
-            border-radius: 6px !important;
-            padding: 2px 4px !important;
-            font-size: 0.75rem !important;
+            border-radius: 8px !important;
+            padding: 4px 8px !important;
+            font-size: 0.8rem !important;
             font-weight: 600 !important;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            margin: 1px 4px !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            margin: 2px 4px !important;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+        .fc-event:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            filter: brightness(1.2);
+            z-index: 5;
         }
         .event-status-pending { 
-            background-color: rgba(245, 158, 11, 0.2) !important; 
-            border-left: 3px solid var(--warning) !important;
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.2) 100%) !important; 
+            border-left: 4px solid var(--warning) !important;
             color: var(--warning) !important; 
+            backdrop-filter: blur(4px);
         }
         .event-status-verified { 
-            background-color: rgba(34, 197, 94, 0.2) !important; 
-            border-left: 3px solid var(--success) !important;
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(34, 197, 94, 0.2) 100%) !important; 
+            border-left: 4px solid var(--success) !important;
             color: var(--success) !important; 
+            backdrop-filter: blur(4px);
         }
         .event-status-rejected { 
-            background-color: rgba(239, 68, 68, 0.2) !important; 
-            border-left: 3px solid #ef4444 !important;
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.2) 100%) !important; 
+            border-left: 4px solid #ef4444 !important;
             color: #ef4444 !important; 
+            backdrop-filter: blur(4px);
+        }
+        .event-routine {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.12) 100%) !important;
+            border-left: 4px solid var(--primary) !important;
+            color: var(--primary) !important;
+            cursor: pointer;
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.05) !important;
+            border-left: 4px solid var(--primary) !important;
         }
         
         .fc-h-event .fc-event-main {
             color: inherit !important;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .fc-daygrid-event-dot {
+            display: none !important;
+        }
+        /* Modern Booking Details Modal */
+        #bookingDetailsModal .modal {
+            max-width: 550px;
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+            border-radius: var(--radius-xl);
+        }
+        .booking-details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+        .booking-detail-item {
+            background: rgba(255, 255, 255, 0.02);
+            padding: 16px;
+            border-radius: var(--radius-lg);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: var(--transition);
+        }
+        .booking-detail-item:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: var(--primary);
+        }
+        .detail-label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--dark-text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+        .detail-value {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--dark-text);
+        }
+        .detail-value i {
+            color: var(--primary);
+            width: 16px;
+            text-align: center;
+        }
+        .receipt-preview-container {
+            margin-top: 24px;
+            border-top: 1px solid var(--dark-border);
+            padding-top: 24px;
+        }
+        .receipt-preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .receipt-preview-header h4 {
+            font-size: 0.9rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .receipt-preview-header h4 i {
+            color: var(--success);
+        }
+        .receipt-img-wrapper {
+            position: relative;
+            width: 100%;
+            height: 200px;
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            border: 1px solid var(--dark-border);
+            cursor: zoom-in;
+            background: rgba(0,0,0,0.2);
+        }
+        .receipt-img-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            transition: transform 0.3s;
+        }
+        .receipt-img-wrapper:hover img {
+            transform: scale(1.05);
+        }
+        .receipt-img-wrapper::after {
+            content: '\f00e';
+            font-family: 'Font Awesome 5 Free';
+            font-weight: 900;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2rem;
+            color: #fff;
+            opacity: 0;
+            transition: var(--transition);
+            pointer-events: none;
+            text-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+        .receipt-img-wrapper:hover::after {
+            opacity: 1;
+        }
+        .notes-section {
+            margin-top: 20px;
+            padding: 16px;
+            background: rgba(245, 158, 11, 0.05);
+            border-left: 4px solid var(--warning);
+            border-radius: var(--radius-md);
+        }
+        .notes-label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--warning);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+        }
+        .notes-text {
+            font-size: 0.9rem;
+            color: var(--dark-text);
+            line-height: 1.5;
+            font-style: italic;
         }
     </style>
     <style>
@@ -1114,44 +1265,87 @@ function getSetting($key, $default = '', $settings = []) {
     <!-- Booking Details Modal -->
     <div class="modal-overlay" id="bookingDetailsModal">
         <div class="modal">
-            <div class="modal-header">
-                <h3>Booking Details</h3>
+            <div class="modal-header" style="padding: 24px 32px; border-bottom: 1px solid var(--dark-border);">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="width: 40px; height: 40px; background: var(--glass); border-radius: 10px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--glass-border);">
+                        <i class="fas fa-file-invoice" style="color: var(--primary);"></i>
+                    </div>
+                    <div>
+                        <h3 style="margin: 0;">Booking Details</h3>
+                        <span id="detailRef" style="font-size: 0.75rem; color: var(--dark-text-secondary); font-weight: 700;">REF: #000000</span>
+                    </div>
+                </div>
                 <button class="close-modal" onclick="closeBookingDetailsModal()">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             
-            <div class="modal-body">
-                <div class="detail-grid">
-                    <div class="detail-group">
-                        <label>Package</label>
-                        <div class="value" id="detailPackage">-</div>
+            <div class="modal-body" style="padding: 32px;">
+                <div class="booking-details-grid">
+                    <div class="booking-detail-item">
+                        <span class="detail-label">Package Name</span>
+                        <div class="detail-value" id="detailPackage">
+                            <i class="fas fa-dumbbell"></i>
+                            <span>-</span>
+                        </div>
                     </div>
-                    <div class="detail-group">
-                        <label>Booking Date</label>
-                        <div class="value" id="detailDate">-</div>
+                    <div class="booking-detail-item">
+                        <span class="detail-label">Status</span>
+                        <div id="detailStatus">
+                            <!-- Badge here -->
+                        </div>
                     </div>
-                    <div class="detail-group">
-                        <label>Amount</label>
-                        <div class="value" id="detailAmount">-</div>
+                    <div class="booking-detail-item">
+                        <span class="detail-label">Start Date</span>
+                        <div class="detail-value" id="detailDate">
+                            <i class="fas fa-calendar-alt"></i>
+                            <span>-</span>
+                        </div>
                     </div>
-                    <div class="detail-group">
-                        <label>Status</label>
-                        <div class="value" id="detailStatus">-</div>
+                    <div class="booking-detail-item" id="detailExpiryContainer">
+                        <span class="detail-label">Expiry Date</span>
+                        <div class="detail-value" id="detailExpiry">
+                            <i class="fas fa-calendar-times"></i>
+                            <span>-</span>
+                        </div>
                     </div>
+                    <div class="booking-detail-item">
+                        <span class="detail-label">Amount Paid</span>
+                        <div class="detail-value" id="detailAmount" style="color: var(--primary); font-size: 1.25rem; font-weight: 800;">
+                            <i class="fas fa-tag"></i>
+                            <span>₱0.00</span>
+                        </div>
+                    </div>
+                    <div class="booking-detail-item">
+                        <span class="detail-label">Contact Info</span>
+                        <div class="detail-value" id="detailContact">
+                            <i class="fas fa-phone-alt"></i>
+                            <span>-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="detailNotesSection" class="notes-section" style="display: none; margin-bottom: 24px;">
+                    <span class="notes-label">Admin/User Notes</span>
+                    <p class="notes-text" id="detailNotes">-</p>
                 </div>
                 
-                <div class="receipt-section" id="receiptSection" style="display: none;">
-                    <h4><i class="fas fa-receipt"></i> Payment Receipt</h4>
-                    <img id="detailReceipt" src="" alt="Payment Receipt" class="receipt-image">
+                <div class="receipt-preview-container" id="receiptSection" style="display: none;">
+                    <div class="receipt-preview-header">
+                        <h4><i class="fas fa-receipt"></i> Payment Receipt</h4>
+                        <span style="font-size: 0.75rem; color: var(--dark-text-secondary);"><i class="fas fa-info-circle"></i> Click to enlarge</span>
+                    </div>
+                    <div class="receipt-img-wrapper" id="receiptImgWrapper">
+                        <img id="detailReceipt" src="" alt="Payment Receipt">
+                    </div>
                 </div>
-                
-                <div class="modal-actions">
-                    <button class="btn btn-secondary" onclick="closeBookingDetailsModal()">
-                        <i class="fas fa-times"></i>
-                        <span>Close</span>
-                    </button>
-                </div>
+            </div>
+
+            <div class="modal-footer" style="padding: 24px 32px; border-top: 1px solid var(--dark-border); display: flex; justify-content: flex-end;">
+                <button class="btn btn-secondary" onclick="closeBookingDetailsModal()" style="padding: 10px 24px;">
+                    <i class="fas fa-times" style="margin-right: 8px;"></i>
+                    <span>Close</span>
+                </button>
             </div>
         </div>
     </div>
