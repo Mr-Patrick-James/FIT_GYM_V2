@@ -56,6 +56,7 @@ $user = getCurrentUser();
             <li><a href="payments.php"><i class="fas fa-money-check"></i> <span>Payments</span></a></li>
             <li><a href="members.php"><i class="fas fa-users"></i> <span>Members</span></a></li>
             <li><a href="packages.php" class="active"><i class="fas fa-dumbbell"></i> <span>Packages</span></a></li>
+            <li><a href="exercises.php"><i class="fas fa-running"></i> <span>Exercises</span></a></li>
             <li><a href="report.php"><i class="fas fa-file-invoice-dollar"></i> <span>Reports</span></a></li>
             <li><a href="settings.php"><i class="fas fa-cog"></i> <span>Settings</span></a></li>
         </ul>
@@ -248,6 +249,67 @@ $user = getCurrentUser();
                             Save Package
                         </button>
                     </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Exercise Management Modal -->
+    <div class="modal-overlay" id="exerciseModal">
+        <div class="modal" style="max-width: 800px;">
+            <div class="modal-header">
+                <div>
+                    <h3 id="exerciseModalTitle">Manage Package Exercises</h3>
+                    <p id="exerciseModalSubtitle" style="font-size: 0.85rem; color: var(--dark-text-secondary);"></p>
+                </div>
+                <button class="close-modal" onclick="closeExerciseModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body" style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 24px; padding: 24px;">
+                <!-- Add Exercise Form -->
+                <div style="border-right: 1px solid var(--dark-border); padding-right: 24px;">
+                    <h4 style="margin-bottom: 16px; color: var(--primary);">Add Exercise</h4>
+                    <form id="addExerciseForm">
+                        <div class="form-group">
+                            <label>Select Exercise</label>
+                            <select id="exerciseSelect" required>
+                                <option value="">Choose an exercise...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Sets</label>
+                            <input type="number" id="exerciseSets" value="3" min="1" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Reps / Duration</label>
+                            <input type="text" id="exerciseReps" placeholder="e.g. 10-12 or 30 secs" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Special Notes</label>
+                            <textarea id="exerciseNotes" rows="2" placeholder="Optional notes..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">
+                            <i class="fas fa-plus"></i>
+                            Add to Plan
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Current Exercises List -->
+                <div>
+                    <h4 style="margin-bottom: 16px; color: var(--primary);">Current Plan</h4>
+                    <div id="packageExercisesList" style="max-height: 400px; overflow-y: auto;">
+                        <!-- Exercises populated by JS -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="padding: 16px 24px; border-top: 1px solid var(--dark-border); text-align: right;">
+                <button class="btn btn-secondary" onclick="closeExerciseModal()">Close</button>
+            </div>
+        </div>
+    </div>
                 </form>
             </div>
         </div>

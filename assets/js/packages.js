@@ -5,6 +5,163 @@ let lastStatsJSON = '';
 let currentEditingPackage = null;
 let packageToDelete = null;
 
+// Manage Exercises Logic
+let currentPackageId = null;
+
+async function openExerciseModal(packageId, packageName) {
+    currentPackageId = packageId;
+    document.getElementById('exerciseModalSubtitle').textContent = `Package: ${packageName}`;
+    document.getElementById('exerciseModal').classList.add('active');
+    
+    await loadAllExercises();
+    await loadPackageExercises(packageId);
+}
+
+function closeExerciseModal() {
+    document.getElementById('exerciseModal').classList.remove('active');
+    currentPackageId = null;
+}
+
+async function loadAllExercises() {
+    try {
+        const response = await fetch('../../api/exercises/get-all.php');
+        const data = await response.json();
+        
+        const select = document.getElementById('exerciseSelect');
+        select.innerHTML = '<option value="">Choose an exercise...</option>';
+        
+        if (data.success) {
+            data.data.forEach(ex => {
+                const option = document.createElement('option');
+                option.value = ex.id;
+                option.textContent = `${ex.name} (${ex.category})`;
+                select.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Error loading exercises:', error);
+    }
+}
+
+async function loadPackageExercises(packageId) {
+    const list = document.getElementById('packageExercisesList');
+    list.innerHTML = '<div style="text-align: center; padding: 20px;"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
+    
+    try {
+        const response = await fetch(`../../api/packages/get-exercises.php?package_id=${packageId}`);
+        const data = await response.json();
+        
+        list.innerHTML = '';
+        
+        if (data.success && data.data.length > 0) {
+            data.data.forEach(ex => {
+                const item = document.createElement('div');
+                item.style.cssText = `
+                    background: rgba(255,255,255,0.03);
+                    border: 1px solid var(--dark-border);
+                    border-radius: 8px;
+                    padding: 12px;
+                    margin-bottom: 10px;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                `;
+                
+                item.innerHTML = `
+                    <div>
+                        <div style="font-weight: 700; color: var(--primary);">${ex.name}</div>
+                        <div style="font-size: 0.8rem; color: var(--dark-text-secondary);">
+                            ${ex.sets} Sets × ${ex.reps}
+                        </div>
+                    </div>
+                    <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.75rem; background: rgba(239, 68, 68, 0.1); color: #ef4444;" 
+                        onclick="removeExerciseFromPackage(${ex.id})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                `;
+                list.appendChild(item);
+            });
+        } else {
+            list.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--dark-text-secondary);">No exercises in this plan yet.</div>';
+        }
+    } catch (error) {
+        console.error('Error loading package exercises:', error);
+        list.innerHTML = '<div style="text-align: center; padding: 20px; color: #ef4444;">Error loading plan.</div>';
+    }
+}
+
+async function addExerciseToPackage(event) {
+    event.preventDefault();
+    
+    const exerciseId = document.getElementById('exerciseSelect').value;
+    const sets = document.getElementById('exerciseSets').value;
+    const reps = document.getElementById('exerciseReps').value;
+    const notes = document.getElementById('exerciseNotes').value;
+    
+    if (!exerciseId) return;
+    
+    const formData = new FormData();
+    formData.append('package_id', currentPackageId);
+    formData.append('exercise_id', exerciseId);
+    formData.append('sets', sets);
+    formData.append('reps', reps);
+    formData.append('notes', notes);
+    
+    try {
+        const response = await fetch('../../api/packages/add-exercise.php', {
+            method: 'POST',
+            body: formData
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+            showNotification('Exercise added!', 'success');
+            document.getElementById('addExerciseForm').reset();
+            loadPackageExercises(currentPackageId);
+        } else {
+            showNotification(data.message, 'warning');
+        }
+    } catch (error) {
+        console.error('Error adding exercise:', error);
+        showNotification('Error adding exercise', 'warning');
+    }
+}
+
+async function removeExerciseFromPackage(exerciseId) {
+    if (!confirm('Remove this exercise from the package plan?')) return;
+    
+    const formData = new FormData();
+    formData.append('package_id', currentPackageId);
+    formData.append('exercise_id', exerciseId);
+    
+    try {
+        const response = await fetch('../../api/packages/remove-exercise.php', {
+            method: 'POST',
+            body: formData
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+            showNotification('Exercise removed!', 'success');
+            loadPackageExercises(currentPackageId);
+        } else {
+            showNotification(data.message, 'warning');
+        }
+    } catch (error) {
+        console.error('Error removing exercise:', error);
+        showNotification('Error removing exercise', 'warning');
+    }
+}
+
+// Initial setup on load
+document.addEventListener('DOMContentLoaded', () => {
+    // Check if we are on the packages page to add form listener
+    const form = document.getElementById('addExerciseForm');
+    if (form) {
+        form.addEventListener('submit', addExerciseToPackage);
+    }
+});
+
 // Load packages from database
 async function loadPackages() {
     try {
@@ -197,6 +354,10 @@ async function populatePackagesGrid(forcedStats = null) {
                     </div>
                 </div>
                 <div style="display: flex; gap: 8px;">
+                    <button class="btn btn-secondary" style="flex: 1; padding: 8px 12px; font-size: 0.85rem;" onclick="openExerciseModal(${pkg.id}, '${pkg.name}')">
+                        <i class="fas fa-list-ul"></i>
+                        Plan
+                    </button>
                     <button class="btn btn-secondary" style="flex: 1; padding: 8px 12px; font-size: 0.85rem;" onclick="editPackage(${pkg.id})">
                         <i class="fas fa-edit"></i>
                         Edit
