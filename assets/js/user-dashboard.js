@@ -492,14 +492,13 @@ function populatePackages() {
             </div>
             <div class="package-footer">
                 <div class="package-price-large">${pkg.price}</div>
-                <div style="display: flex; gap: 10px; width: 100%;">
-                    <button class="btn btn-secondary" onclick="showExercisePlan(${pkg.id}, '${pkg.name}')" style="flex: 1;">
+                <div class="package-btn-group">
+                    <button class="btn btn-exercise" onclick="showExercisePlan(${pkg.id}, '${pkg.name}')" title="View Exercises">
                         <i class="fas fa-list-ul"></i>
-                        <span>Exercises</span>
                     </button>
-                    <button class="btn btn-primary" onclick="selectPackageForBooking('${pkg.name}')" style="flex: 2;">
+                    <button class="btn btn-book" onclick="selectPackageForBooking('${pkg.name}')">
                         <i class="fas fa-calendar-plus"></i>
-                        <span>Book Now</span>
+                        <span style="white-space: nowrap;">Book Now</span>
                     </button>
                 </div>
             </div>

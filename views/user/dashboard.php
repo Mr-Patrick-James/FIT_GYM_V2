@@ -388,6 +388,142 @@ function getSetting($key, $default = '', $settings = []) {
         }
     </style>
     <style>
+        /* Compact & Sleek Package Card Styles */
+        #packagesGrid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+            gap: 20px;
+            padding: 10px;
+        }
+
+        .package-card-large {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--dark-border);
+            border-radius: 16px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            transition: all 0.3s ease;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .package-card-large:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+            background: rgba(255, 255, 255, 0.05);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .package-header {
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .package-header h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--dark-text);
+            margin: 0;
+        }
+
+        .package-tag {
+            background: rgba(255,255,255,0.05);
+            color: var(--primary);
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .package-description {
+            color: var(--dark-text-secondary);
+            font-size: 0.85rem;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+
+        .package-details {
+            margin-bottom: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .package-detail-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--dark-text-secondary);
+            font-size: 0.85rem;
+            padding: 8px 12px;
+            background: rgba(255,255,255,0.02);
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.03);
+        }
+
+        .package-detail-item i {
+            color: var(--primary);
+            font-size: 0.9rem;
+            width: 16px;
+        }
+
+        .package-footer {
+            margin-top: auto;
+            padding-top: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .package-price-large {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--dark-text);
+        }
+
+        .package-btn-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .package-btn-group .btn {
+            height: 40px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            padding: 0 16px;
+        }
+
+        .btn-exercise {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--dark-border);
+            color: var(--dark-text);
+            width: 40px;
+            padding: 0 !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-book {
+            background: var(--primary);
+            border: none;
+            color: var(--dark-bg);
+        }
+
+        .btn-book:hover {
+            background: #fff;
+            transform: translateY(-2px);
+        }
+
         /* Exercise Plan Styles */
         .exercise-item {
             background: rgba(255,255,255,0.03);
