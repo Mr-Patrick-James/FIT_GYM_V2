@@ -461,14 +461,106 @@ function populatePackages() {
             </div>
             <div class="package-footer">
                 <div class="package-price-large">${pkg.price}</div>
-                <button class="btn btn-primary" onclick="selectPackageForBooking('${pkg.name}')">
-                    <i class="fas fa-calendar-plus"></i>
-                    <span>Book Now</span>
-                </button>
+                <div style="display: flex; gap: 10px; width: 100%;">
+                    <button class="btn btn-secondary" onclick="showExercisePlan(${pkg.id}, '${pkg.name}')" style="flex: 1;">
+                        <i class="fas fa-list-ul"></i>
+                        <span>Exercises</span>
+                    </button>
+                    <button class="btn btn-primary" onclick="selectPackageForBooking('${pkg.name}')" style="flex: 2;">
+                        <i class="fas fa-calendar-plus"></i>
+                        <span>Book Now</span>
+                    </button>
+                </div>
             </div>
         `;
         grid.appendChild(packageCard);
     });
+}
+
+// Show exercise plan for a package
+async function showExercisePlan(packageId, packageName) {
+    const modal = document.getElementById('exercisePlanModal');
+    const content = document.getElementById('exercisePlanContent');
+    const title = document.getElementById('exercisePlanTitle');
+    const subtitle = document.getElementById('exercisePlanSubtitle');
+    
+    if (!modal || !content) return;
+    
+    title.textContent = `${packageName} - Exercise Plan`;
+    subtitle.textContent = `A curated list of exercises and equipment for this membership`;
+    
+    // Show loading state
+    content.innerHTML = '<div class="no-exercises"><i class="fas fa-spinner fa-spin"></i><p>Loading exercise plan...</p></div>';
+    modal.classList.add('active');
+    
+    try {
+        const response = await fetch(`../../api/packages/get-exercises.php?package_id=${packageId}`);
+        const data = await response.json();
+        
+        if (data.success && data.data.length > 0) {
+            content.innerHTML = '';
+            data.data.forEach(ex => {
+                const item = document.createElement('div');
+                item.className = 'exercise-item';
+                
+                // Determine icon based on category
+                let icon = 'dumbbell';
+                if (ex.category === 'Cardio') icon = 'running';
+                if (ex.category === 'Core') icon = 'user-ninja';
+                if (ex.category === 'Legs') icon = 'walking';
+                
+                item.innerHTML = `
+                    <div class="exercise-icon">
+                        <i class="fas fa-${icon}"></i>
+                    </div>
+                    <div class="exercise-info">
+                        <span class="exercise-category">${ex.category}</span>
+                        <h4>${ex.name}</h4>
+                        
+                        ${ex.image_url ? `
+                            <img src="${ex.image_url}" alt="${ex.name}" class="exercise-image" 
+                                onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                            <div class="exercise-image-fallback" style="display: none;">
+                                <i class="fas fa-image" style="font-size: 2rem;"></i>
+                            </div>
+                        ` : ''}
+                        
+                        <p class="exercise-description">${ex.description}</p>
+                        <div class="exercise-details">
+                            <div class="exercise-detail">
+                                <i class="fas fa-redo"></i>
+                                <span>${ex.sets} Sets × ${ex.reps}</span>
+                            </div>
+                            <div class="exercise-detail">
+                                <i class="fas fa-tools"></i>
+                                <span><strong>Equipment:</strong> ${ex.equipment_name || 'No equipment'}</span>
+                            </div>
+                        </div>
+                        ${ex.notes ? `<p class="exercise-notes" style="margin-top: 10px; font-size: 0.85rem; font-style: italic; color: var(--dark-text-secondary);"><i class="fas fa-sticky-note"></i> Note: ${ex.notes}</p>` : ''}
+                    </div>
+                `;
+                content.appendChild(item);
+            });
+        } else {
+            content.innerHTML = `
+                <div class="no-exercises">
+                    <i class="fas fa-dumbbell"></i>
+                    <p>No specific exercises assigned to this package yet.</p>
+                    <p style="font-size: 0.9rem;">General gym access is included with all our packages.</p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error fetching exercises:', error);
+        content.innerHTML = '<div class="no-exercises"><i class="fas fa-exclamation-triangle"></i><p>Failed to load exercise plan.</p></div>';
+    }
+}
+
+function closeExercisePlanModal() {
+    const modal = document.getElementById('exercisePlanModal');
+    if (modal) {
+        modal.classList.remove('active');
+    }
 }
 
 // Update booking package select dropdown

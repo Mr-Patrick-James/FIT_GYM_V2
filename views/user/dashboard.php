@@ -326,6 +326,104 @@ function getSetting($key, $default = '', $settings = []) {
         .event-status-verified { background-color: var(--success) !important; color: #fff !important; }
         .event-status-rejected { background-color: #ef4444 !important; color: #fff !important; }
     </style>
+    <style>
+        /* Exercise Plan Styles */
+        .exercise-item {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--dark-border);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 20px;
+            transition: transform 0.2s;
+        }
+        
+        .exercise-item:hover {
+            transform: translateY(-2px);
+            background: rgba(255,255,255,0.05);
+        }
+        
+        .exercise-icon {
+            width: 50px;
+            height: 50px;
+            background: var(--primary);
+            color: var(--dark-bg);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+        
+        .exercise-info h4 {
+            color: var(--primary);
+            margin-bottom: 5px;
+            font-size: 1.1rem;
+        }
+        
+        .exercise-category {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--dark-text-secondary);
+            font-weight: 700;
+        }
+        
+        .exercise-details {
+            display: flex;
+            gap: 20px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px dashed var(--dark-border);
+        }
+        
+        .exercise-detail {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            color: var(--dark-text);
+        }
+        
+        .exercise-detail i {
+            color: var(--primary);
+        }
+        
+        .no-exercises {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--dark-text-secondary);
+        }
+        
+        .no-exercises i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        .exercise-image {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            border: 1px solid var(--dark-border);
+        }
+        
+        .exercise-image-fallback {
+            width: 100%;
+            height: 180px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            margin-bottom: 12px;
+            border: 1px dashed var(--dark-border);
+            text-align: center;
+            line-height: 180px;
+            color: var(--dark-text-secondary);
+        }
+    </style>
 </head>
 <body class="dark-mode">
     <!-- Mobile Menu Toggle Button -->
@@ -857,6 +955,29 @@ function getSetting($key, $default = '', $settings = []) {
                         <span>Close</span>
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Exercise Plan Modal -->
+    <div class="modal-overlay" id="exercisePlanModal">
+        <div class="modal" style="max-width: 700px;">
+            <div class="modal-header">
+                <div>
+                    <h3 id="exercisePlanTitle">Exercise Plan</h3>
+                    <p id="exercisePlanSubtitle" style="font-size: 0.9rem; color: var(--dark-text-secondary); margin-top: 4px;"></p>
+                </div>
+                <button class="close-modal" onclick="closeExercisePlanModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body" id="exercisePlanContent">
+                <!-- Content populated by JS -->
+            </div>
+            
+            <div class="modal-footer" style="padding: 16px 24px; border-top: 1px solid var(--dark-border); text-align: right;">
+                <button class="btn btn-secondary" onclick="closeExercisePlanModal()">Close</button>
             </div>
         </div>
     </div>
