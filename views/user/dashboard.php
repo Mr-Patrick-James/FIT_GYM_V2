@@ -290,12 +290,44 @@ function getSetting($key, $default = '', $settings = []) {
         }
         /* FullCalendar Dark Theme Tweaks */
         .fc {
-            --fc-border-color: var(--dark-border);
+            --fc-border-color: rgba(255, 255, 255, 0.05);
             --fc-daygrid-event-dot-width: 8px;
-            --fc-neutral-bg-color: var(--dark-card);
-            --fc-page-bg-color: var(--dark-card);
+            --fc-neutral-bg-color: transparent;
+            --fc-page-bg-color: transparent;
             --fc-today-bg-color: rgba(255, 255, 255, 0.05);
             font-family: 'Inter', sans-serif;
+            border: none;
+        }
+        .fc .fc-view-harness {
+            background: var(--dark-card);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--dark-border);
+            overflow: hidden;
+        }
+        .fc .fc-scrollgrid {
+            border: none !important;
+        }
+        .fc .fc-col-header-cell {
+            padding: 12px 0;
+            background: rgba(255, 255, 255, 0.02);
+            border-bottom: 1px solid var(--dark-border) !important;
+        }
+        .fc .fc-col-header-cell-cushion {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--dark-text-secondary);
+            font-weight: 700;
+        }
+        .fc .fc-daygrid-day-number {
+            font-size: 0.9rem;
+            font-weight: 600;
+            padding: 8px 12px;
+            color: var(--dark-text-secondary);
+        }
+        .fc .fc-day-today .fc-daygrid-day-number {
+            color: var(--primary);
+            font-weight: 800;
         }
         .fc .fc-toolbar-title {
             font-size: 1.2rem;
@@ -304,10 +336,12 @@ function getSetting($key, $default = '', $settings = []) {
         }
         .fc .fc-button-primary {
             background-color: var(--dark-card);
-            border-color: var(--dark-border);
+            border: 1px solid var(--dark-border);
             color: var(--dark-text);
             font-weight: 600;
             padding: 6px 12px;
+            border-radius: var(--radius-md);
+            transition: all 0.2s;
         }
         .fc .fc-button-primary:hover {
             background-color: var(--dark-border);
@@ -320,11 +354,38 @@ function getSetting($key, $default = '', $settings = []) {
             color: var(--dark-bg);
         }
         .fc-theme-standard td, .fc-theme-standard th {
-            border: 1px solid var(--dark-border);
+            border: 1px solid rgba(255, 255, 255, 0.05) !important;
         }
-        .event-status-pending { background-color: var(--warning) !important; color: #000 !important; }
-        .event-status-verified { background-color: var(--success) !important; color: #fff !important; }
-        .event-status-rejected { background-color: #ef4444 !important; color: #fff !important; }
+        
+        /* Event Styles */
+        .fc-event {
+            border: none !important;
+            border-radius: 6px !important;
+            padding: 2px 4px !important;
+            font-size: 0.75rem !important;
+            font-weight: 600 !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            margin: 1px 4px !important;
+        }
+        .event-status-pending { 
+            background-color: rgba(245, 158, 11, 0.2) !important; 
+            border-left: 3px solid var(--warning) !important;
+            color: var(--warning) !important; 
+        }
+        .event-status-verified { 
+            background-color: rgba(34, 197, 94, 0.2) !important; 
+            border-left: 3px solid var(--success) !important;
+            color: var(--success) !important; 
+        }
+        .event-status-rejected { 
+            background-color: rgba(239, 68, 68, 0.2) !important; 
+            border-left: 3px solid #ef4444 !important;
+            color: #ef4444 !important; 
+        }
+        
+        .fc-h-event .fc-event-main {
+            color: inherit !important;
+        }
     </style>
     <style>
         /* Exercise Plan Styles */

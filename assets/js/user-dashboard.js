@@ -284,28 +284,59 @@ let userCalendar = null;
 let userViewMode = 'table';
 
 function getUserCalendarEvents() {
-    return userBookings.map(b => {
-        const start = b.booking_date || b.date || b.createdAt;
-        let end = b.expires_at || null;
-        if (!end && b.status === 'verified' && b.duration) {
-            const days = parseDurationToDays(b.duration);
-            if (days > 0 && start) {
-                const d = new Date(start);
-                d.setDate(d.getDate() + days);
-                end = d.toISOString();
-            }
-        }
-        const title = `${b.package_name || b.package}${b.status === 'verified' ? ' (Active)' : b.status === 'pending' ? ' (Pending)' : ''}`;
-        return {
-            id: String(b.id),
-            title,
-            start,
-            end: end || start,
+    const events = [];
+    
+    userBookings.forEach(b => {
+        const startStr = b.booking_date || b.date || b.created_at;
+        if (!startStr) return;
+        
+        const startDate = new Date(startStr);
+        const pkgName = b.package_name || b.package || 'Gym Session';
+        
+        // 1. The main booking event (on the start day)
+        events.push({
+            id: `booking-${b.id}`,
+            title: `${pkgName}${b.status === 'verified' ? ' (Paid)' : ' (' + b.status + ')'}`,
+            start: startStr,
             allDay: true,
             classNames: [`event-status-${b.status || 'pending'}`],
-            extendedProps: { status: b.status || 'pending' }
-        };
+            extendedProps: { ...b, type: 'booking' }
+        });
+        
+        // 2. If verified and has duration, show the active period as a background highlight
+        if (b.status === 'verified' && b.duration) {
+            const days = parseDurationToDays(b.duration);
+            if (days > 1) { // Only for multi-day packages
+                const endDate = new Date(startDate);
+                endDate.setDate(endDate.getDate() + days);
+                
+                // Background highlight for the duration
+                events.push({
+                    id: `period-${b.id}`,
+                    start: startStr,
+                    end: endDate.toISOString().split('T')[0],
+                    display: 'background',
+                    color: 'rgba(34, 197, 94, 0.05)',
+                    allDay: true
+                });
+                
+                // Expiry marker on the last day
+                const expiryDate = new Date(endDate);
+                expiryDate.setDate(expiryDate.getDate() - 1); // Show on the last valid day
+                
+                events.push({
+                    id: `expiry-${b.id}`,
+                    title: `Ends: ${pkgName}`,
+                    start: endDate.toISOString().split('T')[0],
+                    allDay: true,
+                    classNames: ['event-status-rejected'], // Red-ish to indicate end
+                    extendedProps: { ...b, type: 'expiry' }
+                });
+            }
+        }
     });
+    
+    return events;
 }
 
 function initUserCalendar() {
@@ -321,10 +352,10 @@ function initUserCalendar() {
         height: 'auto',
         events: getUserCalendarEvents(),
         eventClick: (info) => {
-            const id = info.event.id;
-            const booking = userBookings.find(b => String(b.id) === String(id));
-            if (booking) {
-                viewBookingDetails(booking.id);
+            const eventId = info.event.id;
+            const bookingId = eventId.split('-')[1]; // Get '123' from 'booking-123'
+            if (bookingId) {
+                viewBookingDetails(bookingId);
             }
         }
     });
