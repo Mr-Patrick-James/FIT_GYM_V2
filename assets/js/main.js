@@ -350,6 +350,36 @@ const TEMP_CREDENTIALS = {
 
 // --- Home Page Service & Plan Logic ---
 
+// Update active state of nav links based on scroll position
+function updateActiveNavLink() {
+    const sections = document.querySelectorAll('section[id]');
+    const navLinks = document.querySelectorAll('.nav-links a');
+    
+    let currentSectionId = 'home';
+    const scrollPosition = window.scrollY + 100; // Offset for header
+
+    sections.forEach(section => {
+        const sectionTop = section.offsetTop;
+        const sectionHeight = section.offsetHeight;
+        
+        if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
+            currentSectionId = section.getAttribute('id');
+        }
+    });
+
+    navLinks.forEach(link => {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === `#${currentSectionId}`) {
+            link.classList.add('active');
+        }
+    });
+}
+
+// Attach scroll listener
+window.addEventListener('scroll', updateActiveNavLink);
+// Initialize on load
+window.addEventListener('DOMContentLoaded', updateActiveNavLink);
+
 function scrollToSection(id) {
     const el = document.getElementById(id);
     if (el) {
