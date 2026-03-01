@@ -55,6 +55,198 @@ section {
     margin: 0 auto;
 }
 
+/* Services Section */
+.services-section {
+    background: var(--dark-bg);
+}
+
+.services-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+}
+
+.service-card {
+    background: #111;
+    padding: 40px;
+    border-radius: 20px;
+    border: 1px solid #222;
+    transition: 0.3s;
+}
+
+.service-card:hover {
+    border-color: #444;
+    transform: translateY(-5px);
+}
+
+.service-icon {
+    font-size: 2.5rem;
+    color: white;
+    margin-bottom: 25px;
+}
+
+.service-card h3 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+}
+
+.service-card p {
+    color: #888;
+    line-height: 1.6;
+    margin-bottom: 20px;
+}
+
+.service-feature-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #222;
+}
+
+.preview-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.9rem;
+    color: #aaa;
+}
+
+.preview-item i {
+    color: #22c55e;
+    font-size: 0.8rem;
+}
+
+/* Featured Plans Section */
+.featured-plans-section {
+    background: #0a0a0a;
+    border-top: 1px solid #111;
+}
+
+.plans-showcase-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 30px;
+}
+
+.plan-card {
+    background: #111;
+    border-radius: 20px;
+    border: 1px solid #222;
+    overflow: hidden;
+    transition: 0.3s;
+}
+
+.plan-card:hover {
+    border-color: #444;
+    transform: translateY(-5px);
+}
+
+.plan-header {
+    padding: 25px;
+    background: #1a1a1a;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #222;
+}
+
+.plan-title {
+    font-size: 1.2rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: white;
+}
+
+.exercise-count {
+    background: rgba(255,255,255,0.05);
+    padding: 4px 12px;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #888;
+}
+
+.plan-exercises-preview {
+    padding: 25px;
+}
+
+.plan-exercise-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.ex-thumb {
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    background: #1a1a1a;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #222;
+}
+
+.ex-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.ex-thumb i {
+    font-size: 1.2rem;
+    color: #333;
+}
+
+.ex-info h4 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-bottom: 2px;
+}
+
+.ex-info p {
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.more-exercises {
+    text-align: center;
+    font-size: 0.85rem;
+    color: #444;
+    font-weight: 600;
+    padding-top: 10px;
+}
+
+.plan-footer {
+    padding: 20px 25px;
+    background: #111;
+}
+
+.view-full-plan-btn {
+    width: 100%;
+    background: transparent;
+    border: 1px solid #333;
+    color: white;
+    padding: 12px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.view-full-plan-btn:hover {
+    background: white;
+    color: black;
+    border-color: white;
+}
+
 /* Packages Section */
 .packages-section {
     background: #0f0f0f;

@@ -348,6 +348,70 @@ const TEMP_CREDENTIALS = {
     }
 };
 
+// --- Home Page Service & Plan Logic ---
+
+function scrollToSection(id) {
+    const el = document.getElementById(id);
+    if (el) {
+        el.scrollIntoView({ behavior: 'smooth' });
+    }
+}
+
+function showHomePlanModal(packageId) {
+    const plan = featuredPlans[packageId];
+    if (!plan) return;
+
+    const modal = document.getElementById('homePlanModal');
+    const content = document.getElementById('homePlanContent');
+    
+    let exercisesHTML = plan.exercises.map(ex => `
+        <div style="display: flex; gap: 20px; padding: 20px; border-bottom: 1px solid #222; align-items: center;">
+            <div style="width: 80px; height: 80px; background: #1a1a1a; border-radius: 12px; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 1px solid #333; flex-shrink: 0;">
+                ${ex.image_url ? `
+                    <img src="${ex.image_url.startsWith('http') ? ex.image_url : 'assets/uploads/exercises/' + ex.image_url.split('/').pop()}" style="width: 100%; height: 100%; object-fit: cover;">
+                ` : '<i class="fas fa-dumbbell" style="color: #333; font-size: 1.5rem;"></i>'}
+            </div>
+            <div style="flex-grow: 1;">
+                <span style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: #888; font-weight: 700;">${ex.category}</span>
+                <h4 style="color: white; margin: 4px 0; font-size: 1.1rem;">${ex.exercise_name}</h4>
+                <p style="color: #22c55e; font-weight: 700; font-size: 0.9rem;">${ex.sets} Sets × ${ex.reps}</p>
+            </div>
+        </div>
+    `).join('');
+
+    content.innerHTML = `
+        <div style="background: #1a1a1a; padding: 40px 30px; border-bottom: 1px solid #222;">
+            <h2 style="font-size: 2rem; font-weight: 900; color: white; text-transform: uppercase; margin-bottom: 10px;">${plan.name}</h2>
+            <p style="color: #888; font-size: 1rem;">Full routine preview for this membership plan</p>
+        </div>
+        <div style="padding: 10px 0;">
+            ${exercisesHTML}
+        </div>
+        <div style="padding: 30px; text-align: center; background: #0a0a0a;">
+            <p style="margin-bottom: 20px; color: #888;">Ready to start this routine?</p>
+            <button class="main-cta" onclick="closeHomePlanModal(); openModal('signup');" style="width: auto; padding: 15px 40px;">
+                Join Now to Start
+            </button>
+        </div>
+    `;
+
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeHomePlanModal() {
+    const modal = document.getElementById('homePlanModal');
+    if (modal) {
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+}
+
+// Close home plan modal on backdrop click
+document.getElementById('homePlanModal')?.addEventListener('click', function(e) {
+    if (e.target === this) closeHomePlanModal();
+});
+
 // Show error message
 function showError(message, formElement = null) {
     // Remove existing error messages

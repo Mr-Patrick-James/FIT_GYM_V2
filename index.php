@@ -31,6 +31,23 @@ try {
         $row = $countResult->fetch_assoc();
         $activeMemberCount = $row['total'];
     }
+
+    // Fetch exercises for featured plans
+    $featuredPlans = [];
+    $planResult = $conn->query("
+        SELECT p.id as package_id, p.name as package_name, e.name as exercise_name, e.category, e.image_url, pe.sets, pe.reps 
+        FROM packages p
+        JOIN package_exercises pe ON p.id = pe.package_id
+        JOIN exercises e ON pe.exercise_id = e.id
+        WHERE p.is_active = 1
+        ORDER BY p.id, e.name
+    ");
+    if ($planResult) {
+        while ($row = $planResult->fetch_assoc()) {
+            $featuredPlans[$row['package_id']]['name'] = $row['package_name'];
+            $featuredPlans[$row['package_id']]['exercises'][] = $row;
+        }
+    }
 } catch (Exception $e) {
     error_log("Error fetching data for index: " . $e->getMessage());
 }
@@ -75,6 +92,7 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
             <nav>
                 <ul class="nav-links">
                     <li><a href="#home">Home</a></li>
+                    <li><a href="#services">Services</a></li>
                     <li><a href="#packages">Packages</a></li>
                     <li><a href="#about">About</a></li>
                 </ul>
@@ -97,6 +115,113 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
                 Join Now 
                 <div class="icon-circle"><i class="fa-solid fa-arrow-right"></i></div>
             </button>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section class="services-section" id="services">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Our Premium Services</h2>
+                <p class="section-subtitle">Beyond just equipment, we provide the tools and plans you need to succeed</p>
+            </div>
+
+            <div class="services-grid">
+                <div class="service-card">
+                    <div class="service-icon">
+                        <i class="fas fa-clipboard-list"></i>
+                    </div>
+                    <h3>Personalized Exercise Plans</h3>
+                    <p>Every membership includes access to curated exercise plans designed for your specific goals—whether it's muscle gain, weight loss, or endurance.</p>
+                    <div class="service-feature-preview">
+                        <div class="preview-item">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Sets & Reps Guidance</span>
+                        </div>
+                        <div class="preview-item">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Equipment Instructions</span>
+                        </div>
+                    </div>
+                    <button class="package-btn" onclick="scrollToSection('featured-plans')" style="margin-top: 20px; width: auto; padding: 10px 20px; font-size: 0.8rem;">
+                        View Our Plans
+                    </button>
+                </div>
+
+                <div class="service-card">
+                    <div class="service-icon">
+                        <i class="fas fa-dumbbell"></i>
+                    </div>
+                    <h3>Elite Equipment</h3>
+                    <p>Train with the best. Our facility features top-of-the-line Smith machines, plate-loaded leg presses, and a comprehensive free-weight area.</p>
+                </div>
+
+                <div class="service-card">
+                    <div class="service-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3>Supportive Community</h3>
+                    <p>Join a community of dedicated fitness enthusiasts who motivate each other to reach new heights in a positive, high-energy environment.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Featured Plans Showcase -->
+    <section class="featured-plans-section" id="featured-plans">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Membership Workout Plans</h2>
+                <p class="section-subtitle">Take a sneak peek at the routines we've prepared for you</p>
+            </div>
+
+            <?php if (empty($featuredPlans)): ?>
+                <div style="text-align: center; color: #888; padding: 40px;">
+                    <i class="fas fa-dumbbell" style="font-size: 3rem; margin-bottom: 20px; opacity: 0.3;"></i>
+                    <p>Plans are being curated. Join now to get notified!</p>
+                </div>
+            <?php else: ?>
+                <div class="plans-showcase-grid">
+                    <?php foreach ($featuredPlans as $pkgId => $plan): ?>
+                        <div class="plan-card">
+                            <div class="plan-header">
+                                <h3 class="plan-title"><?php echo htmlspecialchars($plan['name']); ?></h3>
+                                <span class="exercise-count"><?php echo count($plan['exercises']); ?> Exercises</span>
+                            </div>
+                            
+                            <div class="plan-exercises-preview">
+                                <?php foreach (array_slice($plan['exercises'], 0, 3) as $ex): ?>
+                                    <div class="plan-exercise-item">
+                                        <div class="ex-thumb">
+                                            <?php if ($ex['image_url']): ?>
+                                                <img src="<?php echo htmlspecialchars(strpos($ex['image_url'], 'http') === 0 ? $ex['image_url'] : 'assets/uploads/exercises/'.basename($ex['image_url'])); ?>" alt="<?php echo htmlspecialchars($ex['exercise_name']); ?>">
+                                            <?php else: ?>
+                                                <i class="fas fa-image"></i>
+                                            <?php endif; ?>
+                                        </div>
+                                        <div class="ex-info">
+                                            <h4><?php echo htmlspecialchars($ex['exercise_name']); ?></h4>
+                                            <p><?php echo htmlspecialchars($ex['sets']); ?> Sets × <?php echo htmlspecialchars($ex['reps']); ?></p>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                                
+                                <?php if (count($plan['exercises']) > 3): ?>
+                                    <div class="more-exercises">
+                                        + <?php echo count($plan['exercises']) - 3; ?> more exercises
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                            
+                            <div class="plan-footer">
+                                <button class="view-full-plan-btn" onclick="showHomePlanModal(<?php echo $pkgId; ?>)">
+                                    View Full Routine
+                                </button>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
         </div>
     </section>
 
@@ -229,6 +354,7 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
                     <h4>Quick Links</h4>
                     <ul>
                         <li><a href="#home">Home</a></li>
+                        <li><a href="#services">Services</a></li>
                         <li><a href="#packages">Packages</a></li>
                         <li><a href="#about">About</a></li>
                     </ul>
@@ -297,67 +423,79 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
                     <h2>Become a Member</h2>
                     <p>Start your fitness journey today</p>
                 </div>
-                <form>
+                <form id="signupFormElement">
                     <div class="input-group">
-                        <input type="text" id="signupName" required>
+                        <input type="text" id="signupName" name="name" required autocomplete="name">
                         <label>Full Name</label>
                     </div>
                     <div class="input-group">
-                        <input type="email" id="signupEmail" required>
+                        <input type="email" id="signupEmail" name="email" required autocomplete="email">
                         <label>Email Address</label>
                     </div>
                     <div class="input-group">
-                        <input type="password" id="signupPassword" required>
+                        <input type="password" id="signupPassword" name="password" required autocomplete="new-password">
                         <label>Create Password</label>
                         <span class="toggle-password" data-target="signupPassword">
                             <i class="fa-regular fa-eye"></i>
                         </span>
                     </div>
+                    <div class="input-group">
+                        <input type="password" id="signupConfirmPassword" name="confirm_password" required autocomplete="new-password">
+                        <label>Confirm Password</label>
+                        <span class="toggle-password" data-target="signupConfirmPassword">
+                            <i class="fa-regular fa-eye"></i>
+                        </span>
+                    </div>
                     <button type="submit" class="auth-btn" id="signupSubmitBtn">
-                        <span id="signupBtnText">Sign Up</span>
+                        <span id="signupBtnText">Create Account</span>
                         <span id="signupBtnLoader" style="display: none;">
-                            <i class="fas fa-spinner fa-spin"></i> Signing up...
+                            <i class="fas fa-spinner fa-spin"></i> Sending OTP...
                         </span>
                     </button>
                 </form>
                 <div class="switch-auth">
-                    Already a member? <span onclick="switchForm('login')">Log In</span>
+                    Already have an account? <span onclick="switchForm('login')">Log In</span>
                 </div>
             </div>
 
             <div id="otpVerificationForm" class="form-box">
                 <div class="auth-header">
                     <h2>Verify Your Email</h2>
-                    <p>We've sent a 6-digit code to <strong id="otpEmailDisplay"></strong></p>
+                    <p>We've sent a 6-digit code to <strong id="displayEmail"></strong></p>
                 </div>
-                <form>
-                    <div class="otp-input-group">
-                        <input type="text" id="otpInput1" maxlength="1" pattern="[0-9]" required>
-                        <input type="text" id="otpInput2" maxlength="1" pattern="[0-9]" required>
-                        <input type="text" id="otpInput3" maxlength="1" pattern="[0-9]" required>
-                        <input type="text" id="otpInput4" maxlength="1" pattern="[0-9]" required>
-                        <input type="text" id="otpInput5" maxlength="1" pattern="[0-9]" required>
-                        <input type="text" id="otpInput6" maxlength="1" pattern="[0-9]" required>
-                    </div>
-                    <div style="margin-top: 20px; text-align: center;">
-                        <p style="color: #888; font-size: 0.85rem; margin-bottom: 12px;">
-                            Didn't receive the code? 
-                            <span id="resendOtp" style="color: var(--primary); cursor: pointer; text-decoration: underline; font-weight: 600;" onclick="resendOTP()">Resend Code</span>
-                            <span id="resendCooldown" style="color: #888; display: none; margin-left: 5px;"></span>
-                        </p>
-                        <p id="otpTimer" style="color: #888; font-size: 0.85rem;"></p>
-                    </div>
-                    <button type="submit" class="auth-btn">Verify Email</button>
-                </form>
-                <div class="switch-auth">
-                    <span onclick="backToSignup()" style="cursor: pointer;">← Back to Sign Up</span>
+                <div class="otp-inputs">
+                    <input type="text" maxlength="1" id="otpInput1" onkeyup="moveFocus(this, 'otpInput2')">
+                    <input type="text" maxlength="1" id="otpInput2" onkeyup="moveFocus(this, 'otpInput3')">
+                    <input type="text" maxlength="1" id="otpInput3" onkeyup="moveFocus(this, 'otpInput4')">
+                    <input type="text" maxlength="1" id="otpInput4" onkeyup="moveFocus(this, 'otpInput5')">
+                    <input type="text" maxlength="1" id="otpInput5" onkeyup="moveFocus(this, 'otpInput6')">
+                    <input type="text" maxlength="1" id="otpInput6">
+                </div>
+                <button class="auth-btn" onclick="verifyOTP()">Verify Code</button>
+                <div class="resend-otp">
+                    Didn't receive code? <span id="resendBtn" onclick="resendOTP()">Resend</span>
+                    <p id="resendTimer" style="display: none; font-size: 0.8rem; color: #888; margin-top: 5px;"></p>
                 </div>
             </div>
-
         </div>
     </div>
 
-    <script src="assets/js/main.js"></script>
+    <!-- Exercise Plan Preview Modal -->
+    <div class="modal-overlay" id="homePlanModal">
+        <div class="auth-card" style="max-width: 800px; max-height: 90vh; overflow-y: auto; padding: 0;">
+            <button class="close-modal" onclick="closeHomePlanModal()" style="z-index: 100;"><i class="fa-solid fa-xmark"></i></button>
+            
+            <div id="homePlanContent">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Pass PHP data to JavaScript
+        const featuredPlans = <?php echo json_encode($featuredPlans); ?>;
+    </script>
+    <script src="assets/js/main.js?v=1.2"></script>
 
 </body>
 </html>
