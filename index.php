@@ -35,11 +35,18 @@ try {
     // Fetch exercises for featured plans
     $featuredPlans = [];
     $planResult = $conn->query("
-        SELECT p.id as package_id, p.name as package_name, e.name as exercise_name, e.category, e.image_url, pe.sets, pe.reps 
+        SELECT 
+            p.id as package_id, 
+            p.name as package_name, 
+            e.name as exercise_name, 
+            e.category, 
+            e.image_url,
+            pe.sets, 
+            pe.reps 
         FROM packages p
         JOIN package_exercises pe ON p.id = pe.package_id
         JOIN exercises e ON pe.exercise_id = e.id
-        WHERE p.is_active = 1
+        WHERE p.is_active = 1 AND p.name != 'WHO Health & Fitness Plan'
         ORDER BY p.id, e.name
     ");
     if ($planResult) {
@@ -48,6 +55,56 @@ try {
             $featuredPlans[$row['package_id']]['exercises'][] = $row;
         }
     }
+
+    // --- AUTO-SETUP WHO PLAN ---
+    // Check if WHO plan exists, if not, create it
+    $whoCheck = $conn->query("SELECT id FROM packages WHERE name = 'WHO Health & Fitness Plan'");
+    if ($whoCheck && $whoCheck->num_rows === 0) {
+        // Create WHO Package
+        $who_name = "WHO Health & Fitness Plan";
+        $who_duration = "Weekly (WHO Standard)";
+        $who_price = 450.00;
+        $who_tag = "Health Standard";
+        $who_desc = "Scientifically designed plan based on WHO (World Health Organization) physical activity guidelines for adults. Focuses on 150-300 minutes of moderate aerobic activity and 2+ days of strength training per week.";
+        
+        $stmt = $conn->prepare("INSERT INTO packages (name, duration, price, tag, description, is_active) VALUES (?, ?, ?, ?, ?, 1)");
+        $stmt->bind_param("ssdss", $who_name, $who_duration, $who_price, $who_tag, $who_desc);
+        $stmt->execute();
+        $whoId = $conn->insert_id;
+        
+        if ($whoId) {
+            // Get exercise IDs
+            $ex_ids = [];
+            $res = $conn->query("SELECT id, name FROM exercises");
+            while($row = $res->fetch_assoc()) {
+                $ex_ids[$row['name']] = $row['id'];
+            }
+            
+            // WHO-compliant assignments
+            $assignments = [
+                ['Treadmill Jogging', 1, '30 mins (Aerobic)'],
+                ['Stationary Cycling', 1, '20 mins (Aerobic)'],
+                ['Smith Machine Squat', 3, '12-15 (Strength)'],
+                ['Flat Barbell Bench Press', 3, '12-15 (Strength)'],
+                ['Wide-grip Lat Pulldown', 3, '12-15 (Strength)'],
+                ['Hanging Leg Raise', 3, '15-20 (Core)'],
+                ['Kettlebell Swing', 3, '20 (Full Body)']
+            ];
+            
+            $stmt_ex = $conn->prepare("INSERT INTO package_exercises (package_id, exercise_id, sets, reps, notes) VALUES (?, ?, ?, ?, 'WHO Standard')");
+            foreach ($assignments as $a) {
+                if (isset($ex_ids[$a[0]])) {
+                    $ex_id = $ex_ids[$a[0]];
+                    $stmt_ex->bind_param("iiis", $whoId, $ex_id, $a[1], $a[2]);
+                    $stmt_ex->execute();
+                }
+            }
+            // Refresh featured plans by reloading the page once
+            header("Location: index.php");
+            exit();
+        }
+    }
+    // --- END AUTO-SETUP WHO PLAN ---
 } catch (Exception $e) {
     error_log("Error fetching data for index: " . $e->getMessage());
 }

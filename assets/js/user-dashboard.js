@@ -469,43 +469,108 @@ function getUserCalendarEvents() {
                 if (pkgId && activeExercisesByPackage[pkgId]) {
                     const current = new Date(startDate);
                     const pkgExercises = activeExercisesByPackage[pkgId];
+                    const isWhoPlan = pkgName.includes('WHO Health');
+
                     // Add routines for each day of the active period
                     for (let i = 0; i < days; i++) {
                         const dateStr = formatDateISO(current);
-                        
-                        // Rest days: Wednesday, Sunday (2 days/week)
                         const dayOfWeek = current.getDay();
-                        const isRestDay = (dayOfWeek === 0 || dayOfWeek === 3);
 
-                        // Don't put an exercise plan on the starting date (i === 0)
-                        if (i === 0) {
-                            // Do nothing for the start date, or we can add a 'Start Day' marker if needed
-                            // For now, we just skip the workout/rest label as requested
-                        } else if (isRestDay) {
-                            events.push({
-                                id: `rest-${pkgId}-${dateStr}`,
-                                title: `💤 Rest Day`,
-                                start: dateStr,
-                                allDay: true,
-                                classNames: ['event-rest-day'],
-                                extendedProps: { type: 'rest', date: dateStr }
-                            });
-                        } else {
-                            const workout = getSeededWorkout(dateStr, pkgId, pkgExercises);
-                            events.push({
-                                id: `routine-${pkgId}-${dateStr}`,
-                                title: workout.title,
-                                start: dateStr,
-                                allDay: true,
-                                classNames: ['event-routine'],
-                                extendedProps: { 
-                                    type: 'routine',
-                                    package_id: pkgId,
-                                    package_name: pkgName,
-                                    date: dateStr,
-                                    focus_category: workout.category
+                        if (isWhoPlan) {
+                            // Specialized WHO (World Health Organization) Distribution:
+                            // Strength (2d/week): Mon(1), Thu(4)
+                            // Aerobic (5d/week): Mon(1), Tue(2), Thu(4), Fri(5), Sat(6)
+                            // Rest (2d/week): Wed(3), Sun(0)
+                            
+                            const isStrengthDay = (dayOfWeek === 1 || dayOfWeek === 4);
+                            const isAerobicDay = (dayOfWeek === 1 || dayOfWeek === 2 || dayOfWeek === 4 || dayOfWeek === 5 || dayOfWeek === 6);
+                            const isRestDay = !isAerobicDay && !isStrengthDay;
+
+                            if (i === 0) {
+                                // Skip start day routine as per current logic
+                            } else if (isRestDay) {
+                                events.push({
+                                    id: `rest-who-${dateStr}`,
+                                    title: `💤 WHO: Rest & Recovery`,
+                                    start: dateStr,
+                                    allDay: true,
+                                    classNames: ['event-rest-day'],
+                                    extendedProps: { type: 'rest', date: dateStr }
+                                });
+                            } else {
+                                let whoTitle = isStrengthDay && isAerobicDay ? "🥗 WHO: Aerobic + Strength" : 
+                                               isStrengthDay ? "🏋️ WHO: Strength Focus" : "🏃 WHO: Aerobic Session";
+                                
+                                let whoRationale = "";
+                                if (isStrengthDay && isAerobicDay) {
+                                    whoRationale = "WHO (World Health Organization) recommends combining 150-300m aerobic and 2+ days strength per week for optimal health.";
+                                } else if (isStrengthDay) {
+                                    whoRationale = "WHO (World Health Organization) recommends muscle-strengthening activities involving all major muscle groups 2 or more days a week.";
+                                } else {
+                                    whoRationale = "WHO (World Health Organization) recommends at least 150–300 minutes of moderate-intensity aerobic physical activity throughout the week.";
                                 }
-                            });
+
+                                events.push({
+                                    id: `routine-who-${dateStr}`,
+                                    title: whoTitle,
+                                    start: dateStr,
+                                    allDay: true,
+                                    classNames: ['event-routine'],
+                                    extendedProps: { 
+                                        type: 'routine',
+                                        package_id: pkgId,
+                                        package_name: pkgName,
+                                        date: dateStr,
+                                        focus_category: isStrengthDay ? 'Strength' : 'Cardio', // 'Cardio' matches exercise DB category
+                                        who_rationale: whoRationale
+                                    }
+                                });
+                            }
+                        } else {
+                            // Standard Plan Distribution
+                            // Rest days: Wednesday, Sunday (2 days/week)
+                            const isRestDay = (dayOfWeek === 0 || dayOfWeek === 3);
+
+                            if (i === 0) {
+                                // Skip start day routine
+                            } else if (isRestDay) {
+                                events.push({
+                                    id: `rest-${pkgId}-${dateStr}`,
+                                    title: `💤 Rest Day`,
+                                    start: dateStr,
+                                    allDay: true,
+                                    classNames: ['event-rest-day'],
+                                    extendedProps: { type: 'rest', date: dateStr }
+                                });
+                            } else {
+                                const workout = getSeededWorkout(dateStr, pkgId, pkgExercises);
+                                
+                                // Provide WHO context even for standard plans
+                                let whoRationale = "";
+                                if (workout.category === 'Cardio') {
+                                    whoRationale = "This cardio session helps you meet the WHO (World Health Organization) recommendation of 150-300 minutes of aerobic activity per week.";
+                                } else if (workout.category === 'Legs' || workout.category === 'Chest' || workout.category === 'Back') {
+                                    whoRationale = "This strength session helps satisfy the WHO (World Health Organization) guideline of 2+ days of muscle-strengthening activities per week.";
+                                } else {
+                                    whoRationale = "Regular physical activity of any type is recommended by WHO (World Health Organization) to reduce sedentary time and improve health.";
+                                }
+
+                                events.push({
+                                    id: `routine-${pkgId}-${dateStr}`,
+                                    title: workout.title,
+                                    start: dateStr,
+                                    allDay: true,
+                                    classNames: ['event-routine'],
+                                    extendedProps: { 
+                                        type: 'routine',
+                                        package_id: pkgId,
+                                        package_name: pkgName,
+                                        date: dateStr,
+                                        focus_category: workout.category,
+                                        who_rationale: whoRationale
+                                    }
+                                });
+                            }
                         }
                         current.setDate(current.getDate() + 1);
                     }
@@ -541,7 +606,8 @@ function initUserCalendar() {
                   const pkgName = info.event.extendedProps.package_name;
                   const date = info.event.extendedProps.date;
                   const focusCategory = info.event.extendedProps.focus_category;
-                  showExercisePlan(pkgId, pkgName, date, focusCategory);
+                  const whoRationale = info.event.extendedProps.who_rationale;
+                  showExercisePlan(pkgId, pkgName, date, focusCategory, whoRationale);
               } else if (type === 'rest') {
                   const date = info.event.extendedProps.date;
                   showNotification(`Recovery is key! Enjoy your rest day on ${formatDate(date)}.`, 'info');
@@ -702,7 +768,7 @@ function populatePackages() {
 }
 
 // Show exercise plan for a package
-async function showExercisePlan(packageId, packageName, date = null, focusCategory = null) {
+async function showExercisePlan(packageId, packageName, date = null, focusCategory = null, whoRationale = null) {
     const modal = document.getElementById('exercisePlanModal');
     const content = document.getElementById('exercisePlanContent');
     const title = document.getElementById('exercisePlanTitle');
@@ -744,6 +810,30 @@ async function showExercisePlan(packageId, packageName, date = null, focusCatego
             }
             
             content.innerHTML = '';
+
+            // Add WHO rationale if provided
+            if (whoRationale) {
+                const rationaleBox = document.createElement('div');
+                rationaleBox.style.cssText = `
+                    background: rgba(34, 197, 94, 0.1);
+                    border: 1px solid rgba(34, 197, 94, 0.3);
+                    padding: 20px;
+                    border-radius: 12px;
+                    margin-bottom: 25px;
+                    display: flex;
+                    align-items: center;
+                    gap: 15px;
+                `;
+                rationaleBox.innerHTML = `
+                    <div style="font-size: 1.5rem; color: #22c55e;"><i class="fas fa-info-circle"></i></div>
+                    <div style="font-size: 0.95rem; color: #fff; line-height: 1.5;">
+                        <strong style="color: #22c55e; display: block; margin-bottom: 4px; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 1px;">WHO (World Health Organization) Recommendation</strong>
+                        ${whoRationale}
+                    </div>
+                `;
+                content.appendChild(rationaleBox);
+            }
+
             exercises.forEach(ex => {
                 const item = document.createElement('div');
                 item.className = 'exercise-item';
