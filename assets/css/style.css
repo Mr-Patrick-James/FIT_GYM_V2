@@ -792,10 +792,22 @@ header {
     border-bottom: 1px solid #444;
     padding: 10px 30px 10px 0; /* space on the right for eye icon */
     color: white;
+    caret-color: white;
     font-family: inherit;
     font-size: 1rem;
     outline: none;
     transition: 0.3s;
+}
+
+/* Better text selection visibility */
+::selection {
+    background: rgba(255, 255, 255, 0.3);
+    color: white;
+}
+
+::-moz-selection {
+    background: rgba(255, 255, 255, 0.3);
+    color: white;
 }
 
 /* Remove ugly browser autofill colors and keep dark theme */
@@ -911,6 +923,7 @@ header {
     font-size: 1.5rem;
     font-weight: 800;
     color: white;
+    caret-color: white;
     transition: all 0.3s;
     outline: none;
 }

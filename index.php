@@ -92,7 +92,6 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
             <nav>
                 <ul class="nav-links">
                     <li><a href="#home">Home</a></li>
-                    <li><a href="#services">Services</a></li>
                     <li><a href="#packages">Packages</a></li>
                     <li><a href="#about">About</a></li>
                 </ul>
@@ -118,54 +117,7 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
         </div>
     </section>
 
-    <!-- Services Section -->
-    <section class="services-section" id="services">
-        <div class="container">
-            <div class="section-header">
-                <h2 class="section-title">Our Premium Services</h2>
-                <p class="section-subtitle">Beyond just equipment, we provide the tools and plans you need to succeed</p>
-            </div>
 
-            <div class="services-grid">
-                <div class="service-card">
-                    <div class="service-icon">
-                        <i class="fas fa-clipboard-list"></i>
-                    </div>
-                    <h3>Personalized Exercise Plans</h3>
-                    <p>Every membership includes access to curated exercise plans designed for your specific goals—whether it's muscle gain, weight loss, or endurance.</p>
-                    <div class="service-feature-preview">
-                        <div class="preview-item">
-                            <i class="fas fa-check-circle"></i>
-                            <span>Sets & Reps Guidance</span>
-                        </div>
-                        <div class="preview-item">
-                            <i class="fas fa-check-circle"></i>
-                            <span>Equipment Instructions</span>
-                        </div>
-                    </div>
-                    <button class="package-btn" onclick="scrollToSection('featured-plans')" style="margin-top: 20px; width: auto; padding: 10px 20px; font-size: 0.8rem;">
-                        View Our Plans
-                    </button>
-                </div>
-
-                <div class="service-card">
-                    <div class="service-icon">
-                        <i class="fas fa-dumbbell"></i>
-                    </div>
-                    <h3>Elite Equipment</h3>
-                    <p>Train with the best. Our facility features top-of-the-line Smith machines, plate-loaded leg presses, and a comprehensive free-weight area.</p>
-                </div>
-
-                <div class="service-card">
-                    <div class="service-icon">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <h3>Supportive Community</h3>
-                    <p>Join a community of dedicated fitness enthusiasts who motivate each other to reach new heights in a positive, high-energy environment.</p>
-                </div>
-            </div>
-        </div>
-    </section>
 
     <!-- Featured Plans Showcase -->
     <section class="featured-plans-section" id="featured-plans">
@@ -354,7 +306,6 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
                     <h4>Quick Links</h4>
                     <ul>
                         <li><a href="#home">Home</a></li>
-                        <li><a href="#services">Services</a></li>
                         <li><a href="#packages">Packages</a></li>
                         <li><a href="#about">About</a></li>
                     </ul>
