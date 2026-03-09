@@ -196,18 +196,54 @@ function populateSettings() {
     renderGallery();
 }
 
-// Show settings tab
-function showSettingsTab(tab) {
+// Tab switching logic
+function showSettingsTab(tabName) {
+    // Update nav items
+    document.querySelectorAll('.settings-nav-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    document.getElementById(`nav-${tabName}`).classList.add('active');
+
+    // Update sections
     document.querySelectorAll('.settings-section').forEach(section => {
         section.style.display = 'none';
     });
-    document.querySelectorAll('.settings-nav-item').forEach(navItem => {
-        navItem.classList.remove('active');
+    document.getElementById(`settings-${tabName}`).style.display = 'block';
+}
+
+// Export database backup
+function exportDatabase() {
+    Swal.fire({
+        title: 'Export Database?',
+        text: 'This will download a complete SQL backup of your gym database.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#22c55e',
+        cancelButtonColor: '#333',
+        confirmButtonText: '<i class="fas fa-file-export"></i> Yes, Export!',
+        background: '#1a1a1a',
+        color: '#fff'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Create a temporary link to trigger download
+            const link = document.createElement('a');
+            link.href = '../../api/settings/export-db.php';
+            link.download = ''; // Let server decide filename
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            Swal.fire({
+                title: 'Export Started',
+                text: 'Your database backup is being generated. Please wait for the download to finish.',
+                icon: 'success',
+                timer: 3000,
+                showConfirmButton: false,
+                background: '#1a1a1a',
+                color: '#fff'
+            });
+        }
     });
-    const section = document.getElementById(`settings-${tab}`);
-    if (section) section.style.display = 'block';
-    const navItem = document.getElementById(`nav-${tab}`);
-    if (navItem) navItem.classList.add('active');
 }
 
 // Save settings to Database
@@ -314,51 +350,6 @@ async function saveAccountSettings() {
     document.getElementById('currentPassword').value = '';
     document.getElementById('newPassword').value = '';
     document.getElementById('confirmPassword').value = '';
-}
-
-// Clear all data
-async function clearAllData() {
-    if (!confirm('CRITICAL ACTION: This will permanently delete all bookings, payments, and member data. Are you absolutely sure?')) {
-        return;
-    }
-
-    if (!confirm('FINAL WARNING: This action cannot be undone. All gym records will be lost. Proceed?')) {
-        return;
-    }
-
-    try {
-        const response = await fetch('../../api/settings/clear-data.php', { method: 'POST' });
-        const result = await response.json();
-        if (result.success) {
-            showNotification('All data cleared successfully', 'success');
-        } else {
-            showNotification('Error: ' + result.message, 'error');
-        }
-    } catch (e) {
-        console.error('Error clearing data:', e);
-        showNotification('Failed to connect to server', 'error');
-    }
-}
-
-// Reset settings
-async function resetSettings() {
-    if (!confirm('Are you sure you want to reset all settings to default values? Your gym data (members, bookings) will not be affected.')) {
-        return;
-    }
-
-    try {
-        const response = await fetch('../../api/settings/reset.php', { method: 'POST' });
-        const result = await response.json();
-        if (result.success) {
-            showNotification('Settings reset to defaults', 'success');
-            loadSettings();
-        } else {
-            showNotification('Error: ' + result.message, 'error');
-        }
-    } catch (e) {
-        console.error('Error resetting settings:', e);
-        showNotification('Failed to connect to server', 'error');
-    }
 }
 
 // Save appearance settings

@@ -127,6 +127,10 @@ $user = getCurrentUser();
                         <i class="fas fa-user"></i>
                         <span>Account</span>
                     </button>
+                    <button class="settings-nav-item" onclick="showSettingsTab('backup')" id="nav-backup">
+                        <i class="fas fa-database"></i>
+                        <span>Backup</span>
+                    </button>
                 </div>
             </div>
 
@@ -546,37 +550,38 @@ $user = getCurrentUser();
                             </button>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Danger Zone -->
-                    <div class="settings-danger-zone">
-                        <div class="settings-section-header">
-                            <div>
-                                <h2 style="color: var(--danger);">Danger Zone</h2>
-                                <p>Irreversible and destructive actions</p>
+                <!-- Backup Settings -->
+                <div id="settings-backup" class="settings-section" style="display: none;">
+                    <div class="settings-section-header">
+                        <div>
+                            <h2>Database Backup</h2>
+                            <p>Export your gym data for safekeeping and backups</p>
+                        </div>
+                    </div>
+
+                    <div class="settings-group">
+                        <div class="settings-item">
+                            <div class="settings-item-label">
+                                <label>Export Database</label>
+                                <span class="settings-hint">Download a complete SQL backup of your database tables, members, and bookings.</span>
+                            </div>
+                            <div style="margin-top: 16px;">
+                                <button class="btn btn-primary" onclick="exportDatabase()" style="background: #22c55e; border-color: #22c55e;">
+                                    <i class="fas fa-file-export"></i>
+                                    Export SQL Backup
+                                </button>
                             </div>
                         </div>
-
-                        <div class="settings-group">
-                            <div class="settings-danger-item">
-                                <div>
-                                    <h4>Clear All Data</h4>
-                                    <p>Permanently delete all bookings, payments, and member data. This action cannot be undone.</p>
+                        
+                        <div class="settings-info-box" style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2); padding: 20px; border-radius: 12px; margin-top: 24px;">
+                            <div style="display: flex; gap: 15px;">
+                                <i class="fas fa-info-circle" style="color: #3b82f6; font-size: 1.2rem; margin-top: 2px;"></i>
+                                <div style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6;">
+                                    <strong style="color: #fff; display: block; margin-bottom: 4px;">Why backup?</strong>
+                                    Regular backups ensure that your gym's records are safe in case of server issues. It is recommended to export your database at least once a week.
                                 </div>
-                                <button class="btn btn-danger" onclick="clearAllData()">
-                                    <i class="fas fa-trash"></i>
-                                    Clear All Data
-                                </button>
-                            </div>
-
-                            <div class="settings-danger-item">
-                                <div>
-                                    <h4>Reset Settings</h4>
-                                    <p>Reset all settings to their default values. Your data will not be affected.</p>
-                                </div>
-                                <button class="btn btn-warning" onclick="resetSettings()">
-                                    <i class="fas fa-undo"></i>
-                                    Reset Settings
-                                </button>
                             </div>
                         </div>
                     </div>
