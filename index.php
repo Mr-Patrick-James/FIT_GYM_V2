@@ -461,20 +461,22 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
             <div id="otpVerificationForm" class="form-box">
                 <div class="auth-header">
                     <h2>Verify Your Email</h2>
-                    <p>We've sent a 6-digit code to <strong id="displayEmail"></strong></p>
+                    <p>We've sent a 6-digit code to <strong id="otpEmailDisplay"></strong></p>
                 </div>
-                <div class="otp-inputs">
-                    <input type="text" maxlength="1" id="otpInput1" onkeyup="moveFocus(this, 'otpInput2')">
-                    <input type="text" maxlength="1" id="otpInput2" onkeyup="moveFocus(this, 'otpInput3')">
-                    <input type="text" maxlength="1" id="otpInput3" onkeyup="moveFocus(this, 'otpInput4')">
-                    <input type="text" maxlength="1" id="otpInput4" onkeyup="moveFocus(this, 'otpInput5')">
-                    <input type="text" maxlength="1" id="otpInput5" onkeyup="moveFocus(this, 'otpInput6')">
-                    <input type="text" maxlength="1" id="otpInput6">
-                </div>
-                <button class="auth-btn" onclick="verifyOTP()">Verify Code</button>
+                <form id="otpFormElement">
+                    <div class="otp-input-group">
+                        <input type="text" maxlength="1" id="otpInput1">
+                        <input type="text" maxlength="1" id="otpInput2">
+                        <input type="text" maxlength="1" id="otpInput3">
+                        <input type="text" maxlength="1" id="otpInput4">
+                        <input type="text" maxlength="1" id="otpInput5">
+                        <input type="text" maxlength="1" id="otpInput6">
+                    </div>
+                    <button type="submit" class="auth-btn">Verify Code</button>
+                </form>
                 <div class="resend-otp">
-                    Didn't receive code? <span id="resendBtn" onclick="resendOTP()">Resend</span>
-                    <p id="resendTimer" style="display: none; font-size: 0.8rem; color: #888; margin-top: 5px;"></p>
+                    Didn't receive code? <span id="resendOtp" onclick="resendOTP()">Resend</span> <span id="resendCooldown"></span>
+                    <p id="otpTimer" style="display: none; font-size: 0.8rem; color: #888; margin-top: 5px;"></p>
                 </div>
             </div>
         </div>

@@ -472,43 +472,47 @@ function getUserCalendarEvents() {
                     // Add routines for each day of the active period
                     for (let i = 0; i < days; i++) {
                         const dateStr = formatDateISO(current);
-                        const workout = getSeededWorkout(dateStr, pkgId, pkgExercises);
-                        events.push({
-                            id: `routine-${pkgId}-${dateStr}`,
-                            title: workout.title,
-                            start: dateStr,
-                            allDay: true,
-                            classNames: ['event-routine'],
-                            extendedProps: { 
-                                type: 'routine',
-                                package_id: pkgId,
-                                package_name: pkgName,
-                                date: dateStr,
-                                focus_category: workout.category
-                            }
-                        });
+                        
+                        // Rest days: Wednesday, Sunday (2 days/week)
+                        const dayOfWeek = current.getDay();
+                        const isRestDay = (dayOfWeek === 0 || dayOfWeek === 3);
+
+                        // Don't put an exercise plan on the starting date (i === 0)
+                        if (i === 0) {
+                            // Do nothing for the start date, or we can add a 'Start Day' marker if needed
+                            // For now, we just skip the workout/rest label as requested
+                        } else if (isRestDay) {
+                            events.push({
+                                id: `rest-${pkgId}-${dateStr}`,
+                                title: `💤 Rest Day`,
+                                start: dateStr,
+                                allDay: true,
+                                classNames: ['event-rest-day'],
+                                extendedProps: { type: 'rest', date: dateStr }
+                            });
+                        } else {
+                            const workout = getSeededWorkout(dateStr, pkgId, pkgExercises);
+                            events.push({
+                                id: `routine-${pkgId}-${dateStr}`,
+                                title: workout.title,
+                                start: dateStr,
+                                allDay: true,
+                                classNames: ['event-routine'],
+                                extendedProps: { 
+                                    type: 'routine',
+                                    package_id: pkgId,
+                                    package_name: pkgName,
+                                    date: dateStr,
+                                    focus_category: workout.category
+                                }
+                            });
+                        }
                         current.setDate(current.getDate() + 1);
                     }
                 }
             } else if (days === 1 && pkgId && activeExercisesByPackage[pkgId]) {
-                const pkgExercises = activeExercisesByPackage[pkgId];
-                const dateStr = startStr;
-                const workout = getSeededWorkout(dateStr, pkgId, pkgExercises);
-                // For 1-day packages, just add one routine event
-                events.push({
-                    id: `routine-${pkgId}-${dateStr}`,
-                    title: workout.title,
-                    start: dateStr,
-                    allDay: true,
-                    classNames: ['event-routine'],
-                    extendedProps: { 
-                        type: 'routine',
-                        package_id: pkgId,
-                        package_name: pkgName,
-                        date: dateStr,
-                        focus_category: workout.category
-                    }
-                });
+                // For 1-day packages, we don't add a routine on the start date based on your request
+                // So for a 1-day pass, no workout will show on that single day
             }
         }
     });
@@ -533,12 +537,15 @@ function initUserCalendar() {
             const eventId = info.event.id;
             
             if (type === 'routine') {
-                 const pkgId = info.event.extendedProps.package_id;
-                 const pkgName = info.event.extendedProps.package_name;
-                 const date = info.event.extendedProps.date;
-                 const focusCategory = info.event.extendedProps.focus_category;
-                 showExercisePlan(pkgId, pkgName, date, focusCategory);
-             } else {
+                  const pkgId = info.event.extendedProps.package_id;
+                  const pkgName = info.event.extendedProps.package_name;
+                  const date = info.event.extendedProps.date;
+                  const focusCategory = info.event.extendedProps.focus_category;
+                  showExercisePlan(pkgId, pkgName, date, focusCategory);
+              } else if (type === 'rest') {
+                  const date = info.event.extendedProps.date;
+                  showNotification(`Recovery is key! Enjoy your rest day on ${formatDate(date)}.`, 'info');
+              } else {
                 const bookingId = eventId.split('-')[1]; // Get '123' from 'booking-123'
                 if (bookingId) {
                     viewBookingDetails(bookingId);

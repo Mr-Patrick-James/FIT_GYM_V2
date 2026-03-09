@@ -70,9 +70,9 @@ $user = getCurrentUser();
                     <div class="user-role">Administrator</div>
                 </div>
             </div>
-            <a href="../../api/auth/logout.php" class="logout-btn">
+            <button onclick="handleLogout()" class="logout-btn" style="width: 100%; border: none; background: none; cursor: pointer; text-align: left; padding: 0;">
                 <i class="fas fa-sign-out-alt"></i> Logout
-            </a>
+            </button>
         </div>
     </aside>
     

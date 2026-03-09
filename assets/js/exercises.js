@@ -254,9 +254,26 @@ function showNotification(message, type = 'info') {
     setTimeout(() => notification.remove(), 5000);
 }
 
-function handleLogout() {
-    if (confirm('Logout from admin panel?')) {
-        window.location.href = '../../api/auth/logout.php';
+async function handleLogout() {
+    if (!confirm('Logout from admin panel?')) return;
+    
+    try {
+        const response = await fetch('../../api/auth/logout.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        
+        // Clear localStorage
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('userRole');
+        localStorage.removeItem('userData');
+        
+        // Redirect to login page
+        window.location.href = '../../index.php';
+    } catch (error) {
+        console.error('Logout error:', error);
+        // Fallback redirect
+        window.location.href = '../../index.php';
     }
 }
 

@@ -401,6 +401,15 @@ function getSetting($key, $default = '', $settings = []) {
             border: 1px solid rgba(255, 255, 255, 0.05) !important;
             border-left: 4px solid var(--primary) !important;
         }
+        .event-rest-day {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(59, 130, 246, 0.12) 100%) !important;
+            border-left: 4px solid #3b82f6 !important;
+            color: #3b82f6 !important;
+            cursor: pointer;
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(59, 130, 246, 0.05) !important;
+            border-left: 4px solid #3b82f6 !important;
+        }
         
         .fc-h-event .fc-event-main {
             color: inherit !important;
