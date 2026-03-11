@@ -392,11 +392,54 @@ function showHomePlanModal(packageId) {
     if (!plan) return;
 
     const modal = document.getElementById('homePlanModal');
-    const content = document.getElementById('homePlanContent');
+    const title = document.getElementById('homePlanTitle');
+    const subtitle = document.getElementById('homePlanSubtitle');
+    const rationaleBox = document.getElementById('homePlanWhoRationale');
+    const exercisesGrid = document.getElementById('homePlanExercises');
     
-    let exercisesHTML = plan.exercises.map(ex => `
-        <div style="display: flex; gap: 20px; padding: 20px; border-bottom: 1px solid #222; align-items: center;">
-            <div style="width: 80px; height: 80px; background: #1a1a1a; border-radius: 12px; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 1px solid #333; flex-shrink: 0;">
+    if (!modal || !exercisesGrid) return;
+
+    title.textContent = plan.name;
+    subtitle.textContent = "Full routine preview for this membership plan";
+
+    // Determine WHO rationale based on plan contents
+    const categories = plan.exercises.map(ex => ex.category);
+    const hasCardio = categories.some(c => c === 'Cardio' || c === 'Aerobic');
+    const hasStrength = categories.some(c => c === 'Strength' || c === 'Legs' || c === 'Chest' || c === 'Back');
+    
+    let rationaleText = "";
+    if (hasCardio && hasStrength) {
+        rationaleText = "WHO (World Health Organization) recommends combining 150-300m aerobic activity and 2+ days strength training per week for optimal health. This plan provides a balanced mix of both.";
+    } else if (hasCardio) {
+        rationaleText = "This cardio-focused routine helps you meet the WHO (World Health Organization) recommendation of 150-300 minutes of moderate aerobic activity per week.";
+    } else if (hasStrength) {
+        rationaleText = "This strength routine helps satisfy the WHO (World Health Organization) guideline of performing muscle-strengthening activities 2 or more days a week.";
+    } else {
+        rationaleText = "Regular physical activity of any type is recommended by WHO (World Health Organization) to reduce sedentary time and improve long-term health.";
+    }
+
+    rationaleBox.style.display = 'flex';
+    rationaleBox.style.cssText = `
+        background: rgba(34, 197, 94, 0.1);
+        border: 1px solid rgba(34, 197, 94, 0.3);
+        padding: 20px;
+        border-radius: 12px;
+        margin-bottom: 25px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    `;
+    rationaleBox.innerHTML = `
+        <div style="font-size: 1.5rem; color: #22c55e;"><i class="fas fa-info-circle"></i></div>
+        <div style="font-size: 0.95rem; color: #fff; line-height: 1.5;">
+            <strong style="color: #22c55e; display: block; margin-bottom: 4px; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 1px;">WHO (World Health Organization) Recommendation</strong>
+            ${rationaleText}
+        </div>
+    `;
+
+    exercisesGrid.innerHTML = plan.exercises.map(ex => `
+        <div style="display: flex; gap: 20px; padding: 20px; border: 1px solid #222; background: #1a1a1a; border-radius: 15px; align-items: center;">
+            <div style="width: 80px; height: 80px; background: #0a0a0a; border-radius: 12px; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 1px solid #333; flex-shrink: 0;">
                 ${ex.image_url ? `
                     <img src="${ex.image_url.startsWith('http') ? ex.image_url : 'assets/uploads/exercises/' + ex.image_url.split('/').pop()}" style="width: 100%; height: 100%; object-fit: cover;">
                 ` : '<i class="fas fa-dumbbell" style="color: #333; font-size: 1.5rem;"></i>'}
@@ -408,22 +451,6 @@ function showHomePlanModal(packageId) {
             </div>
         </div>
     `).join('');
-
-    content.innerHTML = `
-        <div style="background: #1a1a1a; padding: 40px 30px; border-bottom: 1px solid #222;">
-            <h2 style="font-size: 2rem; font-weight: 900; color: white; text-transform: uppercase; margin-bottom: 10px;">${plan.name}</h2>
-            <p style="color: #888; font-size: 1rem;">Full routine preview for this membership plan</p>
-        </div>
-        <div style="padding: 10px 0;">
-            ${exercisesHTML}
-        </div>
-        <div style="padding: 30px; text-align: center; background: #0a0a0a;">
-            <p style="margin-bottom: 20px; color: #888;">Ready to start this routine?</p>
-            <button class="main-cta" onclick="closeHomePlanModal(); openModal('signup');" style="width: auto; padding: 15px 40px;">
-                Join Now to Start
-            </button>
-        </div>
-    `;
 
     modal.classList.add('active');
     document.body.style.overflow = 'hidden';

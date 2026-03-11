@@ -492,11 +492,26 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
 
     <!-- Exercise Plan Preview Modal -->
     <div class="modal-overlay" id="homePlanModal">
-        <div class="auth-card" style="max-width: 800px; max-height: 90vh; overflow-y: auto; padding: 0;">
+        <div class="auth-card" style="max-width: 800px; max-height: 90vh; overflow-y: auto; padding: 40px;">
             <button class="close-modal" onclick="closeHomePlanModal()" style="z-index: 100;"><i class="fa-solid fa-xmark"></i></button>
             
-            <div id="homePlanContent">
+            <div id="homePlanHeader" style="margin-bottom: 30px;">
+                <h2 id="homePlanTitle" style="font-size: 2rem; margin-bottom: 10px;">Plan Routine</h2>
+                <p id="homePlanSubtitle" style="color: #888;">Explore the exercises in this membership plan</p>
+            </div>
+
+            <div id="homePlanWhoRationale" style="margin-bottom: 30px; display: none;">
                 <!-- Populated by JS -->
+            </div>
+
+            <div id="homePlanExercises" class="plan-exercises-grid" style="display: grid; gap: 20px;">
+                <!-- Populated by JS -->
+            </div>
+            
+            <div style="margin-top: 40px; text-align: center;">
+                <button class="auth-btn" onclick="closeHomePlanModal(); openModal('signup')" style="width: auto; padding: 15px 40px;">
+                    Start This Plan Now
+                </button>
             </div>
         </div>
     </div>
