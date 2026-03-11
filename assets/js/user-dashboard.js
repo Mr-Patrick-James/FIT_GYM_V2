@@ -1212,6 +1212,14 @@ function closeBookingModal() {
 function handleFileSelect(event) {
     const file = event.target.files[0];
     if (file) {
+        // Validate file size (max 5MB)
+        const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+        if (file.size > maxSize) {
+            showNotification('Image size is too huge! Maximum allowed size is 5MB.', 'warning');
+            event.target.value = ''; // Clear the input
+            return;
+        }
+
         selectedFile = file;
         const preview = document.getElementById('filePreview');
         const fileName = document.getElementById('fileName');
@@ -1248,6 +1256,13 @@ async function submitBooking(event) {
     
     if (!selectedFile) {
         showNotification('Please upload a payment receipt', 'warning');
+        return;
+    }
+
+    // Double check file size before uploading
+    const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+    if (selectedFile.size > maxSize) {
+        showNotification('Image size is too huge! Maximum allowed size is 5MB.', 'warning');
         return;
     }
     
