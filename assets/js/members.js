@@ -418,7 +418,7 @@ function exportMembers() {
         const spent = Math.round(member.totalSpent);
         const status = isMemberActive(member) ? 'Active' : 'Inactive';
         
-        csv += `${name},${email},${contact},${address},${bookings},${verified},₱${spent},${status}\n`;
+        csv += `${name},${email},${contact},${address},${bookings},${verified},${spent},${status}\n`;
     });
     
     // Create download link

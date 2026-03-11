@@ -564,7 +564,7 @@ function exportPayments() {
         const contact = (payment.contact || 'N/A').replace(/,/g, '');
         const packageName = (payment.package_name || payment.package || 'N/A').replace(/,/g, '');
         const date = (payment.date_formatted || formatDateForDisplay(payment.created_at)).replace(/,/g, '');
-        const amount = (payment.amount_formatted || ('₱' + parseFloat(payment.amount).toFixed(2))).replace(/,/g, '');
+        const amount = (payment.amount_formatted || parseFloat(payment.amount).toFixed(2)).replace(/[₱,]/g, '');
         
         csv += `${name},${email},${contact},${packageName},${date},${amount},Verified\n`;
     });

@@ -583,7 +583,7 @@ async function exportData(type) {
             const date = new Date(payment.created_at).toLocaleDateString();
             const name = (payment.user_name || 'Unknown').replace(/,/g, '');
             const pkg = (payment.package_name || 'N/A').replace(/,/g, '');
-            const amount = payment.amount;
+            const amount = (payment.amount || '0').toString().replace(/[₱,]/g, '');
             csv += `${date},${name},${pkg},${amount}\n`;
         });
     } else {
@@ -592,7 +592,7 @@ async function exportData(type) {
             const date = new Date(booking.created_at).toLocaleDateString();
             const name = (booking.user_name || 'Unknown').replace(/,/g, '');
             const pkg = (booking.package_name || 'N/A').replace(/,/g, '');
-            const amount = booking.amount;
+            const amount = (booking.amount || '0').toString().replace(/[₱,]/g, '');
             const status = (booking.status || 'pending').replace(/,/g, '');
             csv += `${date},${name},${pkg},${amount},${status}\n`;
         });

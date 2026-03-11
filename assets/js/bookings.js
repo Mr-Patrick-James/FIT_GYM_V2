@@ -736,7 +736,7 @@ function exportBookings() {
         const contact = (booking.contact || 'N/A').replace(/,/g, '');
         const packageName = (booking.package || 'N/A').replace(/,/g, '');
         const date = formatDateForDisplay(booking.date || booking.createdAt).replace(/,/g, '');
-        const amount = (booking.amount || '₱0').replace(/,/g, '');
+        const amount = (booking.amount || '0').replace(/[₱,]/g, '');
         const status = (booking.status || 'pending').replace(/,/g, '');
         
         csv += `${name},${email},${contact},${packageName},${date},${amount},${status}\n`;
