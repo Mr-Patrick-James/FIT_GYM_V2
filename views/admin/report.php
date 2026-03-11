@@ -146,14 +146,26 @@ $user = getCurrentUser();
             <div class="card-header">
                 <h3>Select Time Period</h3>
                 <div class="card-actions">
-                    <select id="periodSelect" class="card-btn" style="padding: 10px 16px; cursor: pointer;" onchange="updateAllCharts()">
+                    <select id="periodSelect" class="card-btn" style="padding: 10px 16px; cursor: pointer;" onchange="toggleCustomDate()">
                         <option value="7days">Last 7 Days</option>
                         <option value="30days" selected>Last 30 Days</option>
                         <option value="3months">Last 3 Months</option>
                         <option value="6months">Last 6 Months</option>
                         <option value="year">Last Year</option>
+                        <option value="custom">Custom Range</option>
                         <option value="all">All Time</option>
                     </select>
+                </div>
+            </div>
+            
+            <div id="customDateRange" style="display: none; padding: 20px; border-top: 1px solid var(--dark-border); flex-wrap: wrap; gap: 20px;">
+                <div style="flex: 1; min-width: 250px;">
+                    <label style="display: block; margin-bottom: 8px; color: var(--dark-text-secondary); font-size: 0.85rem; font-weight: 700; text-transform: uppercase;">Start Date & Time</label>
+                    <input type="datetime-local" id="startDate" class="settings-input" style="width: 100%;" onchange="updateAllCharts()">
+                </div>
+                <div style="flex: 1; min-width: 250px;">
+                    <label style="display: block; margin-bottom: 8px; color: var(--dark-text-secondary); font-size: 0.85rem; font-weight: 700; text-transform: uppercase;">End Date & Time</label>
+                    <input type="datetime-local" id="endDate" class="settings-input" style="width: 100%;" onchange="updateAllCharts()">
                 </div>
             </div>
         </div>

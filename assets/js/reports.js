@@ -44,14 +44,48 @@ function getDateRange(period) {
     return ranges[period] || ranges['30days'];
 }
 
+// Toggle custom date range inputs
+function toggleCustomDate() {
+    const period = document.getElementById('periodSelect').value;
+    const customRange = document.getElementById('customDateRange');
+    
+    if (period === 'custom') {
+        customRange.style.display = 'flex';
+        // Set default values if empty
+        if (!document.getElementById('startDate').value) {
+            const lastWeek = new Date();
+            lastWeek.setDate(lastWeek.getDate() - 7);
+            document.getElementById('startDate').value = lastWeek.toISOString().slice(0, 16);
+        }
+        if (!document.getElementById('endDate').value) {
+            document.getElementById('endDate').value = new Date().toISOString().slice(0, 16);
+        }
+    } else {
+        customRange.style.display = 'none';
+        updateAllCharts();
+    }
+}
+
 // Filter data by period
 function filterByPeriod(data, period) {
     if (period === 'all') return data;
-    const startDate = getDateRange(period);
+    
+    let startDate, endDate;
+    
+    if (period === 'custom') {
+        const startVal = document.getElementById('startDate').value;
+        const endVal = document.getElementById('endDate').value;
+        startDate = startVal ? new Date(startVal) : new Date(0);
+        endDate = endVal ? new Date(endVal) : new Date();
+    } else {
+        startDate = getDateRange(period);
+        endDate = new Date();
+    }
+    
     return data.filter(item => {
         const rawDate = item.created_at || item.booking_date || item.date || item.createdAt || null;
         const itemDate = rawDate ? new Date(rawDate) : new Date(0);
-        return itemDate >= startDate;
+        return itemDate >= startDate && itemDate <= endDate;
     });
 }
 
@@ -208,6 +242,13 @@ function isBookingActive(booking) {
 
 // Get days in period
 function getDaysInPeriod(period) {
+    if (period === 'custom') {
+        const start = new Date(document.getElementById('startDate').value);
+        const end = new Date(document.getElementById('endDate').value);
+        const diffTime = Math.abs(end - start);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+        return diffDays || 1; // Return at least 1 day to avoid division by zero
+    }
     const days = {
         '7days': 7,
         '30days': 30,
@@ -626,9 +667,15 @@ async function generateReport() {
         });
         
         const periodSelect = document.getElementById('periodSelect');
-        const periodText = periodSelect && periodSelect.selectedOptions && periodSelect.selectedOptions.length > 0 
+        let periodText = periodSelect && periodSelect.selectedOptions && periodSelect.selectedOptions.length > 0 
             ? periodSelect.selectedOptions[0].text 
             : 'All Time';
+            
+        if (currentPeriod === 'custom') {
+            const start = new Date(document.getElementById('startDate').value).toLocaleString();
+            const end = new Date(document.getElementById('endDate').value).toLocaleString();
+            periodText = `Custom (${start} to ${end})`;
+        }
         
         const report = `
 COMPREHENSIVE GYM REPORT
