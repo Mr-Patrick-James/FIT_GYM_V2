@@ -19,10 +19,17 @@ $stmt->close();
 
 // Stats for trainer
 $totalMembers = 0;
-$res = $conn->query("SELECT COUNT(DISTINCT user_id) as count FROM bookings WHERE status = 'verified'");
-if ($res) $totalMembers = $res->fetch_assoc()['count'];
+if ($trainerId) {
+    $res = $conn->query("SELECT COUNT(*) as count FROM bookings WHERE trainer_id = $trainerId AND status = 'verified'");
+    if ($res) $totalMembers = $res->fetch_assoc()['count'];
+}
 
-$activePlans = 0; // Placeholder for future feature
+// Active Plans count
+$activePlans = 0;
+if ($trainerId) {
+    $res = $conn->query("SELECT COUNT(DISTINCT booking_id) as count FROM member_exercise_plans mep JOIN bookings b ON mep.booking_id = b.id WHERE b.trainer_id = $trainerId");
+    if ($res) $activePlans = $res->fetch_assoc()['count'];
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -65,6 +72,7 @@ $activePlans = 0; // Placeholder for future feature
         <ul class="nav-links">
             <li><a href="dashboard.php" class="active"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
             <li><a href="members.php"><i class="fas fa-users"></i> <span>My Clients</span></a></li>
+            <li><a href="packages.php"><i class="fas fa-dumbbell"></i> <span>Packages</span></a></li>
             <li><a href="plans.php"><i class="fas fa-clipboard-list"></i> <span>Exercise Plans</span></a></li>
             <li><a href="exercises.php"><i class="fas fa-running"></i> <span>Exercises</span></a></li>
             <li><a href="profile.php"><i class="fas fa-user-circle"></i> <span>My Profile</span></a></li>
@@ -94,9 +102,9 @@ $activePlans = 0; // Placeholder for future feature
             </div>
             
             <div class="header-actions">
-                <button class="action-btn notification-btn">
+                <button class="action-btn notification-btn" onclick="toggleNotifications()">
                     <i class="fas fa-bell"></i>
-                    <span class="notification-badge">0</span>
+                    <span class="notification-badge" id="notifBadge">0</span>
                 </button>
                 
                 <button class="action-btn" title="Logout" onclick="handleLogout()">
@@ -119,31 +127,82 @@ $activePlans = 0; // Placeholder for future feature
             <div class="stat-card">
                 <div class="stat-header">
                     <div class="stat-icon" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">
+                        <i class="fas fa-dumbbell"></i>
+                    </div>
+                </div>
+                <div class="stat-value" id="assignedPkgCount">0</div>
+                <div class="stat-label">Assigned Packages</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">
                         <i class="fas fa-clipboard-check"></i>
                     </div>
                 </div>
                 <div class="stat-value"><?php echo $activePlans; ?></div>
                 <div class="stat-label">Active Plans</div>
             </div>
-            
-            <div class="stat-card">
-                <div class="stat-header">
-                    <div class="stat-icon" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">
-                        <i class="fas fa-calendar-day"></i>
-                    </div>
-                </div>
-                <div class="stat-value">0</div>
-                <div class="stat-label">Today's Sessions</div>
-            </div>
         </div>
 
-        <div class="content-card" style="margin-top: 32px;">
-            <div class="card-header">
-                <h3>Recent Client Activity</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-top: 32px;">
+            <!-- Recent Client Progress -->
+            <div class="content-card" style="margin-top: 0;">
+                <div class="card-header">
+                    <h3>Recent Client Progress</h3>
+                </div>
+                <div style="padding: 24px;">
+                    <?php
+                    $recentActivity = [];
+                    if ($trainerId) {
+                        $res = $conn->query("
+                            SELECT mp.*, u.name as member_name 
+                            FROM member_progress mp 
+                            JOIN bookings b ON mp.booking_id = b.id 
+                            JOIN users u ON b.user_id = u.id 
+                            WHERE mp.trainer_id = $trainerId 
+                            ORDER BY mp.created_at DESC LIMIT 5
+                        ");
+                        if ($res) {
+                            while ($row = $res->fetch_assoc()) {
+                                $recentActivity[] = $row;
+                            }
+                        }
+                    }
+                    
+                    if (empty($recentActivity)): ?>
+                        <div style="padding: 20px; text-align: center; color: var(--dark-text-secondary);">
+                            <i class="fas fa-history" style="font-size: 3rem; margin-bottom: 16px; opacity: 0.3;"></i>
+                            <p>No recent activity recorded.</p>
+                        </div>
+                    <?php else: ?>
+                        <?php foreach ($recentActivity as $act): ?>
+                            <div style="padding: 16px; border-bottom: 1px solid var(--dark-border); display: flex; justify-content: space-between; align-items: flex-start;">
+                                <div>
+                                    <h4 style="font-weight: 700; margin-bottom: 4px;"><?php echo htmlspecialchars($act['member_name']); ?></h4>
+                                    <p style="font-size: 0.85rem; color: var(--dark-text-secondary);"><?php echo htmlspecialchars($act['remarks']); ?></p>
+                                </div>
+                                <div style="text-align: right;">
+                                    <span style="display: block; font-size: 0.85rem; font-weight: 800; color: var(--primary);"><?php echo $act['weight'] ? $act['weight'] . ' kg' : ''; ?></span>
+                                    <span style="font-size: 0.75rem; color: #555;"><?php echo date('M d, Y', strtotime($act['logged_at'])); ?></span>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </div>
             </div>
-            <div style="padding: 40px; text-align: center; color: var(--dark-text-secondary);">
-                <i class="fas fa-history" style="font-size: 3rem; margin-bottom: 16px; opacity: 0.3;"></i>
-                <p>No recent activity to show.</p>
+
+            <!-- My Assigned Packages -->
+            <div class="content-card" style="margin-top: 0;">
+                <div class="card-header">
+                    <h3>My Assigned Packages</h3>
+                </div>
+                <div id="assignedPackagesList" style="padding: 24px;">
+                    <div style="text-align: center; padding: 20px;">
+                        <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--primary);"></i>
+                        <p style="margin-top: 10px;">Loading packages...</p>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -152,7 +211,130 @@ $activePlans = 0; // Placeholder for future feature
         </div>
     </main>
 
+    <!-- Notifications Modal -->
+    <div class="modal-overlay" id="notificationsModal">
+        <div class="modal" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-bell"></i> Notifications</h3>
+                <button class="close-modal" onclick="toggleNotifications()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="notificationsList" style="max-height: 400px; overflow-y: auto; padding: 10px;">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+            <div class="modal-footer" style="padding: 16px 24px; border-top: 1px solid var(--dark-border); text-align: right;">
+                <button class="btn btn-secondary btn-sm" onclick="markAllAsRead()">Mark all as read</button>
+            </div>
+        </div>
+    </div>
+
     <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            loadAssignedPackages();
+            loadNotifications();
+        });
+
+        async function loadAssignedPackages() {
+            const list = document.getElementById('assignedPackagesList');
+            const countEl = document.getElementById('assignedPkgCount');
+            
+            try {
+                const response = await fetch('../../api/trainers/get-assigned-packages.php');
+                const data = await response.json();
+                
+                if (data.success) {
+                    countEl.textContent = data.data.length;
+                    if (data.data.length === 0) {
+                        list.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--dark-text-secondary);"><i class="fas fa-dumbbell" style="font-size: 3rem; opacity: 0.2; margin-bottom: 15px; display: block;"></i> No packages assigned to you yet.</div>';
+                        return;
+                    }
+                    
+                    list.innerHTML = data.data.map(pkg => `
+                        <div style="padding: 16px; border-bottom: 1px solid var(--dark-border); display: flex; align-items: center; gap: 15px;">
+                            <div style="width: 40px; height: 40px; border-radius: 8px; background: var(--glass); display: flex; align-items: center; justify-content: center; color: var(--primary);">
+                                <i class="fas fa-dumbbell"></i>
+                            </div>
+                            <div style="flex: 1;">
+                                <h4 style="font-weight: 700;">${pkg.name}</h4>
+                                <p style="font-size: 0.8rem; color: var(--dark-text-secondary);">${pkg.duration} • ₱${parseFloat(pkg.price).toLocaleString()}</p>
+                            </div>
+                            <div class="status-badge status-verified" style="font-size: 0.7rem;">Active</div>
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Error loading packages:', error);
+                list.innerHTML = '<p style="color: #ef4444; text-align: center;">Failed to load packages.</p>';
+            }
+        }
+
+        async function loadNotifications() {
+            const list = document.getElementById('notificationsList');
+            const badge = document.getElementById('notifBadge');
+            
+            try {
+                const response = await fetch('../../api/notifications/get-all.php');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const unreadCount = data.data.filter(n => !n.is_read).length;
+                    badge.textContent = unreadCount;
+                    badge.style.display = unreadCount > 0 ? 'flex' : 'none';
+                    
+                    if (data.data.length === 0) {
+                        list.innerHTML = '<p style="text-align: center; padding: 20px; color: var(--dark-text-secondary);">No notifications yet.</p>';
+                        return;
+                    }
+                    
+                    list.innerHTML = data.data.map(n => `
+                        <div style="padding: 15px; border-bottom: 1px solid var(--dark-border); position: relative; ${!n.is_read ? 'background: rgba(59, 130, 246, 0.05);' : ''}" onclick="markAsRead(${n.id})">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                <strong style="font-size: 0.9rem; color: ${n.type === 'assignment' ? 'var(--primary)' : 'white'};">${n.title}</strong>
+                                <span style="font-size: 0.7rem; color: #555;">${new Date(n.created_at).toLocaleDateString()}</span>
+                            </div>
+                            <p style="font-size: 0.85rem; color: var(--dark-text-secondary); line-height: 1.4;">${n.message}</p>
+                            ${!n.is_read ? '<div style="position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--primary);"></div>' : ''}
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Error loading notifications:', error);
+            }
+        }
+
+        async function markAsRead(id) {
+            try {
+                await fetch('../../api/notifications/mark-as-read.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id })
+                });
+                loadNotifications();
+            } catch (error) {
+                console.error('Error marking as read:', error);
+            }
+        }
+
+        async function markAllAsRead() {
+            try {
+                await fetch('../../api/notifications/mark-as-read.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: 0 })
+                });
+                loadNotifications();
+            } catch (error) {
+                console.error('Error marking all as read:', error);
+            }
+        }
+
+        function toggleNotifications() {
+            document.getElementById('notificationsModal').classList.toggle('active');
+        }
+
         async function handleLogout() {
             if (!confirm('Are you sure you want to logout?')) return;
             try {

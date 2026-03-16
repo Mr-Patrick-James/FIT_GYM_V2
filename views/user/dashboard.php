@@ -831,9 +831,9 @@ function getSetting($key, $default = '', $settings = []) {
             </div>
             
             <div class="header-actions">
-                <button class="action-btn notification-btn" onclick="showNotifications()">
+                <button class="action-btn notification-btn" onclick="toggleNotifications()">
                     <i class="fas fa-bell"></i>
-                    <span class="notification-badge" id="notificationCount">2</span>
+                    <span class="notification-badge" id="notifBadge">0</span>
                 </button>
                 
                 <button class="action-btn" onclick="logout()" title="Logout">
@@ -861,11 +861,11 @@ function getSetting($key, $default = '', $settings = []) {
                         <div class="stat-card">
                             <div class="stat-header">
                                 <div class="stat-icon">
-                                    <i class="fas fa-clock"></i>
+                                    <i class="fas fa-user-tie"></i>
                                 </div>
                             </div>
-                            <div class="stat-value" id="pendingBookingsCount">0</div>
-                            <div class="stat-label">Pending Verifications</div>
+                            <div class="stat-value" id="statTrainer">None</div>
+                            <div class="stat-label">Assigned Trainer</div>
                         </div>
                         
                         <div class="stat-card">
@@ -886,6 +886,26 @@ function getSetting($key, $default = '', $settings = []) {
                             </div>
                             <div class="stat-value" id="membershipStatus">None</div>
                             <div class="stat-label">Membership Status</div>
+                        </div>
+                    </div>
+
+                    <!-- Coach Recommendations Section (Dynamic) -->
+                    <div id="coachSection" style="display: none; margin-bottom: 32px; grid-template-columns: 1fr 1fr; gap: 24px;">
+                        <div class="content-card" style="margin-top: 0;">
+                            <div class="card-header">
+                                <h3><i class="fas fa-lightbulb" style="color: var(--primary);"></i> Coach's Tips</h3>
+                            </div>
+                            <div id="myTipsList" style="padding: 20px; max-height: 250px; overflow-y: auto;">
+                                <p style="text-align: center; color: var(--dark-text-secondary); font-size: 0.9rem;">No tips from your coach yet.</p>
+                            </div>
+                        </div>
+                        <div class="content-card" style="margin-top: 0;">
+                            <div class="card-header">
+                                <h3><i class="fas fa-utensils" style="color: var(--primary);"></i> Meal Guidance</h3>
+                            </div>
+                            <div id="myFoodList" style="padding: 20px; max-height: 250px; overflow-y: auto;">
+                                <p style="text-align: center; color: var(--dark-text-secondary); font-size: 0.9rem;">No food recommendations yet.</p>
+                            </div>
                         </div>
                     </div>
 
@@ -1332,6 +1352,24 @@ function getSetting($key, $default = '', $settings = []) {
                             <span>-</span>
                         </div>
                     </div>
+                    <div class="booking-detail-item" id="detailTrainerContainer" style="display: none;">
+                        <span class="detail-label">Assigned Trainer</span>
+                        <div class="detail-value" id="detailTrainer" style="color: var(--primary); font-weight: 700;">
+                            <i class="fas fa-user-tie"></i>
+                            <span>-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="trainerActions" style="display: none; margin-top: 24px; gap: 12px;">
+                    <button class="btn btn-primary" onclick="viewMyPlan()" style="flex: 1; justify-content: center;">
+                        <i class="fas fa-clipboard-list"></i>
+                        <span>My Exercise Plan</span>
+                    </button>
+                    <button class="btn btn-secondary" onclick="viewMyProgress()" style="flex: 1; justify-content: center;">
+                        <i class="fas fa-chart-line"></i>
+                        <span>My Progress History</span>
+                    </button>
                 </div>
 
                 <div id="detailNotesSection" class="notes-section" style="display: none; margin-bottom: 24px;">
@@ -1504,6 +1542,46 @@ function getSetting($key, $default = '', $settings = []) {
                         <span>Book This Now</span>
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress History Modal -->
+    <div class="modal-overlay" id="myProgressModal">
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-chart-line"></i> My Progress History</h3>
+                <button class="close-modal" onclick="closeMyProgressModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="myProgressContent" style="max-height: 450px; overflow-y: auto;">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+            <div class="modal-footer" style="padding: 16px 24px; border-top: 1px solid var(--dark-border); text-align: right;">
+                <button class="btn btn-secondary" onclick="closeMyProgressModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notifications Modal -->
+    <div class="modal-overlay" id="notificationsModal">
+        <div class="modal" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-bell"></i> My Notifications</h3>
+                <button class="close-modal" onclick="toggleNotifications()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="notificationsList" style="max-height: 400px; overflow-y: auto; padding: 10px;">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+            <div class="modal-footer" style="padding: 16px 24px; border-top: 1px solid var(--dark-border); text-align: right;">
+                <button class="btn btn-secondary btn-sm" onclick="markAllAsRead()">Mark all as read</button>
             </div>
         </div>
     </div>

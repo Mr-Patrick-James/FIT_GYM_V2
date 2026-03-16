@@ -1089,11 +1089,9 @@ function isBookingActive(booking) {
 function updateStats() {
     // Active membership = any verified booking that is NOT expired
     const activeVerifiedBookings = userBookings.filter(b => isBookingActive(b));
-    const pending = userBookings.filter(b => b.status === 'pending').length;
     const totalVerified = userBookings.filter(b => b.status === 'verified').length;
     
     document.getElementById('activeBookingsCount').textContent = activeVerifiedBookings.length;
-    document.getElementById('pendingBookingsCount').textContent = pending;
     document.getElementById('verifiedBookingsCount').textContent = totalVerified;
     
     // Update membership status display
@@ -1105,6 +1103,7 @@ function updateStats() {
     const profileMembershipExpiryDate = document.getElementById('profileMembershipExpiryDate');
     const profileMembershipExpiryRow = document.getElementById('profileMembershipExpiryRow');
     const sidebarMemberBadge = document.getElementById('sidebarMemberBadge');
+    const statTrainer = document.getElementById('statTrainer');
 
     if (activeVerifiedBookings.length > 0) {
         // Find the booking with the latest expiry date
@@ -1118,6 +1117,10 @@ function updateStats() {
             membershipStatus.textContent = 'Active';
             membershipStatus.className = 'stat-value status-verified';
             membershipStatus.style.color = '';
+        }
+
+        if (statTrainer) {
+            statTrainer.textContent = latestActive.trainer_name || 'Not Assigned';
         }
 
         // Update Sidebar Badge
@@ -1146,6 +1149,10 @@ function updateStats() {
             membershipStatus.textContent = hasVerified ? 'Expired' : 'None';
             membershipStatus.className = 'stat-value ' + (hasVerified ? 'status-rejected' : '');
             membershipStatus.style.color = '';
+        }
+        
+        if (statTrainer) {
+            statTrainer.textContent = 'None';
         }
 
         // Hide Sidebar Badge
@@ -1387,6 +1394,22 @@ function viewBookingDetails(bookingId) {
         expiryContainer.style.display = 'none';
     }
 
+    // Handle Trainer
+    const trainerContainer = document.getElementById('detailTrainerContainer');
+    const trainerValue = document.getElementById('detailTrainer').querySelector('span');
+    const trainerActions = document.getElementById('trainerActions');
+    
+    if (booking.trainer_name) {
+        trainerContainer.style.display = 'block';
+        trainerValue.textContent = booking.trainer_name;
+        trainerActions.style.display = 'flex';
+        // Store current booking ID for plan/progress viewing
+        currentViewingBookingId = booking.id;
+    } else {
+        trainerContainer.style.display = 'none';
+        trainerActions.style.display = 'none';
+    }
+
     // Handle Notes
     const notesSection = document.getElementById('detailNotesSection');
     if (booking.notes && booking.notes.trim() !== '') {
@@ -1412,6 +1435,97 @@ function viewBookingDetails(bookingId) {
     
     document.getElementById('bookingDetailsModal').classList.add('active');
     document.body.style.overflow = 'hidden';
+}
+
+let currentViewingBookingId = null;
+
+async function viewMyPlan() {
+    if (!currentViewingBookingId) return;
+    
+    const modal = document.getElementById('exercisePlanModal');
+    const title = document.getElementById('exercisePlanTitle');
+    const subtitle = document.getElementById('exercisePlanSubtitle');
+    const content = document.getElementById('exercisePlanContent');
+    
+    try {
+        content.innerHTML = '<div style="text-align: center; padding: 40px;"><i class="fas fa-spinner fa-spin"></i> Loading your customized plan...</div>';
+        modal.classList.add('active');
+        
+        const response = await fetch(`../../api/trainers/get-member-plan.php?booking_id=${currentViewingBookingId}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            const plan = data.data;
+            title.textContent = `Exercise Plan: ${plan.package_name}`;
+            subtitle.textContent = plan.is_customized ? 'Personalized for you by your trainer' : 'Standard package routine';
+            
+            if (plan.exercises.length === 0) {
+                content.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--dark-text-secondary);">Your trainer hasn\'t assigned specific exercises to this plan yet.</div>';
+                return;
+            }
+            
+            content.innerHTML = plan.exercises.map(ex => `
+                <div class="exercise-item" style="display: flex; gap: 20px; padding: 20px; border-bottom: 1px solid var(--dark-border); align-items: center;">
+                    <img src="${ex.image_url || '../../assets/img/exercise-placeholder.jpg'}" style="width: 80px; height: 80px; border-radius: 8px; object-fit: cover; background: #1a1a1a;">
+                    <div style="flex: 1;">
+                        <h4 style="margin-bottom: 4px; font-weight: 700;">${ex.name}</h4>
+                        <div style="display: flex; gap: 15px; font-size: 0.85rem; color: var(--primary);">
+                            <span><i class="fas fa-redo"></i> ${ex.sets} Sets</span>
+                            <span><i class="fas fa-running"></i> ${ex.reps} Reps</span>
+                        </div>
+                        ${ex.notes ? `<p style="margin-top: 8px; font-size: 0.85rem; color: var(--dark-text-secondary); font-style: italic;"><i class="fas fa-sticky-note"></i> ${ex.notes}</p>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            content.innerHTML = `<div style="text-align: center; padding: 40px; color: #ef4444;">${data.message}</div>`;
+        }
+    } catch (error) {
+        console.error('Error loading plan:', error);
+        content.innerHTML = '<div style="text-align: center; padding: 40px; color: #ef4444;">Failed to load exercise plan.</div>';
+    }
+}
+
+async function viewMyProgress() {
+    if (!currentViewingBookingId) return;
+    
+    const modal = document.getElementById('myProgressModal');
+    const content = document.getElementById('myProgressContent');
+    
+    try {
+        content.innerHTML = '<div style="text-align: center; padding: 40px;"><i class="fas fa-spinner fa-spin"></i> Loading progress history...</div>';
+        modal.classList.add('active');
+        
+        const response = await fetch(`../../api/trainers/get-progress-history.php?booking_id=${currentViewingBookingId}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            if (data.data.length === 0) {
+                content.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--dark-text-secondary);">No progress has been logged for this subscription yet.</div>';
+                return;
+            }
+            
+            content.innerHTML = data.data.map(log => `
+                <div style="padding: 20px; border-bottom: 1px solid var(--dark-border); border-left: 4px solid var(--primary); background: rgba(255,255,255,0.02); margin-bottom: 12px; border-radius: 0 8px 8px 0;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <strong style="color: var(--primary);"><i class="fas fa-calendar-alt"></i> ${formatDate(log.logged_at)}</strong>
+                        ${log.weight ? `<span style="font-weight: 800; color: #fff;"><i class="fas fa-weight"></i> ${log.weight} kg</span>` : ''}
+                    </div>
+                    <p style="font-size: 0.95rem; line-height: 1.6; color: var(--dark-text-secondary);">${log.remarks || 'No remarks provided.'}</p>
+                    <div style="margin-top: 12px; font-size: 0.75rem; color: #555; text-align: right;">Logged by: Coach ${log.trainer_name}</div>
+                </div>
+            `).join('');
+        } else {
+            content.innerHTML = `<div style="text-align: center; padding: 40px; color: #ef4444;">${data.message}</div>`;
+        }
+    } catch (error) {
+        console.error('Error loading progress:', error);
+        content.innerHTML = '<div style="text-align: center; padding: 40px; color: #ef4444;">Failed to load progress history.</div>';
+    }
+}
+
+function closeMyProgressModal() {
+    document.getElementById('myProgressModal').classList.remove('active');
 }
 
 // Close booking details modal
@@ -1875,9 +1989,12 @@ function setupEventListeners() {
         updateUserCalendarEvents();
         
         // Update notification count
+        const notifBadge = document.getElementById('notifBadge');
         const pendingCount = userBookings.filter(b => b.status === 'pending').length;
-        document.getElementById('notificationCount').textContent = pendingCount || '';
-        document.getElementById('bookingsBadge').textContent = pendingCount || '0';
+        if (notifBadge) notifBadge.textContent = pendingCount || '0';
+        
+        const bookingsBadge = document.getElementById('bookingsBadge');
+        if (bookingsBadge) bookingsBadge.textContent = pendingCount || '0';
     }, 3000); // 3 seconds interval is better for performance than 1 second
 
     // View toggle buttons

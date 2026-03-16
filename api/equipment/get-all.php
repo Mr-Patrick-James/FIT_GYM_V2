@@ -1,7 +1,11 @@
 <?php
 require_once '../config.php';
 require_once '../session.php';
-requireAdmin();
+
+// Allow Admin or Trainer
+if (!isAdmin() && !isTrainer()) {
+    sendResponse(false, 'Unauthorized access', null, 401);
+}
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     sendResponse(false, 'Method not allowed', null, 405);

@@ -57,6 +57,7 @@ $user = getCurrentUser();
             <li><a href="members.php"><i class="fas fa-users"></i> <span>Members</span></a></li>
             <li><a href="trainers.php"><i class="fas fa-user-tie"></i> <span>Trainers</span></a></li>
             <li><a href="packages.php" class="active"><i class="fas fa-dumbbell"></i> <span>Packages</span></a></li>
+            <li><a href="equipment.php"><i class="fas fa-tools"></i> <span>Equipment</span></a></li>
             <li><a href="exercises.php"><i class="fas fa-running"></i> <span>Exercises</span></a></li>
             <li><a href="report.php"><i class="fas fa-file-invoice-dollar"></i> <span>Reports</span></a></li>
             <li><a href="settings.php"><i class="fas fa-cog"></i> <span>Settings</span></a></li>
@@ -240,6 +241,30 @@ $user = getCurrentUser();
                         <p style="font-size: 0.75rem; color: var(--dark-text-secondary); margin-top: 4px;">Each line will appear as a bullet point with a checkmark on the landing page.</p>
                     </div>
                     
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; user-select: none;">
+                            <input type="checkbox" id="isTrainerAssisted" style="width: 18px; height: 18px; cursor: pointer;" onchange="toggleTrainerSelection()">
+                            <span style="font-weight: 600; font-size: 0.95rem;">Trainer Assisted</span>
+                        </label>
+                        <p style="font-size: 0.8rem; color: var(--dark-text-secondary); margin-top: 4px; margin-left: 28px;">
+                            If checked, members who subscribe to this package can be assigned to a personal trainer.
+                        </p>
+                    </div>
+
+                    <!-- Trainer Selection (Hidden by default) -->
+                    <div id="trainerSelectionGroup" style="display: none; margin-left: 28px; padding: 15px; background: rgba(255,255,255,0.02); border: 1px solid var(--dark-border); border-radius: 8px; margin-top: 10px;">
+                        <label style="font-size: 0.85rem; font-weight: 700; margin-bottom: 10px; display: block; color: var(--primary);">
+                            Select Available Trainers for this Package
+                        </label>
+                        <div id="packageTrainersList" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-height: 150px; overflow-y: auto; padding-right: 5px;">
+                            <!-- Populated by JS -->
+                            <p style="font-size: 0.8rem; color: var(--dark-text-secondary); grid-column: 1/-1;">Loading trainers...</p>
+                        </div>
+                        <p style="font-size: 0.75rem; color: var(--dark-text-secondary); margin-top: 10px;">
+                            Only selected trainers will be available for assignment when members book this package.
+                        </p>
+                    </div>
+                    
                     <div class="modal-actions">
                         <button type="button" class="btn btn-secondary" onclick="closePackageModal()">
                             <i class="fas fa-times"></i>
@@ -268,40 +293,14 @@ $user = getCurrentUser();
                 </button>
             </div>
             
-            <div class="modal-body" style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 24px; padding: 24px;">
-                <!-- Add Exercise Form -->
-                <div style="border-right: 1px solid var(--dark-border); padding-right: 24px;">
-                    <h4 style="margin-bottom: 16px; color: var(--primary);">Add Exercise</h4>
-                    <form id="addExerciseForm">
-                        <div class="form-group">
-                            <label>Select Exercise</label>
-                            <select id="exerciseSelect" required>
-                                <option value="">Choose an exercise...</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Sets</label>
-                            <input type="number" id="exerciseSets" value="3" min="1" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Reps / Duration</label>
-                            <input type="text" id="exerciseReps" placeholder="e.g. 10-12 or 30 secs" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Special Notes</label>
-                            <textarea id="exerciseNotes" rows="2" placeholder="Optional notes..."></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-primary" style="width: 100%;">
-                            <i class="fas fa-plus"></i>
-                            Add to Plan
-                        </button>
-                    </form>
-                </div>
-
+            <div class="modal-body" style="padding: 24px;">
                 <!-- Current Exercises List -->
                 <div>
-                    <h4 style="margin-bottom: 16px; color: var(--primary);">Current Plan</h4>
-                    <div id="packageExercisesList" style="max-height: 400px; overflow-y: auto;">
+                    <h4 style="margin-bottom: 16px; color: var(--primary);">Current Package Plan</h4>
+                    <p style="font-size: 0.85rem; color: var(--dark-text-secondary); margin-bottom: 20px;">
+                        <i class="fas fa-info-circle"></i> This plan is managed by the training staff. Admins can view the default exercises assigned to this package.
+                    </p>
+                    <div id="packageExercisesList" style="max-height: 500px; overflow-y: auto;">
                         <!-- Exercises populated by JS -->
                     </div>
                 </div>

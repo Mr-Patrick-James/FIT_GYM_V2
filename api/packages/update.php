@@ -13,6 +13,8 @@ $duration = trim($data['duration'] ?? '');
 $price = trim($data['price'] ?? '');
 $tag = trim($data['tag'] ?? '');
 $description = trim($data['description'] ?? '');
+$isTrainerAssisted = isset($data['is_trainer_assisted']) ? (bool)$data['is_trainer_assisted'] : false;
+$trainerIds = $data['trainer_ids'] ?? [];
 
 // Validation
 if ($id <= 0) {
@@ -36,40 +38,55 @@ if ($priceValue <= 0) {
 }
 
 $conn = getDBConnection();
+$conn->begin_transaction();
 
-// Check if package exists
-$checkStmt = $conn->prepare("SELECT id FROM packages WHERE id = ?");
-$checkStmt->bind_param("i", $id);
-$checkStmt->execute();
-$checkResult = $checkStmt->get_result();
+try {
+    // Check if package exists
+    $checkStmt = $conn->prepare("SELECT id FROM packages WHERE id = ?");
+    $checkStmt->bind_param("i", $id);
+    $checkStmt->execute();
+    $checkResult = $checkStmt->get_result();
 
-if ($checkResult->num_rows === 0) {
+    if ($checkResult->num_rows === 0) {
+        throw new Exception('Package not found');
+    }
     $checkStmt->close();
-    $conn->close();
-    sendResponse(false, 'Package not found', null, 404);
-}
-$checkStmt->close();
 
-// Update package
-$stmt = $conn->prepare("UPDATE packages SET name = ?, duration = ?, price = ?, tag = ?, description = ?, updated_at = NOW() WHERE id = ?");
-$stmt->bind_param("ssdssi", $name, $duration, $priceValue, $tag, $description, $id);
+    // Update package
+    $stmt = $conn->prepare("UPDATE packages SET name = ?, duration = ?, price = ?, tag = ?, description = ?, is_trainer_assisted = ?, updated_at = NOW() WHERE id = ?");
+    $isTrainerAssistedInt = $isTrainerAssisted ? 1 : 0;
+    $stmt->bind_param("ssdssii", $name, $duration, $priceValue, $tag, $description, $isTrainerAssistedInt, $id);
 
-if ($stmt->execute()) {
-    $stmt->close();
+    if ($stmt->execute()) {
+        // Sync trainers
+        $conn->query("DELETE FROM package_trainers WHERE package_id = $id");
+        
+        if (!empty($trainerIds) && $isTrainerAssisted) {
+            $trainerStmt = $conn->prepare("INSERT INTO package_trainers (package_id, trainer_id) VALUES (?, ?)");
+            foreach ($trainerIds as $trainerId) {
+                $tId = (int)$trainerId;
+                $trainerStmt->bind_param("ii", $id, $tId);
+                $trainerStmt->execute();
+
+                // Notify trainer (could be optimized to only notify new ones, but for simplicity)
+                $tUserQuery = $conn->query("SELECT user_id FROM trainers WHERE id = $tId");
+                if ($tUserQuery && $tUser = $tUserQuery->fetch_assoc()) {
+                    createNotification($tUser['user_id'], 'Package Assignment Updated', "You are assigned to handle the package: $name.", 'assignment');
+                }
+            }
+            $trainerStmt->close();
+        }
+        
+        $conn->commit();
+        $stmt->close();
+        $conn->close();
+        sendResponse(true, 'Package updated successfully');
+    } else {
+        throw new Exception($stmt->error);
+    }
+} catch (Exception $e) {
+    $conn->rollback();
     $conn->close();
-    
-    sendResponse(true, 'Package updated successfully', [
-        'id' => $id,
-        'name' => $name,
-        'duration' => $duration,
-        'price' => '₱' . number_format($priceValue, 2),
-        'tag' => $tag,
-        'description' => $description
-    ]);
-} else {
-    $error = $stmt->error;
-    $stmt->close();
-    $conn->close();
-    sendResponse(false, 'Error updating package: ' . $error, null, 500);
+    sendResponse(false, 'Failed to update package: ' . $e->getMessage());
 }
 ?>

@@ -179,6 +179,7 @@ $user = getCurrentUser();
             <li><a href="members.php"><i class="fas fa-users"></i> <span>Members</span></a></li>
             <li><a href="trainers.php"><i class="fas fa-user-tie"></i> <span>Trainers</span></a></li>
             <li><a href="packages.php"><i class="fas fa-dumbbell"></i> <span>Packages</span></a></li>
+            <li><a href="equipment.php"><i class="fas fa-tools"></i> <span>Equipment</span></a></li>
             <li><a href="exercises.php"><i class="fas fa-running"></i> <span>Exercises</span></a></li>
             <li><a href="report.php"><i class="fas fa-file-invoice-dollar"></i> <span>Reports</span></a></li>
             <li><a href="settings.php"><i class="fas fa-cog"></i> <span>Settings</span></a></li>
@@ -522,7 +523,25 @@ $user = getCurrentUser();
                     <h4><i class="fas fa-receipt"></i> Payment Receipt</h4>
                     <img src="" alt="Payment Receipt" class="receipt-image" id="modalReceipt">
                 </div>
-                
+
+                <!-- Trainer Assignment (Hidden by default, shown for trainer-assisted packages) -->
+                <div class="detail-group" id="trainerAssignmentGroup" style="display: none; margin-top: 20px; padding: 15px; background: rgba(59, 130, 246, 0.05); border: 1px dashed var(--primary-color); border-radius: 8px;">
+                    <label style="color: var(--primary-color); font-weight: 700; margin-bottom: 8px; display: block;">
+                        <i class="fas fa-user-tie"></i> Assign Personal Trainer
+                    </label>
+                    <select id="modalTrainerSelect" class="form-control" style="width: 100%; padding: 10px; border-radius: 6px; background: var(--dark-card-bg); color: white; border: 1px solid var(--dark-border);">
+                        <option value="">Select Trainer...</option>
+                    </select>
+                    <p style="font-size: 0.75rem; color: var(--dark-text-secondary); margin-top: 8px;">
+                        This package is <strong>Trainer Assisted</strong>. Please assign a trainer to guide this member.
+                    </p>
+                </div>
+
+                <div class="detail-group" id="assignedTrainerGroup" style="display: none;">
+                    <label>Assigned Trainer</label>
+                    <div class="value" id="modalAssignedTrainer">-</div>
+                </div>
+
                 <div class="modal-actions">
                     <button class="btn btn-secondary" id="rejectPaymentBtn" onclick="rejectPayment()">
                         <i class="fas fa-times"></i>

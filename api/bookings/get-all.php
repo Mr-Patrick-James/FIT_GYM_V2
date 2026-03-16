@@ -22,9 +22,12 @@ try {
     $isAdmin = isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin';
     $userId = $_SESSION['user_id'];
     
-    $sql = "SELECT b.*, u.name as user_name, p.name as package_name, p.duration, b.expires_at FROM bookings b 
+    $sql = "SELECT b.*, u.name as user_name, p.name as package_name, p.duration, p.is_trainer_assisted, b.expires_at, t.name as trainer_name 
+            FROM bookings b 
             LEFT JOIN users u ON b.user_id = u.id 
-            LEFT JOIN packages p ON b.package_id = p.id WHERE 1=1";
+            LEFT JOIN packages p ON b.package_id = p.id 
+            LEFT JOIN trainers t ON b.trainer_id = t.id
+            WHERE 1=1";
     
     // If not admin, only show user's own bookings
     if (!$isAdmin) {
@@ -93,6 +96,19 @@ try {
         // Identify walk-in bookings (user_id is NULL)
         $booking['is_walkin'] = is_null($booking['user_id']);
         
+        // Fetch linked trainers for the package if applicable
+        $booking['package_trainer_ids'] = [];
+        if ($booking['is_trainer_assisted'] && $booking['package_id']) {
+            $tStmt = $conn->prepare("SELECT trainer_id FROM package_trainers WHERE package_id = ?");
+            $tStmt->bind_param("i", $booking['package_id']);
+            $tStmt->execute();
+            $tRes = $tStmt->get_result();
+            while ($tRow = $tRes->fetch_assoc()) {
+                $booking['package_trainer_ids'][] = (int)$tRow['trainer_id'];
+            }
+            $tStmt->close();
+        }
+
         // Use the package name from the booking record if available, otherwise from the packages table
         $booking['package_name'] = $booking['package_name'] ?: $booking['package_name'];
         

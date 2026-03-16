@@ -8,7 +8,7 @@ $user = getCurrentUser();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Exercise List | FitPay Trainer</title>
+    <title>Exercise Library | FitPay Trainer</title>
     
     <!-- Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -31,10 +31,12 @@ $user = getCurrentUser();
     </script>
 </head>
 <body>
+    <!-- Mobile Menu Toggle Button -->
     <button class="mobile-menu-btn" id="mobileMenuToggle">
         <i class="fas fa-bars"></i>
     </button>
     
+    <!-- Sidebar -->
     <aside class="sidebar">
         <div class="logo">
             <h1>FitPay</h1>
@@ -44,6 +46,7 @@ $user = getCurrentUser();
         <ul class="nav-links">
             <li><a href="dashboard.php"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
             <li><a href="members.php"><i class="fas fa-users"></i> <span>My Clients</span></a></li>
+            <li><a href="packages.php"><i class="fas fa-dumbbell"></i> <span>Packages</span></a></li>
             <li><a href="plans.php"><i class="fas fa-clipboard-list"></i> <span>Exercise Plans</span></a></li>
             <li><a href="exercises.php" class="active"><i class="fas fa-running"></i> <span>Exercises</span></a></li>
             <li><a href="profile.php"><i class="fas fa-user-circle"></i> <span>My Profile</span></a></li>
@@ -51,32 +54,38 @@ $user = getCurrentUser();
         
         <div class="admin-profile">
             <div class="admin-avatar"><?php 
-                $name = $user['name'] ?? 'Trainer';
+                $trainerName = $user['name'] ?? 'Trainer';
                 $initials = '';
-                foreach(explode(' ', $name) as $word) {
+                foreach(explode(' ', $trainerName) as $word) {
                     if (!empty($word)) $initials .= strtoupper($word[0]);
                 }
                 echo htmlspecialchars(substr($initials, 0, 2));
             ?></div>
             <div class="admin-info">
-                <h4><?php echo htmlspecialchars($name); ?></h4>
+                <h4><?php echo htmlspecialchars($trainerName); ?></h4>
                 <p>Professional Trainer</p>
             </div>
         </div>
     </aside>
 
+    <!-- Main Content -->
     <main class="main-content">
         <div class="top-bar">
             <div class="page-title">
                 <h1>Exercise Library</h1>
-                <p>Browse the master list of gym exercises</p>
+                <p>Browse and manage the master list of gym exercises</p>
             </div>
             
             <div class="header-actions">
-                <div class="search-box">
-                    <i class="fas fa-search"></i>
-                    <input type="text" id="exerciseSearch" placeholder="Search exercises..." oninput="filterExercises()">
-                </div>
+                <button class="action-btn primary" onclick="openAddExerciseModal()">
+                    <i class="fas fa-plus"></i>
+                    <span>Add New Exercise</span>
+                </button>
+                
+                <button class="action-btn notification-btn">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-badge" id="notificationBadge">0</span>
+                </button>
                 
                 <button class="action-btn" title="Logout" onclick="handleLogout()">
                     <i class="fas fa-sign-out-alt"></i>
@@ -87,6 +96,10 @@ $user = getCurrentUser();
         <div class="content-card" style="margin-top: 32px;">
             <div class="card-header">
                 <h3>All Exercises</h3>
+                <div class="search-box" style="width: 300px;">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="exerciseSearch" placeholder="Search exercises..." oninput="filterExercises()">
+                </div>
             </div>
             
             <div id="exercisesGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; padding: 20px;">
@@ -96,79 +109,125 @@ $user = getCurrentUser();
             <div id="noExercisesMessage" style="display: none; text-align: center; padding: 60px 20px; color: var(--dark-text-secondary);">
                 <i class="fas fa-running" style="font-size: 3rem; margin-bottom: 16px; opacity: 0.5;"></i>
                 <h3 style="margin-bottom: 8px;">No exercises found</h3>
+                <p>Click "Add New Exercise" to create your first exercise entry.</p>
             </div>
         </div>
     </main>
 
+    <!-- Add/Edit Exercise Modal -->
+    <div class="modal-overlay" id="exerciseModal">
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 id="exerciseModalTitle">Add New Exercise</h3>
+                <button class="close-modal" onclick="closeExerciseModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <form id="exerciseForm" onsubmit="saveExercise(event)">
+                    <input type="hidden" id="exerciseId">
+                    <div class="form-group">
+                        <label>Exercise Name <span style="color: var(--warning);">*</span></label>
+                        <input type="text" id="exerciseName" required placeholder="e.g., Bench Press">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select id="exerciseCategory">
+                            <option value="Chest">Chest</option>
+                            <option value="Back">Back</option>
+                            <option value="Legs">Legs</option>
+                            <option value="Shoulders">Shoulders</option>
+                            <option value="Arms">Arms</option>
+                            <option value="Core">Core</option>
+                            <option value="Cardio">Cardio</option>
+                            <option value="Full Body">Full Body</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Equipment (Optional)</label>
+                        <select id="equipmentSelect">
+                            <option value="">No specific equipment</option>
+                            <!-- Populated by JS -->
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Exercise Image</label>
+                        <div id="imageUploadArea" class="file-upload-area" style="padding: 20px; border: 2px dashed var(--dark-border); border-radius: 12px; text-align: center; cursor: pointer; transition: all 0.3s;" onclick="document.getElementById('exerciseImageFile').click()">
+                            <i class="fas fa-cloud-upload-alt" style="font-size: 2rem; color: var(--primary); margin-bottom: 10px;"></i>
+                            <p style="font-size: 0.9rem; margin-bottom: 5px;">Click to upload exercise image</p>
+                            <span style="font-size: 0.75rem; color: var(--dark-text-secondary);">JPG, PNG or WebP</span>
+                            <input type="file" id="exerciseImageFile" accept="image/*" style="display: none;" onchange="handleImagePreview(event)">
+                        </div>
+                        <div id="imagePreviewContainer" style="display: none; margin-top: 15px; position: relative;">
+                            <img id="imagePreview" src="" style="width: 100%; height: 180px; object-fit: cover; border-radius: 12px; border: 1px solid var(--dark-border);">
+                            <button type="button" onclick="removeImagePreview()" style="position: absolute; top: 10px; right: 10px; background: rgba(239, 68, 68, 0.9); color: white; border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer;">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <input type="hidden" id="exerciseImageUrl">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="exerciseDescription" rows="3" placeholder="Briefly describe the exercise..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Instructions</label>
+                        <textarea id="exerciseInstructions" rows="4" placeholder="Step-by-step instructions..."></textarea>
+                    </div>
+                    
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeExerciseModal()">
+                            <i class="fas fa-times"></i>
+                            Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i>
+                            Save Exercise
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal-overlay" id="deleteExerciseModal">
+        <div class="modal" style="max-width: 400px;">
+            <div class="modal-header">
+                <h3 style="color: #ef4444;">Delete Exercise</h3>
+                <button class="close-modal" onclick="closeDeleteExerciseModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" style="padding: 24px; text-align: center;">
+                <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: #ef4444; margin-bottom: 16px;"></i>
+                <p>Are you sure you want to delete <strong id="deleteExerciseName">this exercise</strong>?</p>
+                <p style="font-size: 0.85rem; color: var(--dark-text-secondary); margin-top: 8px;">
+                    This will also remove it from any membership package plans it's currently assigned to.
+                </p>
+            </div>
+            <div class="modal-footer" style="padding: 16px 24px; display: flex; gap: 12px;">
+                <button class="btn btn-secondary" style="flex: 1;" onclick="closeDeleteExerciseModal()">Cancel</button>
+                <button class="btn" style="flex: 1; background: #ef4444; color: white;" onclick="confirmDeleteExercise()">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../../assets/js/exercises.js"></script>
     <script>
-        let allExercises = [];
-
-        async function loadExercises() {
-            try {
-                const response = await fetch('../../api/exercises/get-all.php');
-                const data = await response.json();
-                if (data.success) {
-                    allExercises = data.data;
-                    renderExercises(allExercises);
-                }
-            } catch (error) {
-                console.error('Error loading exercises:', error);
-            }
-        }
-
-        function renderExercises(exercises) {
-            const grid = document.getElementById('exercisesGrid');
-            const noMsg = document.getElementById('noExercisesMessage');
-            if (!grid) return;
-            
-            if (exercises.length === 0) {
-                grid.style.display = 'none';
-                noMsg.style.display = 'block';
-                return;
-            }
-            
-            grid.style.display = 'grid';
-            noMsg.style.display = 'none';
-            grid.innerHTML = exercises.map(ex => `
-                <div class="content-card" style="padding: 0; overflow: hidden; height: 100%;">
-                    <div style="height: 160px; background: #1a1a1a; display: flex; align-items: center; justify-content: center; position: relative;">
-                        ${ex.image_url ? `<img src="${ex.image_url}" style="width: 100%; height: 100%; object-fit: cover;">` : `<i class="fas fa-running" style="font-size: 48px; color: #333;"></i>`}
-                        <span class="status-badge" style="position: absolute; top: 12px; right: 12px; font-size: 0.7rem; padding: 4px 10px; background: var(--glass); border: 1px solid var(--glass-border);">${ex.category}</span>
-                    </div>
-                    <div style="padding: 20px;">
-                        <h4 style="font-weight: 800; margin-bottom: 8px; font-size: 1.1rem;"><?php echo htmlspecialchars(isset($ex['name']) ? $ex['name'] : ''); ?>${ex.name}</h4>
-                        <p style="font-size: 0.85rem; color: var(--dark-text-secondary); line-height: 1.5; height: 3.8rem; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;">
-                            ${ex.description || 'No description available.'}
-                        </p>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function filterExercises() {
-            const query = document.getElementById('exerciseSearch').value.toLowerCase();
-            const filtered = allExercises.filter(ex => 
-                ex.name.toLowerCase().includes(query) || 
-                ex.category.toLowerCase().includes(query)
-            );
-            renderExercises(filtered);
-        }
-
+        // Custom logout for trainer context if different
         async function handleLogout() {
-            if (!confirm('Are you sure you want to logout?')) return;
-            try {
-                const response = await fetch('../../api/auth/logout.php', { method: 'POST' });
-                window.location.href = '../../index.php';
-            } catch (error) {
-                window.location.href = '../../index.php';
-            }
+            if (!confirm('Logout?')) return;
+            await fetch('../../api/auth/logout.php', { method: 'POST' });
+            window.location.href = '../../index.php';
         }
-
-        document.getElementById('mobileMenuToggle')?.addEventListener('click', () => {
-            document.querySelector('.sidebar').classList.toggle('active');
-        });
-
-        document.addEventListener('DOMContentLoaded', loadExercises);
     </script>
 </body>
 </html>

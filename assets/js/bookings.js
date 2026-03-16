@@ -4,6 +4,7 @@ let filteredBookings = [];
 let currentViewingBooking = null;
 let calendar = null;
 let viewMode = 'table'; // 'table' or 'calendar'
+let trainersList = [];
 
 // Current filter values
 let currentFilters = {
@@ -15,6 +16,42 @@ let currentFilters = {
 
 // Walk-in booking data
 let packages = [];
+
+// Load trainers for assignment
+async function loadTrainers(allowedIds = null) {
+    try {
+        const response = await fetch('../../api/trainers/get-all.php');
+        const data = await response.json();
+        if (data.success) {
+            trainersList = data.data.filter(t => t.is_active);
+            const select = document.getElementById('modalTrainerSelect');
+            if (select) {
+                select.innerHTML = '<option value="">Select Trainer...</option>';
+                
+                // Filter trainers if allowedIds is provided
+                const filteredTrainers = allowedIds && allowedIds.length > 0
+                    ? trainersList.filter(t => allowedIds.includes(t.id))
+                    : trainersList;
+
+                filteredTrainers.forEach(trainer => {
+                    const option = document.createElement('option');
+                    option.value = trainer.id;
+                    option.textContent = `${trainer.name} (${trainer.specialization})`;
+                    select.appendChild(option);
+                });
+
+                if (allowedIds && allowedIds.length > 0 && filteredTrainers.length === 0) {
+                    const option = document.createElement('option');
+                    option.disabled = true;
+                    option.textContent = "No assigned trainers for this package";
+                    select.appendChild(option);
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Error loading trainers:', error);
+    }
+}
 
 // Helper to fix receipt URLs for display in admin views
 function fixReceiptUrl(url) {
@@ -359,6 +396,27 @@ function viewBooking(id) {
         document.getElementById('modalAmount').textContent = booking.amount || '₱0';
         document.getElementById('modalPaymentMethod').textContent = (booking.payment_method || 'N/A').toUpperCase();
         document.getElementById('modalCreatedAt').textContent = formatDateForDisplay(booking.createdAt);
+
+        // Handle trainer display/assignment
+        const assignmentGroup = document.getElementById('trainerAssignmentGroup');
+        const assignedGroup = document.getElementById('assignedTrainerGroup');
+        const assignedValue = document.getElementById('modalAssignedTrainer');
+        const trainerSelect = document.getElementById('modalTrainerSelect');
+        
+        if (booking.status === 'pending' && booking.is_trainer_assisted) {
+            assignmentGroup.style.display = 'block';
+            assignedGroup.style.display = 'none';
+            trainerSelect.value = '';
+            // Load filtered trainers for this package
+            loadTrainers(booking.package_trainer_ids);
+        } else if (booking.trainer_name) {
+            assignmentGroup.style.display = 'none';
+            assignedGroup.style.display = 'block';
+            assignedValue.textContent = booking.trainer_name;
+        } else {
+            assignmentGroup.style.display = 'none';
+            assignedGroup.style.display = 'none';
+        }
         
         // Show verified at if available
         if (booking.verified_at) {
@@ -441,6 +499,13 @@ async function verifyBooking(id, event) {
         }
         
         if (booking.status === 'pending') {
+            // If trainer assisted, open modal instead of direct verification
+            if (booking.is_trainer_assisted) {
+                viewBooking(id);
+                showNotification('This package requires trainer assignment. Please assign one in the details view.', 'info');
+                return;
+            }
+
             if (confirm(`Verify payment for ${booking.name || 'this user'}?`)) {
                 // Show loading state
                 if (btn) {
@@ -611,6 +676,14 @@ async function verifyPayment() {
     try {
         const booking = currentViewingBooking;
         if (booking.status === 'pending') {
+            const trainerId = document.getElementById('modalTrainerSelect')?.value;
+            
+            // Validate trainer selection if package is trainer-assisted
+            if (booking.is_trainer_assisted && !trainerId) {
+                showNotification('Please assign a trainer for this package', 'warning');
+                return;
+            }
+
             if (confirm(`Verify payment for ${booking.name || 'this user'}?`)) {
                 // Show loading state
                 verifyBtn.disabled = true;
@@ -624,7 +697,8 @@ async function verifyPayment() {
                     },
                     body: JSON.stringify({
                         status: 'verified',
-                        notes: booking.notes || ''
+                        notes: booking.notes || '',
+                        trainer_id: trainerId || null
                     })
                 });
                 

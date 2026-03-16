@@ -4,6 +4,56 @@ let lastPackagesJSON = '';
 let lastStatsJSON = '';
 let currentEditingPackage = null;
 let packageToDelete = null;
+let trainersList = [];
+
+async function loadTrainers() {
+    try {
+        const response = await fetch('../../api/trainers/get-all.php');
+        const data = await response.json();
+        if (data.success) {
+            trainersList = data.data.filter(t => t.is_active);
+            renderTrainerCheckboxes();
+        }
+    } catch (error) {
+        console.error('Error loading trainers:', error);
+    }
+}
+
+function renderTrainerCheckboxes() {
+    const list = document.getElementById('packageTrainersList');
+    if (!list) return;
+    
+    if (trainersList.length === 0) {
+        list.innerHTML = '<p style="font-size: 0.8rem; color: #ef4444; grid-column: 1/-1;">No active trainers found. Please add trainers first.</p>';
+        return;
+    }
+    
+    list.innerHTML = trainersList.map(trainer => `
+        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem; user-select: none;">
+            <input type="checkbox" name="package_trainer" value="${trainer.id}" style="width: 16px; height: 16px;">
+            <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${trainer.name}">${trainer.name}</span>
+        </label>
+    `).join('');
+}
+
+function toggleTrainerSelection() {
+    const isAssisted = document.getElementById('isTrainerAssisted').checked;
+    const group = document.getElementById('trainerSelectionGroup');
+    if (group) {
+        group.style.display = isAssisted ? 'block' : 'none';
+        
+        if (isAssisted && trainersList.length === 0) {
+            loadTrainers();
+        }
+    }
+}
+
+function setTrainerCheckboxes(selectedIds) {
+    const checkboxes = document.querySelectorAll('input[name="package_trainer"]');
+    checkboxes.forEach(cb => {
+        cb.checked = selectedIds.includes(parseInt(cb.value));
+    });
+}
 
 // Manage Exercises Logic
 let currentPackageId = null;
@@ -80,13 +130,10 @@ async function loadPackageExercises(packageId) {
                             <div style="font-weight: 700; color: var(--primary);">${ex.name}</div>
                             <div style="font-size: 0.8rem; color: var(--dark-text-secondary);">
                                 ${ex.sets} Sets × ${ex.reps}
+                                ${ex.notes ? `<div style="font-style: italic; font-size: 0.75rem; margin-top: 4px;">Note: ${ex.notes}</div>` : ''}
                             </div>
                         </div>
                     </div>
-                    <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.75rem; background: rgba(239, 68, 68, 0.1); color: #ef4444;" 
-                        onclick="removeExerciseFromPackage(${ex.id})">
-                        <i class="fas fa-trash"></i>
-                    </button>
                 `;
                 list.appendChild(item);
             });
@@ -431,6 +478,19 @@ function openAddPackageModal() {
             packageForm.reset();
         }
         
+        const isTrainerAssisted = document.getElementById('isTrainerAssisted');
+        const group = document.getElementById('trainerSelectionGroup');
+        if (isTrainerAssisted) {
+            isTrainerAssisted.checked = false;
+        }
+        if (group) {
+            group.style.display = 'none';
+        }
+        
+        // Clear trainer checkboxes
+        const checkboxes = document.querySelectorAll('input[name="package_trainer"]');
+        checkboxes.forEach(cb => cb.checked = false);
+        
         modal.classList.add('active');
     } catch (error) {
         console.error('Error opening package modal:', error);
@@ -453,6 +513,28 @@ function editPackage(packageId) {
     document.getElementById('packagePrice').value = pkg.price;
     document.getElementById('packageTag').value = pkg.tag || '';
     document.getElementById('packageDescription').value = pkg.description || '';
+    
+    const isTrainerAssisted = document.getElementById('isTrainerAssisted');
+    const group = document.getElementById('trainerSelectionGroup');
+    const isAssisted = pkg.is_trainer_assisted || false;
+    
+    if (isTrainerAssisted) {
+        isTrainerAssisted.checked = isAssisted;
+    }
+    if (group) {
+        group.style.display = isAssisted ? 'block' : 'none';
+    }
+    
+    // Set trainer checkboxes
+    const trainerIds = Array.isArray(pkg.trainer_ids) ? pkg.trainer_ids : 
+                      (pkg.trainer_ids ? JSON.parse(pkg.trainer_ids) : []);
+    
+    if (trainersList.length === 0) {
+        loadTrainers().then(() => setTrainerCheckboxes(trainerIds));
+    } else {
+        setTrainerCheckboxes(trainerIds);
+    }
+    
     document.getElementById('packageModal').classList.add('active');
 }
 
@@ -465,7 +547,20 @@ async function savePackage(event) {
     const price = document.getElementById('packagePrice').value.trim();
     const tag = document.getElementById('packageTag').value;
     const description = document.getElementById('packageDescription').value.trim();
+    const isTrainerAssisted = document.getElementById('isTrainerAssisted') ? document.getElementById('isTrainerAssisted').checked : false;
     
+    const selectedTrainers = [];
+    if (isTrainerAssisted) {
+        document.querySelectorAll('input[name="package_trainer"]:checked').forEach(cb => {
+            selectedTrainers.push(parseInt(cb.value));
+        });
+        
+        if (selectedTrainers.length === 0) {
+            showNotification('Please select at least one trainer for this package', 'warning');
+            return;
+        }
+    }
+
     // Validate price format
     if (!price.startsWith('₱')) {
         showNotification('Price must start with ₱', 'warning');
@@ -478,7 +573,9 @@ async function savePackage(event) {
             duration,
             price,
             tag: tag || '',
-            description
+            description,
+            is_trainer_assisted: isTrainerAssisted,
+            trainer_ids: selectedTrainers
         };
         
         // Add ID if editing existing package
@@ -668,6 +765,11 @@ async function initPage() {
             closeDeleteModal();
         }
     });
+    
+    const isTrainerAssisted = document.getElementById('isTrainerAssisted');
+    if (isTrainerAssisted) {
+        isTrainerAssisted.addEventListener('change', toggleTrainerSelection);
+    }
     
     // Notification button
     const notificationBtn = document.querySelector('.notification-btn');

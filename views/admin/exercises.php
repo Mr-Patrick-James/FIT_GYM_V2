@@ -50,6 +50,7 @@ $user = getCurrentUser();
             <li><a href="members.php"><i class="fas fa-users"></i> <span>Members</span></a></li>
             <li><a href="trainers.php"><i class="fas fa-user-tie"></i> <span>Trainers</span></a></li>
             <li><a href="packages.php"><i class="fas fa-dumbbell"></i> <span>Packages</span></a></li>
+            <li><a href="equipment.php"><i class="fas fa-tools"></i> <span>Equipment</span></a></li>
             <li><a href="exercises.php" class="active"><i class="fas fa-running"></i> <span>Exercises</span></a></li>
             <li><a href="report.php"><i class="fas fa-file-invoice-dollar"></i> <span>Reports</span></a></li>
             <li><a href="settings.php"><i class="fas fa-cog"></i> <span>Settings</span></a></li>
@@ -80,10 +81,9 @@ $user = getCurrentUser();
             </div>
             
             <div class="header-actions">
-                <button class="action-btn primary" onclick="openAddExerciseModal()">
-                    <i class="fas fa-plus"></i>
-                    <span>Add New Exercise</span>
-                </button>
+                <p style="font-size: 0.85rem; color: var(--dark-text-secondary); margin-right: 16px;">
+                    <i class="fas fa-info-circle"></i> Managed by Training Staff
+                </p>
                 
                 <button class="action-btn notification-btn">
                     <i class="fas fa-bell"></i>

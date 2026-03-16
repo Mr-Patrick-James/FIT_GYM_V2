@@ -107,6 +107,19 @@ function getDBConnection() {
     return $conn;
 }
 
+/**
+ * Create a notification for a user
+ */
+function createNotification($userId, $title, $message, $type = 'info') {
+    $conn = getDBConnection();
+    $stmt = $conn->prepare("INSERT INTO notifications (user_id, title, message, type) VALUES (?, ?, ?, ?)");
+    $stmt->bind_param("isss", $userId, $title, $message, $type);
+    $result = $stmt->execute();
+    $stmt->close();
+    $conn->close();
+    return $result;
+}
+
 // Enable CORS (but don't set headers if they're already sent)
 if (!headers_sent()) {
     header("Access-Control-Allow-Origin: *");

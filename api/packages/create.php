@@ -12,6 +12,8 @@ $duration = trim($data['duration'] ?? '');
 $price = trim($data['price'] ?? '');
 $tag = trim($data['tag'] ?? '');
 $description = trim($data['description'] ?? '');
+$isTrainerAssisted = isset($data['is_trainer_assisted']) ? (bool)$data['is_trainer_assisted'] : false;
+$trainerIds = $data['trainer_ids'] ?? [];
 
 // Validation
 if (empty($name) || empty($duration) || empty($price)) {
@@ -31,28 +33,44 @@ if ($priceValue <= 0) {
 }
 
 $conn = getDBConnection();
+$conn->begin_transaction();
 
-// Insert new package
-$stmt = $conn->prepare("INSERT INTO packages (name, duration, price, tag, description) VALUES (?, ?, ?, ?, ?)");
-$stmt->bind_param("ssdss", $name, $duration, $priceValue, $tag, $description);
+try {
+    // Insert new package
+    $stmt = $conn->prepare("INSERT INTO packages (name, duration, price, tag, description, is_trainer_assisted) VALUES (?, ?, ?, ?, ?, ?)");
+    $isTrainerAssistedInt = $isTrainerAssisted ? 1 : 0;
+    $stmt->bind_param("ssdssi", $name, $duration, $priceValue, $tag, $description, $isTrainerAssistedInt);
 
-if ($stmt->execute()) {
-    $packageId = $stmt->insert_id;
-    $stmt->close();
+    if ($stmt->execute()) {
+        $packageId = $conn->insert_id;
+        
+        // Save linked trainers if any
+        if (!empty($trainerIds) && $isTrainerAssisted) {
+            $trainerStmt = $conn->prepare("INSERT INTO package_trainers (package_id, trainer_id) VALUES (?, ?)");
+            foreach ($trainerIds as $trainerId) {
+                $tId = (int)$trainerId;
+                $trainerStmt->bind_param("ii", $packageId, $tId);
+                $trainerStmt->execute();
+
+                // Notify trainer
+                $tUserQuery = $conn->query("SELECT user_id FROM trainers WHERE id = $tId");
+                if ($tUserQuery && $tUser = $tUserQuery->fetch_assoc()) {
+                    createNotification($tUser['user_id'], 'New Package Assignment', "You have been assigned to handle the package: $name.", 'assignment');
+                }
+            }
+            $trainerStmt->close();
+        }
+        
+        $conn->commit();
+        $stmt->close();
+        $conn->close();
+        sendResponse(true, 'Package created successfully', ['id' => $packageId]);
+    } else {
+        throw new Exception($stmt->error);
+    }
+} catch (Exception $e) {
+    $conn->rollback();
     $conn->close();
-    
-    sendResponse(true, 'Package created successfully', [
-        'id' => $packageId,
-        'name' => $name,
-        'duration' => $duration,
-        'price' => '₱' . number_format($priceValue, 2),
-        'tag' => $tag,
-        'description' => $description
-    ]);
-} else {
-    $error = $stmt->error;
-    $stmt->close();
-    $conn->close();
-    sendResponse(false, 'Error creating package: ' . $error, null, 500);
+    sendResponse(false, 'Failed to create package: ' . $e->getMessage());
 }
 ?>

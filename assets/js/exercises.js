@@ -6,23 +6,23 @@ let exerciseToDelete = null;
 // Load exercises and equipment
 async function loadData() {
     try {
-        const [exRes, eqRes] = await Promise.all([
-            fetch('../../api/exercises/get-all.php'),
-            fetch('../../api/equipment/get-all.php')
-        ]);
-        
+        const exRes = await fetch('../../api/exercises/get-all.php');
         const exData = await exRes.json();
-        const eqData = await eqRes.json();
-        
         if (exData.success) allExercises = exData.data;
-        if (eqData.success) allEquipment = eqData.data;
-        
-        populateEquipmentSelect();
-        populateExercisesGrid();
     } catch (error) {
-        console.error('Error loading data:', error);
-        showNotification('Error loading exercises', 'warning');
+        console.error('Error loading exercises:', error);
     }
+
+    try {
+        const eqRes = await fetch('../../api/equipment/get-all.php');
+        const eqData = await eqRes.json();
+        if (eqData.success) allEquipment = eqData.data;
+    } catch (error) {
+        console.error('Error loading equipment:', error);
+    }
+    
+    populateEquipmentSelect();
+    populateExercisesGrid();
 }
 
 function populateEquipmentSelect() {
@@ -54,6 +54,9 @@ function populateExercisesGrid(exercises = allExercises) {
     grid.style.display = 'grid';
     noMsg.style.display = 'none';
     
+    // Check if we are in admin context to hide edit/delete
+    const isAdminView = window.location.href.includes('/admin/');
+    
     exercises.forEach(ex => {
         const card = document.createElement('div');
         card.className = 'package-card'; // Reuse package card style
@@ -62,6 +65,17 @@ function populateExercisesGrid(exercises = allExercises) {
         
         const imageUrl = ex.image_url || 'https://via.placeholder.com/300x180?text=No+Image';
         
+        const managementButtons = isAdminView ? '' : `
+            <div style="display: flex; gap: 8px; margin-top: 16px;">
+                <button class="btn btn-secondary" style="flex: 1; padding: 8px; font-size: 0.85rem;" onclick="editExercise(${ex.id})">
+                    <i class="fas fa-edit"></i> Edit
+                </button>
+                <button class="btn" style="flex: 1; padding: 8px; font-size: 0.85rem; background: rgba(239, 68, 68, 0.1); color: #ef4444;" onclick="deleteExercise(${ex.id})">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+            </div>
+        `;
+
         card.innerHTML = `
             <div style="height: 160px; position: relative;">
                 <img src="${imageUrl}" style="width: 100%; height: 100%; object-fit: cover;">
@@ -72,14 +86,7 @@ function populateExercisesGrid(exercises = allExercises) {
             </div>
             <div style="padding: 16px;">
                 <h3 style="color: var(--primary); margin-bottom: 8px; font-size: 1.1rem; font-weight: 700;">${ex.name}</h3>
-                <div style="display: flex; gap: 8px; margin-top: 16px;">
-                    <button class="btn btn-secondary" style="flex: 1; padding: 8px; font-size: 0.85rem;" onclick="editExercise(${ex.id})">
-                        <i class="fas fa-edit"></i> Edit
-                    </button>
-                    <button class="btn" style="flex: 1; padding: 8px; font-size: 0.85rem; background: rgba(239, 68, 68, 0.1); color: #ef4444;" onclick="deleteExercise(${ex.id})">
-                        <i class="fas fa-trash"></i> Delete
-                    </button>
-                </div>
+                ${managementButtons}
             </div>
         `;
         grid.appendChild(card);

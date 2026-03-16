@@ -27,6 +27,7 @@ try {
     
     $status = $input['status'] ?? null;
     $notes = $input['notes'] ?? null;
+    $trainerId = $input['trainer_id'] ?? null;
     
     if (!$status) {
         sendResponse(false, 'Status is required', null, 400);
@@ -38,9 +39,9 @@ try {
     }
     
     // Update the booking
-    $sql = "UPDATE bookings SET status = ?, notes = ? WHERE id = ?";
+    $sql = "UPDATE bookings SET status = ?, notes = ?, trainer_id = ? WHERE id = ?";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ssi", $status, $notes, $bookingId);
+    $stmt->bind_param("ssii", $status, $notes, $trainerId, $bookingId);
     $result = $stmt->execute();
     
     if (!$result) {
@@ -49,6 +50,10 @@ try {
     
     // If status is verified, also add to payments and set expiry date
     if ($status === 'verified') {
+        // Set verification timestamp
+        $verifiedAt = date('Y-m-d H:i:s');
+        $conn->query("UPDATE bookings SET verified_at = '$verifiedAt' WHERE id = $bookingId");
+
         // Get booking details to add to payments
         $sql = "SELECT b.*, p.duration FROM bookings b 
                 LEFT JOIN packages p ON b.package_id = p.id 
