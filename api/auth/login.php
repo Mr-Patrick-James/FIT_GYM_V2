@@ -83,9 +83,13 @@ error_log("Session cookie params: " . print_r(session_get_cookie_params(), true)
 error_log("Session user_id: " . ($_SESSION['user_id'] ?? 'NOT SET'));
 
 // Determine redirect URL (relative to project root)
-$redirect = $user['role'] === 'admin' 
-    ? 'views/admin/dashboard.php' 
-    : 'views/user/dashboard.php';
+if ($user['role'] === 'admin') {
+    $redirect = 'views/admin/dashboard.php';
+} elseif ($user['role'] === 'trainer') {
+    $redirect = 'views/trainer/dashboard.php';
+} else {
+    $redirect = 'views/user/dashboard.php';
+}
 
 sendResponse(true, 'Login successful', [
     'user' => $user,

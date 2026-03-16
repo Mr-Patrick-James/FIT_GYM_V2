@@ -58,6 +58,7 @@ $user = getCurrentUser();
             <li><a href="bookings.php"><i class="fas fa-calendar-check"></i> <span>Bookings</span> <span class="badge" id="bookingsBadge">0</span></a></li>
             <li><a href="payments.php" class="active"><i class="fas fa-money-check"></i> <span>Payments</span></a></li>
             <li><a href="members.php"><i class="fas fa-users"></i> <span>Members</span></a></li>
+            <li><a href="trainers.php"><i class="fas fa-user-tie"></i> <span>Trainers</span></a></li>
             <li><a href="packages.php"><i class="fas fa-dumbbell"></i> <span>Packages</span></a></li>
             <li><a href="exercises.php"><i class="fas fa-running"></i> <span>Exercises</span></a></li>
             <li><a href="report.php"><i class="fas fa-file-invoice-dollar"></i> <span>Reports</span></a></li>

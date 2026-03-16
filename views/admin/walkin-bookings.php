@@ -54,6 +54,7 @@ $user = getCurrentUser();
             <ul>
                 <li><a href="dashboard.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
                 <li><a href="members.php"><i class="fas fa-users"></i> Members</a></li>
+                <li><a href="trainers.php"><i class="fas fa-user-tie"></i> Trainers</a></li>
                 <li><a href="packages.php"><i class="fas fa-box"></i> Packages</a></li>
                 <li><a href="exercises.php"><i class="fas fa-running"></i> Exercises</a></li>
                 <li><a href="bookings.php"><i class="fas fa-calendar-check"></i> Bookings</a></li>

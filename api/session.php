@@ -62,6 +62,11 @@ function isAdmin() {
     return isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin';
 }
 
+// Check if user is trainer
+function isTrainer() {
+    return isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'trainer';
+}
+
 // Require login - redirect to index if not logged in
 function requireLogin() {
     // Ensure session is started
@@ -96,7 +101,7 @@ function requireLogin() {
         // Determine the correct relative path based on current location
         $currentPath = $_SERVER['PHP_SELF'];
         
-        if (strpos($currentPath, '/views/admin/') !== false) {
+        if (strpos($currentPath, '/views/admin/') !== false || strpos($currentPath, '/views/trainer/') !== false) {
             $redirectUrl = '../../index.php';
         } elseif (strpos($currentPath, '/views/user/') !== false) {
             $redirectUrl = '../../index.php';
@@ -117,19 +122,33 @@ function requireLogin() {
     }
 }
 
-// Require admin - redirect to user dashboard if not admin
+// Require admin - redirect to appropriate dashboard if not admin
 function requireAdmin() {
     requireLogin();
     if (!isAdmin()) {
         // Determine the correct relative path based on current location
         $currentPath = $_SERVER['PHP_SELF'];
         
-        if (strpos($currentPath, '/views/admin/') !== false) {
+        if (isTrainer()) {
+            $redirectUrl = (strpos($currentPath, '/views/admin/') !== false) ? '../trainer/dashboard.php' : 'trainer/dashboard.php';
+        } else {
+            $redirectUrl = (strpos($currentPath, '/views/admin/') !== false) ? '../user/dashboard.php' : 'user/dashboard.php';
+        }
+        
+        header("Location: $redirectUrl");
+        exit();
+    }
+}
+
+// Require trainer - redirect to user dashboard if not trainer or admin
+function requireTrainer() {
+    requireLogin();
+    if (!isTrainer() && !isAdmin()) {
+        // Determine the correct relative path based on current location
+        $currentPath = $_SERVER['PHP_SELF'];
+        
+        if (strpos($currentPath, '/views/trainer/') !== false) {
             $redirectUrl = '../user/dashboard.php';
-        } elseif (strpos($currentPath, '/views/user/') !== false) {
-            $redirectUrl = 'dashboard.php'; // Already in user directory
-        } elseif (strpos($currentPath, '/api/') !== false) {
-            $redirectUrl = '../views/user/dashboard.php';
         } else {
             $redirectUrl = 'views/user/dashboard.php';
         }
