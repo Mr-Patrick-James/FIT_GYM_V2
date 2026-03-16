@@ -242,13 +242,24 @@ $user = getCurrentUser();
                     </div>
                     
                     <div class="form-group">
-                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; user-select: none;">
-                            <input type="checkbox" id="isTrainerAssisted" style="width: 18px; height: 18px; cursor: pointer;" onchange="toggleTrainerSelection()">
-                            <span style="font-weight: 600; font-size: 0.95rem;">Trainer Assisted</span>
-                        </label>
-                        <p style="font-size: 0.8rem; color: var(--dark-text-secondary); margin-top: 4px; margin-left: 28px;">
-                            If checked, members who subscribe to this package can be assigned to a personal trainer.
+                        <label>Target Goal <span style="color: var(--warning);">*</span></label>
+                        <select id="packageGoal" required class="form-control">
+                            <option value="General Fitness">General Fitness</option>
+                            <option value="Muscle Building">Muscle Building</option>
+                            <option value="Body Toning">Body Toning</option>
+                            <option value="Weight Loss">Weight Loss</option>
+                            <option value="Strength & Power">Strength & Power</option>
+                            <option value="Endurance">Endurance</option>
+                            <option value="Flexibility">Flexibility</option>
+                        </select>
+                        <p style="font-size: 0.75rem; color: var(--dark-text-secondary); margin-top: 4px;">
+                            The primary objective this package is designed for.
                         </p>
+                    </div>
+
+                    <div class="form-group checkbox-group">
+                        <input type="checkbox" id="isTrainerAssisted" onchange="toggleTrainerSelection()">
+                        <label for="isTrainerAssisted">Personal Trainer Assisted</label>
                     </div>
 
                     <!-- Trainer Selection (Hidden by default) -->

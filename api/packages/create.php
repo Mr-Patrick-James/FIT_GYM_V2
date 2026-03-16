@@ -12,6 +12,7 @@ $duration = trim($data['duration'] ?? '');
 $price = trim($data['price'] ?? '');
 $tag = trim($data['tag'] ?? '');
 $description = trim($data['description'] ?? '');
+$goal = trim($data['goal'] ?? 'General Fitness');
 $isTrainerAssisted = isset($data['is_trainer_assisted']) ? (bool)$data['is_trainer_assisted'] : false;
 $trainerIds = $data['trainer_ids'] ?? [];
 
@@ -37,9 +38,9 @@ $conn->begin_transaction();
 
 try {
     // Insert new package
-    $stmt = $conn->prepare("INSERT INTO packages (name, duration, price, tag, description, is_trainer_assisted) VALUES (?, ?, ?, ?, ?, ?)");
+    $stmt = $conn->prepare("INSERT INTO packages (name, duration, price, tag, description, is_trainer_assisted, goal) VALUES (?, ?, ?, ?, ?, ?, ?)");
     $isTrainerAssistedInt = $isTrainerAssisted ? 1 : 0;
-    $stmt->bind_param("ssdssi", $name, $duration, $priceValue, $tag, $description, $isTrainerAssistedInt);
+    $stmt->bind_param("ssdssis", $name, $duration, $priceValue, $tag, $description, $isTrainerAssistedInt, $goal);
 
     if ($stmt->execute()) {
         $packageId = $conn->insert_id;

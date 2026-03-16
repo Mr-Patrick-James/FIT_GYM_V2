@@ -576,6 +576,16 @@ function getSetting($key, $default = '', $settings = []) {
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
         }
 
+        .package-card-large.active-plan {
+            border-color: #22c55e;
+            background: rgba(34, 197, 94, 0.03);
+        }
+        
+        .package-card-large.active-plan:hover {
+            border-color: #22c55e;
+            box-shadow: 0 10px 30px rgba(34, 197, 94, 0.1);
+        }
+
         .package-header {
             margin-bottom: 16px;
             display: flex;
@@ -779,6 +789,44 @@ function getSetting($key, $default = '', $settings = []) {
             text-align: center;
             line-height: 180px;
             color: var(--dark-text-secondary);
+        }
+        /* Modal Tabs */
+        .modal-tabs {
+            display: flex;
+            gap: 24px;
+            border-bottom: 1px solid var(--dark-border);
+            margin: 0 24px 20px;
+            padding-bottom: 12px;
+        }
+        .modal-tab-btn {
+            background: transparent;
+            border: none;
+            color: var(--dark-text-secondary);
+            font-weight: 600;
+            font-size: 0.9rem;
+            padding: 8px 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+        .modal-tab-btn.active {
+            color: var(--primary);
+        }
+        .modal-tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -13px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: var(--primary);
+            border-radius: 3px 3px 0 0;
+        }
+        .modal-tab-content {
+            display: none;
+        }
+        .modal-tab-content.active {
+            display: block;
         }
     </style>
 </head>
@@ -1002,7 +1050,24 @@ function getSetting($key, $default = '', $settings = []) {
             </div>
         </div>
 
-        <!-- Bookings Section -->
+        <!-- Training Calendar Section -->
+                    <div id="trainingCalendarSection" style="display: none; margin-bottom: 32px;">
+                        <div class="content-card" style="margin-top: 0;">
+                            <div class="card-header">
+                                <h3><i class="fas fa-calendar-alt" style="color: var(--primary);"></i> My Training Schedule</h3>
+                                <div class="card-actions">
+                                    <span style="font-size: 0.75rem; color: var(--dark-text-secondary);">
+                                        <i class="fas fa-info-circle"></i> Scheduled by your trainer
+                                    </span>
+                                </div>
+                            </div>
+                            <div style="padding: 24px;">
+                                <div id="trainingCalendar" style="min-height: 500px;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bookings Section -->
         <div id="bookingsSection" class="content-section">
             <div class="content-card">
                 <div class="card-header">
@@ -1293,14 +1358,14 @@ function getSetting($key, $default = '', $settings = []) {
 
     <!-- Booking Details Modal -->
     <div class="modal-overlay" id="bookingDetailsModal">
-        <div class="modal">
+        <div class="modal" style="max-width: 800px;">
             <div class="modal-header" style="padding: 24px 32px; border-bottom: 1px solid var(--dark-border);">
                 <div style="display: flex; align-items: center; gap: 12px;">
                     <div style="width: 40px; height: 40px; background: var(--glass); border-radius: 10px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--glass-border);">
                         <i class="fas fa-file-invoice" style="color: var(--primary);"></i>
                     </div>
                     <div>
-                        <h3 style="margin: 0;">Booking Details</h3>
+                        <h3 style="margin: 0;">Package Hub</h3>
                         <span id="detailRef" style="font-size: 0.75rem; color: var(--dark-text-secondary); font-weight: 700;">REF: #000000</span>
                     </div>
                 </div>
@@ -1309,81 +1374,118 @@ function getSetting($key, $default = '', $settings = []) {
                 </button>
             </div>
             
-            <div class="modal-body" style="padding: 32px;">
-                <div class="booking-details-grid">
-                    <div class="booking-detail-item">
-                        <span class="detail-label">Package Name</span>
-                        <div class="detail-value" id="detailPackage">
-                            <i class="fas fa-dumbbell"></i>
-                            <span>-</span>
+            <div class="modal-tabs">
+                <button class="modal-tab-btn active" onclick="switchModalTab('info')">Overview</button>
+                <button class="modal-tab-btn" onclick="switchModalTab('plan')">Exercise Plan</button>
+                <button class="modal-tab-btn" onclick="switchModalTab('calendar')">Training Calendar</button>
+                <button class="modal-tab-btn" onclick="switchModalTab('diet')">Nutrition & Diet</button>
+                <button class="modal-tab-btn" onclick="switchModalTab('tips')">Tips & Guidance</button>
+            </div>
+            
+            <div class="modal-body" style="padding: 0 32px 32px; max-height: 60vh; overflow-y: auto;">
+                <!-- Info Tab -->
+                <div id="modalTabInfo" class="modal-tab-content active">
+                    <div class="booking-details-grid" style="margin-top: 20px;">
+                        <div class="booking-detail-item">
+                            <span class="detail-label">Package Name</span>
+                            <div class="detail-value" id="detailPackage">
+                                <i class="fas fa-dumbbell"></i>
+                                <span>-</span>
+                            </div>
+                        </div>
+                        <div class="booking-detail-item">
+                            <span class="detail-label">Status</span>
+                            <div id="detailStatus">
+                                <!-- Badge here -->
+                            </div>
+                        </div>
+                        <div class="booking-detail-item">
+                            <span class="detail-label">Start Date</span>
+                            <div class="detail-value" id="detailDate">
+                                <i class="fas fa-calendar-alt"></i>
+                                <span>-</span>
+                            </div>
+                        </div>
+                        <div class="booking-detail-item" id="detailExpiryContainer">
+                            <span class="detail-label">Expiry Date</span>
+                            <div class="detail-value" id="detailExpiry">
+                                <i class="fas fa-calendar-times"></i>
+                                <span>-</span>
+                            </div>
+                        </div>
+                        <div class="booking-detail-item">
+                            <span class="detail-label">Amount Paid</span>
+                            <div class="detail-value" id="detailAmount" style="color: var(--primary); font-size: 1.25rem; font-weight: 800;">
+                                <i class="fas fa-tag"></i>
+                                <span>₱0.00</span>
+                            </div>
+                        </div>
+                        <div class="booking-detail-item">
+                            <span class="detail-label">Contact Info</span>
+                            <div class="detail-value" id="detailContact">
+                                <i class="fas fa-phone-alt"></i>
+                                <span>-</span>
+                            </div>
+                        </div>
+                        <div class="booking-detail-item" id="detailTrainerContainer" style="display: none;">
+                            <span class="detail-label">Assigned Trainer</span>
+                            <div class="detail-value" id="detailTrainer" style="color: var(--primary); font-weight: 700;">
+                                <i class="fas fa-user-tie"></i>
+                                <span>-</span>
+                            </div>
                         </div>
                     </div>
-                    <div class="booking-detail-item">
-                        <span class="detail-label">Status</span>
-                        <div id="detailStatus">
-                            <!-- Badge here -->
-                        </div>
+
+                    <div id="detailNotesSection" class="notes-section" style="display: none; margin-top: 24px;">
+                        <span class="notes-label">Admin/User Notes</span>
+                        <p class="notes-text" id="detailNotes">-</p>
                     </div>
-                    <div class="booking-detail-item">
-                        <span class="detail-label">Start Date</span>
-                        <div class="detail-value" id="detailDate">
-                            <i class="fas fa-calendar-alt"></i>
-                            <span>-</span>
+                    
+                    <div class="receipt-preview-container" id="receiptSection" style="display: none; margin-top: 24px;">
+                        <div class="receipt-preview-header">
+                            <h4><i class="fas fa-receipt"></i> Payment Receipt</h4>
+                            <span style="font-size: 0.75rem; color: var(--dark-text-secondary);"><i class="fas fa-info-circle"></i> Click to enlarge</span>
                         </div>
-                    </div>
-                    <div class="booking-detail-item" id="detailExpiryContainer">
-                        <span class="detail-label">Expiry Date</span>
-                        <div class="detail-value" id="detailExpiry">
-                            <i class="fas fa-calendar-times"></i>
-                            <span>-</span>
-                        </div>
-                    </div>
-                    <div class="booking-detail-item">
-                        <span class="detail-label">Amount Paid</span>
-                        <div class="detail-value" id="detailAmount" style="color: var(--primary); font-size: 1.25rem; font-weight: 800;">
-                            <i class="fas fa-tag"></i>
-                            <span>₱0.00</span>
-                        </div>
-                    </div>
-                    <div class="booking-detail-item">
-                        <span class="detail-label">Contact Info</span>
-                        <div class="detail-value" id="detailContact">
-                            <i class="fas fa-phone-alt"></i>
-                            <span>-</span>
-                        </div>
-                    </div>
-                    <div class="booking-detail-item" id="detailTrainerContainer" style="display: none;">
-                        <span class="detail-label">Assigned Trainer</span>
-                        <div class="detail-value" id="detailTrainer" style="color: var(--primary); font-weight: 700;">
-                            <i class="fas fa-user-tie"></i>
-                            <span>-</span>
+                        <div class="receipt-img-wrapper" id="receiptImgWrapper">
+                            <img id="detailReceipt" src="" alt="Payment Receipt">
                         </div>
                     </div>
                 </div>
 
-                <div id="trainerActions" style="display: none; margin-top: 24px; gap: 12px;">
-                    <button class="btn btn-primary" onclick="viewMyPlan()" style="flex: 1; justify-content: center;">
-                        <i class="fas fa-clipboard-list"></i>
-                        <span>My Exercise Plan</span>
-                    </button>
-                    <button class="btn btn-secondary" onclick="viewMyProgress()" style="flex: 1; justify-content: center;">
-                        <i class="fas fa-chart-line"></i>
-                        <span>My Progress History</span>
-                    </button>
+                <!-- Plan Tab -->
+                <div id="modalTabPlan" class="modal-tab-content">
+                    <div id="modalPlanContent" style="padding-top: 20px;">
+                        <div style="text-align: center; padding: 40px; color: var(--dark-text-secondary);">
+                            <i class="fas fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 12px;"></i>
+                            <p>Loading your exercise plan...</p>
+                        </div>
+                    </div>
                 </div>
 
-                <div id="detailNotesSection" class="notes-section" style="display: none; margin-bottom: 24px;">
-                    <span class="notes-label">Admin/User Notes</span>
-                    <p class="notes-text" id="detailNotes">-</p>
-                </div>
-                
-                <div class="receipt-preview-container" id="receiptSection" style="display: none;">
-                    <div class="receipt-preview-header">
-                        <h4><i class="fas fa-receipt"></i> Payment Receipt</h4>
-                        <span style="font-size: 0.75rem; color: var(--dark-text-secondary);"><i class="fas fa-info-circle"></i> Click to enlarge</span>
+                <!-- Calendar Tab -->
+                <div id="modalTabCalendar" class="modal-tab-content">
+                    <div style="padding-top: 20px;">
+                        <div id="modalCalendar" style="min-height: 400px; background: var(--dark-card); border-radius: 12px; padding: 10px; border: 1px solid var(--dark-border);"></div>
                     </div>
-                    <div class="receipt-img-wrapper" id="receiptImgWrapper">
-                        <img id="detailReceipt" src="" alt="Payment Receipt">
+                </div>
+
+                <!-- Diet Tab -->
+                <div id="modalTabDiet" class="modal-tab-content">
+                    <div id="modalDietContent" style="padding-top: 20px;">
+                        <div style="text-align: center; padding: 40px; color: var(--dark-text-secondary);">
+                            <i class="fas fa-utensils" style="font-size: 2rem; opacity: 0.2; margin-bottom: 12px; display: block;"></i>
+                            <p>No nutrition plan assigned yet.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tips Tab -->
+                <div id="modalTabTips" class="modal-tab-content">
+                    <div id="modalTipsContent" style="padding-top: 20px;">
+                        <div style="text-align: center; padding: 40px; color: var(--dark-text-secondary);">
+                            <i class="fas fa-lightbulb" style="font-size: 2rem; opacity: 0.2; margin-bottom: 12px; display: block;"></i>
+                            <p>No tips shared by your coach yet.</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1391,7 +1493,7 @@ function getSetting($key, $default = '', $settings = []) {
             <div class="modal-footer" style="padding: 24px 32px; border-top: 1px solid var(--dark-border); display: flex; justify-content: flex-end;">
                 <button class="btn btn-secondary" onclick="closeBookingDetailsModal()" style="padding: 10px 24px;">
                     <i class="fas fa-times" style="margin-right: 8px;"></i>
-                    <span>Close</span>
+                    <span>Close Hub</span>
                 </button>
             </div>
         </div>

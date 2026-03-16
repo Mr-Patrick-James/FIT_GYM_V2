@@ -406,188 +406,76 @@ function formatDateISO(date) {
     return `${year}-${month}-${day}`;
 }
 
-function getUserCalendarEvents() {
+async function getUserCalendarEvents() {
     const events = [];
     
+    // 1. Add Bookings and Subscription Periods
     userBookings.forEach(b => {
         const startStr = b.booking_date || b.date || b.created_at;
         if (!startStr) return;
         
-        // Parse the start date as local midnight
-        const parts = startStr.split('-');
-        let startDate;
-        if (parts.length === 3) {
-            startDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-        } else {
-            startDate = new Date(startStr);
-        }
-        
         const pkgName = b.package_name || b.package || 'Gym Session';
-        const pkgId = b.package_id;
         
-        // 1. The main booking event (on the start day)
+        // Main booking event
         events.push({
             id: `booking-${b.id}`,
-            title: `${pkgName}${b.status === 'verified' ? ' (Paid)' : ' (' + b.status + ')'}`,
+            title: `${pkgName} (${b.status.toUpperCase()})`,
             start: startStr,
             allDay: true,
             classNames: [`event-status-${b.status || 'pending'}`],
-            extendedProps: { ...b, type: 'booking' }
+            extendedProps: { ...b, type: 'booking' },
+            color: b.status === 'verified' ? '#22c55e' : (b.status === 'pending' ? '#f59e0b' : '#ef4444')
         });
         
-        // 2. If verified and has duration, show the active period as a background highlight
+        // Background highlight for verified multi-day packages
         if (b.status === 'verified' && b.duration) {
             const days = parseDurationToDays(b.duration);
-            if (days > 1) { // Only for multi-day packages
+            if (days > 1) {
+                const parts = startStr.split('-');
+                const startDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
                 const endDate = new Date(startDate);
                 endDate.setDate(endDate.getDate() + days);
                 
-                // Background highlight for the duration
                 events.push({
                     id: `period-${b.id}`,
                     start: startStr,
                     end: formatDateISO(endDate),
                     display: 'background',
-                    color: 'rgba(34, 197, 94, 0.05)',
+                    color: 'rgba(34, 197, 94, 0.08)',
                     allDay: true
                 });
-                
-                // Expiry marker on the last day
-                const expiryDate = new Date(endDate);
-                expiryDate.setDate(expiryDate.getDate() - 1); // Show on the last valid day
-                
-                events.push({
-                    id: `expiry-${b.id}`,
-                    title: `Ends: ${pkgName}`,
-                    start: formatDateISO(endDate),
-                    allDay: true,
-                    classNames: ['event-status-rejected'], // Red-ish to indicate end
-                    extendedProps: { ...b, type: 'expiry' }
-                });
-
-                // 3. Add daily routines if exercises are available
-                if (pkgId && activeExercisesByPackage[pkgId]) {
-                    const current = new Date(startDate);
-                    const pkgExercises = activeExercisesByPackage[pkgId];
-                    const isWhoPlan = pkgName.includes('WHO Health');
-
-                    // Add routines for each day of the active period
-                    for (let i = 0; i < days; i++) {
-                        const dateStr = formatDateISO(current);
-                        const dayOfWeek = current.getDay();
-
-                        if (isWhoPlan) {
-                            // Specialized WHO (World Health Organization) Distribution:
-                            // Strength (2d/week): Mon(1), Thu(4)
-                            // Aerobic (5d/week): Mon(1), Tue(2), Thu(4), Fri(5), Sat(6)
-                            // Rest (2d/week): Wed(3), Sun(0)
-                            
-                            const isStrengthDay = (dayOfWeek === 1 || dayOfWeek === 4);
-                            const isAerobicDay = (dayOfWeek === 1 || dayOfWeek === 2 || dayOfWeek === 4 || dayOfWeek === 5 || dayOfWeek === 6);
-                            const isRestDay = !isAerobicDay && !isStrengthDay;
-
-                            if (i === 0) {
-                                // Skip start day routine as per current logic
-                            } else if (isRestDay) {
-                                events.push({
-                                    id: `rest-who-${dateStr}`,
-                                    title: `💤 WHO: Rest & Recovery`,
-                                    start: dateStr,
-                                    allDay: true,
-                                    classNames: ['event-rest-day'],
-                                    extendedProps: { type: 'rest', date: dateStr }
-                                });
-                            } else {
-                                let whoTitle = isStrengthDay && isAerobicDay ? "🥗 WHO: Aerobic + Strength" : 
-                                               isStrengthDay ? "🏋️ WHO: Strength Focus" : "🏃 WHO: Aerobic Session";
-                                
-                                let whoRationale = "";
-                                if (isStrengthDay && isAerobicDay) {
-                                    whoRationale = "WHO (World Health Organization) recommends combining 150-300m aerobic and 2+ days strength per week for optimal health.";
-                                } else if (isStrengthDay) {
-                                    whoRationale = "WHO (World Health Organization) recommends muscle-strengthening activities involving all major muscle groups 2 or more days a week.";
-                                } else {
-                                    whoRationale = "WHO (World Health Organization) recommends at least 150–300 minutes of moderate-intensity aerobic physical activity throughout the week.";
-                                }
-
-                                events.push({
-                                    id: `routine-who-${dateStr}`,
-                                    title: whoTitle,
-                                    start: dateStr,
-                                    allDay: true,
-                                    classNames: ['event-routine'],
-                                    extendedProps: { 
-                                        type: 'routine',
-                                        package_id: pkgId,
-                                        package_name: pkgName,
-                                        date: dateStr,
-                                        focus_category: isStrengthDay ? 'Strength' : 'Cardio', // 'Cardio' matches exercise DB category
-                                        who_rationale: whoRationale
-                                    }
-                                });
-                            }
-                        } else {
-                            // Standard Plan Distribution
-                            // Rest days: Wednesday, Sunday (2 days/week)
-                            const isRestDay = (dayOfWeek === 0 || dayOfWeek === 3);
-
-                            if (i === 0) {
-                                // Skip start day routine
-                            } else if (isRestDay) {
-                                events.push({
-                                    id: `rest-${pkgId}-${dateStr}`,
-                                    title: `💤 Rest Day`,
-                                    start: dateStr,
-                                    allDay: true,
-                                    classNames: ['event-rest-day'],
-                                    extendedProps: { type: 'rest', date: dateStr }
-                                });
-                            } else {
-                                const workout = getSeededWorkout(dateStr, pkgId, pkgExercises);
-                                
-                                // Provide WHO context even for standard plans
-                                let whoRationale = "";
-                                if (workout.category === 'Cardio') {
-                                    whoRationale = "This cardio session helps you meet the WHO (World Health Organization) recommendation of 150-300 minutes of aerobic activity per week.";
-                                } else if (workout.category === 'Legs' || workout.category === 'Chest' || workout.category === 'Back') {
-                                    whoRationale = "This strength session helps satisfy the WHO (World Health Organization) guideline of 2+ days of muscle-strengthening activities per week.";
-                                } else {
-                                    whoRationale = "Regular physical activity of any type is recommended by WHO (World Health Organization) to reduce sedentary time and improve health.";
-                                }
-
-                                events.push({
-                                    id: `routine-${pkgId}-${dateStr}`,
-                                    title: workout.title,
-                                    start: dateStr,
-                                    allDay: true,
-                                    classNames: ['event-routine'],
-                                    extendedProps: { 
-                                        type: 'routine',
-                                        package_id: pkgId,
-                                        package_name: pkgName,
-                                        date: dateStr,
-                                        focus_category: workout.category,
-                                        who_rationale: whoRationale
-                                    }
-                                });
-                            }
-                        }
-                        current.setDate(current.getDate() + 1);
-                    }
-                }
-            } else if (days === 1 && pkgId && activeExercisesByPackage[pkgId]) {
-                // For 1-day packages, we don't add a routine on the start date based on your request
-                // So for a 1-day pass, no workout will show on that single day
             }
         }
     });
+
+    // 2. Fetch and add actual trainer-scheduled sessions for all verified bookings
+    const verifiedBookings = userBookings.filter(b => b.status === 'verified');
+    for (const b of verifiedBookings) {
+        try {
+            const resp = await fetch(`../../api/trainers/get-sessions.php?booking_id=${b.id}`);
+            const sessions = await resp.json();
+            if (Array.isArray(sessions)) {
+                sessions.forEach(s => {
+                    events.push({
+                        ...s,
+                        id: `session-${s.id}`,
+                        title: `${s.title}${s.type === 'rest_day' ? '' : ' (Coach)'}`,
+                        extendedProps: { ...s, type: 'session' }
+                    });
+                });
+            }
+        } catch (e) { console.error('Error fetching sessions for calendar:', e); }
+    }
     
     return events;
 }
 
-function initUserCalendar() {
+async function initUserCalendar() {
     const el = document.getElementById('userCalendar');
     if (!el || userCalendar) return;
+    
+    const events = await getUserCalendarEvents();
+    
     userCalendar = new FullCalendar.Calendar(el, {
         initialView: 'dayGridMonth',
         headerToolbar: {
@@ -596,40 +484,29 @@ function initUserCalendar() {
             right: 'dayGridMonth,timeGridWeek,timeGridDay'
         },
         height: 'auto',
-        events: getUserCalendarEvents(),
+        events: events,
         eventClick: (info) => {
             const type = info.event.extendedProps.type;
-            const eventId = info.event.id;
-            
-            if (type === 'routine') {
-                  const pkgId = info.event.extendedProps.package_id;
-                  const pkgName = info.event.extendedProps.package_name;
-                  const date = info.event.extendedProps.date;
-                  const focusCategory = info.event.extendedProps.focus_category;
-                  const whoRationale = info.event.extendedProps.who_rationale;
-                  showExercisePlan(pkgId, pkgName, date, focusCategory, whoRationale);
-              } else if (type === 'rest') {
-                  const date = info.event.extendedProps.date;
-                  showNotification(`Recovery is key! Enjoy your rest day on ${formatDate(date)}.`, 'info');
-              } else {
-                const bookingId = eventId.split('-')[1]; // Get '123' from 'booking-123'
-                if (bookingId) {
-                    viewBookingDetails(bookingId);
-                }
+            if (type === 'session') {
+                showSessionDetails(info.event);
+            } else if (type === 'booking' || type === 'expiry') {
+                const bId = info.event.id.split('-')[1];
+                viewBookingDetails(bId);
             }
         }
     });
     userCalendar.render();
 }
 
-function updateUserCalendarEvents() {
+async function updateUserCalendarEvents() {
     if (userCalendar) {
+        const events = await getUserCalendarEvents();
         userCalendar.removeAllEvents();
-        userCalendar.addEventSource(getUserCalendarEvents());
+        userCalendar.addEventSource(events);
     }
 }
 
-function toggleUserView(mode) {
+async function toggleUserView(mode) {
     userViewMode = mode;
     const tableContainer = document.querySelector('#bookingsSection .table-container');
     const calendarView = document.getElementById('userCalendarView');
@@ -643,10 +520,10 @@ function toggleUserView(mode) {
         tableBtn.classList.remove('active');
         calBtn.classList.add('active');
         if (!userCalendar) {
-            initUserCalendar();
+            await initUserCalendar();
         } else {
             userCalendar.render();
-            updateUserCalendarEvents();
+            await updateUserCalendarEvents();
         }
     } else {
         tableContainer.style.display = 'block';
@@ -717,54 +594,175 @@ function showSection(section, event) {
 // Populate packages grid
 function populatePackages() {
     const grid = document.getElementById('packagesGrid');
+    if (!grid) return;
     grid.innerHTML = '';
     
     packagesData.forEach(pkg => {
+        // Check if this package is currently active for the user
+        const activeBooking = userBookings.find(b => 
+            String(b.package_id) === String(pkg.id) && 
+            b.status === 'verified' && 
+            (!b.expires_at || new Date(b.expires_at) > new Date())
+        );
+        const isActive = !!activeBooking;
+
         const packageCard = document.createElement('div');
-        packageCard.className = 'package-card-large';
+        packageCard.className = `package-card-large ${isActive ? 'active-plan' : ''}`;
         packageCard.innerHTML = `
             <div class="package-header">
-                <h3>${pkg.name}</h3>
-                <span class="package-tag">${pkg.tag}</span>
+                <div>
+                    <h3 style="margin-bottom: 4px;">${pkg.name}</h3>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <span class="package-tag">${pkg.tag || 'Standard'}</span>
+                        <span style="font-size: 0.65rem; color: var(--primary); font-weight: 700;">
+                            <i class="fas fa-bullseye"></i> ${pkg.goal || 'General Fitness'}
+                        </span>
+                        ${isActive ? `
+                        <span style="font-size: 0.65rem; padding: 2px 8px; background: rgba(34, 197, 94, 0.1); color: #22c55e; border-radius: 4px; border: 1px solid rgba(34, 197, 94, 0.2); font-weight: 800; text-transform: uppercase;">
+                            <i class="fas fa-check-circle"></i> Currently Active
+                        </span>
+                        ` : ''}
+                    </div>
+                </div>
             </div>
-            <p class="package-description">${pkg.description}</p>
+            <p class="package-description">${pkg.description || 'Full gym access with all facilities'}</p>
             <div class="package-details">
                 <div class="package-detail-item">
                     <i class="fas fa-clock"></i>
                     <span>${pkg.duration}</span>
                 </div>
-                ${pkg.description.split('\n').filter(line => line.trim() !== '').map(line => `
-                <div class="package-detail-item">
-                    <i class="fas fa-check-circle"></i>
-                    <span>${line.trim()}</span>
-                </div>
-                `).join('')}
-                ${pkg.description.trim() === '' ? `
                 <div class="package-detail-item">
                     <i class="fas fa-check-circle"></i>
                     <span>Full gym access</span>
                 </div>
-                <div class="package-detail-item">
-                    <i class="fas fa-dumbbell"></i>
-                    <span>All facilities</span>
+                ${pkg.is_trainer_assisted ? `
+                <div class="package-detail-item" style="color: var(--primary); font-weight: 700;">
+                    <i class="fas fa-user-tie"></i>
+                    <span>Trainer Assisted</span>
                 </div>
                 ` : ''}
             </div>
             <div class="package-footer">
                 <div class="package-price-large">${pkg.price}</div>
                 <div class="package-btn-group">
-                    <button class="btn btn-exercise" onclick="showExercisePlan(${pkg.id}, '${pkg.name}')" title="View Exercises">
-                        <i class="fas fa-list-ul"></i>
+                    <button class="btn btn-exercise" onclick="${isActive ? `viewBookingDetails(${activeBooking.id})` : `previewPackageHub(${pkg.id})`}" title="${isActive ? 'View My Hub' : 'View Package Details'}">
+                        <i class="fas ${isActive ? 'fa-th-large' : 'fa-list-ul'}"></i>
                     </button>
+                    ${isActive ? `
+                    <button class="btn btn-book" style="background: rgba(34, 197, 94, 0.1); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.2); cursor: default;" disabled>
+                        <i class="fas fa-check"></i>
+                        <span>Subscribed</span>
+                    </button>
+                    ` : `
                     <button class="btn btn-book" onclick="selectPackageForBooking('${pkg.name}')">
                         <i class="fas fa-calendar-plus"></i>
                         <span style="white-space: nowrap;">Book Now</span>
                     </button>
+                    `}
                 </div>
             </div>
         `;
         grid.appendChild(packageCard);
     });
+}
+
+// Preview a package Hub (before booking)
+async function previewPackageHub(packageId) {
+    const pkg = packagesData.find(p => p.id === packageId);
+    if (!pkg) return;
+
+    const modal = document.getElementById('bookingDetailsModal');
+    if (!modal) return;
+
+    // Set modal to "Preview" mode
+    document.getElementById('detailRef').textContent = `PREVIEW: ${pkg.name}`;
+    document.getElementById('detailPackage').querySelector('span').textContent = pkg.name;
+    document.getElementById('detailDate').querySelector('span').textContent = 'Starts upon booking';
+    document.getElementById('detailAmount').querySelector('span').textContent = pkg.price;
+    document.getElementById('detailContact').querySelector('span').textContent = 'N/A (Preview)';
+    
+    // Status Badge
+    document.getElementById('detailStatus').innerHTML = '<span class="status-badge status-pending">Preview</span>';
+    
+    // Trainer Container
+    const trainerContainer = document.getElementById('detailTrainerContainer');
+    trainerContainer.style.display = pkg.is_trainer_assisted ? 'block' : 'none';
+    if (pkg.is_trainer_assisted) {
+        document.getElementById('detailTrainer').querySelector('span').textContent = 'Assigned after booking';
+    }
+
+    // Notes
+    document.getElementById('detailNotesSection').style.display = 'block';
+    document.getElementById('detailNotes').textContent = pkg.description || 'No additional details.';
+    
+    // Receipt (Hide for preview)
+    document.getElementById('receiptSection').style.display = 'none';
+
+    // Load Tabs Content for Preview
+    switchModalTab('info');
+    
+    // 1. Exercise Plan Preview
+    const planContent = document.getElementById('modalPlanContent');
+    planContent.innerHTML = '<div style="text-align: center; padding: 40px;"><i class="fas fa-spinner fa-spin"></i> Loading default plan...</div>';
+    
+    try {
+        const response = await fetch(`../../api/packages/get-exercises.php?package_id=${packageId}`);
+        const data = await response.json();
+        if (data.success && data.data.length > 0) {
+            planContent.innerHTML = data.data.map(ex => `
+                <div class="exercise-item" style="display: flex; gap: 20px; padding: 20px; border-bottom: 1px solid var(--dark-border); align-items: center;">
+                    <img src="${ex.image_url || '../../assets/img/exercise-placeholder.jpg'}" style="width: 80px; height: 80px; border-radius: 8px; object-fit: cover; background: #1a1a1a;">
+                    <div style="flex: 1;">
+                        <h4 style="margin-bottom: 4px; font-weight: 700; color: white;">${ex.name}</h4>
+                        <div style="display: flex; gap: 15px; font-size: 0.85rem; color: var(--primary);">
+                            <span><i class="fas fa-redo"></i> ${ex.sets} Sets</span>
+                            <span><i class="fas fa-running"></i> ${ex.reps} Reps</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            planContent.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--dark-text-secondary);">This package has general gym access.</div>';
+        }
+    } catch (e) {
+        planContent.innerHTML = '<div style="text-align: center; padding: 40px; color: #ef4444;">Failed to load plan.</div>';
+    }
+
+    // 2. Calendar Preview (Sample)
+    const calendarEl = document.getElementById('modalCalendar');
+    if (modalCalendar) modalCalendar.destroy();
+    
+    modalCalendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth' },
+        themeSystem: 'standard',
+        events: [
+            { title: 'Workout A', start: new Date().toISOString().split('T')[0], color: '#3b82f6' },
+            { title: 'Workout B', start: new Date(Date.now() + 86400000).toISOString().split('T')[0], color: '#3b82f6' },
+            { title: 'Rest Day', start: new Date(Date.now() + 172800000).toISOString().split('T')[0], color: '#ef4444' }
+        ]
+    });
+    modalCalendar.render();
+
+    // 3. Diet & Tips (Sample for Preview)
+    document.getElementById('modalDietContent').innerHTML = `
+        <div style="text-align: center; padding: 40px; color: var(--dark-text-secondary);">
+            <i class="fas fa-utensils" style="font-size: 2.5rem; opacity: 0.1; margin-bottom: 15px; display: block;"></i>
+            <h4 style="color: white; margin-bottom: 8px;">Personalized Nutrition</h4>
+            <p style="font-size: 0.9rem; line-height: 1.6;">Once you book this package, your coach will provide a daily meal plan tailored to your goal of <strong>${pkg.goal || 'General Fitness'}</strong>.</p>
+        </div>
+    `;
+    
+    document.getElementById('modalTipsContent').innerHTML = `
+        <div style="text-align: center; padding: 40px; color: var(--dark-text-secondary);">
+            <i class="fas fa-lightbulb" style="font-size: 2.5rem; opacity: 0.1; margin-bottom: 15px; display: block;"></i>
+            <h4 style="color: white; margin-bottom: 8px;">Professional Guidance</h4>
+            <p style="font-size: 0.9rem; line-height: 1.6;">Your assigned trainer will share daily tips on form, hydration, and recovery through this portal.</p>
+        </div>
+    `;
+
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
 }
 
 // Show exercise plan for a package
@@ -1364,6 +1362,231 @@ async function uploadReceipt(file) {
     }
 }
 
+let trainingCalendar = null;
+
+async function initTrainingCalendar(bookingId) {
+    const calendarEl = document.getElementById('trainingCalendar');
+    if (!calendarEl) return;
+    
+    document.getElementById('trainingCalendarSection').style.display = 'block';
+    
+    if (trainingCalendar) {
+        trainingCalendar.destroy();
+    }
+    
+    trainingCalendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek'
+        },
+        themeSystem: 'standard',
+        events: '../../api/trainers/get-sessions.php?booking_id=' + bookingId,
+        eventDidMount: function(info) {
+            if (info.event.extendedProps.type === 'rest_day') {
+                info.el.style.backgroundColor = '#ef4444';
+                info.el.style.borderColor = '#ef4444';
+            }
+        },
+        eventClick: function(info) {
+            showSessionDetails(info.event);
+        }
+    });
+    
+    trainingCalendar.render();
+}
+
+function showSessionDetails(event) {
+    const props = event.extendedProps;
+    let content = `
+        <div style="padding: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="color: var(--primary); margin: 0;">${event.title}</h3>
+                <span class="status-badge" style="background: ${props.type === 'rest_day' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(59, 130, 246, 0.1)'}; color: ${props.type === 'rest_day' ? '#ef4444' : '#3b82f6'}; border: 1px solid currentColor;">
+                    ${props.type.replace('_', ' ').toUpperCase()}
+                </span>
+            </div>
+            
+            <div style="margin-bottom: 20px; color: var(--dark-text-secondary); font-size: 0.9rem;">
+                <p><i class="far fa-calendar-alt"></i> ${event.start.toLocaleDateString(undefined, {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})}</p>
+                ${!event.allDay ? `<p><i class="far fa-clock"></i> ${event.start.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>` : ''}
+            </div>
+            
+            ${props.exercise_names && props.exercise_names.length > 0 ? `
+                <div style="margin-bottom: 20px;">
+                    <h4 style="color: white; margin-bottom: 12px; font-size: 0.95rem;"><i class="fas fa-dumbbell"></i> Exercises for today:</h4>
+                    <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                        ${props.exercise_names.map(ex => `<span style="background: var(--glass); padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; border: 1px solid var(--dark-border);">${ex}</span>`).join('')}
+                    </div>
+                </div>
+            ` : ''}
+            
+            ${props.notes ? `
+                <div style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border-left: 3px solid var(--primary);">
+                    <h4 style="color: white; margin-bottom: 8px; font-size: 0.9rem;">Coach's Notes:</h4>
+                    <p style="font-size: 0.9rem; color: var(--dark-text-secondary); line-height: 1.5; margin: 0;">${props.notes}</p>
+                </div>
+            ` : ''}
+        </div>
+    `;
+
+    // Create a temporary modal or use an existing one
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay active';
+    modal.style.zIndex = '10000';
+    modal.innerHTML = `
+        <div class="modal" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3>Session Details</h3>
+                <button class="close-modal" onclick="this.closest('.modal-overlay').remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">${content}</div>
+            <div class="modal-footer" style="text-align: right; padding: 16px 24px; border-top: 1px solid var(--dark-border);">
+                <button class="btn btn-primary" onclick="this.closest('.modal-overlay').remove()">Close</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+// Initialize Training Calendar
+let modalCalendar = null;
+
+async function initModalCalendar(bookingId) {
+    const calendarEl = document.getElementById('modalCalendar');
+    if (!calendarEl) return;
+    
+    if (modalCalendar) {
+        modalCalendar.destroy();
+    }
+    
+    modalCalendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek'
+        },
+        themeSystem: 'standard',
+        events: '../../api/trainers/get-sessions.php?booking_id=' + bookingId,
+        eventClick: function(info) {
+            showSessionDetails(info.event);
+        },
+        eventDidMount: function(info) {
+            if (info.event.extendedProps.type === 'rest_day') {
+                info.el.style.backgroundColor = '#ef4444';
+                info.el.style.borderColor = '#ef4444';
+            }
+        }
+    });
+    
+    modalCalendar.render();
+}
+
+function switchModalTab(tabId) {
+    // Update buttons
+    document.querySelectorAll('.modal-tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.getAttribute('onclick').includes(`'${tabId}'`)) {
+            btn.classList.add('active');
+        }
+    });
+    
+    // Update content
+    document.querySelectorAll('.modal-tab-content').forEach(content => {
+        content.classList.remove('active');
+    });
+    
+    const targetContent = document.getElementById(`modalTab${tabId.charAt(0).toUpperCase() + tabId.slice(1)}`);
+    if (targetContent) targetContent.classList.add('active');
+    
+    // Special handling for specific tabs
+    if (tabId === 'calendar' && modalCalendar) {
+        setTimeout(() => modalCalendar.updateSize(), 100);
+    }
+}
+
+async function loadModalPlan(bookingId) {
+    const content = document.getElementById('modalPlanContent');
+    try {
+        const response = await fetch(`../../api/trainers/get-member-plan.php?booking_id=${bookingId}`);
+        const data = await response.json();
+        
+        if (data.success && data.data.exercises.length > 0) {
+            content.innerHTML = data.data.exercises.map(ex => `
+                <div class="exercise-item" style="display: flex; gap: 20px; padding: 20px; border-bottom: 1px solid var(--dark-border); align-items: center;">
+                    <img src="${ex.image_url || '../../assets/img/exercise-placeholder.jpg'}" style="width: 80px; height: 80px; border-radius: 8px; object-fit: cover; background: #1a1a1a;">
+                    <div style="flex: 1;">
+                        <h4 style="margin-bottom: 4px; font-weight: 700; color: white;">${ex.name}</h4>
+                        <div style="display: flex; gap: 15px; font-size: 0.85rem; color: var(--primary);">
+                            <span><i class="fas fa-redo"></i> ${ex.sets} Sets</span>
+                            <span><i class="fas fa-running"></i> ${ex.reps} Reps</span>
+                        </div>
+                        ${ex.notes ? `<p style="margin-top: 8px; font-size: 0.85rem; color: var(--dark-text-secondary); font-style: italic;"><i class="fas fa-sticky-note"></i> ${ex.notes}</p>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            content.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--dark-text-secondary);">Your coach hasn\'t assigned specific exercises to this plan yet.</div>';
+        }
+    } catch (error) {
+        content.innerHTML = '<div style="text-align: center; padding: 40px; color: #ef4444;">Failed to load plan.</div>';
+    }
+}
+
+async function loadModalDiet(memberId) {
+    const content = document.getElementById('modalDietContent');
+    try {
+        const response = await fetch(`../../api/trainers/get-food.php?member_id=${memberId}`);
+        const data = await response.json();
+        
+        if (data.success && data.data.length > 0) {
+            content.innerHTML = data.data.map(f => `
+                <div style="padding: 20px; border-bottom: 1px solid var(--dark-border); border-left: 4px solid var(--info); background: rgba(255,255,255,0.02); margin-bottom: 12px; border-radius: 0 8px 8px 0;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 12px; align-items: center;">
+                        <span class="status-badge" style="background: rgba(59, 130, 246, 0.1); color: var(--info); border: 1px solid rgba(59, 130, 246, 0.2); text-transform: uppercase; font-size: 0.7rem; font-weight: 800; padding: 4px 10px;">${f.meal_type}</span>
+                        ${f.calories ? `<span style="font-size: 0.85rem; font-weight: 700; color: white;"><i class="fas fa-fire"></i> ${f.calories} kcal</span>` : ''}
+                    </div>
+                    <p style="font-size: 0.95rem; color: var(--dark-text-secondary); line-height: 1.6; margin: 0; background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px;">${f.food_items}</p>
+                    <div style="font-size: 0.75rem; color: #555; text-align: right; margin-top: 12px;">
+                        <i class="far fa-calendar-alt"></i> ${formatDate(f.created_at)}
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            content.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--dark-text-secondary);"><i class="fas fa-utensils" style="font-size: 2rem; opacity: 0.2; margin-bottom: 12px; display: block;"></i><p>No nutrition plan assigned yet.</p></div>';
+        }
+    } catch (error) {
+        content.innerHTML = '<div style="text-align: center; padding: 40px; color: #ef4444;">Failed to load nutrition plan.</div>';
+    }
+}
+
+async function loadModalTips(memberId) {
+    const content = document.getElementById('modalTipsContent');
+    try {
+        const response = await fetch(`../../api/trainers/get-tips.php?member_id=${memberId}`);
+        const data = await response.json();
+        
+        if (data.success && data.data.length > 0) {
+            content.innerHTML = data.data.map(t => `
+                <div style="padding: 20px; border-bottom: 1px solid var(--dark-border); border-left: 4px solid var(--warning); background: rgba(255,255,255,0.02); margin-bottom: 12px; border-radius: 0 8px 8px 0;">
+                    <p style="font-size: 0.95rem; color: white; line-height: 1.6; margin-bottom: 12px;">${t.tip_text}</p>
+                    <div style="font-size: 0.75rem; color: var(--dark-text-secondary); text-align: right;">
+                        <i class="far fa-clock"></i> ${formatDate(t.created_at)}
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            content.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--dark-text-secondary);"><i class="fas fa-lightbulb" style="font-size: 2rem; opacity: 0.2; margin-bottom: 12px; display: block;"></i><p>No tips shared by your coach yet.</p></div>';
+        }
+    } catch (error) {
+        content.innerHTML = '<div style="text-align: center; padding: 40px; color: #ef4444;">Failed to load tips.</div>';
+    }
+}
+
 // View booking details
 function viewBookingDetails(bookingId) {
     const booking = userBookings.find(b => String(b.id) === String(bookingId));
@@ -1402,12 +1625,20 @@ function viewBookingDetails(bookingId) {
     if (booking.trainer_name) {
         trainerContainer.style.display = 'block';
         trainerValue.textContent = booking.trainer_name;
-        trainerActions.style.display = 'flex';
+        
         // Store current booking ID for plan/progress viewing
         currentViewingBookingId = booking.id;
+        
+        // Load all data for the Hub
+        initModalCalendar(booking.id);
+        loadModalPlan(booking.id);
+        loadModalDiet(booking.userId || booking.user_id || userData.id);
+        loadModalTips(booking.userId || booking.user_id || userData.id);
+        
+        // Reset to Info tab
+        switchModalTab('info');
     } else {
         trainerContainer.style.display = 'none';
-        trainerActions.style.display = 'none';
     }
 
     // Handle Notes
@@ -2001,10 +2232,10 @@ function setupEventListeners() {
     const userTableBtn = document.getElementById('userTableViewBtn');
     const userCalendarBtn = document.getElementById('userCalendarViewBtn');
     if (userTableBtn) {
-        userTableBtn.addEventListener('click', () => toggleUserView('table'));
+        userTableBtn.addEventListener('click', async () => await toggleUserView('table'));
     }
     if (userCalendarBtn) {
-        userCalendarBtn.addEventListener('click', () => toggleUserView('calendar'));
+        userCalendarBtn.addEventListener('click', async () => await toggleUserView('calendar'));
     }
 }
 

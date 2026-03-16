@@ -13,6 +13,7 @@ $duration = trim($data['duration'] ?? '');
 $price = trim($data['price'] ?? '');
 $tag = trim($data['tag'] ?? '');
 $description = trim($data['description'] ?? '');
+$goal = trim($data['goal'] ?? 'General Fitness');
 $isTrainerAssisted = isset($data['is_trainer_assisted']) ? (bool)$data['is_trainer_assisted'] : false;
 $trainerIds = $data['trainer_ids'] ?? [];
 
@@ -53,9 +54,9 @@ try {
     $checkStmt->close();
 
     // Update package
-    $stmt = $conn->prepare("UPDATE packages SET name = ?, duration = ?, price = ?, tag = ?, description = ?, is_trainer_assisted = ?, updated_at = NOW() WHERE id = ?");
+    $stmt = $conn->prepare("UPDATE packages SET name = ?, duration = ?, price = ?, tag = ?, description = ?, is_trainer_assisted = ?, goal = ?, updated_at = NOW() WHERE id = ?");
     $isTrainerAssistedInt = $isTrainerAssisted ? 1 : 0;
-    $stmt->bind_param("ssdssii", $name, $duration, $priceValue, $tag, $description, $isTrainerAssistedInt, $id);
+    $stmt->bind_param("ssdssisi", $name, $duration, $priceValue, $tag, $description, $isTrainerAssistedInt, $goal, $id);
 
     if ($stmt->execute()) {
         // Sync trainers

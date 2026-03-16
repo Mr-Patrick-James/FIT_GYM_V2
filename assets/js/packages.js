@@ -222,6 +222,11 @@ document.addEventListener('DOMContentLoaded', () => {
 async function loadPackages() {
     try {
         const response = await fetch('../../api/packages/get-all.php');
+        
+        if (!response.ok) {
+            throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+        }
+        
         const data = await response.json();
         
         if (data.success) {
@@ -241,13 +246,15 @@ async function loadPackages() {
             }
             return false; // Data unchanged
         } else {
-            console.error('Error loading packages:', data.message);
+            console.error('API Error:', data.message);
+            showNotification(data.message || 'Failed to load packages', 'warning');
             allPackages = [];
             lastPackagesJSON = '';
             return true;
         }
     } catch (error) {
-        console.error('Network error loading packages:', error);
+        console.error('Fetch Error:', error);
+        showNotification('Connection error: Could not reach the server', 'warning');
         allPackages = [];
         lastPackagesJSON = '';
         return true;
@@ -379,8 +386,11 @@ async function populatePackagesGrid(forcedStats = null) {
         const revenue = stats.packageRevenue[pkg.name] || 0;
         
         packageCard.innerHTML = `
-            <div style="position: absolute; top: 12px; right: 12px;">
+            <div style="position: absolute; top: 12px; right: 12px; display: flex; flex-direction: column; align-items: flex-end; gap: 5px;">
                 <span class="package-tag" style="font-size: 0.7rem; padding: 4px 10px;">${pkg.tag || 'Standard'}</span>
+                <span style="font-size: 0.65rem; padding: 2px 8px; background: rgba(59, 130, 246, 0.1); color: #3b82f6; border-radius: 4px; border: 1px solid rgba(59, 130, 246, 0.2); font-weight: 700;">
+                    <i class="fas fa-bullseye"></i> ${pkg.goal || 'General Fitness'}
+                </span>
             </div>
             <div style="margin-bottom: 12px; padding-right: 80px;">
                 <h3 style="margin-bottom: 6px; color: var(--primary); font-size: 1.1rem; font-weight: 800;">${pkg.name}</h3>
@@ -478,6 +488,11 @@ function openAddPackageModal() {
             packageForm.reset();
         }
         
+        const packageGoal = document.getElementById('packageGoal');
+        if (packageGoal) {
+            packageGoal.value = 'General Fitness';
+        }
+        
         const isTrainerAssisted = document.getElementById('isTrainerAssisted');
         const group = document.getElementById('trainerSelectionGroup');
         if (isTrainerAssisted) {
@@ -514,6 +529,11 @@ function editPackage(packageId) {
     document.getElementById('packageTag').value = pkg.tag || '';
     document.getElementById('packageDescription').value = pkg.description || '';
     
+    const packageGoal = document.getElementById('packageGoal');
+    if (packageGoal) {
+        packageGoal.value = pkg.goal || 'General Fitness';
+    }
+    
     const isTrainerAssisted = document.getElementById('isTrainerAssisted');
     const group = document.getElementById('trainerSelectionGroup');
     const isAssisted = pkg.is_trainer_assisted || false;
@@ -547,6 +567,7 @@ async function savePackage(event) {
     const price = document.getElementById('packagePrice').value.trim();
     const tag = document.getElementById('packageTag').value;
     const description = document.getElementById('packageDescription').value.trim();
+    const goal = document.getElementById('packageGoal') ? document.getElementById('packageGoal').value : 'General Fitness';
     const isTrainerAssisted = document.getElementById('isTrainerAssisted') ? document.getElementById('isTrainerAssisted').checked : false;
     
     const selectedTrainers = [];
@@ -574,6 +595,7 @@ async function savePackage(event) {
             price,
             tag: tag || '',
             description,
+            goal,
             is_trainer_assisted: isTrainerAssisted,
             trainer_ids: selectedTrainers
         };

@@ -52,14 +52,21 @@ if ($checkVerifiedColumn && $checkVerifiedColumn->num_rows == 0) {
     echo "<p>ℹ️ verified_at column already exists in bookings</p>";
 }
 
-// 2.1.1 Add is_trainer_assisted to packages table if it doesn't exist
+// 2.1.1 Add is_trainer_assisted and goal to packages table if they don't exist
 $checkAssistedColumn = $conn->query("SHOW COLUMNS FROM packages LIKE 'is_trainer_assisted'");
 if ($checkAssistedColumn && $checkAssistedColumn->num_rows == 0) {
     $sqlAlterPackages = "ALTER TABLE packages ADD COLUMN is_trainer_assisted BOOLEAN DEFAULT FALSE AFTER description";
     if ($conn->query($sqlAlterPackages) === TRUE) echo "<p>✅ is_trainer_assisted column added to packages</p>";
     else echo "<p>❌ Error adding is_trainer_assisted to packages: " . $conn->error . "</p>";
+}
+
+$checkGoalColumn = $conn->query("SHOW COLUMNS FROM packages LIKE 'goal'");
+if ($checkGoalColumn && $checkGoalColumn->num_rows == 0) {
+    $sqlAlterGoal = "ALTER TABLE packages ADD COLUMN goal VARCHAR(50) DEFAULT 'General Fitness' AFTER is_trainer_assisted";
+    if ($conn->query($sqlAlterGoal) === TRUE) echo "<p>✅ goal column added to packages</p>";
+    else echo "<p>❌ Error adding goal to packages: " . $conn->error . "</p>";
 } else {
-    echo "<p>ℹ️ is_trainer_assisted column already exists in packages</p>";
+    echo "<p>ℹ️ goal column already exists in packages</p>";
 }
 
 // 2.1.2 Create package_trainers junction table
@@ -154,16 +161,44 @@ CREATE TABLE IF NOT EXISTS trainer_sessions (
     booking_id INT NOT NULL,
     session_date DATE NOT NULL,
     session_time TIME NOT NULL,
-    duration INT DEFAULT 60, -- minutes
+    duration INT DEFAULT 60,
     status ENUM('scheduled', 'completed', 'cancelled') DEFAULT 'scheduled',
+    type ENUM('workout', 'assessment', 'consultation', 'rest_day') DEFAULT 'workout',
+    title VARCHAR(100) DEFAULT 'Workout Session',
     notes TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (trainer_id) REFERENCES trainers(id) ON DELETE CASCADE,
     FOREIGN KEY (member_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE CASCADE
+    FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE CASCADE,
+    INDEX idx_date (session_date),
+    INDEX idx_trainer_date (trainer_id, session_date)
 )";
 if ($conn->query($sqlSessions) === TRUE) echo "<p>✅ trainer_sessions table created/verified</p>";
 else echo "<p>❌ Error creating trainer_sessions table: " . $conn->error . "</p>";
+
+// 6.1 Add type column to trainer_sessions if it doesn't exist
+$checkTypeColumn = $conn->query("SHOW COLUMNS FROM trainer_sessions LIKE 'type'");
+if ($checkTypeColumn && $checkTypeColumn->num_rows == 0) {
+    $sqlAlterType = "ALTER TABLE trainer_sessions ADD COLUMN type ENUM('workout', 'assessment', 'consultation', 'rest_day') DEFAULT 'workout' AFTER status";
+    if ($conn->query($sqlAlterType) === TRUE) echo "<p>✅ type column added to trainer_sessions</p>";
+    else echo "<p>❌ Error adding type to trainer_sessions: " . $conn->error . "</p>";
+}
+
+// 6.2 Add title column to trainer_sessions if it doesn't exist
+$checkTitleColumn = $conn->query("SHOW COLUMNS FROM trainer_sessions LIKE 'title'");
+if ($checkTitleColumn && $checkTitleColumn->num_rows == 0) {
+    $sqlAlterTitle = "ALTER TABLE trainer_sessions ADD COLUMN title VARCHAR(100) DEFAULT 'Workout Session' AFTER type";
+    if ($conn->query($sqlAlterTitle) === TRUE) echo "<p>✅ title column added to trainer_sessions</p>";
+    else echo "<p>❌ Error adding title to trainer_sessions: " . $conn->error . "</p>";
+}
+
+// 6.3 Add exercises column to trainer_sessions if it doesn't exist
+$checkExColumn = $conn->query("SHOW COLUMNS FROM trainer_sessions LIKE 'exercises'");
+if ($checkExColumn && $checkExColumn->num_rows == 0) {
+    $sqlAlterEx = "ALTER TABLE trainer_sessions ADD COLUMN exercises TEXT AFTER notes";
+    if ($conn->query($sqlAlterEx) === TRUE) echo "<p>✅ exercises column added to trainer_sessions</p>";
+    else echo "<p>❌ Error adding exercises to trainer_sessions: " . $conn->error . "</p>";
+}
 
 // 7. Create trainer_tips table
 $sqlTips = "

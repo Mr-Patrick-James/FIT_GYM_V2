@@ -206,14 +206,28 @@ $user = getCurrentUser();
         });
 
         async function loadPackages() {
+            const grid = document.getElementById('packagesGrid');
             try {
                 const response = await fetch('../../api/packages/get-all.php');
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                
                 const data = await response.json();
                 if (data.success) {
                     allPackages = data.data;
                     renderPackages();
+                } else {
+                    grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--danger);">
+                        <i class="fas fa-exclamation-circle" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                        <p>${data.message || 'Failed to load packages'}</p>
+                    </div>`;
                 }
-            } catch (err) { console.error(err); }
+            } catch (err) { 
+                console.error(err); 
+                grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--danger);">
+                    <i class="fas fa-wifi" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                    <p>Connection error. Please check your network.</p>
+                </div>`;
+            }
         }
 
         async function loadAllExercises() {
