@@ -35,7 +35,7 @@ while ($row = $result->fetch_assoc()) {
         $placeholders = implode(',', array_fill(0, count($ex_ids), '?'));
         // Join with exercises to get names and member_exercise_plans to get sets/reps for this specific booking
         $ex_stmt = $conn->prepare("
-            SELECT e.name, mp.sets, mp.reps 
+            SELECT e.name, e.image_url, e.description, mp.sets, mp.reps 
             FROM exercises e
             LEFT JOIN member_exercise_plans mp ON e.id = mp.exercise_id AND mp.booking_id = ?
             WHERE e.id IN ($placeholders)
@@ -49,6 +49,8 @@ while ($row = $result->fetch_assoc()) {
         while ($ex_row = $ex_res->fetch_assoc()) {
             $exercise_details[] = [
                 'name' => $ex_row['name'],
+                'image_url' => $ex_row['image_url'],
+                'description' => $ex_row['description'],
                 'sets' => $ex_row['sets'] ?? 3,
                 'reps' => $ex_row['reps'] ?? '10-12'
             ];

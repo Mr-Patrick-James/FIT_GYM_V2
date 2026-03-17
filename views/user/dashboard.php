@@ -360,14 +360,45 @@ function getSetting($key, $default = '', $settings = []) {
         /* Event Styles */
         .fc-event {
             border: none !important;
-            border-radius: 8px !important;
-            padding: 4px 8px !important;
-            font-size: 0.8rem !important;
-            font-weight: 600 !important;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            margin: 2px 4px !important;
+            border-radius: 6px !important;
+            padding: 2px 6px !important;
+            font-size: 0.75rem !important;
+            font-weight: 700 !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin: 1px 2px !important;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
+        
+        /* Milestone Specific Styles - Minimal & Professional */
+        .event-milestone-paid {
+            background: rgba(34, 197, 94, 0.15) !important;
+            border-left: 3px solid #22c55e !important;
+            color: #22c55e !important;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .event-milestone-paid::before {
+            content: '\f09d'; /* Credit Card icon */
+            font-family: 'Font Awesome 6 Free';
+            margin-right: 4px;
+        }
+
+        .event-milestone-expiry {
+            background: rgba(239, 68, 68, 0.15) !important;
+            border-left: 3px solid #ef4444 !important;
+            color: #ef4444 !important;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .event-milestone-expiry::before {
+            content: '\f273'; /* Calendar Times icon */
+            font-family: 'Font Awesome 6 Free';
+            margin-right: 4px;
+        }
+
         .fc-event:hover {
             transform: translateY(-2px) scale(1.02);
             box-shadow: 0 8px 24px rgba(0,0,0,0.3);
@@ -375,52 +406,199 @@ function getSetting($key, $default = '', $settings = []) {
             z-index: 5;
         }
         .event-status-pending { 
-            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.2) 100%) !important; 
-            border-left: 4px solid var(--warning) !important;
+            background: rgba(245, 158, 11, 0.1) !important; 
+            border-left: 3px solid var(--warning) !important;
             color: var(--warning) !important; 
-            backdrop-filter: blur(4px);
         }
         .event-status-verified { 
-            background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(34, 197, 94, 0.2) 100%) !important; 
-            border-left: 4px solid var(--success) !important;
+            background: rgba(34, 197, 94, 0.1) !important; 
+            border-left: 3px solid var(--success) !important;
             color: var(--success) !important; 
-            backdrop-filter: blur(4px);
         }
         .event-status-rejected { 
-            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.2) 100%) !important; 
-            border-left: 4px solid #ef4444 !important;
+            background: rgba(239, 68, 68, 0.1) !important; 
+            border-left: 3px solid #ef4444 !important;
             color: #ef4444 !important; 
-            backdrop-filter: blur(4px);
         }
         .event-routine {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.12) 100%) !important;
-            border-left: 4px solid var(--primary) !important;
+            background: rgba(255, 255, 255, 0.05) !important;
+            border-left: 3px solid var(--primary) !important;
             color: var(--primary) !important;
-            cursor: pointer;
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.05) !important;
-            border-left: 4px solid var(--primary) !important;
+            backdrop-filter: blur(4px);
         }
         .event-rest-day {
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(59, 130, 246, 0.12) 100%) !important;
-            border-left: 4px solid #3b82f6 !important;
-            color: #3b82f6 !important;
-            cursor: pointer;
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(59, 130, 246, 0.05) !important;
-            border-left: 4px solid #3b82f6 !important;
+            background: rgba(239, 68, 68, 0.1) !important;
+            border-left: 3px solid #ef4444 !important;
+            color: #ef4444 !important;
+            backdrop-filter: blur(4px);
         }
         
         .fc-h-event .fc-event-main {
             color: inherit !important;
-            display: flex;
-            align-items: center;
-            gap: 6px;
+            display: block;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         
         .fc-daygrid-event-dot {
             display: none !important;
         }
+/* Floating Coach Corner Icon */
+        .coach-corner-float {
+            position: fixed;
+            bottom: 32px;
+            right: 32px;
+            width: 64px;
+            height: 64px;
+            background: #fff;
+            color: #000;
+            border-radius: 20px;
+            display: none; /* Hidden by default, shown by JS if trainer assigned */
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(255, 255, 255, 0.2);
+            z-index: 999;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            border: none;
+        }
+
+        .coach-corner-float:hover {
+            transform: scale(1.1) translateY(-5px);
+            box-shadow: 0 15px 40px rgba(255, 255, 255, 0.3);
+        }
+
+        .coach-corner-float i {
+            animation: pulse 2s infinite;
+        }
+
+        .hub-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #ef4444;
+            color: #fff;
+            font-size: 0.7rem;
+            font-weight: 800;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #fff;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes bounceIn {
+            from { opacity: 0; transform: scale(0.3); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        /* Coach Hub Modal Premium */
+        #coachHubModal .modal {
+            max-width: 850px !important;
+            height: 85vh;
+            display: flex;
+            flex-direction: column;
+            background: #050505 !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            border-radius: 32px !important;
+        }
+
+        .coach-hub-header {
+            padding: 32px 40px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .coach-hub-nav {
+            display: flex;
+            gap: 8px;
+            padding: 12px 40px;
+            background: rgba(255, 255, 255, 0.02);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .hub-tab-btn {
+            padding: 10px 20px;
+            border-radius: 12px;
+            border: none;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.5);
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .hub-tab-btn:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .hub-tab-btn.active {
+            color: #000;
+            background: #fff;
+        }
+
+        .hub-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 32px 40px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .hub-tab-content {
+            display: none;
+            flex: 1;
+            height: 100%;
+        }
+
+        .hub-tab-content.active {
+            display: block;
+        }
+
+        .coach-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 24px;
+            padding: 24px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .coach-card:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .hub-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 768px) {
+            .hub-grid { grid-template-columns: 1fr; }
+            .coach-corner-float { bottom: 20px; right: 20px; width: 56px; height: 56px; }
+        }
+    </style>
+    <style>
         /* Modern Booking Details Modal */
         #bookingDetailsModal .modal {
             max-width: 550px;
@@ -831,6 +1009,81 @@ function getSetting($key, $default = '', $settings = []) {
     </style>
 </head>
 <body class="dark-mode">
+    <!-- Coach Hub Floating Action Button -->
+    <button class="coach-corner-float" id="coachHubFloat" onclick="openCoachHub()" title="Coach's Corner">
+        <i class="fas fa-dumbbell"></i>
+        <span id="coachHubBadge" class="hub-badge" style="display: none;">0</span>
+    </button>
+
+    <!-- Coach Hub Modal -->
+    <div class="modal-overlay" id="coachHubModal">
+        <div class="modal">
+            <div class="coach-hub-header">
+                <div style="flex: 1;">
+                    <h2 style="font-size: 1.75rem; font-weight: 900; color: #fff; letter-spacing: -0.8px; margin-bottom: 4px;">Coach's Corner</h2>
+                    <div style="display: flex; align-items: center; gap: 16px;">
+                        <p style="color: rgba(255,255,255,0.5); font-size: 0.9rem; font-weight: 500;">Your personalized training & guidance hub</p>
+                        <div id="hubSubscriptionDates" style="display: none; align-items: center; gap: 12px; background: rgba(255,255,255,0.05); padding: 4px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
+                            <span style="font-size: 0.75rem; color: rgba(255,255,255,0.4); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Plan Period:</span>
+                            <span id="hubStartDate" style="font-size: 0.85rem; color: var(--primary); font-weight: 700;">--</span>
+                            <i class="fas fa-long-arrow-alt-right" style="color: rgba(255,255,255,0.2); font-size: 0.8rem;"></i>
+                            <span id="hubExpiryDate" style="font-size: 0.85rem; color: #ef4444; font-weight: 700;">--</span>
+                        </div>
+                    </div>
+                </div>
+                <button class="close-modal" onclick="closeCoachHub()" style="background: rgba(255,255,255,0.05); border: none; width: 40px; height: 40px; border-radius: 12px; color: #fff; cursor: pointer;">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="coach-hub-nav">
+                <button class="hub-tab-btn active" onclick="switchHubTab('calendar')"><i class="fas fa-calendar-alt"></i> Calendar</button>
+                <button class="hub-tab-btn" onclick="switchHubTab('progress')"><i class="fas fa-chart-line"></i> Progress</button>
+                <button class="hub-tab-btn" onclick="switchHubTab('plans')"><i class="fas fa-clipboard-list"></i> Workout Plans</button>
+                <button class="hub-tab-btn" onclick="switchHubTab('guidance')"><i class="fas fa-lightbulb"></i> Guidance & Tips</button>
+            </div>
+
+            <div class="hub-content">
+                <!-- Calendar Tab -->
+                <div id="hubCalendar" class="hub-tab-content active" style="display: flex; flex-direction: column;">
+                    <div id="userCoachCalendar" style="flex: 1; min-height: 500px;"></div>
+                </div>
+
+                <!-- Progress Tab -->
+                <div id="hubProgress" class="hub-tab-content">
+                    <div class="hub-grid" id="hubProgressList">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Plans Tab -->
+                <div id="hubPlans" class="hub-tab-content">
+                    <div id="hubPlansList">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Guidance Tab -->
+                <div id="hubGuidance" class="hub-tab-content">
+                    <div class="hub-grid">
+                        <div class="coach-card">
+                            <h4 style="color: #fff; margin-bottom: 16px; display: flex; align-items: center; gap: 10px;">
+                                <i class="fas fa-lightbulb" style="color: var(--primary);"></i> Daily Tips
+                            </h4>
+                            <div id="hubTipsList"></div>
+                        </div>
+                        <div class="coach-card">
+                            <h4 style="color: #fff; margin-bottom: 16px; display: flex; align-items: center; gap: 10px;">
+                                <i class="fas fa-utensils" style="color: var(--primary);"></i> Nutrition
+                            </h4>
+                            <div id="hubFoodList"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Mobile Menu Toggle Button -->
     <button class="mobile-menu-btn" id="mobileMenuToggle">
         <i class="fas fa-bars"></i>
@@ -934,9 +1187,15 @@ function getSetting($key, $default = '', $settings = []) {
                             </div>
                             <div class="stat-value" id="membershipStatus">None</div>
                             <div class="stat-label">Membership Status</div>
-                            <div id="membershipExpiry" style="font-size: 0.75rem; color: var(--dark-text-secondary); margin-top: 8px; display: none; align-items: center; justify-content: center; gap: 6px;">
-                                <i class="far fa-calendar-alt" style="color: var(--primary);"></i> 
-                                <span>Expires: <strong id="membershipExpiryDate" style="color: #fff;">--</strong></span>
+                            <div id="membershipExpiry" style="font-size: 0.75rem; color: var(--dark-text-secondary); margin-top: 8px; display: none; flex-direction: column; align-items: center; gap: 4px;">
+                                <div>
+                                    <i class="far fa-calendar-check" style="color: var(--primary);"></i> 
+                                    <span>Starts: <strong id="membershipStartDate" style="color: #fff;">--</strong></span>
+                                </div>
+                                <div>
+                                    <i class="far fa-calendar-times" style="color: #ef4444;"></i> 
+                                    <span>Expires: <strong id="membershipExpiryDate" style="color: #fff;">--</strong></span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1178,9 +1437,15 @@ function getSetting($key, $default = '', $settings = []) {
                                             <span class="status-badge status-verified" id="profileMembershipStatus">Active</span>
                                         </div>
                                         <p id="profileMembershipPlan">Monthly Membership Plan</p>
-                                        <div class="membership-expiry" id="profileMembershipExpiryRow" style="margin-top: 8px; font-size: 0.85rem; color: var(--dark-text-secondary);">
-                                            <i class="far fa-calendar-alt" style="margin-right: 6px;"></i>
-                                            <span>Expires on: <strong id="profileMembershipExpiryDate" style="color: var(--primary);">--</strong></span>
+                                        <div id="profileMembershipExpiryRow" style="margin-top: 8px; font-size: 0.85rem; color: var(--dark-text-secondary); display: flex; flex-direction: column; gap: 4px;">
+                                            <div style="display: flex; align-items: center;">
+                                                <i class="far fa-calendar-check" style="margin-right: 8px; color: var(--primary); width: 14px;"></i>
+                                                <span>Started on: <strong id="profileMembershipStartDate" style="color: #fff;">--</strong></span>
+                                            </div>
+                                            <div style="display: flex; align-items: center;">
+                                                <i class="far fa-calendar-times" style="margin-right: 8px; color: #ef4444; width: 14px;"></i>
+                                                <span>Expires on: <strong id="profileMembershipExpiryDate" style="color: #fff;">--</strong></span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

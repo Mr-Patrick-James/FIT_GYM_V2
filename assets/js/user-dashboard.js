@@ -203,6 +203,9 @@ async function initDashboard() {
         populatePayments();
         setupEventListeners();
         
+        // Update Coach Hub Indicator
+        updateCoachHubIndicator();
+        
         // Set today as minimum date for booking
         const today = new Date().toISOString().split('T')[0];
         const bookingDateInput = document.getElementById('bookingDate');
@@ -417,18 +420,18 @@ async function getUserCalendarEvents() {
         const pkgName = b.package_name || b.package || 'Gym Session';
         const isActive = isBookingActive(b);
         
-        // Main booking event
+        // Date Paid / Booked event
         events.push({
             id: `booking-${b.id}`,
-            title: `${pkgName} (${b.status.toUpperCase()})`,
+            title: `Paid`,
             start: startStr,
             allDay: true,
-            classNames: [`event-status-${b.status || 'pending'}`],
+            classNames: [`event-milestone-paid`],
             extendedProps: { ...b, type: 'booking' },
             color: b.status === 'verified' ? '#22c55e' : (b.status === 'pending' ? '#f59e0b' : '#ef4444')
         });
         
-        // Background highlight for verified OR pending multi-day packages
+        // Plan Expiry event for multi-day packages
         if ((b.status === 'verified' || b.status === 'pending') && b.duration) {
             const days = parseDurationToDays(b.duration);
             if (days > 1) {
@@ -437,20 +440,22 @@ async function getUserCalendarEvents() {
                 const endDate = new Date(startDate);
                 endDate.setDate(endDate.getDate() + days);
                 
-                // Add expiry marker
+                // Add expiry marker (exactly on the expiry date)
                 events.push({
                     id: `expiry-${b.id}`,
-                    title: `EXPIRY: ${pkgName}`,
-                    start: formatDateISO(new Date(endDate.getTime() - 86400000)), // Show on the last day
+                    title: `Expiry`,
+                    start: formatDateISO(endDate),
                     allDay: true,
+                    classNames: [`event-milestone-expiry`],
                     color: '#ef4444',
                     extendedProps: { ...b, type: 'expiry' }
                 });
 
+                // Background highlight for the duration
                 events.push({
                     id: `period-${b.id}`,
                     start: startStr,
-                    end: formatDateISO(endDate),
+                    end: formatDateISO(new Date(endDate.getTime() + 86400000)), // Extend background highlight slightly
                     display: 'background',
                     color: b.status === 'verified' ? 'rgba(34, 197, 94, 0.08)' : 'rgba(245, 158, 11, 0.08)',
                     allDay: true
@@ -471,6 +476,7 @@ async function getUserCalendarEvents() {
                         ...s,
                         id: `session-${s.id}`,
                         title: `${s.title}${s.type === 'rest_day' ? '' : ' (Coach)'}`,
+                        classNames: [s.type === 'rest_day' ? 'event-rest-day' : 'event-routine'],
                         extendedProps: { ...s, type: 'session' }
                     });
                 });
@@ -1204,14 +1210,25 @@ function updateStats() {
         }
 
         // Show expiry date on dashboard card
+        const membershipStartDate = document.getElementById('membershipStartDate');
         if (membershipExpiry && membershipExpiryDate) {
             membershipExpiry.style.display = 'flex';
+            if (membershipStartDate) {
+                membershipStartDate.textContent = formatDate(latestActive.booking_date || latestActive.created_at);
+            }
             const expiryDate = latestActive.expires_at ? new Date(latestActive.expires_at) : new Date(new Date(latestActive.booking_date || latestActive.created_at).getTime() + parseDurationToDays(latestActive.duration) * 86400000);
             membershipExpiryDate.textContent = formatDate(expiryDate);
         }
 
         if (statTrainer) {
             statTrainer.textContent = latestActive.trainer_name || 'Not Assigned';
+        }
+
+        // Show/Hide Coach Hub Float
+        const coachFloat = document.querySelector('.coach-corner-float');
+        if (coachFloat) {
+            // Show if they have a trainer assigned
+            coachFloat.style.display = latestActive.trainer_id ? 'flex' : 'none';
         }
 
         // Update Sidebar Badge
@@ -1230,6 +1247,10 @@ function updateStats() {
             // Show expiry date
             if (profileMembershipExpiryDate && profileMembershipExpiryRow) {
                 profileMembershipExpiryRow.style.display = 'flex';
+                const profileMembershipStartDate = document.getElementById('profileMembershipStartDate');
+                if (profileMembershipStartDate) {
+                    profileMembershipStartDate.textContent = formatDate(latestActive.booking_date || latestActive.created_at);
+                }
                 const expiryDate = latestActive.expires_at ? new Date(latestActive.expires_at) : new Date(new Date(latestActive.booking_date || latestActive.created_at).getTime() + parseDurationToDays(latestActive.duration) * 86400000);
                 profileMembershipExpiryDate.textContent = formatDate(expiryDate);
             }
@@ -1250,6 +1271,10 @@ function updateStats() {
         if (statTrainer) {
             statTrainer.textContent = 'None';
         }
+
+        // Hide Coach Hub Float
+        const coachFloat = document.querySelector('.coach-corner-float');
+        if (coachFloat) coachFloat.style.display = 'none';
 
         // Hide Sidebar Badge
         if (sidebarMemberBadge) {
@@ -1483,8 +1508,7 @@ async function initTrainingCalendar(bookingId) {
         events: '../../api/trainers/get-sessions.php?booking_id=' + bookingId,
         eventDidMount: function(info) {
             if (info.event.extendedProps.type === 'rest_day') {
-                info.el.style.backgroundColor = '#ef4444';
-                info.el.style.borderColor = '#ef4444';
+                info.el.classList.add('event-rest-day');
             }
         },
         eventClick: function(info) {
@@ -1497,57 +1521,86 @@ async function initTrainingCalendar(bookingId) {
 
 function showSessionDetails(event) {
     const props = event.extendedProps;
+    const isRestDay = props.type === 'rest_day';
+    
     let content = `
-        <div style="padding: 20px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h3 style="color: var(--primary); margin: 0;">${event.title}</h3>
-                <span class="status-badge" style="background: ${props.type === 'rest_day' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(59, 130, 246, 0.1)'}; color: ${props.type === 'rest_day' ? '#ef4444' : '#3b82f6'}; border: 1px solid currentColor;">
+        <div style="padding: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                <div>
+                    <h3 style="color: #fff; margin: 0; font-size: 1.5rem; font-weight: 800;">${event.title}</h3>
+                    <div style="display: flex; gap: 12px; margin-top: 8px; color: rgba(255,255,255,0.5); font-size: 0.85rem;">
+                        <span><i class="far fa-calendar-alt"></i> ${event.start.toLocaleDateString(undefined, {weekday: 'short', month: 'short', day: 'numeric'})}</span>
+                        ${!event.allDay ? `<span><i class="far fa-clock"></i> ${event.start.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>` : ''}
+                    </div>
+                </div>
+                <span class="status-badge" style="background: ${isRestDay ? 'rgba(239, 68, 68, 0.1)' : 'rgba(59, 130, 246, 0.1)'}; color: ${isRestDay ? '#ef4444' : '#3b82f6'}; border: 1px solid currentColor; padding: 6px 12px; border-radius: 8px; font-weight: 800; font-size: 0.75rem;">
                     ${props.type.replace('_', ' ').toUpperCase()}
                 </span>
             </div>
             
-            <div style="margin-bottom: 20px; color: var(--dark-text-secondary); font-size: 0.9rem;">
-                <p><i class="far fa-calendar-alt"></i> ${event.start.toLocaleDateString(undefined, {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})}</p>
-                ${!event.allDay ? `<p><i class="far fa-clock"></i> ${event.start.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>` : ''}
-            </div>
-            
-            ${props.exercise_names && props.exercise_names.length > 0 ? `
-                <div style="margin-bottom: 20px;">
-                    <h4 style="color: white; margin-bottom: 12px; font-size: 0.95rem;"><i class="fas fa-dumbbell"></i> Exercises for today:</h4>
-                    <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-                        ${props.exercise_names.map(ex => `<span style="background: var(--glass); padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; border: 1px solid var(--dark-border);">${ex}</span>`).join('')}
+            ${props.exercise_details && props.exercise_details.length > 0 ? `
+                <div style="margin-bottom: 24px;">
+                    <h4 style="color: rgba(255,255,255,0.4); margin-bottom: 16px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Workout Lineup</h4>
+                    <div style="display: flex; flex-direction: column; gap: 16px;">
+                        ${props.exercise_details.map(ex => `
+                            <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; padding: 16px; display: flex; gap: 16px; align-items: center;">
+                                <div style="width: 64px; height: 64px; border-radius: 12px; background: #111; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); flex-shrink: 0;">
+                                    <img src="${ex.image_url || '../../assets/img/exercise-placeholder.jpg'}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='../../assets/img/exercise-placeholder.jpg'">
+                                </div>
+                                <div style="flex: 1;">
+                                    <h5 style="color: #fff; margin: 0 0 6px 0; font-size: 1rem; font-weight: 700;">${ex.name}</h5>
+                                    <div style="display: flex; gap: 12px; font-size: 0.8rem; color: var(--primary); font-weight: 800;">
+                                        <span>${ex.sets} SETS</span>
+                                        <span style="color: rgba(255,255,255,0.2)">|</span>
+                                        <span>${ex.reps} REPS</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
                     </div>
                 </div>
-            ` : ''}
+            ` : (isRestDay ? `
+                <div style="text-align: center; padding: 40px 20px; background: rgba(239, 68, 68, 0.05); border-radius: 20px; border: 1px dashed rgba(239, 68, 68, 0.2);">
+                    <i class="fas fa-bed" style="font-size: 2.5rem; color: #ef4444; margin-bottom: 16px; opacity: 0.5;"></i>
+                    <p style="color: #ef4444; font-weight: 700; margin: 0;">Recovery is key! Enjoy your rest day.</p>
+                </div>
+            ` : '')}
             
             ${props.notes ? `
-                <div style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border-left: 3px solid var(--primary);">
-                    <h4 style="color: white; margin-bottom: 8px; font-size: 0.9rem;">Coach's Notes:</h4>
-                    <p style="font-size: 0.9rem; color: var(--dark-text-secondary); line-height: 1.5; margin: 0;">${props.notes}</p>
+                <div style="background: rgba(255,255,255,0.02); padding: 20px; border-radius: 16px; border-left: 4px solid var(--primary);">
+                    <h4 style="color: rgba(255,255,255,0.4); margin-bottom: 8px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase;">Coach's Guidance</h4>
+                    <p style="font-size: 0.9rem; color: rgba(255,255,255,0.7); line-height: 1.6; margin: 0;">${props.notes}</p>
                 </div>
             ` : ''}
         </div>
     `;
 
-    // Create a temporary modal or use an existing one
-    const modal = document.createElement('div');
-    modal.className = 'modal-overlay active';
-    modal.style.zIndex = '10000';
-    modal.innerHTML = `
-        <div class="modal" style="max-width: 500px;">
-            <div class="modal-header">
-                <h3>Session Details</h3>
-                <button class="close-modal" onclick="this.closest('.modal-overlay').remove()">
+    // Use a high-quality modal wrapper
+    const modalId = 'sessionDetailsModal_' + Date.now();
+    const modalOverlay = document.createElement('div');
+    modalOverlay.className = 'modal-overlay active';
+    modalOverlay.id = modalId;
+    modalOverlay.style.zIndex = '10000';
+    modalOverlay.innerHTML = `
+        <div class="modal" style="max-width: 550px; background: #080808; border: 1px solid rgba(255,255,255,0.1); border-radius: 28px; overflow: hidden; animation: modalFadeIn 0.3s ease;">
+            <div style="position: absolute; top: 20px; right: 20px; z-index: 1;">
+                <button onclick="document.getElementById('${modalId}').remove()" style="background: rgba(255,255,255,0.05); border: none; width: 36px; height: 36px; border-radius: 10px; color: #fff; cursor: pointer; transition: 0.2s;">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            <div class="modal-body">${content}</div>
-            <div class="modal-footer" style="text-align: right; padding: 16px 24px; border-top: 1px solid var(--dark-border);">
-                <button class="btn btn-primary" onclick="this.closest('.modal-overlay').remove()">Close</button>
+            <div class="modal-body" style="padding: 0;">${content}</div>
+            <div style="padding: 20px 24px; background: rgba(255,255,255,0.02); border-top: 1px solid rgba(255,255,255,0.05); text-align: right;">
+                <button class="btn btn-primary" onclick="document.getElementById('${modalId}').remove()" style="padding: 10px 24px; border-radius: 12px; font-weight: 700;">Got it, Coach!</button>
             </div>
         </div>
     `;
-    document.body.appendChild(modal);
+    
+    document.body.appendChild(modalOverlay);
+    
+    // Close on overlay click
+    modalOverlay.onclick = (e) => {
+        if (e.target === modalOverlay) modalOverlay.remove();
+    };
 }
 
 // Initialize Training Calendar
@@ -1569,14 +1622,69 @@ async function initModalCalendar(bookingId) {
             right: 'dayGridMonth,timeGridWeek'
         },
         themeSystem: 'standard',
-        events: '../../api/trainers/get-sessions.php?booking_id=' + bookingId,
+        eventSources: [
+            // Source 1: The actual trainer-scheduled sessions
+            {
+                url: '../../api/trainers/get-sessions.php?booking_id=' + bookingId,
+                method: 'GET'
+            },
+            // Source 2: The static subscription milestone events (Paid/Expiry)
+            async function(fetchInfo, successCallback, failureCallback) {
+                const b = userBookings.find(b => b.id == bookingId);
+                if (!b) return successCallback([]);
+                
+                const milestones = [];
+                const startStr = b.booking_date || b.date || b.created_at;
+                
+                // Paid Milestone
+                milestones.push({
+                    title: `Paid`,
+                    start: startStr,
+                    allDay: true,
+                    color: '#22c55e',
+                    classNames: ['event-milestone-paid'],
+                    extendedProps: { type: 'booking', ...b }
+                });
+
+                // Expiry Milestone
+                if (b.duration) {
+                    const days = parseDurationToDays(b.duration);
+                    if (days > 1) {
+                        const parts = startStr.split('-');
+                        const startDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+                        const endDate = new Date(startDate);
+                        endDate.setDate(endDate.getDate() + days);
+                        
+                        milestones.push({
+                            title: `Expiry`,
+                            start: formatDateISO(endDate),
+                            allDay: true,
+                            color: '#ef4444',
+                            classNames: ['event-milestone-expiry'],
+                            extendedProps: { type: 'expiry', ...b }
+                        });
+
+                        milestones.push({
+                            start: startStr,
+                            end: formatDateISO(new Date(endDate.getTime() + 86400000)),
+                            display: 'background',
+                            color: 'rgba(34, 197, 94, 0.08)',
+                            allDay: true
+                        });
+                    }
+                }
+                successCallback(milestones);
+            }
+        ],
         eventClick: function(info) {
-            showSessionDetails(info.event);
+            const type = info.event.extendedProps.type;
+            if (type !== 'booking' && type !== 'expiry') {
+                showSessionDetails(info.event);
+            }
         },
         eventDidMount: function(info) {
             if (info.event.extendedProps.type === 'rest_day') {
-                info.el.style.backgroundColor = '#ef4444';
-                info.el.style.borderColor = '#ef4444';
+                info.el.classList.add('event-rest-day');
             }
         }
     });
@@ -1682,6 +1790,319 @@ async function loadModalTips(memberId) {
         }
     } catch (error) {
         content.innerHTML = '<div style="text-align: center; padding: 40px; color: #ef4444;">Failed to load tips.</div>';
+    }
+}
+
+// ===== Coach's Corner Hub (Floating Action) =====
+let coachCalendar = null;
+
+async function updateCoachHubIndicator() {
+    const activeWithTrainer = userBookings.find(b => isBookingActive(b) && b.trainer_id);
+    const badge = document.getElementById('coachHubBadge');
+    if (!activeWithTrainer || !badge) {
+        if (badge) badge.style.display = 'none';
+        return;
+    }
+
+    try {
+        // Fetch upcoming sessions for this booking
+        const response = await fetch(`../../api/trainers/get-sessions.php?booking_id=${activeWithTrainer.id}&upcoming=1`);
+        const sessions = await response.json();
+        
+        if (Array.isArray(sessions) && sessions.length > 0) {
+            badge.textContent = sessions.length;
+            badge.style.display = 'flex';
+            const floatBtn = document.getElementById('coachHubFloat');
+            if (floatBtn) floatBtn.title = `${sessions.length} Upcoming Session${sessions.length > 1 ? 's' : ''}`;
+            
+            // Pulse animation for the badge if there are new sessions
+            badge.style.animation = 'none';
+            badge.offsetHeight; // trigger reflow
+            badge.style.animation = 'bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+        } else {
+            badge.style.display = 'none';
+        }
+    } catch (error) {
+        console.error('Error updating Coach Hub indicator:', error);
+    }
+}
+
+async function openCoachHub() {
+    // Find the primary active booking with a trainer
+    const activeWithTrainer = userBookings.find(b => isBookingActive(b) && b.trainer_id);
+    
+    if (!activeWithTrainer) {
+        showNotification('This feature is only available for active trainer-assisted packages.', 'info');
+        return;
+    }
+
+    const modal = document.getElementById('coachHubModal');
+    if (!modal) return;
+
+    // Set global context if needed
+    currentViewingBookingId = activeWithTrainer.id;
+
+    // Populate Dates in Hub
+    const hubDatesRow = document.getElementById('hubSubscriptionDates');
+    const hubStart = document.getElementById('hubStartDate');
+    const hubExpiry = document.getElementById('hubExpiryDate');
+    
+    if (hubDatesRow && hubStart && hubExpiry) {
+        hubDatesRow.style.display = 'flex';
+        hubStart.textContent = formatDate(activeWithTrainer.booking_date || activeWithTrainer.date || activeWithTrainer.created_at);
+        
+        const expDate = activeWithTrainer.expires_at ? new Date(activeWithTrainer.expires_at) : new Date(new Date(activeWithTrainer.booking_date || activeWithTrainer.created_at).getTime() + parseDurationToDays(activeWithTrainer.duration) * 86400000);
+        hubExpiry.textContent = formatDate(expDate);
+    }
+
+    // Initial Load
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+
+    // Small delay to ensure modal transition has started
+    setTimeout(() => {
+        switchHubTab('calendar');
+    }, 50);
+}
+
+function closeCoachHub() {
+    const modal = document.getElementById('coachHubModal');
+    if (modal) {
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+}
+
+async function switchHubTab(tabId) {
+    // Update button states
+    document.querySelectorAll('.hub-tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.getAttribute('onclick').includes(`'${tabId}'`)) {
+            btn.classList.add('active');
+        }
+    });
+
+    // Update content visibility
+    document.querySelectorAll('.hub-tab-content').forEach(content => {
+        content.style.display = 'none';
+    });
+
+    const target = document.getElementById(`hub${tabId.charAt(0).toUpperCase() + tabId.slice(1)}`);
+    if (target) target.style.display = 'block';
+
+    // Fetch data based on tab
+    const activeBooking = userBookings.find(b => isBookingActive(b) && b.trainer_id);
+    if (!activeBooking) return;
+
+    if (tabId === 'calendar') {
+        initCoachCalendar(activeBooking.id);
+    } else if (tabId === 'progress') {
+        loadHubProgress(activeBooking.id);
+    } else if (tabId === 'plans') {
+        loadHubPlans(activeBooking.id);
+    } else if (tabId === 'guidance') {
+        loadHubGuidance(activeBooking.userId || activeBooking.user_id || (JSON.parse(localStorage.getItem('userData'))?.id));
+    }
+}
+
+async function initCoachCalendar(bookingId) {
+    const el = document.getElementById('userCoachCalendar');
+    if (!el) return;
+
+    if (coachCalendar) {
+        coachCalendar.destroy();
+    }
+
+    coachCalendar = new FullCalendar.Calendar(el, {
+        initialView: 'dayGridMonth',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek'
+        },
+        height: '100%',
+        themeSystem: 'standard',
+        eventSources: [
+            // Source 1: The actual trainer-scheduled sessions
+            {
+                url: '../../api/trainers/get-sessions.php?booking_id=' + bookingId,
+                method: 'GET'
+            },
+            // Source 2: The static subscription milestone events
+            async function(fetchInfo, successCallback, failureCallback) {
+                const b = userBookings.find(b => b.id == bookingId);
+                if (!b) return successCallback([]);
+                
+                const milestones = [];
+                const startStr = b.booking_date || b.date || b.created_at;
+                const pkgName = b.package_name || b.package || 'Plan';
+                
+                // Paid Milestone
+                 milestones.push({
+                     title: `Paid`,
+                     start: startStr,
+                     allDay: true,
+                     color: '#22c55e',
+                     classNames: ['event-milestone-paid'],
+                     extendedProps: { type: 'booking', ...b }
+                 });
+
+                 // Expiry Milestone
+                 if (b.duration) {
+                     const days = parseDurationToDays(b.duration);
+                     if (days > 1) {
+                         const parts = startStr.split('-');
+                         const startDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+                         const endDate = new Date(startDate);
+                         endDate.setDate(endDate.getDate() + days);
+                         
+                         milestones.push({
+                             title: `Expiry`,
+                             start: formatDateISO(endDate),
+                             allDay: true,
+                             color: '#ef4444',
+                             classNames: ['event-milestone-expiry'],
+                             extendedProps: { type: 'expiry', ...b }
+                         });
+
+                        milestones.push({
+                            start: startStr,
+                            end: formatDateISO(new Date(endDate.getTime() + 86400000)),
+                            display: 'background',
+                            color: 'rgba(34, 197, 94, 0.08)',
+                            allDay: true
+                        });
+                    }
+                }
+                successCallback(milestones);
+            }
+        ],
+        eventClick: (info) => {
+            const type = info.event.extendedProps.type;
+            if (type === 'booking' || type === 'expiry') {
+                viewBookingDetails(bookingId);
+            } else {
+                showSessionDetails(info.event);
+            }
+        },
+        eventDidMount: (info) => {
+            if (info.event.extendedProps.type === 'rest_day') {
+                info.el.classList.add('event-rest-day');
+            }
+        }
+    });
+
+    coachCalendar.render();
+    
+    // Multiple update attempts to ensure rendering after modal animation completes
+    setTimeout(() => coachCalendar.updateSize(), 100);
+    setTimeout(() => coachCalendar.updateSize(), 300);
+    setTimeout(() => coachCalendar.updateSize(), 500);
+}
+
+async function loadHubProgress(bookingId) {
+    const list = document.getElementById('hubProgressList');
+    if (!list) return;
+
+    list.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px;"><i class="fas fa-spinner fa-spin"></i> Loading progress...</div>';
+
+    try {
+        const resp = await fetch(`../../api/trainers/get-progress-history.php?booking_id=${bookingId}`);
+        const data = await resp.json();
+
+        if (data.success && data.data.length > 0) {
+            list.innerHTML = data.data.map(log => `
+                <div class="coach-card">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 12px; align-items: center;">
+                        <span style="color: var(--primary); font-weight: 700; font-size: 0.85rem;"><i class="fas fa-calendar-alt"></i> ${formatDate(log.logged_at)}</span>
+                        ${log.weight ? `<span style="font-weight: 900; color: #fff; background: rgba(255,255,255,0.05); padding: 4px 12px; border-radius: 8px;"><i class="fas fa-weight"></i> ${log.weight} kg</span>` : ''}
+                    </div>
+                    <p style="color: rgba(255,255,255,0.7); font-size: 0.95rem; line-height: 1.6; margin-bottom: 12px;">${log.remarks || 'No remarks provided.'}</p>
+                    <div style="font-size: 0.7rem; color: rgba(255,255,255,0.3); text-align: right;">Verified by Coach ${log.trainer_name}</div>
+                </div>
+            `).join('');
+        } else {
+            list.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 60px; color: rgba(255,255,255,0.2);"><i class="fas fa-chart-line" style="font-size: 3rem; margin-bottom: 20px; display: block;"></i><p>No progress logs yet. Your coach will log your milestones here.</p></div>';
+        }
+    } catch (e) {
+        list.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #ef4444;">Failed to load progress.</div>';
+    }
+}
+
+async function loadHubPlans(bookingId) {
+    const list = document.getElementById('hubPlansList');
+    if (!list) return;
+
+    list.innerHTML = '<div style="text-align: center; padding: 40px;"><i class="fas fa-spinner fa-spin"></i> Loading workout plan...</div>';
+
+    try {
+        const resp = await fetch(`../../api/trainers/get-member-plan.php?booking_id=${bookingId}`);
+        const data = await resp.json();
+
+        if (data.success && data.data.exercises.length > 0) {
+            list.innerHTML = data.data.exercises.map(ex => `
+                <div class="coach-card" style="display: flex; gap: 20px; align-items: center;">
+                    <div style="width: 80px; height: 80px; border-radius: 16px; background: #111; overflow: hidden; border: 1px solid rgba(255,255,255,0.05);">
+                        <img src="${ex.image_url || '../../assets/img/exercise-placeholder.jpg'}" style="width: 100%; height: 100%; object-fit: cover;">
+                    </div>
+                    <div style="flex: 1;">
+                        <h4 style="color: #fff; margin-bottom: 6px;">${ex.name}</h4>
+                        <div style="display: flex; gap: 15px; font-size: 0.85rem; color: var(--primary); font-weight: 700;">
+                            <span><i class="fas fa-redo"></i> ${ex.sets} Sets</span>
+                            <span><i class="fas fa-running"></i> ${ex.reps} Reps</span>
+                        </div>
+                        ${ex.notes ? `<p style="margin-top: 8px; font-size: 0.8rem; color: rgba(255,255,255,0.4); font-style: italic;">Note: ${ex.notes}</p>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            list.innerHTML = '<div style="text-align: center; padding: 60px; color: rgba(255,255,255,0.2);"><i class="fas fa-clipboard-list" style="font-size: 3rem; margin-bottom: 20px; display: block;"></i><p>Your coach hasn\'t assigned a customized plan yet.</p></div>';
+        }
+    } catch (e) {
+        list.innerHTML = '<div style="text-align: center; padding: 40px; color: #ef4444;">Failed to load plan.</div>';
+    }
+}
+
+async function loadHubGuidance(memberId) {
+    const tipsList = document.getElementById('hubTipsList');
+    const foodList = document.getElementById('hubFoodList');
+    
+    if (tipsList) tipsList.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    if (foodList) foodList.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+    try {
+        // Fetch Tips
+        const tipsResp = await fetch(`../../api/trainers/get-tips.php?member_id=${memberId}`);
+        const tipsData = await tipsResp.json();
+        if (tipsData.success && tipsData.data.length > 0) {
+            tipsList.innerHTML = tipsData.data.map(t => `
+                <div style="padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <p style="color: rgba(255,255,255,0.8); font-size: 0.9rem; line-height: 1.5; margin-bottom: 4px;">${t.tip_text}</p>
+                    <span style="font-size: 0.7rem; color: rgba(255,255,255,0.2);"><i class="far fa-clock"></i> ${formatDate(t.created_at)}</span>
+                </div>
+            `).join('');
+        } else {
+            tipsList.innerHTML = '<p style="color: rgba(255,255,255,0.2); font-size: 0.85rem;">No tips from your coach yet.</p>';
+        }
+
+        // Fetch Food
+        const foodResp = await fetch(`../../api/trainers/get-food.php?member_id=${memberId}`);
+        const foodData = await foodResp.json();
+        if (foodData.success && foodData.data.length > 0) {
+            foodList.innerHTML = foodData.data.map(f => `
+                <div style="padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                        <span style="color: var(--primary); font-size: 0.75rem; font-weight: 800; text-transform: uppercase;">${f.meal_type}</span>
+                        ${f.calories ? `<span style="color: #fff; font-size: 0.75rem; font-weight: 700;">${f.calories} kcal</span>` : ''}
+                    </div>
+                    <p style="color: rgba(255,255,255,0.8); font-size: 0.9rem; line-height: 1.5;">${f.food_items}</p>
+                </div>
+            `).join('');
+        } else {
+            foodList.innerHTML = '<p style="color: rgba(255,255,255,0.2); font-size: 0.85rem;">No food recommendations yet.</p>';
+        }
+    } catch (e) {
+        console.error('Error loading guidance:', e);
     }
 }
 
@@ -2335,6 +2756,7 @@ function setupEventListeners() {
         populateBookings();
         populatePayments();
         updateUserCalendarEvents();
+        updateCoachHubIndicator();
         
         // Update notification count
         const notifBadge = document.getElementById('notifBadge');
