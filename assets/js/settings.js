@@ -4,13 +4,76 @@ let settingsData = {
     payment: {},
     notifications: {},
     landing: {
-        gallery: []
+        gallery: [],
+        heroImages: []
     },
     account: {}
 };
 
 // State for new gallery uploads
 let pendingGalleryFiles = [];
+let pendingHeroFiles = [];
+
+// Helper to compress images before upload
+async function compressImage(file, maxWidth = 1920, quality = 0.8) {
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (event) => {
+            const img = new Image();
+            img.src = event.target.result;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+
+                if (width > maxWidth) {
+                    height = (maxWidth / width) * height;
+                    width = maxWidth;
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                canvas.toBlob((blob) => {
+                    const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".webp", {
+                        type: 'image/webp',
+                        lastModified: Date.now()
+                    });
+                    resolve(compressedFile);
+                }, 'image/webp', quality);
+            };
+        };
+    });
+}
+
+// Handle Gallery Uploads
+async function handleGalleryUpload(input) {
+    const files = input.files || input;
+    if (files) {
+        showNotification('Processing images...', 'info');
+        for (const file of Array.from(files)) {
+            const compressed = await compressImage(file, 1200); // Gallery images can be smaller
+            pendingGalleryFiles.push(compressed);
+        }
+        renderGallery();
+    }
+}
+
+// Handle Hero Uploads
+async function handleHeroUpload(input) {
+    const files = input.files || input;
+    if (files) {
+        showNotification('Optimizing hero backgrounds...', 'info');
+        for (const file of Array.from(files)) {
+            const compressed = await compressImage(file, 1920); // Hero needs full HD
+            pendingHeroFiles.push(compressed);
+        }
+        renderHeroGallery();
+    }
+}
 
 // QR Preview Function
 function previewQR(input) {
@@ -24,16 +87,6 @@ function previewQR(input) {
     }
 }
 
-// Handle Gallery Uploads
-function handleGalleryUpload(input) {
-    if (input.files) {
-        Array.from(input.files).forEach(file => {
-            pendingGalleryFiles.push(file);
-        });
-        renderGallery();
-    }
-}
-
 // Remove Gallery Item
 function removeGalleryItem(index, isExisting = false) {
     if (isExisting) {
@@ -42,6 +95,16 @@ function removeGalleryItem(index, isExisting = false) {
         pendingGalleryFiles.splice(index, 1);
     }
     renderGallery();
+}
+
+// Remove Hero Item
+function removeHeroItem(index, isExisting = false) {
+    if (isExisting) {
+        settingsData.landing.heroImages.splice(index, 1);
+    } else {
+        pendingHeroFiles.splice(index, 1);
+    }
+    renderHeroGallery();
 }
 
 // Render Gallery Grid
@@ -75,6 +138,52 @@ function renderGallery() {
         item.innerHTML = `
             <img src="" alt="Pending Upload">
             <button class="remove-btn" onclick="removeGalleryItem(${index}, false)">
+                <i class="fas fa-trash"></i>
+            </button>
+        `;
+        grid.appendChild(item);
+
+        reader.onload = (e) => {
+            item.querySelector('img').src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+
+    // Add the "Add" button back
+    grid.appendChild(addBtn);
+}
+
+// Render Hero Gallery Grid
+function renderHeroGallery() {
+    const grid = document.getElementById('hero-gallery-grid');
+    if (!grid) return;
+
+    // Clear existing items but keep the add button
+    const addBtn = grid.querySelector('.gallery-add-btn');
+    grid.innerHTML = '';
+
+    // Render existing images from server
+    settingsData.landing.heroImages.forEach((path, index) => {
+        const fullPath = path.startsWith('http') ? path : `../../${path}`;
+        const item = document.createElement('div');
+        item.className = 'gallery-item';
+        item.innerHTML = `
+            <img src="${fullPath}" alt="Hero Background">
+            <button class="remove-btn" onclick="removeHeroItem(${index}, true)">
+                <i class="fas fa-trash"></i>
+            </button>
+        `;
+        grid.appendChild(item);
+    });
+
+    // Render pending uploads
+    pendingHeroFiles.forEach((file, index) => {
+        const reader = new FileReader();
+        const item = document.createElement('div');
+        item.className = 'gallery-item';
+        item.innerHTML = `
+            <img src="" alt="Pending Upload">
+            <button class="remove-btn" onclick="removeHeroItem(${index}, false)">
                 <i class="fas fa-trash"></i>
             </button>
         `;
@@ -124,6 +233,7 @@ async function loadSettings() {
                 missionText: data.mission_text || '',
                 yearsExperience: data.years_experience || '',
                 gallery: JSON.parse(data.about_images || '[]'),
+                heroImages: JSON.parse(data.hero_images || '[]'),
                 footerTagline: data.footer_tagline || ''
             };
             settingsData.account = {
@@ -132,6 +242,7 @@ async function loadSettings() {
             };
             
             pendingGalleryFiles = []; // Reset pending uploads
+            pendingHeroFiles = [];
             populateSettings();
         } else {
             showNotification('Error loading settings: ' + result.message, 'error');
@@ -194,6 +305,7 @@ function populateSettings() {
 
     // Render gallery
     renderGallery();
+    renderHeroGallery();
 }
 
 // Tab switching logic
@@ -306,9 +418,17 @@ function saveLandingSettings() {
     // Send existing gallery paths as JSON
     formData.append('existing_gallery', JSON.stringify(settingsData.landing.gallery));
     
-    // Append new files
+    // Append new gallery files
     pendingGalleryFiles.forEach((file, index) => {
         formData.append(`gallery_file_${index}`, file);
+    });
+
+    // Send existing hero paths as JSON
+    formData.append('existing_hero_images', JSON.stringify(settingsData.landing.heroImages));
+
+    // Append new hero files
+    pendingHeroFiles.forEach((file, index) => {
+        formData.append(`hero_file_${index}`, file);
     });
     
     saveToDB(formData);
@@ -462,4 +582,44 @@ document.addEventListener('DOMContentLoaded', function() {
             if (btn.dataset.theme === currentTheme) btn.classList.add('active');
         });
     }, 100);
+
+    // Setup Drag and Drop
+    setupDragAndDrop('hero-upload-area', 'heroImageInput', handleHeroUpload);
+    setupDragAndDrop('about-upload-area', 'aboutImageInput', handleGalleryUpload);
 });
+
+function setupDragAndDrop(areaId, inputId, uploadHandler) {
+    const area = document.getElementById(areaId);
+    if (!area) return;
+
+    const dropzone = area.querySelector('.upload-dropzone');
+    const input = document.getElementById(inputId);
+
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropzone.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropzone.addEventListener(eventName, () => {
+            dropzone.classList.add('highlight');
+        }, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropzone.addEventListener(eventName, () => {
+            dropzone.classList.remove('highlight');
+        }, false);
+    });
+
+    dropzone.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        input.files = files; // This triggers handleHeroUpload or handleGalleryUpload via onchange? No, need to call it manually.
+        uploadHandler({ files: files });
+    }, false);
+}

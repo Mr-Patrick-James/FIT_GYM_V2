@@ -16,16 +16,23 @@ try {
     $settings = $_POST;
     unset($settings['qr_image']); // Handled separately
     
-    // We'll handle existing_gallery separately as well
+    // We'll handle existing_gallery and existing_hero_images separately as well
     $existingGallery = [];
     if (isset($settings['existing_gallery'])) {
         $existingGallery = json_decode($settings['existing_gallery'], true);
         unset($settings['existing_gallery']);
     }
 
+    $existingHero = [];
+    if (isset($settings['existing_hero_images'])) {
+        $existingHero = json_decode($settings['existing_hero_images'], true);
+        unset($settings['existing_hero_images']);
+    }
+
     foreach ($settings as $key => $value) {
         // Skip keys that are handled by file uploads or special logic
         if (strpos($key, 'gallery_file_') === 0 || 
+            strpos($key, 'hero_file_') === 0 || 
             $key === 'current_password' || 
             $key === 'new_password' || 
             $key === 'admin_name' || 
@@ -130,8 +137,23 @@ try {
 
     // Handle Gallery Image Uploads
     $newGalleryPaths = [];
+    $newHeroPaths = [];
+    
+    // Log the received files for debugging
+    $logFile = '../../upload_debug.txt';
+    $logData = "Time: " . date('Y-m-d H:i:s') . "\n";
+    $logData .= "FILES: " . print_r($_FILES, true) . "\n";
+    $logData .= "POST keys: " . print_r(array_keys($_POST), true) . "\n";
+    file_put_contents($logFile, $logData, FILE_APPEND);
+
     foreach ($_FILES as $key => $file) {
-        if (strpos($key, 'gallery_file_') === 0 && $file['error'] === UPLOAD_ERR_OK) {
+        if (strpos($key, 'gallery_file_') === 0) {
+            if ($file['error'] !== UPLOAD_ERR_OK) {
+                if ($file['error'] === UPLOAD_ERR_INI_SIZE || $file['error'] === UPLOAD_ERR_FORM_SIZE) {
+                    throw new Exception("Gallery file too large. Check your server limits.");
+                }
+                continue; // Skip other errors for now or throw
+            }
             $fileName = $file['name'];
             $fileTmpName = $file['tmp_name'];
             $fileSize = $file['size'];
@@ -140,23 +162,68 @@ try {
 
             $allowed = ['jpg', 'jpeg', 'png', 'webp'];
 
-            if (in_array($fileActualExt, $allowed) && $fileSize < 5000000) {
-                $fileNameNew = "about_gallery_" . uniqid('', true) . "." . $fileActualExt;
-                $uploadDir = '../../uploads/settings/';
-                
-                if (!is_dir($uploadDir)) {
-                    mkdir($uploadDir, 0777, true);
+            if (in_array($fileActualExt, $allowed)) {
+                if ($fileSize < 10000000) { // 10MB limit in our code
+                    $fileNameNew = "about_gallery_" . uniqid('', true) . "." . $fileActualExt;
+                    $uploadDir = '../../uploads/settings/';
+                    
+                    if (!is_dir($uploadDir)) {
+                        mkdir($uploadDir, 0777, true);
+                    }
+                    
+                    if (move_uploaded_file($fileTmpName, $uploadDir . $fileNameNew)) {
+                        $newGalleryPaths[] = 'uploads/settings/' . $fileNameNew;
+                    } else {
+                        throw new Exception("Failed to move gallery file. Check folder permissions.");
+                    }
+                } else {
+                    throw new Exception("Gallery file exceeds 10MB limit.");
                 }
-                
-                if (move_uploaded_file($fileTmpName, $uploadDir . $fileNameNew)) {
-                    $newGalleryPaths[] = 'uploads/settings/' . $fileNameNew;
+            } else {
+                throw new Exception("Invalid file type: " . $fileActualExt);
+            }
+        }
+
+        if (strpos($key, 'hero_file_') === 0) {
+            if ($file['error'] !== UPLOAD_ERR_OK) {
+                if ($file['error'] === UPLOAD_ERR_INI_SIZE || $file['error'] === UPLOAD_ERR_FORM_SIZE) {
+                    throw new Exception("Hero file too large. Check your server limits.");
                 }
+                continue;
+            }
+            $fileName = $file['name'];
+            $fileTmpName = $file['tmp_name'];
+            $fileSize = $file['size'];
+            $fileExt = explode('.', $fileName);
+            $fileActualExt = strtolower(end($fileExt));
+
+            $allowed = ['jpg', 'jpeg', 'png', 'webp'];
+
+            if (in_array($fileActualExt, $allowed)) {
+                if ($fileSize < 10000000) { // 10MB limit
+                    $fileNameNew = "hero_bg_" . uniqid('', true) . "." . $fileActualExt;
+                    $uploadDir = '../../uploads/settings/';
+                    
+                    if (!is_dir($uploadDir)) {
+                        mkdir($uploadDir, 0777, true);
+                    }
+                    
+                    if (move_uploaded_file($fileTmpName, $uploadDir . $fileNameNew)) {
+                        $newHeroPaths[] = 'uploads/settings/' . $fileNameNew;
+                    } else {
+                        throw new Exception("Failed to move hero file. Check folder permissions.");
+                    }
+                } else {
+                    throw new Exception("Hero file exceeds 10MB limit.");
+                }
+            } else {
+                throw new Exception("Invalid file type: " . $fileActualExt);
             }
         }
     }
 
-    // Merge existing and new paths, then save as JSON
-    $finalGallery = array_merge($existingGallery, $newGalleryPaths);
+    // Merge existing and new paths, then save as JSON for gallery
+    $finalGallery = array_merge(is_array($existingGallery) ? $existingGallery : [], $newGalleryPaths);
     $galleryJson = json_encode($finalGallery);
     
     $key = 'about_images';
@@ -164,6 +231,18 @@ try {
                             ON DUPLICATE KEY UPDATE setting_value = ?");
     $stmt->bind_param("sss", $key, $galleryJson, $galleryJson);
     $stmt->execute();
+    $stmt->close();
+
+    // Merge existing and new paths, then save as JSON for hero
+    $finalHero = array_merge(is_array($existingHero) ? $existingHero : [], $newHeroPaths);
+    $heroJson = json_encode($finalHero);
+    
+    $key = 'hero_images';
+    $stmt = $conn->prepare("INSERT INTO gym_settings (setting_key, setting_value) VALUES (?, ?) 
+                            ON DUPLICATE KEY UPDATE setting_value = ?");
+    $stmt->bind_param("sss", $key, $heroJson, $heroJson);
+    $stmt->execute();
+    $stmt->close();
 
     sendResponse(true, 'Settings updated successfully');
 

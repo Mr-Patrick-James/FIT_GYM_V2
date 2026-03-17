@@ -1,0 +1,180 @@
+Time: 2026-03-17 05:02:43
+FILES: Array
+(
+    [hero_file_0] => Array
+        (
+            [name] => 2.png
+            [full_path] => 2.png
+            [type] => 
+            [tmp_name] => 
+            [error] => 1
+            [size] => 0
+        )
+
+)
+
+POST keys: Array
+(
+    [0] => about_text
+    [1] => mission_text
+    [2] => years_experience
+    [3] => footer_tagline
+    [4] => existing_gallery
+    [5] => existing_hero_images
+)
+
+Time: 2026-03-17 05:02:44
+FILES: Array
+(
+    [hero_file_0] => Array
+        (
+            [name] => 2.png
+            [full_path] => 2.png
+            [type] => 
+            [tmp_name] => 
+            [error] => 1
+            [size] => 0
+        )
+
+)
+
+POST keys: Array
+(
+    [0] => about_text
+    [1] => mission_text
+    [2] => years_experience
+    [3] => footer_tagline
+    [4] => existing_gallery
+    [5] => existing_hero_images
+)
+
+Time: 2026-03-17 05:03:43
+FILES: Array
+(
+    [hero_file_0] => Array
+        (
+            [name] => 2.webp
+            [full_path] => 2.webp
+            [type] => image/webp
+            [tmp_name] => C:\wamp64\tmp\php39FB.tmp
+            [error] => 0
+            [size] => 120906
+        )
+
+)
+
+POST keys: Array
+(
+    [0] => about_text
+    [1] => mission_text
+    [2] => years_experience
+    [3] => footer_tagline
+    [4] => existing_gallery
+    [5] => existing_hero_images
+)
+
+Time: 2026-03-17 05:03:44
+FILES: Array
+(
+)
+
+POST keys: Array
+(
+    [0] => about_text
+    [1] => mission_text
+    [2] => years_experience
+    [3] => footer_tagline
+    [4] => existing_gallery
+    [5] => existing_hero_images
+)
+
+Time: 2026-03-17 05:12:07
+FILES: Array
+(
+    [hero_file_0] => Array
+        (
+            [name] => received_253763833748985.webp
+            [full_path] => received_253763833748985.webp
+            [type] => image/webp
+            [tmp_name] => C:\wamp64\tmp\phpE974.tmp
+            [error] => 0
+            [size] => 77488
+        )
+
+    [hero_file_1] => Array
+        (
+            [name] => received_243674931470652.webp
+            [full_path] => received_243674931470652.webp
+            [type] => image/webp
+            [tmp_name] => C:\wamp64\tmp\phpE975.tmp
+            [error] => 0
+            [size] => 70820
+        )
+
+    [hero_file_2] => Array
+        (
+            [name] => received_1255449418403705.webp
+            [full_path] => received_1255449418403705.webp
+            [type] => image/webp
+            [tmp_name] => C:\wamp64\tmp\phpE976.tmp
+            [error] => 0
+            [size] => 61798
+        )
+
+    [hero_file_3] => Array
+        (
+            [name] => received_3639542122989348.webp
+            [full_path] => received_3639542122989348.webp
+            [type] => image/webp
+            [tmp_name] => C:\wamp64\tmp\phpE977.tmp
+            [error] => 0
+            [size] => 50526
+        )
+
+    [hero_file_4] => Array
+        (
+            [name] => received_252530697123903.webp
+            [full_path] => received_252530697123903.webp
+            [type] => image/webp
+            [tmp_name] => C:\wamp64\tmp\phpE978.tmp
+            [error] => 0
+            [size] => 38410
+        )
+
+    [hero_file_5] => Array
+        (
+            [name] => IMG_20230402_094327.webp
+            [full_path] => IMG_20230402_094327.webp
+            [type] => image/webp
+            [tmp_name] => C:\wamp64\tmp\phpE998.tmp
+            [error] => 0
+            [size] => 111856
+        )
+
+)
+
+POST keys: Array
+(
+    [0] => about_text
+    [1] => mission_text
+    [2] => years_experience
+    [3] => footer_tagline
+    [4] => existing_gallery
+    [5] => existing_hero_images
+)
+
+Time: 2026-03-17 05:12:08
+FILES: Array
+(
+)
+
+POST keys: Array
+(
+    [0] => about_text
+    [1] => mission_text
+    [2] => years_experience
+    [3] => footer_tagline
+    [4] => existing_gallery
+    [5] => existing_hero_images
+)
+

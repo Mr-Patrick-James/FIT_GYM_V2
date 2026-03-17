@@ -133,14 +133,15 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
     <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Montserrat:wght@300;400;700;900&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="assets/css/style.css?v=1.2">
+    <link rel="stylesheet" href="assets/css/style.css?v=1.3">
 </head>
 <body>
 
     <header>
         <div class="logo-circle">
             <?php 
-            $nameParts = explode(' ', getSetting('gym_name', 'MARTINEZ GYM', $settings));
+            $gymName = getSetting('gym_name', 'MARTINEZ GYM', $settings);
+            $nameParts = explode(' ', $gymName);
             echo htmlspecialchars($nameParts[0]);
             if (isset($nameParts[1])) echo '<br>' . htmlspecialchars($nameParts[1]);
             ?>
@@ -158,6 +159,23 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
     </header>
 
     <section class="hero" id="home">
+        <div class="hero-slider">
+            <?php 
+            $heroImagesJson = $settings['hero_images'] ?? '[]';
+            $heroImages = json_decode($heroImagesJson, true);
+            
+            // If the key is not in settings, or the array is empty, we show nothing (solid color background via CSS)
+            if (!empty($heroImages)) {
+                foreach ($heroImages as $index => $image) {
+                    $activeClass = ($index === 0) ? 'active' : '';
+                    // Ensure path is relative to root or absolute
+                    $imageUrl = (strpos($image, 'http') === 0) ? $image : $image . '?v=' . time();
+                    echo '<div class="slide ' . $activeClass . '" style="background-image: url(\'' . htmlspecialchars($imageUrl) . '\')"></div>';
+                }
+            }
+            ?>
+        </div>
+        <div class="hero-overlay"></div>
         <div class="hero-content">
             <?php 
             $gymName = getSetting('gym_name', 'MARTINEZ Fitness GYM', $settings);

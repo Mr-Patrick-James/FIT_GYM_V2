@@ -37,6 +37,8 @@ try {
         'mission_text' => 'Founded with the mission to provide high-quality fitness access to everyone, we offer flexible membership plans and expert guidance to ensure you get the most out of every session.',
         'years_experience' => '10+',
         'footer_tagline' => 'Pushing your limits since 2014. Join the elite fitness community today.',
+        'hero_images' => '[]',
+        'about_images' => '[]',
         'admin_name' => 'Admin Martinez',
         'admin_email' => 'admin@martinezfitness.com',
         'email_new_booking' => 'true',

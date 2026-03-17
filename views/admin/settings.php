@@ -459,19 +459,49 @@ $user = getCurrentUser();
 
                         <div class="settings-item">
                             <div class="settings-item-label">
-                                <label>Gym Interior Gallery</label>
-                                <span class="settings-hint">Multiple images for the About section slider</span>
+                                <label>Hero Background Slider</label>
+                                <span class="settings-hint">Multiple images for the home page hero section slider.</span>
                             </div>
-                            <div class="gallery-container">
+                            <div class="modern-upload-area" id="hero-upload-area">
+                                <div class="upload-dropzone" onclick="document.getElementById('heroImageInput').click()">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                    <div class="upload-text">
+                                        <strong>Click to upload</strong> or drag and drop
+                                        <span>PNG, JPG, WEBP up to 5MB</span>
+                                    </div>
+                                </div>
+                                <div class="gallery-grid" id="hero-gallery-grid">
+                                    <!-- Gallery items will be injected here by JS -->
+                                    <div class="gallery-add-btn" onclick="document.getElementById('heroImageInput').click()" style="display: none;">
+                                        <i class="fas fa-plus"></i>
+                                        <span>Add Image</span>
+                                    </div>
+                                </div>
+                                <input type="file" id="heroImageInput" accept="image/*" multiple style="display: none;" onchange="handleHeroUpload(this)">
+                            </div>
+                        </div>
+
+                        <div class="settings-item">
+                            <div class="settings-item-label">
+                                <label>Gym Interior Gallery</label>
+                                <span class="settings-hint">Multiple images for the About section slider.</span>
+                            </div>
+                            <div class="modern-upload-area" id="about-upload-area">
+                                <div class="upload-dropzone" onclick="document.getElementById('aboutImageInput').click()">
+                                    <i class="fas fa-images"></i>
+                                    <div class="upload-text">
+                                        <strong>Click to upload</strong> or drag and drop
+                                        <span>PNG, JPG, WEBP up to 5MB</span>
+                                    </div>
+                                </div>
                                 <div class="gallery-grid" id="about-gallery-grid">
                                     <!-- Gallery items will be injected here by JS -->
-                                    <div class="gallery-add-btn" onclick="document.getElementById('aboutImageInput').click()">
+                                    <div class="gallery-add-btn" onclick="document.getElementById('aboutImageInput').click()" style="display: none;">
                                         <i class="fas fa-plus"></i>
                                         <span>Add Image</span>
                                     </div>
                                 </div>
                                 <input type="file" id="aboutImageInput" accept="image/*" multiple style="display: none;" onchange="handleGalleryUpload(this)">
-                                <p class="file-info" style="margin-top: 10px;">Recommended size: 800x600px. Max 5MB per image.</p>
                             </div>
                         </div>
 

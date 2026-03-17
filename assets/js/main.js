@@ -1,3 +1,25 @@
+// Hero Slider Logic
+function initHeroSlider() {
+    const slides = document.querySelectorAll('.hero-slider .slide');
+    if (slides.length <= 1) return;
+
+    let currentSlide = 0;
+    const slideInterval = 5000; // 5 seconds per slide
+
+    function nextSlide() {
+        slides[currentSlide].classList.remove('active');
+        currentSlide = (currentSlide + 1) % slides.length;
+        slides[currentSlide].classList.add('active');
+    }
+
+    setInterval(nextSlide, slideInterval);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    initHeroSlider();
+    updateActiveNavLink();
+});
+
 const modal = document.getElementById('authModal');
 const loginForm = document.getElementById('loginForm');
 const signupForm = document.getElementById('signupForm');
@@ -375,10 +397,12 @@ function updateActiveNavLink() {
     });
 }
 
-// Attach scroll listener
+document.addEventListener('DOMContentLoaded', () => {
+    initHeroSlider();
+    updateActiveNavLink();
+});
+
 window.addEventListener('scroll', updateActiveNavLink);
-// Initialize on load
-window.addEventListener('DOMContentLoaded', updateActiveNavLink);
 
 function scrollToSection(id) {
     const el = document.getElementById(id);
