@@ -49,12 +49,102 @@ $user = getCurrentUser();
             background: rgba(255,255,255,0.02);
         }
         .exercise-badge {
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             padding: 2px 8px;
-            border-radius: 4px;
-            background: var(--glass);
-            color: var(--primary);
+            border-radius: 6px;
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Modern Input Styles */
+        .modern-input {
+            background: var(--premium-input-bg) !important;
+            border: 1px solid var(--premium-border) !important;
+            border-radius: 14px !important;
+            padding: 14px 18px !important;
+            color: #fff !important;
+            font-size: 0.9rem !important;
+            font-weight: 500 !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            width: 100%;
+            outline: none !important;
+        }
+
+        .modern-input:focus {
+            border-color: rgba(255, 255, 255, 0.3) !important;
+            background: var(--premium-input-hover) !important;
+            box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.05) !important;
+        }
+
+        .modern-input::placeholder {
+            color: var(--premium-text-muted);
+            opacity: 0.6;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: var(--premium-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            margin-left: 4px;
+        }
+
+        .action-btn-modern {
+            padding: 12px 24px;
+            border-radius: 14px;
             font-weight: 700;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid transparent;
+        }
+
+        .action-btn-modern.primary {
+            background: #fff;
+            color: #000;
+        }
+
+        .action-btn-modern.primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(255, 255, 255, 0.1);
+            filter: brightness(0.9);
+        }
+
+        .action-btn-modern.danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border-color: rgba(239, 68, 68, 0.2);
+        }
+
+        .action-btn-modern.danger:hover {
+            background: #ef4444;
+            color: #fff;
+        }
+
+        .template-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--premium-border);
+            border-radius: 20px;
+            padding: 16px;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .template-card:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255, 255, 255, 0.1);
+            transform: translateX(4px);
         }
     </style>
 </head>
@@ -73,8 +163,7 @@ $user = getCurrentUser();
             <li><a href="dashboard.php"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
             <li><a href="members.php"><i class="fas fa-users"></i> <span>My Clients</span></a></li>
             <li><a href="packages.php" class="active"><i class="fas fa-dumbbell"></i> <span>Packages</span></a></li>
-            <li><a href="plans.php"><i class="fas fa-clipboard-list"></i> <span>Exercise Plans</span></a></li>
-            <li><a href="exercises.php"><i class="fas fa-running"></i> <span>Exercises</span></a></li>
+            <li><a href="exercises.php"><i class="fas fa-running"></i> <span>Exercise Library</span></a></li>
             <li><a href="profile.php"><i class="fas fa-user-circle"></i> <span>My Profile</span></a></li>
         </ul>
         
@@ -134,62 +223,61 @@ $user = getCurrentUser();
 
     <!-- Exercise Management Modal -->
     <div class="modal-overlay" id="exerciseModal">
-        <div class="modal" style="max-width: 900px;">
-            <div class="modal-header">
+        <div class="modal" style="max-width: 960px !important;">
+            <div class="modal-header" style="padding: 40px 40px 24px; border: none; background: transparent;">
                 <div>
-                    <h3 id="exerciseModalTitle">Manage Package Exercises</h3>
-                    <p id="exerciseModalSubtitle" style="font-size: 0.85rem; color: var(--dark-text-secondary);"></p>
+                    <h3 id="exerciseModalTitle" style="font-size: 1.8rem; font-weight: 800; color: #fff; letter-spacing: -0.5px;">Manage Package Exercises</h3>
+                    <p id="exerciseModalSubtitle" style="font-size: 0.9rem; font-weight: 500; color: var(--premium-text-muted); margin-top: 4px;"></p>
                 </div>
                 <button class="close-modal" onclick="closeExerciseModal()">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             
-            <div class="modal-body" style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 32px; padding: 24px;">
-                <!-- Add Exercise Form -->
-                <div style="border-right: 1px solid var(--dark-border); padding-right: 32px;">
-                    <h4 style="margin-bottom: 20px; color: var(--primary); display: flex; align-items: center; gap: 10px;">
-                        <i class="fas fa-plus-circle"></i> Add Exercise
-                    </h4>
-                    <form id="addExerciseForm">
+            <div class="modal-body" style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 40px; padding: 0 40px 40px;">
+                <!-- Current Plan List (Left) -->
+                <div>
+                    <h4 style="font-size: 1.1rem; font-weight: 800; color: #fff; margin-bottom: 8px;">Current Package Plan</h4>
+                    <p style="font-size: 0.8rem; color: var(--premium-text-muted); margin-bottom: 24px; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-info-circle"></i> View and manage the exercises assigned to this package.
+                    </p>
+                    <div id="packageExercisesList" style="max-height: 480px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding-right: 8px;">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Add Exercise Form (Right) -->
+                <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--premium-border); border-radius: 24px; padding: 32px;">
+                    <h4 style="font-size: 0.9rem; font-weight: 800; color: #fff; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 24px;">Add Exercise to Plan</h4>
+                    <form id="addExerciseForm" style="display: flex; flex-direction: column; gap: 20px;">
                         <div class="form-group">
                             <label>Select Exercise</label>
-                            <select id="exerciseSelect" required class="form-control" style="width: 100%;">
+                            <select id="exerciseSelect" required class="modern-input">
                                 <option value="">Choose an exercise...</option>
                             </select>
                         </div>
-                        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                             <div class="form-group">
                                 <label>Sets</label>
-                                <input type="number" id="exerciseSets" value="3" min="1" class="form-control">
+                                <input type="number" id="exerciseSets" value="3" min="1" class="modern-input">
                             </div>
                             <div class="form-group">
-                                <label>Reps / Duration</label>
-                                <input type="text" id="exerciseReps" placeholder="e.g. 10-12" class="form-control">
+                                <label>Reps</label>
+                                <input type="text" id="exerciseReps" placeholder="e.g. 12" class="modern-input">
                             </div>
                         </div>
                         <div class="form-group">
-                            <label>Special Notes</label>
-                            <textarea id="exerciseNotes" rows="3" placeholder="Optional instructions..." class="form-control"></textarea>
+                            <label>Notes</label>
+                            <textarea id="exerciseNotes" rows="4" placeholder="Special instructions..." class="modern-input" style="resize: none;"></textarea>
                         </div>
-                        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">
+                        <button type="submit" class="action-btn-modern primary" style="width: 100%; justify-content: center; margin-top: 12px; border-radius: 12px;">
                             <i class="fas fa-plus"></i> Add to Plan
                         </button>
                     </form>
                 </div>
-
-                <!-- Current Plan List -->
-                <div>
-                    <h4 style="margin-bottom: 20px; color: var(--primary); display: flex; align-items: center; gap: 10px;">
-                        <i class="fas fa-list-ul"></i> Current Template
-                    </h4>
-                    <div id="packageExercisesList" style="max-height: 450px; overflow-y: auto; padding-right: 10px;">
-                        <!-- Populated by JS -->
-                    </div>
-                </div>
             </div>
-            <div class="modal-footer" style="padding: 16px 24px; border-top: 1px solid var(--dark-border); text-align: right;">
-                <button class="btn btn-secondary" onclick="closeExerciseModal()">Close</button>
+            <div class="modal-footer" style="padding: 24px 40px; border-top: 1px solid var(--premium-border); text-align: right; background: rgba(0,0,0,0.1);">
+                <button class="action-btn-modern" style="background: var(--premium-input-bg); color: #fff;" onclick="closeExerciseModal()">Close Window</button>
             </div>
         </div>
     </div>
@@ -294,23 +382,23 @@ $user = getCurrentUser();
                 
                 if (data.success && data.data.length > 0) {
                     list.innerHTML = data.data.map(ex => `
-                        <div class="exercise-list-item">
+                        <div class="template-card" style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--premium-border); border-radius: 12px; padding: 12px; display: flex; align-items: center; gap: 12px;">
+                            <img src="${ex.image_url || '../../assets/img/exercise-placeholder.jpg'}" style="width: 44px; height: 44px; border-radius: 8px; object-fit: cover; background: #000;">
                             <div style="flex: 1;">
-                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-                                    <strong style="color: white;">${ex.name}</strong>
-                                    <span class="exercise-badge">${ex.category}</span>
-                                </div>
-                                <div style="font-size: 0.8rem; color: var(--dark-text-secondary);">
-                                    ${ex.sets} sets × ${ex.reps} ${ex.notes ? `• <span style="font-style: italic;">${ex.notes}</span>` : ''}
-                                </div>
+                                <h5 style="font-size: 0.9rem; font-weight: 700; color: #fff; margin-bottom: 2px;">${ex.name}</h5>
+                                <p style="font-size: 0.75rem; color: var(--premium-text-muted); font-weight: 500;">${ex.sets} Sets × ${ex.reps} reps</p>
                             </div>
-                            <button class="icon-btn danger" onclick="removeExercise(${ex.id})" title="Remove">
-                                <i class="fas fa-trash"></i>
+                            <button class="action-btn-modern danger" style="padding: 0; width: 32px; height: 32px; justify-content: center; border-radius: 8px;" onclick="removeExercise(${ex.id})" title="Remove">
+                                <i class="fas fa-trash-alt" style="font-size: 0.8rem;"></i>
                             </button>
                         </div>
                     `).join('');
                 } else {
-                    list.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--dark-text-secondary);"><i class="fas fa-dumbbell" style="font-size: 2rem; opacity: 0.2; margin-bottom: 10px; display: block;"></i> No exercises in this template yet.</div>';
+                    list.innerHTML = `
+                        <div style="text-align: center; padding: 40px 20px; color: var(--premium-text-muted);">
+                            <i class="fas fa-clipboard-list" style="font-size: 2.5rem; opacity: 0.1; margin-bottom: 12px; display: block;"></i>
+                            <p style="font-size: 0.85rem;">No exercises assigned yet.</p>
+                        </div>`;
                 }
             } catch (err) { console.error(err); }
         }

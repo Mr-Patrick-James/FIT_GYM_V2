@@ -501,6 +501,7 @@ async function initUserCalendar() {
             right: 'dayGridMonth,timeGridWeek,timeGridDay'
         },
         height: 'auto',
+        dayMaxEvents: 2,
         events: events,
         eventClick: (info) => {
             const type = info.event.extendedProps.type;
@@ -770,6 +771,7 @@ async function previewPackageHub(packageId) {
         initialView: 'dayGridMonth',
         headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth' },
         themeSystem: 'standard',
+        dayMaxEvents: 2,
         events: [
             { title: 'Workout A', start: new Date().toISOString().split('T')[0], color: '#3b82f6' },
             { title: 'Workout B', start: new Date(Date.now() + 86400000).toISOString().split('T')[0], color: '#3b82f6' },
@@ -1505,6 +1507,7 @@ async function initTrainingCalendar(bookingId) {
             right: 'dayGridMonth,timeGridWeek'
         },
         themeSystem: 'standard',
+        dayMaxEvents: 2,
         events: '../../api/trainers/get-sessions.php?booking_id=' + bookingId,
         eventDidMount: function(info) {
             if (info.event.extendedProps.type === 'rest_day') {
@@ -1622,6 +1625,7 @@ async function initModalCalendar(bookingId) {
             right: 'dayGridMonth,timeGridWeek'
         },
         themeSystem: 'standard',
+        dayMaxEvents: 2,
         eventSources: [
             // Source 1: The actual trainer-scheduled sessions
             {
@@ -1922,6 +1926,7 @@ async function initCoachCalendar(bookingId) {
         },
         height: '100%',
         themeSystem: 'standard',
+        dayMaxEvents: 2,
         eventSources: [
             // Source 1: The actual trainer-scheduled sessions
             {

@@ -362,16 +362,27 @@ function getSetting($key, $default = '', $settings = []) {
             border: none !important;
             border-radius: 6px !important;
             padding: 2px 6px !important;
-            font-size: 0.75rem !important;
+            font-size: 0.7rem !important;
             font-weight: 700 !important;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             margin: 1px 2px !important;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            white-space: nowrap !important;
         }
-        
+
+        .fc-h-event .fc-event-main {
+            display: block !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            white-space: nowrap !important;
+        }
+
+        .fc-daygrid-event-dot {
+            display: none !important;
+        }
+
         /* Milestone Specific Styles - Minimal & Professional */
         .event-milestone-paid {
             background: rgba(34, 197, 94, 0.15) !important;
@@ -431,17 +442,6 @@ function getSetting($key, $default = '', $settings = []) {
             border-left: 3px solid #ef4444 !important;
             color: #ef4444 !important;
             backdrop-filter: blur(4px);
-        }
-        
-        .fc-h-event .fc-event-main {
-            color: inherit !important;
-            display: block;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        
-        .fc-daygrid-event-dot {
-            display: none !important;
         }
 /* Floating Coach Corner Icon */
         .coach-corner-float {

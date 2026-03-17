@@ -47,6 +47,68 @@ if ($trainerId) {
     <!-- Dashboard Styles -->
     <link rel="stylesheet" href="../../assets/css/dashboard.css?v=1.6">
     
+    <style>
+        /* Floating Notification Icon */
+        .trainer-notif-float {
+            position: fixed;
+            bottom: 32px;
+            right: 32px;
+            width: 64px;
+            height: 64px;
+            background: #fff;
+            color: #000;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(255, 255, 255, 0.2);
+            z-index: 999;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            border: none;
+        }
+
+        .trainer-notif-float:hover {
+            transform: scale(1.1) translateY(-5px);
+            box-shadow: 0 15px 40px rgba(255, 255, 255, 0.3);
+        }
+
+        .trainer-notif-float i {
+            animation: pulse 2s infinite;
+        }
+
+        .notif-badge-float {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #ef4444;
+            color: #fff;
+            font-size: 0.7rem;
+            font-weight: 800;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #fff;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes bounceIn {
+            from { opacity: 0; transform: scale(0.3); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+    </style>
+    
     <script>
         (function() {
             const savedTheme = localStorage.getItem('theme') || 'dark';
@@ -73,8 +135,7 @@ if ($trainerId) {
             <li><a href="dashboard.php" class="active"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
             <li><a href="members.php"><i class="fas fa-users"></i> <span>My Clients</span></a></li>
             <li><a href="packages.php"><i class="fas fa-dumbbell"></i> <span>Packages</span></a></li>
-            <li><a href="plans.php"><i class="fas fa-clipboard-list"></i> <span>Exercise Plans</span></a></li>
-            <li><a href="exercises.php"><i class="fas fa-running"></i> <span>Exercises</span></a></li>
+            <li><a href="exercises.php"><i class="fas fa-running"></i> <span>Exercise Library</span></a></li>
             <li><a href="profile.php"><i class="fas fa-user-circle"></i> <span>My Profile</span></a></li>
         </ul>
         
@@ -172,7 +233,7 @@ if ($trainerId) {
                     
                     if (empty($recentActivity)): ?>
                         <div style="padding: 20px; text-align: center; color: var(--dark-text-secondary);">
-                            <i class="fas fa-history" style="font-size: 3rem; margin-bottom: 16px; opacity: 0.3;"></i>
+                            <i class="fas fa-history" style="font-size: 3rem; margin-bottom: 166px; opacity: 0.3;"></i>
                             <p>No recent activity recorded.</p>
                         </div>
                     <?php else: ?>
@@ -210,6 +271,12 @@ if ($trainerId) {
             <p>© <?php echo date('Y'); ?> Martinez Fitness Gym • Trainer Portal v1.0</p>
         </div>
     </main>
+
+    <!-- Trainer Notification FAB -->
+    <button class="trainer-notif-float" id="trainerNotifFloat" onclick="toggleNotifications()" title="View Notifications">
+        <i class="fas fa-bell"></i>
+        <span class="notif-badge-float" id="notifBadgeFloat">0</span>
+    </button>
 
     <!-- Notifications Modal -->
     <div class="modal-overlay" id="notificationsModal">
@@ -274,6 +341,7 @@ if ($trainerId) {
         async function loadNotifications() {
             const list = document.getElementById('notificationsList');
             const badge = document.getElementById('notifBadge');
+            const badgeFloat = document.getElementById('notifBadgeFloat');
             
             try {
                 const response = await fetch('../../api/notifications/get-all.php');
@@ -281,8 +349,16 @@ if ($trainerId) {
                 
                 if (data.success) {
                     const unreadCount = data.data.filter(n => !n.is_read).length;
+                    
+                    // Update header badge
                     badge.textContent = unreadCount;
                     badge.style.display = unreadCount > 0 ? 'flex' : 'none';
+                    
+                    // Update float badge
+                    if (badgeFloat) {
+                        badgeFloat.textContent = unreadCount;
+                        badgeFloat.style.display = unreadCount > 0 ? 'flex' : 'none';
+                    }
                     
                     if (data.data.length === 0) {
                         list.innerHTML = '<p style="text-align: center; padding: 20px; color: var(--dark-text-secondary);">No notifications yet.</p>';

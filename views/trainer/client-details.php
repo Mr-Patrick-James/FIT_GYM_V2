@@ -379,8 +379,7 @@ $memberId = $client['member_id'];
             <li><a href="dashboard.php"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
             <li><a href="members.php" class="active"><i class="fas fa-users"></i> <span>My Clients</span></a></li>
             <li><a href="packages.php"><i class="fas fa-dumbbell"></i> <span>Packages</span></a></li>
-            <li><a href="plans.php"><i class="fas fa-clipboard-list"></i> <span>Exercise Plans</span></a></li>
-            <li><a href="exercises.php"><i class="fas fa-running"></i> <span>Exercises</span></a></li>
+            <li><a href="exercises.php"><i class="fas fa-running"></i> <span>Exercise Library</span></a></li>
             <li><a href="profile.php"><i class="fas fa-user-circle"></i> <span>My Profile</span></a></li>
         </ul>
         
