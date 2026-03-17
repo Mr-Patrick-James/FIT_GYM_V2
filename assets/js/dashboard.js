@@ -270,14 +270,9 @@ function populateBookingsTable() {
             <td data-label="Status"><span class="status-badge status-${booking.status || 'pending'}">${(booking.status || 'pending').charAt(0).toUpperCase() + (booking.status || 'pending').slice(1)}</span></td>
             <td data-label="Actions">
                 <div class="table-actions">
-                    <button class="icon-btn" onclick="viewBooking('${booking.id}')" title="View Details">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                    <button class="icon-btn ${booking.status === 'pending' ? 'primary' : ''}" 
-                            onclick="verifyBooking('${booking.id}')" 
-                            title="Verify Payment"
-                            ${booking.status !== 'pending' ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>
-                        <i class="fas fa-check"></i>
+                    <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem; display: flex; align-items: center; gap: 6px;" onclick="viewBooking('${booking.id}')">
+                        <i class="fas fa-tasks"></i>
+                        <span>Manage</span>
                     </button>
                 </div>
             </td>

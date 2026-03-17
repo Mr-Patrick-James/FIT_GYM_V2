@@ -1175,6 +1175,8 @@ function updateStats() {
     const profileMembershipPlan = document.getElementById('profileMembershipPlan');
     const profileMembershipExpiryDate = document.getElementById('profileMembershipExpiryDate');
     const profileMembershipExpiryRow = document.getElementById('profileMembershipExpiryRow');
+    const membershipExpiry = document.getElementById('membershipExpiry');
+    const membershipExpiryDate = document.getElementById('membershipExpiryDate');
     const sidebarMemberBadge = document.getElementById('sidebarMemberBadge');
     const statTrainer = document.getElementById('statTrainer');
 
@@ -1199,6 +1201,13 @@ function updateStats() {
             } else {
                 membershipStatus.style.fontSize = '';
             }
+        }
+
+        // Show expiry date on dashboard card
+        if (membershipExpiry && membershipExpiryDate) {
+            membershipExpiry.style.display = 'flex';
+            const expiryDate = latestActive.expires_at ? new Date(latestActive.expires_at) : new Date(new Date(latestActive.booking_date || latestActive.created_at).getTime() + parseDurationToDays(latestActive.duration) * 86400000);
+            membershipExpiryDate.textContent = formatDate(expiryDate);
         }
 
         if (statTrainer) {
@@ -1231,6 +1240,11 @@ function updateStats() {
             membershipStatus.textContent = hasVerified ? 'Expired' : 'None';
             membershipStatus.className = 'stat-value ' + (hasVerified ? 'status-rejected' : '');
             membershipStatus.style.color = '';
+        }
+        
+        // Hide expiry date on dashboard card
+        if (membershipExpiry) {
+            membershipExpiry.style.display = 'none';
         }
         
         if (statTrainer) {

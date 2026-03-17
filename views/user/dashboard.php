@@ -934,6 +934,10 @@ function getSetting($key, $default = '', $settings = []) {
                             </div>
                             <div class="stat-value" id="membershipStatus">None</div>
                             <div class="stat-label">Membership Status</div>
+                            <div id="membershipExpiry" style="font-size: 0.75rem; color: var(--dark-text-secondary); margin-top: 8px; display: none; align-items: center; justify-content: center; gap: 6px;">
+                                <i class="far fa-calendar-alt" style="color: var(--primary);"></i> 
+                                <span>Expires: <strong id="membershipExpiryDate" style="color: #fff;">--</strong></span>
+                            </div>
                         </div>
                     </div>
 
@@ -1112,7 +1116,7 @@ function getSetting($key, $default = '', $settings = []) {
                             <tr>
                                 <th>Package</th>
                                 <th>Booking Date</th>
-                                <th>Expiry Date</th>
+                                 <th>Expiry Date</th>
                                 <th>Amount</th>
                                 <th>Status</th>
                                 <th>Actions</th>
