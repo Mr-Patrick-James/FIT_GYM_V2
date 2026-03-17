@@ -44,6 +44,10 @@ function updateStats(trainers) {
     
     const specializations = new Set(trainers.map(t => t.specialization.trim().toLowerCase()));
     document.getElementById('specializationsCount').textContent = specializations.size;
+
+    const totalPackages = trainers.reduce((sum, t) => sum + (t.package_count || 0), 0);
+    const totalPkgEl = document.getElementById('totalAssignedPackages');
+    if (totalPkgEl) totalPkgEl.textContent = totalPackages;
 }
 
 function renderTrainers(trainers) {
@@ -84,6 +88,12 @@ function renderTrainers(trainers) {
                 </div>
                 
                 <div style="display: grid; gap: 12px; margin-bottom: 24px;">
+                    <div style="display: flex; align-items: center; gap: 12px; color: var(--dark-text-secondary); font-size: 0.9rem;">
+                        <div style="width: 32px; height: 32px; border-radius: 8px; background: var(--glass); display: flex; align-items: center; justify-content: center; font-size: 0.8rem;">
+                            <i class="fas fa-dumbbell"></i>
+                        </div>
+                        <span><strong>${trainer.package_count || 0}</strong> Assigned Packages</span>
+                    </div>
                     ${trainer.email ? `
                         <div style="display: flex; align-items: center; gap: 12px; color: var(--dark-text-secondary); font-size: 0.9rem;">
                             <div style="width: 32px; height: 32px; border-radius: 8px; background: var(--glass); display: flex; align-items: center; justify-content: center; font-size: 0.8rem;">
@@ -114,9 +124,89 @@ function renderTrainers(trainers) {
                         <i class="fas fa-trash"></i> Delete
                     </button>
                 </div>
+                <button class="card-btn primary" style="justify-content: center; width: 100%; margin-top: 12px;" onclick="viewTrainerMembers(${trainer.id}, '${trainer.name}')">
+                    <i class="fas fa-users"></i> View Assigned Members
+                </button>
             </div>
         </div>
     `).join('');
+}
+
+// Trainer Members Modal logic
+let activeTrainerId = null;
+
+async function viewTrainerMembers(id, name) {
+    activeTrainerId = id;
+    const modalTitle = document.getElementById('viewMembersModalTitle');
+    if (modalTitle) modalTitle.textContent = `Members Assigned to ${name}`;
+    
+    const modal = document.getElementById('trainerMembersModal');
+    if (modal) modal.classList.add('active');
+    
+    const list = document.getElementById('trainerMembersList');
+    if (!list) return;
+    
+    list.innerHTML = '<div style="text-align: center; padding: 40px;"><i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--primary);"></i><p style="margin-top: 10px;">Loading assigned members...</p></div>';
+    
+    try {
+        const response = await fetch(`../../api/admin/get-trainer-clients.php?trainer_id=${id}`);
+        const data = await response.json();
+        
+        if (data.success && data.data.length > 0) {
+            list.innerHTML = data.data.map(member => {
+                const weightDiff = member.latest_weight && member.starting_weight ? (member.latest_weight - member.starting_weight).toFixed(1) : null;
+                const weightColor = weightDiff ? (weightDiff < 0 ? '#22c55e' : '#ef4444') : 'inherit';
+                const weightIcon = weightDiff ? (weightDiff < 0 ? 'fa-arrow-down' : 'fa-arrow-up') : '';
+                
+                return `
+                    <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <div>
+                                <h4 style="font-weight: 700; color: #fff; margin-bottom: 4px;">${member.name}</h4>
+                                <p style="font-size: 0.8rem; color: var(--dark-text-secondary);">${member.package_name}</p>
+                            </div>
+                            <span class="status-badge ${member.is_expired ? 'status-rejected' : 'status-verified'}" style="font-size: 0.7rem;">
+                                ${member.is_expired ? 'Expired' : 'Active'}
+                            </span>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.05);">
+                            <div>
+                                <p style="font-size: 0.7rem; color: var(--dark-text-secondary); text-transform: uppercase; font-weight: 700; margin-bottom: 4px;">Latest Weight</p>
+                                <p style="font-weight: 800; color: #fff;">${member.latest_weight ? member.latest_weight + ' kg' : 'N/A'}</p>
+                            </div>
+                            <div>
+                                <p style="font-size: 0.7rem; color: var(--dark-text-secondary); text-transform: uppercase; font-weight: 700; margin-bottom: 4px;">Progress</p>
+                                <p style="font-weight: 800; color: ${weightColor};">
+                                    ${weightDiff ? `<i class="fas ${weightIcon}"></i> ${Math.abs(weightDiff)} kg` : 'No logs yet'}
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; color: var(--dark-text-secondary);">
+                            <span><i class="fas fa-history"></i> ${member.log_count} progress logs</span>
+                            <span>Expires: ${new Date(member.expires_at).toLocaleDateString()}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        } else {
+            list.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: var(--dark-text-secondary);">
+                    <i class="fas fa-users-slash" style="font-size: 3rem; margin-bottom: 16px; opacity: 0.3;"></i>
+                    <p>No members currently assigned to this trainer.</p>
+                </div>`;
+        }
+    } catch (error) {
+        console.error('Error loading trainer members:', error);
+        list.innerHTML = '<div style="text-align: center; padding: 40px; color: #ef4444;"><p>Failed to load members.</p></div>';
+    }
+}
+
+function closeTrainerMembersModal() {
+    const modal = document.getElementById('trainerMembersModal');
+    if (modal) modal.classList.remove('active');
+    activeTrainerId = null;
 }
 
 function filterTrainers() {

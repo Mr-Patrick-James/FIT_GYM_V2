@@ -248,19 +248,33 @@ $user = getCurrentUser();
                 </div>
             </div>
             
-            <!-- Package Distribution -->
+            <!-- Trending Packages -->
             <div class="content-card">
                 <div class="card-header">
-                    <h3>Package Distribution</h3>
+                    <h3>Trending Packages</h3>
                 </div>
-                <div class="chart-container" style="height: 350px; margin-top: 20px;">
-                    <canvas id="packageChart"></canvas>
+                <div id="trendingPackagesList" style="margin-top: 10px; display: flex; flex-direction: column; gap: 12px; padding: 10px;">
+                    <!-- Trending items will be injected here -->
+                    <div style="text-align: center; padding: 40px; color: var(--dark-text-secondary);">
+                        <i class="fas fa-spinner fa-spin" style="font-size: 1.5rem; margin-bottom: 10px;"></i>
+                        <p>Loading trending data...</p>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Charts Row 2 -->
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-top: 32px;">
+            <!-- Package Distribution -->
+            <div class="content-card">
+                <div class="card-header">
+                    <h3>Package Distribution</h3>
+                </div>
+                <div class="chart-container" style="height: 300px; margin-top: 20px;">
+                    <canvas id="packageChart"></canvas>
+                </div>
+            </div>
+
             <!-- Booking Status -->
             <div class="content-card">
                 <div class="card-header">
@@ -275,7 +289,27 @@ $user = getCurrentUser();
             <div class="content-card">
                 <div class="card-header">
                     <h3>Monthly Comparison</h3>
+                    <div class="card-actions">
+                        <select id="monthlyYearSelect" class="card-btn" style="padding: 6px 12px; cursor: pointer; background: var(--dark-bg-secondary); border: 1px solid var(--dark-border); color: #fff; border-radius: 6px; font-size: 0.85rem;" onchange="toggleMonthlyCustomDate()">
+                            <option value="current">Current Year</option>
+                            <option value="last">Last Year</option>
+                            <option value="custom">Custom Range</option>
+                            <option value="all">All Time</option>
+                        </select>
+                    </div>
                 </div>
+                
+                <div id="monthlyCustomRange" style="display: none; padding: 15px; border-bottom: 1px solid var(--dark-border); flex-wrap: wrap; gap: 15px; background: rgba(255, 255, 255, 0.02);">
+                    <div style="flex: 1; min-width: 150px;">
+                        <label style="display: block; margin-bottom: 5px; color: var(--dark-text-secondary); font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">From</label>
+                        <input type="date" id="monthlyStartDate" class="settings-input" style="width: 100%; padding: 8px;" onchange="initializeMonthlyChart()">
+                    </div>
+                    <div style="flex: 1; min-width: 150px;">
+                        <label style="display: block; margin-bottom: 5px; color: var(--dark-text-secondary); font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">To</label>
+                        <input type="date" id="monthlyEndDate" class="settings-input" style="width: 100%; padding: 8px;" onchange="initializeMonthlyChart()">
+                    </div>
+                </div>
+
                 <div class="chart-container" style="height: 300px; margin-top: 20px;">
                     <canvas id="monthlyChart"></canvas>
                 </div>

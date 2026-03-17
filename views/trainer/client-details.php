@@ -53,8 +53,7 @@ $memberId = $client['member_id'];
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- FullCalendar -->
-    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
-    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
 
     <!-- Dashboard Styles -->
     <link rel="stylesheet" href="../../assets/css/dashboard.css?v=1.6">
@@ -70,6 +69,51 @@ $memberId = $client['member_id'];
         })();
     </script>
     <style>
+        :root {
+            --premium-bg: #050505;
+            --premium-card: #0f0f0f;
+            --premium-border: rgba(255, 255, 255, 0.06);
+            --premium-accent: #ffffff;
+            --premium-text-muted: rgba(255, 255, 255, 0.4);
+            --premium-input-bg: rgba(255, 255, 255, 0.02);
+            --premium-input-hover: rgba(255, 255, 255, 0.04);
+        }
+
+        body {
+            background-color: var(--premium-bg) !important;
+            color: #fff !important;
+            font-family: 'Inter', sans-serif !important;
+        }
+
+        .main-content {
+            background-color: var(--premium-bg) !important;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            background: #000 !important;
+            border-right: 1px solid var(--premium-border) !important;
+        }
+
+        .top-bar {
+            background: rgba(0, 0, 0, 0.6) !important;
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--premium-border) !important;
+            padding: 24px 40px !important;
+        }
+
+        .page-title h1 {
+            font-size: 2rem !important;
+            font-weight: 900 !important;
+            letter-spacing: -1px !important;
+            color: #fff !important;
+        }
+
+        .page-title p {
+            color: var(--premium-text-muted) !important;
+            font-weight: 500 !important;
+        }
+
         .management-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -89,45 +133,234 @@ $memberId = $client['member_id'];
         .tab-btn {
             background: transparent;
             border: none;
-            color: var(--dark-text-secondary);
-            font-weight: 600;
-            font-size: 0.95rem;
-            padding: 8px 4px;
+            color: var(--premium-text-muted);
+            font-weight: 700;
+            font-size: 0.9rem;
+            padding: 12px 24px;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
             position: relative;
+            border-radius: 12px;
+            letter-spacing: -0.2px;
         }
+
+        .tab-btn:hover {
+            color: #fff;
+            background: var(--premium-input-bg);
+        }
+
         .tab-btn.active {
-            color: var(--primary);
-        }
-        .tab-btn.active::after {
-            content: '';
-            position: absolute;
-            bottom: -13px;
-            left: 0;
-            width: 100%;
-            height: 3px;
-            background: var(--primary);
-            border-radius: 3px 3px 0 0;
+            color: #000;
+            background: #fff;
+            box-shadow: 0 8px 20px rgba(255, 255, 255, 0.1);
         }
         
-        .fc-theme-standard .fc-scrollgrid { border-color: var(--dark-border); }
-        .fc-theme-standard td, .fc-theme-standard th { border-color: var(--dark-border); }
-        .fc .fc-daygrid-day-number { color: var(--dark-text-secondary); }
-        .fc .fc-col-header-cell-cushion { color: white; padding: 10px; }
-        .light-mode .fc .fc-col-header-cell-cushion { color: #333; }
+        .content-card {
+            background: var(--premium-card) !important;
+            border: 1px solid var(--premium-border) !important;
+            border-radius: 28px !important;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3) !important;
+        }
+
+        .card-header {
+            padding: 24px 32px !important;
+            border-bottom: 1px solid var(--premium-border) !important;
+            background: transparent !important;
+        }
+
+        .card-header h3 {
+            font-size: 1.25rem !important;
+            font-weight: 800 !important;
+            letter-spacing: -0.5px !important;
+            color: #fff !important;
+        }
+
+        .form-control, .modern-input {
+            width: 100%;
+            background: var(--premium-input-bg) !important;
+            border: 1px solid var(--premium-border) !important;
+            border-radius: 16px !important;
+            padding: 14px 20px !important;
+            color: #fff !important;
+            font-size: 0.95rem !important;
+            font-weight: 500 !important;
+            transition: all 0.3s ease !important;
+            outline: none !important;
+        }
+
+        .form-control:focus, .modern-input:focus {
+            background: var(--premium-input-hover) !important;
+            border-color: rgba(255, 255, 255, 0.2) !important;
+            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1) !important;
+        }
+
+        label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--premium-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            margin-bottom: 10px;
+            margin-top: 20px;
+        }
+
+        .btn-primary {
+            background: #fff !important;
+            color: #000 !important;
+            border: none !important;
+            border-radius: 18px !important;
+            padding: 16px 24px !important;
+            font-size: 1rem !important;
+            font-weight: 800 !important;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.02);
+            box-shadow: 0 10px 25px rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-secondary {
+            background: var(--premium-input-bg) !important;
+            color: #fff !important;
+            border: 1px solid var(--premium-border) !important;
+            border-radius: 14px !important;
+            padding: 10px 20px !important;
+            font-weight: 700 !important;
+            font-size: 0.85rem !important;
+            transition: all 0.2s !important;
+        }
+
+        .btn-secondary:hover {
+            background: var(--premium-input-hover) !important;
+            border-color: rgba(255, 255, 255, 0.2) !important;
+        }
+
+        /* FullCalendar Customization */
+        .fc {
+            --fc-border-color: rgba(255, 255, 255, 0.1);
+            --fc-page-bg-color: transparent;
+            --fc-neutral-bg-color: transparent;
+            --fc-list-event-hover-bg-color: var(--premium-input-hover);
+            --fc-today-bg-color: rgba(255, 255, 255, 0.05);
+            font-family: 'Inter', sans-serif;
+        }
+
+        .fc .fc-toolbar-title {
+            font-size: 1.25rem !important;
+            font-weight: 800 !important;
+            letter-spacing: -0.5px;
+            color: #fff;
+        }
+
+        .fc .fc-button-primary {
+            background: var(--premium-input-bg) !important;
+            border: 1px solid var(--premium-border) !important;
+            border-radius: 12px !important;
+            padding: 8px 16px !important;
+            font-weight: 700 !important;
+            font-size: 0.85rem !important;
+            transition: all 0.2s !important;
+        }
+
+        .fc .fc-button-primary:hover {
+            background: var(--premium-input-hover) !important;
+            border-color: rgba(255, 255, 255, 0.2) !important;
+        }
+
+        .fc .fc-col-header-cell {
+            padding: 12px 0 !important;
+            font-size: 0.75rem !important;
+            font-weight: 800 !important;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--premium-text-muted);
+        }
+
+        .fc-theme-standard td, .fc-theme-standard th {
+            border-color: rgba(255, 255, 255, 0.08) !important;
+        }
+
+        .fc-daygrid-day-number {
+            font-size: 0.85rem !important;
+            font-weight: 600 !important;
+            padding: 8px !important;
+            color: var(--premium-text-muted) !important;
+        }
+
+        .fc-day-today .fc-daygrid-day-number {
+            color: #fff !important;
+        }
         
         .history-item {
-            padding: 16px;
-            border-bottom: 1px solid var(--dark-border);
-            background: rgba(255,255,255,0.02);
-            border-radius: 12px;
+            padding: 24px;
+            border-bottom: 1px solid var(--premium-border);
+            background: rgba(255, 255, 255, 0.01);
+            border-radius: 20px;
             margin-bottom: 16px;
-            transition: transform 0.2s ease;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            border: 1px solid transparent;
         }
         .history-item:hover {
-            transform: translateX(5px);
-            background: rgba(255,255,255,0.04);
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.03);
+            border-color: var(--premium-border);
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-badge.scheduled {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 32px;
+            right: 32px;
+            background: #fff;
+            color: #000;
+            padding: 20px 32px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            z-index: 10001;
+            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            font-weight: 800;
+        }
+        .fc-event:hover {
+            transform: scale(1.02);
+            z-index: 10;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            cursor: pointer;
+        }
+        .fc-event {
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
     </style>
 </head>
@@ -165,6 +398,46 @@ $memberId = $client['member_id'];
             </div>
         </div>
     </aside>
+
+    <!-- Event Details Modal -->
+    <div class="modal-overlay" id="eventDetailsModal">
+        <div class="modal" style="max-width: 500px !important;">
+            <div class="modal-header" style="padding: 32px 32px 16px; border: none; background: transparent; display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
+                        <div id="eventIconBox" style="width: 28px; height: 28px; background: #fff; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #000;">
+                            <i class="fas fa-calendar-check" style="font-size: 0.8rem;"></i>
+                        </div>
+                        <h4 id="eventCategoryLabel" style="font-size: 0.75rem; font-weight: 800; color: var(--premium-text-muted); text-transform: uppercase; letter-spacing: 1px;">Event Details</h4>
+                    </div>
+                    <h3 id="eventTitleDisplay" style="font-size: 1.5rem; font-weight: 800; color: #fff; letter-spacing: -0.5px;">Session Title</h3>
+                </div>
+                <button class="close-modal" onclick="closeEventDetailsModal()">
+                    <i class="fas fa-times" style="color: #fff;"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body" style="padding: 0 32px 32px;">
+                <div id="eventMainDetails" style="background: var(--premium-input-bg); border: 1px solid var(--premium-border); border-radius: 20px; padding: 20px; margin-bottom: 24px; display: flex; flex-direction: column; gap: 16px;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <i class="far fa-clock" style="color: var(--premium-text-muted);"></i>
+                        <span id="eventTimeDisplay" style="font-size: 0.95rem; font-weight: 600; color: #fff;">08:00 AM</span>
+                    </div>
+                    <div id="eventNotesBox">
+                        <p style="font-size: 0.75rem; font-weight: 700; color: var(--premium-text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Notes & Insights</p>
+                        <p id="eventNotesDisplay" style="font-size: 0.9rem; color: rgba(255,255,255,0.8); line-height: 1.6;">No notes provided for this session.</p>
+                    </div>
+                </div>
+
+                <div id="eventExercisesSection" style="display: none;">
+                    <p style="font-size: 0.75rem; font-weight: 800; color: var(--premium-text-muted); text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 16px;">Planned Exercises</p>
+                    <div id="eventExercisesList" style="display: flex; flex-direction: column; gap: 12px;">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <main class="main-content">
         <div class="top-bar">
@@ -417,7 +690,7 @@ $memberId = $client['member_id'];
             const list = document.getElementById('sessionExercisesList');
             if (!list) return;
             
-            if (memberPlanExercises.length === 0) {
+            if (!Array.isArray(memberPlanExercises) || memberPlanExercises.length === 0) {
                 list.innerHTML = '<p style="font-size: 0.8rem; color: var(--dark-text-secondary);">No exercises in member\'s plan yet.</p>';
                 return;
             }
@@ -467,6 +740,8 @@ $memberId = $client['member_id'];
 
         function initCalendar() {
             const calendarEl = document.getElementById('calendar');
+            const subscriptionStartDate = '<?php echo $client['verified_at'] ?: ($client['booking_date'] ?: $client['created_at']); ?>';
+            
             calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
                 headerToolbar: {
@@ -478,8 +753,32 @@ $memberId = $client['member_id'];
                 selectable: true,
                 select: function(info) {
                     document.getElementById('sessionDate').value = info.startStr.split('T')[0];
-                    switchMainTab('sessions');
+                    document.getElementById('sessionForm').scrollIntoView({ behavior: 'smooth', block: 'center' });
                     document.getElementById('sessionTitle').focus();
+                },
+                eventDidMount: function(info) {
+                    info.el.style.borderRadius = '8px';
+                    info.el.style.border = 'none';
+                    info.el.style.padding = '2px 6px';
+                    info.el.style.fontWeight = '700';
+                    info.el.style.fontSize = '0.8rem';
+                    
+                    if (info.event.backgroundColor === '#3b82f6') {
+                        info.el.style.backgroundColor = 'rgba(59, 130, 246, 0.2)';
+                        info.el.style.color = '#3b82f6';
+                        info.el.style.borderLeft = '3px solid #3b82f6';
+                    } else if (info.event.backgroundColor === '#22c55e') {
+                        info.el.style.backgroundColor = 'rgba(34, 197, 94, 0.2)';
+                        info.el.style.color = '#22c55e';
+                        info.el.style.borderLeft = '3px solid #22c55e';
+                    } else if (info.event.backgroundColor === '#f59e0b') {
+                        info.el.style.backgroundColor = 'rgba(245, 158, 11, 0.2)';
+                        info.el.style.color = '#f59e0b';
+                        info.el.style.borderLeft = '3px solid #f59e0b';
+                    }
+                },
+                eventClick: function(info) {
+                    showEventDetails(info.event);
                 },
                 eventSources: [
                     {
@@ -489,10 +788,84 @@ $memberId = $client['member_id'];
                     {
                         url: '../../api/trainers/get-progress-history.php?booking_id=' + bookingId + '&calendar=1',
                         color: '#22c55e'
+                    },
+                    {
+                        events: [
+                            {
+                                title: '⭐ Subscription Started',
+                                start: subscriptionStartDate.split(' ')[0],
+                                allDay: true,
+                                color: '#f59e0b',
+                                display: 'block',
+                                extendedProps: { type: 'milestone' }
+                            }
+                        ]
                     }
                 ]
             });
             calendar.render();
+        }
+
+        function showEventDetails(event) {
+            const modal = document.getElementById('eventDetailsModal');
+            const title = document.getElementById('eventTitleDisplay');
+            const category = document.getElementById('eventCategoryLabel');
+            const time = document.getElementById('eventTimeDisplay');
+            const notes = document.getElementById('eventNotesDisplay');
+            const exSection = document.getElementById('eventExercisesSection');
+            const exList = document.getElementById('eventExercisesList');
+            const iconBox = document.getElementById('eventIconBox');
+            
+            // Reset state
+            exSection.style.display = 'none';
+            exList.innerHTML = '';
+            
+            const details = event.extendedProps;
+            
+            if (details.type === 'progress') {
+                category.innerText = 'Progress Log';
+                title.innerText = event.title.replace('⚖️ ', '') + ' KG';
+                time.innerText = new Date(event.start).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+                notes.innerText = details.remarks || 'No notes provided for this log.';
+                iconBox.style.background = '#fff';
+                iconBox.style.color = '#000';
+                iconBox.innerHTML = '<i class="fas fa-weight"></i>';
+            } else if (details.type === 'milestone') {
+                category.innerText = 'Milestone';
+                title.innerText = 'Subscription Started';
+                time.innerText = new Date(event.start).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+                notes.innerText = "This is when the member's fitness journey officially began with you!";
+                iconBox.style.background = '#f59e0b';
+                iconBox.style.color = '#fff';
+                iconBox.innerHTML = '<i class="fas fa-star"></i>';
+            } else {
+                category.innerText = (details.type || 'Workout').toUpperCase() + ' SESSION';
+                title.innerText = event.title;
+                time.innerText = event.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' • ' + event.start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                notes.innerText = details.notes || 'No notes provided for this session.';
+                iconBox.style.background = '#3b82f6';
+                iconBox.style.color = '#fff';
+                iconBox.innerHTML = '<i class="fas fa-dumbbell"></i>';
+                
+                if (details.exercise_details && details.exercise_details.length > 0) {
+                    exSection.style.display = 'block';
+                    exList.innerHTML = details.exercise_details.map(ex => `
+                        <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--premium-border); border-radius: 14px; padding: 14px; display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: 0.95rem; font-weight: 700; color: #fff;">${ex.name}</span>
+                            <span style="font-size: 0.8rem; font-weight: 800; color: #fff; background: rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 8px;">${ex.sets} × ${ex.reps}</span>
+                        </div>
+                    `).join('');
+                }
+            }
+            
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('active'), 10);
+        }
+
+        function closeEventDetailsModal() {
+            const modal = document.getElementById('eventDetailsModal');
+            modal.classList.remove('active');
+            setTimeout(() => modal.style.display = 'none', 300);
         }
 
         async function handleProgressSubmit(e) {
@@ -544,6 +917,15 @@ $memberId = $client['member_id'];
 
         async function handleSessionSubmit(e) {
             e.preventDefault();
+            console.log("Submitting session form...");
+            
+            const submitBtn = e.target.querySelector('button[type="submit"]') || document.querySelector('#sessionForm button[type="submit"]');
+            if (!submitBtn) {
+                console.error("Submit button not found!");
+                return;
+            }
+            
+            const originalBtnText = submitBtn.innerHTML;
             
             const selectedExercises = Array.from(document.querySelectorAll('input[name="session_exercises"]:checked'))
                 .map(cb => cb.value);
@@ -560,21 +942,47 @@ $memberId = $client['member_id'];
                 exercises: selectedExercises
             };
             
+            console.log("Data to send:", data);
+            
             try {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Scheduling...';
+                
                 const response = await fetch('../../api/trainers/save-session.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
                 });
-                const result = await response.json();
+                
+                const responseText = await response.text();
+                console.log("Raw Response:", responseText);
+                
+                let result;
+                try {
+                    result = JSON.parse(responseText);
+                } catch (e) {
+                    console.error("JSON Parse Error:", e);
+                    // If not JSON, it might be a PHP error message
+                    showNotification('Server Error: ' + responseText.substring(0, 100), 'warning');
+                    return;
+                }
+                
                 if (result.success) {
                     showNotification('Event added to calendar', 'success');
                     document.getElementById('sessionForm').reset();
                     document.getElementById('sessionDate').value = new Date().toISOString().split('T')[0];
                     loadSessions();
-                    calendar.refetchEvents();
+                    if (calendar) calendar.refetchEvents();
+                } else {
+                    showNotification(result.message || 'Failed to schedule session', 'warning');
                 }
-            } catch (err) { console.error(err); }
+            } catch (err) { 
+                console.error("Submission error:", err);
+                showNotification('An error occurred while saving the session', 'warning');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
+            }
         }
 
         function toggleSessionTime() {
@@ -711,13 +1119,19 @@ $memberId = $client['member_id'];
         function showNotification(message, type = 'info') {
             const notification = document.createElement('div');
             notification.className = `notification ${type}`;
+            const icon = type === 'success' ? 'check-circle' : (type === 'warning' ? 'exclamation-circle' : 'info-circle');
+            const bg = type === 'success' ? '#22c55e' : (type === 'warning' ? '#f59e0b' : '#3b82f6');
+            
             notification.innerHTML = `
-                <i class="fas fa-${type === 'success' ? 'check-circle' : 'info-circle'}"></i>
+                <i class="fas fa-${icon}"></i>
                 <span>${message}</span>
             `;
-            notification.style.cssText = `position: fixed; top: 100px; right: 32px; background: ${type === 'success' ? '#22c55e' : '#3b82f6'}; color: white; padding: 16px 24px; border-radius: 12px; display: flex; align-items: center; gap: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 10000; animation: slideIn 0.3s ease-out; font-weight: 600;`;
+            notification.style.cssText = `position: fixed; top: 100px; right: 32px; background: ${bg}; color: white; padding: 16px 24px; border-radius: 12px; display: flex; align-items: center; gap: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 10000; animation: slideIn 0.3s ease-out; font-weight: 600;`;
             document.body.appendChild(notification);
-            setTimeout(() => notification.remove(), 5000);
+            setTimeout(() => {
+                notification.style.animation = 'slideIn 0.3s ease reverse forwards';
+                setTimeout(() => notification.remove(), 300);
+            }, 5000);
         }
 
         async function handleLogout() {

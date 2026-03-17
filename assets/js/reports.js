@@ -356,7 +356,9 @@ async function initializeRevenueChart() {
 
 // Initialize Package Chart
 async function initializePackageChart() {
-    const ctx = document.getElementById('packageChart').getContext('2d');
+    const canvas = document.getElementById('packageChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
     const { payments } = await loadReportsData();
     const filteredPayments = filterByPeriod(payments, currentPeriod);
     
@@ -377,10 +379,10 @@ async function initializePackageChart() {
             datasets: [{
                 data: data,
                 backgroundColor: [
+                    '#ffffff',
                     'rgba(255, 255, 255, 0.8)',
                     'rgba(255, 255, 255, 0.6)',
                     'rgba(255, 255, 255, 0.4)',
-                    'rgba(255, 255, 255, 0.3)',
                     'rgba(255, 255, 255, 0.2)'
                 ],
                 borderColor: '#0a0a0a',
@@ -397,7 +399,7 @@ async function initializePackageChart() {
                         color: '#ffffff',
                         padding: 15,
                         font: {
-                            size: 12
+                            size: 11
                         }
                     }
                 },
@@ -408,9 +410,61 @@ async function initializePackageChart() {
                     borderColor: '#ffffff',
                     borderWidth: 2
                 }
-            }
+            },
+            cutout: '70%'
         }
     });
+
+    // Update Trending Packages List
+    updateTrendingPackages(packageCount, filteredPayments.length);
+}
+
+// Update Trending Packages UI
+function updateTrendingPackages(packageCount, totalSales) {
+    const listContainer = document.getElementById('trendingPackagesList');
+    if (!listContainer) return;
+
+    // Convert object to array and sort by count
+    const trending = Object.entries(packageCount)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5); // Top 5
+
+    if (trending.length === 0) {
+        listContainer.innerHTML = `
+            <div style="text-align: center; padding: 40px; color: var(--dark-text-secondary);">
+                <p>No sales data for this period</p>
+            </div>`;
+        return;
+    }
+
+    let html = '';
+    trending.forEach(([name, count], index) => {
+        const percentage = totalSales > 0 ? Math.round((count / totalSales) * 100) : 0;
+        const iconColor = index === 0 ? '#f59e0b' : index === 1 ? '#94a3b8' : index === 2 ? '#b45309' : '#4b5563';
+        const rankIcon = index < 3 ? `<i class="fas fa-crown" style="color: ${iconColor}; font-size: 0.85rem;"></i>` : `<span style="font-size: 0.8rem; font-weight: 800; color: var(--dark-text-secondary);">#${index + 1}</span>`;
+
+        html += `
+            <div style="display: flex; align-items: center; gap: 15px; background: rgba(255,255,255,0.04); padding: 14px 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.06); transition: transform 0.2s, background 0.2s; cursor: default;" onmouseover="this.style.background='rgba(255,255,255,0.07)'" onmouseout="this.style.background='rgba(255,255,255,0.04)'">
+                <div style="width: 36px; height: 36px; min-width: 36px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.06); border-radius: 10px; border: 1px solid rgba(255,255,255,0.05);">
+                    ${rankIcon}
+                </div>
+                <div style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: 700; font-size: 0.95rem; color: #fff; text-transform: uppercase; letter-spacing: 0.5px;">${name}</span>
+                        <div style="text-align: right;">
+                            <span style="font-weight: 800; color: #fff; font-size: 1rem;">${count}</span>
+                            <span style="font-weight: 500; font-size: 0.75rem; color: var(--dark-text-secondary); margin-left: 2px;">sold</span>
+                        </div>
+                    </div>
+                    <div style="height: 8px; background: rgba(255,255,255,0.08); border-radius: 20px; overflow: hidden; position: relative;">
+                        <div style="height: 100%; width: ${percentage}%; background: linear-gradient(90deg, #fff, rgba(255,255,255,0.7)); border-radius: 20px; transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);"></div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    listContainer.innerHTML = html;
 }
 
 // Initialize Status Chart
@@ -490,16 +544,92 @@ async function initializeStatusChart() {
     });
 }
 
+// Toggle custom date range inputs for monthly chart
+function toggleMonthlyCustomDate() {
+    const yearSelect = document.getElementById('monthlyYearSelect');
+    const customRange = document.getElementById('monthlyCustomRange');
+    
+    if (yearSelect && yearSelect.value === 'custom') {
+        if (customRange) customRange.style.display = 'flex';
+        
+        // Set default values if empty
+        const startInput = document.getElementById('monthlyStartDate');
+        const endInput = document.getElementById('monthlyEndDate');
+        
+        if (startInput && !startInput.value) {
+            const startOfYear = new Date(new Date().getFullYear(), 0, 1);
+            startInput.value = startOfYear.toISOString().split('T')[0];
+        }
+        if (endInput && !endInput.value) {
+            endInput.value = new Date().toISOString().split('T')[0];
+        }
+    } else {
+        if (customRange) customRange.style.display = 'none';
+    }
+    initializeMonthlyChart();
+}
+
 // Initialize Monthly Chart
 async function initializeMonthlyChart() {
-    const ctx = document.getElementById('monthlyChart').getContext('2d');
+    const canvas = document.getElementById('monthlyChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    
+    // If chart exists, destroy it before creating new one
+    if (monthlyChart) {
+        monthlyChart.destroy();
+    }
+    
     const { payments } = await loadReportsData();
-    const filteredPayments = filterByPeriod(payments, currentPeriod);
+    
+    // Get filter values specifically for this chart
+    const yearSelect = document.getElementById('monthlyYearSelect');
+    const selectedFilter = yearSelect ? yearSelect.value : 'current';
+    
+    let filteredPayments;
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    
+    if (selectedFilter === 'current') {
+        filteredPayments = payments.filter(p => {
+            const d = new Date(p.created_at || p.date);
+            return d.getFullYear() === currentYear;
+        });
+    } else if (selectedFilter === 'last') {
+        filteredPayments = payments.filter(p => {
+            const d = new Date(p.created_at || p.date);
+            return d.getFullYear() === currentYear - 1;
+        });
+    } else if (selectedFilter === 'custom') {
+        const startVal = document.getElementById('monthlyStartDate').value;
+        const endVal = document.getElementById('monthlyEndDate').value;
+        const startDate = startVal ? new Date(startVal) : new Date(0);
+        const endDate = endVal ? new Date(endVal) : new Date();
+        // Set end date to end of day
+        endDate.setHours(23, 59, 59, 999);
+        
+        filteredPayments = payments.filter(p => {
+            const d = new Date(p.created_at || p.date);
+            return d >= startDate && d <= endDate;
+        });
+    } else {
+        filteredPayments = payments; // All time
+    }
     
     // Group by month
     const monthlyRevenue = {};
+    
+    // If current/last year, pre-fill all 12 months for better comparison
+    if (selectedFilter === 'current' || selectedFilter === 'last') {
+        const year = selectedFilter === 'current' ? currentYear : currentYear - 1;
+        const shortMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        shortMonths.forEach(m => {
+            monthlyRevenue[`${m} ${year}`] = 0;
+        });
+    }
+
     filteredPayments.forEach(payment => {
-        const date = new Date(payment.created_at);
+        const date = new Date(payment.created_at || payment.date);
         const monthKey = date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
         
         if (!monthlyRevenue[monthKey]) {

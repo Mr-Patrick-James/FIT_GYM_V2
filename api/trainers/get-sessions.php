@@ -15,28 +15,43 @@ if ($_SESSION['user_role'] === 'trainer') {
     $trainerStmt = $conn->prepare("SELECT id FROM trainers WHERE user_id = ?");
     $trainerStmt->bind_param("i", $user['id']);
     $trainerStmt->execute();
-    $trainerId = $trainerStmt->get_result()->fetch_assoc()['id'];
+    $res = $trainerStmt->get_result()->fetch_assoc();
+    $trainerId = $res ? $res['id'] : null;
 }
 
 $query = "SELECT * FROM trainer_sessions WHERE 1=1";
-if ($booking_id > 0) $query .= " AND booking_id = $booking_id";
+if ($booking_id > 0) $query .= " AND booking_id = " . (int)$booking_id;
+if ($trainerId) $query .= " AND trainer_id = " . (int)$trainerId;
 if ($upcoming) $query .= " AND session_date >= CURDATE() AND status = 'scheduled'";
 $query .= " ORDER BY session_date ASC, session_time ASC";
 
 $result = $conn->query($query);
 $sessions = [];
 while ($row = $result->fetch_assoc()) {
-    // Get exercise names if IDs exist
-    $exercise_names = [];
+    // Get detailed exercise info from member_exercise_plans
+    $exercise_details = [];
     if (!empty($row['exercises'])) {
         $ex_ids = explode(',', $row['exercises']);
         $placeholders = implode(',', array_fill(0, count($ex_ids), '?'));
-        $ex_stmt = $conn->prepare("SELECT name FROM exercises WHERE id IN ($placeholders)");
-        $ex_stmt->bind_param(str_repeat('i', count($ex_ids)), ...$ex_ids);
+        // Join with exercises to get names and member_exercise_plans to get sets/reps for this specific booking
+        $ex_stmt = $conn->prepare("
+            SELECT e.name, mp.sets, mp.reps 
+            FROM exercises e
+            LEFT JOIN member_exercise_plans mp ON e.id = mp.exercise_id AND mp.booking_id = ?
+            WHERE e.id IN ($placeholders)
+        ");
+        
+        $params = array_merge([(int)$row['booking_id']], array_map('intval', $ex_ids));
+        $types = 'i' . str_repeat('i', count($ex_ids));
+        $ex_stmt->bind_param($types, ...$params);
         $ex_stmt->execute();
         $ex_res = $ex_stmt->get_result();
         while ($ex_row = $ex_res->fetch_assoc()) {
-            $exercise_names[] = $ex_row['name'];
+            $exercise_details[] = [
+                'name' => $ex_row['name'],
+                'sets' => $ex_row['sets'] ?? 3,
+                'reps' => $ex_row['reps'] ?? '10-12'
+            ];
         }
         $ex_stmt->close();
     }
@@ -50,7 +65,7 @@ while ($row = $result->fetch_assoc()) {
         'status' => $row['status'],
         'notes' => $row['notes'],
         'type' => $row['type'] ?? 'workout',
-        'exercise_names' => $exercise_names,
+        'exercise_details' => $exercise_details,
         'color' => $row['type'] === 'rest_day' ? '#ef4444' : '#3b82f6'
     ];
 }

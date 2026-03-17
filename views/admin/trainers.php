@@ -131,6 +131,16 @@ $user = getCurrentUser();
                 <div class="stat-label">Specializations</div>
             </div>
 
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon" style="background: rgba(139, 92, 246, 0.1); color: #8b5cf6;">
+                        <i class="fas fa-dumbbell"></i>
+                    </div>
+                </div>
+                <div class="stat-value" id="totalAssignedPackages">0</div>
+                <div class="stat-label">Assigned Packages</div>
+            </div>
+
             <div class="stat-card" style="cursor: pointer;" onclick="openAddTrainerModal()">
                 <div class="stat-header">
                     <div class="stat-icon" style="background: var(--primary-color); color: white;">
@@ -276,5 +286,25 @@ $user = getCurrentUser();
 
     <script src="../../assets/js/main.js"></script>
     <script src="../../assets/js/trainers.js"></script>
+
+    <!-- View Trainer Members Modal -->
+    <div class="modal-overlay" id="trainerMembersModal">
+        <div class="modal" style="max-width: 700px;">
+            <div class="modal-header">
+                <h3 id="viewMembersModalTitle">Assigned Members</h3>
+                <button class="close-modal" onclick="closeTrainerMembersModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" style="padding: 24px;">
+                <div id="trainerMembersList" style="display: flex; flex-direction: column; gap: 16px; max-height: 500px; overflow-y: auto; padding-right: 8px;">
+                    <!-- Members will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer" style="padding: 16px 24px; border-top: 1px solid var(--dark-border); text-align: right;">
+                <button class="btn btn-secondary" onclick="closeTrainerMembersModal()">Close</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
