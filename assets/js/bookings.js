@@ -297,17 +297,10 @@ function populateBookingsTable() {
             <td data-label="Status"><span class="status-badge status-${booking.status || 'pending'}">${(booking.status || 'pending').charAt(0).toUpperCase() + (booking.status || 'pending').slice(1)}</span></td>
             <td data-label="Actions">
                 <div class="table-actions">
-                    <button class="icon-btn" onclick="viewBooking('${booking.id}')" title="View Details">
-                        <i class="fas fa-eye"></i>
+                    <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem; display: flex; align-items: center; gap: 6px;" onclick="viewBooking('${booking.id}')">
+                        <i class="fas fa-tasks"></i>
+                        <span>Manage</span>
                     </button>
-                    ${booking.status === 'pending' ? `
-                        <button class="icon-btn success" onclick="verifyBooking('${booking.id}', event)" title="Verify Payment">
-                            <i class="fas fa-check"></i>
-                        </button>
-                        <button class="icon-btn danger" onclick="rejectBooking('${booking.id}', event)" title="Reject Payment">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    ` : ''}
                 </div>
             </td>
         `;
@@ -430,8 +423,21 @@ function viewBooking(id) {
         if (booking.notes) {
             document.getElementById('notesGroup').style.display = 'block';
             document.getElementById('modalNotes').textContent = booking.notes;
+            // Update label based on status
+            const notesLabel = document.getElementById('notesLabel');
+            if (notesLabel) {
+                notesLabel.textContent = booking.status === 'rejected' ? 'Rejection Reason' : 'Notes';
+                notesLabel.style.color = booking.status === 'rejected' ? '#ef4444' : '';
+            }
         } else {
             document.getElementById('notesGroup').style.display = 'none';
+        }
+        
+        // Handle rejection reason input visibility
+        const rejectionGroup = document.getElementById('rejectionReasonGroup');
+        if (rejectionGroup) {
+            rejectionGroup.style.display = 'none';
+            document.getElementById('modalRejectionReason').value = '';
         }
         
         // Show receipt if available
@@ -737,13 +743,36 @@ async function rejectPayment() {
         return;
     }
     
+    const rejectionGroup = document.getElementById('rejectionReasonGroup');
+    const rejectionReason = document.getElementById('modalRejectionReason').value.trim();
+    
+    // First click: show the reason input
+    if (rejectionGroup.style.display === 'none') {
+        rejectionGroup.style.display = 'block';
+        document.getElementById('modalRejectionReason').focus();
+        showNotification('Please provide a reason for rejection.', 'info');
+        
+        // Update button text to "Confirm Rejection"
+        const rejectBtn = document.getElementById('rejectPaymentBtn');
+        rejectBtn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Confirm Rejection';
+        rejectBtn.classList.add('danger');
+        return;
+    }
+    
+    // Second click: validate and process
+    if (!rejectionReason) {
+        showNotification('Reason for rejection is required.', 'warning');
+        document.getElementById('modalRejectionReason').style.borderColor = '#ef4444';
+        return;
+    }
+    
     const rejectBtn = document.getElementById('rejectPaymentBtn');
     const originalContent = rejectBtn.innerHTML;
     
     try {
         const booking = currentViewingBooking;
         if (booking.status === 'pending') {
-            if (confirm(`Reject payment for ${booking.name || 'this user'}? The client will be notified.`)) {
+            if (confirm(`Reject payment for ${booking.name || 'this user'}? The client will see your reason.`)) {
                 // Show loading state
                 rejectBtn.disabled = true;
                 rejectBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Rejecting...';
@@ -756,14 +785,14 @@ async function rejectPayment() {
                     },
                     body: JSON.stringify({
                         status: 'rejected',
-                        notes: booking.notes || ''
+                        notes: rejectionReason
                     })
                 });
                 
                 const data = await response.json();
                 
                 if (data.success) {
-                    showNotification('Payment rejected. Notification sent to client.', 'warning');
+                    showNotification('Payment rejected. Reason sent to client.', 'warning');
                     
                     // Refresh bookings
                     await loadAllBookings();

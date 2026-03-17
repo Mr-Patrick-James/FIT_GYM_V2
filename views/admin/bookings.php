@@ -514,9 +514,17 @@ $user = getCurrentUser();
                         <div class="value" id="modalVerifiedAt">-</div>
                     </div>
                     <div class="detail-group" id="notesGroup" style="display: none;">
-                        <label>Notes</label>
-                        <div class="value" id="modalNotes">-</div>
-                    </div>
+                    <label id="notesLabel">Notes</label>
+                    <div class="value" id="modalNotes">-</div>
+                </div>
+                
+                <!-- Rejection Reason Input (Hidden by default) -->
+                <div class="detail-group" id="rejectionReasonGroup" style="display: none; margin-top: 20px; padding: 15px; background: rgba(239, 68, 68, 0.05); border: 1px dashed #ef4444; border-radius: 8px;">
+                    <label style="color: #ef4444; font-weight: 700; margin-bottom: 8px; display: block;">
+                        <i class="fas fa-exclamation-circle"></i> Reason for Rejection
+                    </label>
+                    <textarea id="modalRejectionReason" class="form-control" rows="3" placeholder="Explain why the booking is being rejected (e.g. invalid receipt, incorrect amount)..." style="width: 100%; padding: 10px; border-radius: 6px; background: var(--dark-card-bg); color: white; border: 1px solid var(--dark-border);"></textarea>
+                </div>
                 </div>
                 
                 <div class="receipt-section" id="receiptSection" style="display: none;">

@@ -440,6 +440,111 @@ function sendBookingVerificationEmail($bookingData) {
 }
 
 /**
+ * Send booking rejection email to the member
+ */
+function sendBookingRejectionEmail($bookingData) {
+    global $phpmailerInstalled;
+    
+    $userEmail = $bookingData['user_email'];
+    $userName = $bookingData['user_name'];
+    $packageName = $bookingData['package_name'];
+    $rejectionReason = $bookingData['rejection_reason'] ?? 'No reason provided.';
+
+    $subject = 'Booking Status Update - Martinez Fitness';
+    
+    $htmlMessage = '
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: #ef4444; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+            .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
+            .error-icon { font-size: 48px; color: #ef4444; text-align: center; margin-bottom: 20px; }
+            .detail-row { margin-bottom: 10px; border-bottom: 1px solid #e5e7eb; padding-bottom: 5px; }
+            .detail-label { font-weight: bold; color: #4b5563; }
+            .reason-box { background: rgba(239, 68, 68, 0.05); border: 1px dashed #ef4444; border-radius: 8px; padding: 15px; margin-top: 20px; }
+            .footer { text-align: center; margin-top: 20px; color: #6b7280; font-size: 12px; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>BOOKING STATUS UPDATE</h1>
+                <p>Martinez Fitness Gym</p>
+            </div>
+            <div class="content">
+                <div class="error-icon">✕</div>
+                <h2>Hello ' . htmlspecialchars($userName) . '!</h2>
+                <p>We are writing to inform you about your recent booking request for <strong>' . htmlspecialchars($packageName) . '</strong>.</p>
+                
+                <p>Unfortunately, your payment verification has been <strong>rejected</strong> for the following reason:</p>
+                
+                <div class="reason-box">
+                    <p style="margin: 0; color: #ef4444; font-weight: 600;">' . htmlspecialchars($rejectionReason) . '</p>
+                </div>
+                
+                <p style="margin-top: 25px;">Please correct the issue and submit a new booking request. You can visit your dashboard to view more details.</p>
+                
+                <p>If you have any questions, please contact our support team.</p>
+            </div>
+            <div class="footer">
+                <p>© ' . date('Y') . ' Martinez Fitness Gym. All rights reserved.</p>
+                <p>This is an automated email, please do not reply.</p>
+            </div>
+        </div>
+    </body>
+    </html>';
+
+    // Try PHPMailer first
+    if ($phpmailerInstalled) {
+        try {
+            $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
+            $config = getEmailConfig();
+            
+            if (!empty($config['smtp_username']) && !empty($config['smtp_password'])) {
+                $mail->isSMTP();
+                $mail->Host       = $config['smtp_host'];
+                $mail->SMTPAuth   = true;
+                $mail->Username   = $config['smtp_username'];
+                $mail->Password   = $config['smtp_password'];
+                $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+                $mail->Port       = $config['smtp_port'];
+                $mail->CharSet    = 'UTF-8';
+                $mail->SMTPOptions = array(
+                    'ssl' => array(
+                        'verify_peer' => false,
+                        'verify_peer_name' => false,
+                        'allow_self_signed' => true
+                    )
+                );
+                
+                $mail->setFrom($config['from_email'], $config['from_name']);
+                $mail->addAddress($userEmail, $userName);
+                
+                $mail->isHTML(true);
+                $mail->Subject = $subject;
+                $mail->Body = $htmlMessage;
+                $mail->AltBody = "Hello $userName, your booking for $packageName has been rejected. Reason: $rejectionReason";
+                
+                $mail->send();
+                return true;
+            }
+        } catch (Exception $e) {
+            error_log("PHPMailer failed for booking rejection notification: " . $e->getMessage());
+        }
+    }
+    
+    // Fallback to simple mail()
+    $headers = "MIME-Version: 1.0\r\n";
+    $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
+    $headers .= "From: Martinez Fitness <noreply@martinezfitness.com>\r\n";
+    
+    return mail($userEmail, $subject, $htmlMessage, $headers);
+}
+
+/**
  * Send booking expiry warning email to the member
  */
 function sendBookingExpiryEmail($bookingData) {

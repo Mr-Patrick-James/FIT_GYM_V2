@@ -1,3 +1,119 @@
+// Package Hub Preview Logic
+let modalCalendar = null;
+
+async function previewPackageHub(packageId) {
+    const pkg = allPackages.find(p => p.id === packageId);
+    if (!pkg) return;
+
+    const modal = document.getElementById('bookingDetailsModal');
+    if (!modal) return;
+
+    // Set modal to "Preview" mode
+    document.getElementById('detailRef').textContent = `PREVIEW: ${pkg.name}`;
+    document.getElementById('detailPackage').querySelector('span').textContent = pkg.name;
+    document.getElementById('detailAmount').querySelector('span').textContent = pkg.price;
+    
+    // Notes
+    document.getElementById('detailNotes').textContent = pkg.description || 'No additional details.';
+    
+    // Load Tabs Content for Preview
+    switchModalTab('info');
+    
+    // 1. Exercise Plan Preview
+    const planContent = document.getElementById('modalPlanContent');
+    planContent.innerHTML = '<div style="text-align: center; padding: 40px;"><i class="fas fa-spinner fa-spin"></i> Loading default plan...</div>';
+    
+    try {
+        const response = await fetch(`../../api/packages/get-exercises.php?package_id=${packageId}`);
+        const data = await response.json();
+        if (data.success && data.data.length > 0) {
+            planContent.innerHTML = data.data.map(ex => `
+                <div class="exercise-item" style="display: flex; gap: 20px; padding: 20px; border-bottom: 1px solid var(--dark-border); align-items: center;">
+                    ${ex.image_url ? 
+                        `<img src="${ex.image_url}" style="width: 80px; height: 80px; border-radius: 8px; object-fit: cover; background: #1a1a1a;">` :
+                        `<div style="width: 80px; height: 80px; border-radius: 8px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; border: 1px dashed var(--dark-border);"><i class="fas fa-image" style="opacity: 0.2;"></i></div>`
+                    }
+                    <div style="flex: 1;">
+                        <h4 style="margin-bottom: 4px; font-weight: 700; color: white;">${ex.name}</h4>
+                        <div style="display: flex; gap: 15px; font-size: 0.85rem; color: var(--primary);">
+                            <span><i class="fas fa-redo"></i> ${ex.sets} Sets</span>
+                            <span><i class="fas fa-running"></i> ${ex.reps} Reps</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            planContent.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--dark-text-secondary);">This package has general gym access.</div>';
+        }
+    } catch (e) {
+        planContent.innerHTML = '<div style="text-align: center; padding: 40px; color: #ef4444;">Failed to load plan.</div>';
+    }
+
+    // 2. Calendar Preview (Sample)
+    const calendarEl = document.getElementById('modalCalendar');
+    if (modalCalendar) modalCalendar.destroy();
+    
+    modalCalendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth' },
+        themeSystem: 'standard',
+        events: [
+            { title: 'Workout A', start: new Date().toISOString().split('T')[0], color: '#3b82f6' },
+            { title: 'Workout B', start: new Date(Date.now() + 86400000).toISOString().split('T')[0], color: '#3b82f6' },
+            { title: 'Rest Day', start: new Date(Date.now() + 172800000).toISOString().split('T')[0], color: '#ef4444' }
+        ]
+    });
+    modalCalendar.render();
+
+    // 3. Diet & Tips (Sample for Preview)
+    document.getElementById('modalDietContent').innerHTML = `
+        <div style="text-align: center; padding: 40px; color: var(--dark-text-secondary);">
+            <i class="fas fa-utensils" style="font-size: 2.5rem; opacity: 0.1; margin-bottom: 15px; display: block;"></i>
+            <h4 style="color: white; margin-bottom: 8px;">Personalized Nutrition</h4>
+            <p style="font-size: 0.9rem; line-height: 1.6;">Once booked, the coach will provide a daily meal plan tailored to the goal of <strong>${pkg.goal || 'General Fitness'}</strong>.</p>
+        </div>
+    `;
+    
+    document.getElementById('modalTipsContent').innerHTML = `
+        <div style="text-align: center; padding: 40px; color: var(--dark-text-secondary);">
+            <i class="fas fa-lightbulb" style="font-size: 2.5rem; opacity: 0.1; margin-bottom: 15px; display: block;"></i>
+            <h4 style="color: white; margin-bottom: 8px;">Professional Guidance</h4>
+            <p style="font-size: 0.9rem; line-height: 1.6;">Assigned trainers share daily tips on form, hydration, and recovery through the user portal.</p>
+        </div>
+    `;
+
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function switchModalTab(tab) {
+    // Hide all contents
+    document.querySelectorAll('.modal-tab-content').forEach(c => c.style.display = 'none');
+    document.querySelectorAll('.modal-tab-btn').forEach(b => b.classList.remove('active'));
+    
+    // Show selected
+    const contentId = 'modalTab' + tab.charAt(0).toUpperCase() + tab.slice(1);
+    const content = document.getElementById(contentId);
+    if (content) content.style.display = 'block';
+    
+    // Update button
+    const btn = Array.from(document.querySelectorAll('.modal-tab-btn')).find(b => b.textContent.toLowerCase().includes(tab));
+    if (btn) btn.classList.add('active');
+
+    // Re-render calendar if tab is calendar
+    if (tab === 'calendar' && modalCalendar) {
+        setTimeout(() => modalCalendar.render(), 100);
+    }
+}
+
+function closeBookingDetailsModal() {
+    const modal = document.getElementById('bookingDetailsModal');
+    if (modal) {
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+}
+
 // All packages data
 let allPackages = [];
 let lastPackagesJSON = '';
@@ -134,6 +250,9 @@ async function loadPackageExercises(packageId) {
                             </div>
                         </div>
                     </div>
+                    <button class="icon-btn danger" onclick="removeExerciseFromPackage('${ex.id}')" title="Remove from plan">
+                        <i class="fas fa-trash"></i>
+                    </button>
                 `;
                 list.appendChild(item);
             });
@@ -209,14 +328,6 @@ async function removeExerciseFromPackage(exerciseId) {
     }
 }
 
-// Initial setup on load
-document.addEventListener('DOMContentLoaded', () => {
-    // Check if we are on the packages page to add form listener
-    const form = document.getElementById('addExerciseForm');
-    if (form) {
-        form.addEventListener('submit', addExerciseToPackage);
-    }
-});
 
 // Load packages from database
 async function loadPackages() {
@@ -380,59 +491,93 @@ async function populatePackagesGrid(forcedStats = null) {
     allPackages.forEach(pkg => {
         const packageCard = document.createElement('div');
         packageCard.className = 'package-card';
-        packageCard.style.position = 'relative';
+        packageCard.style.cssText = `
+            position: relative;
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+            border-radius: 16px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+            height: 100%;
+        `;
         
         const bookingsCount = stats.packageBookings[pkg.name] || 0;
         const revenue = stats.packageRevenue[pkg.name] || 0;
         
+        // Find assigned trainer names
+        let trainerNames = [];
+        if (pkg.trainer_ids) {
+            const trainerIds = Array.isArray(pkg.trainer_ids) ? pkg.trainer_ids : 
+                              (typeof pkg.trainer_ids === 'string' ? JSON.parse(pkg.trainer_ids) : []);
+            
+            trainerNames = trainersList
+                .filter(t => trainerIds.includes(t.id))
+                .map(t => t.name);
+        }
+        
         packageCard.innerHTML = `
-            <div style="position: absolute; top: 12px; right: 12px; display: flex; flex-direction: column; align-items: flex-end; gap: 5px;">
-                <span class="package-tag" style="font-size: 0.7rem; padding: 4px 10px;">${pkg.tag || 'Standard'}</span>
-                <span style="font-size: 0.65rem; padding: 2px 8px; background: rgba(59, 130, 246, 0.1); color: #3b82f6; border-radius: 4px; border: 1px solid rgba(59, 130, 246, 0.2); font-weight: 700;">
-                    <i class="fas fa-bullseye"></i> ${pkg.goal || 'General Fitness'}
-                </span>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+                <div style="flex: 1; padding-right: 12px;">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                        <span class="package-tag" style="font-size: 0.65rem; padding: 4px 10px; background: var(--primary); color: #000; font-weight: 800; border-radius: 4px; text-transform: uppercase;">${pkg.tag || 'Standard'}</span>
+                        <span style="font-size: 0.65rem; padding: 4px 10px; background: rgba(59, 130, 246, 0.1); color: #3b82f6; border-radius: 4px; border: 1px solid rgba(59, 130, 246, 0.2); font-weight: 700;">
+                            <i class="fas fa-bullseye"></i> ${pkg.goal || 'General Fitness'}
+                        </span>
+                    </div>
+                    <h3 style="margin: 0; color: #fff; font-size: 1.25rem; font-weight: 800; line-height: 1.2;">${pkg.name}</h3>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 0.75rem; color: var(--dark-text-secondary); margin-bottom: 2px;">Price</div>
+                    <div style="font-weight: 900; font-size: 1.5rem; color: var(--primary);">${pkg.price}</div>
+                </div>
             </div>
-            <div style="margin-bottom: 12px; padding-right: 80px;">
-                <h3 style="margin-bottom: 6px; color: var(--primary); font-size: 1.1rem; font-weight: 800;">${pkg.name}</h3>
-                <p style="color: var(--dark-text-secondary); font-size: 0.8rem; margin-bottom: 6px; line-height: 1.4;">
+
+            <div style="flex: 1; margin-bottom: 24px;">
+                <p style="color: var(--dark-text-secondary); font-size: 0.9rem; margin-bottom: 16px; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
                     ${pkg.description || 'Full gym access with all facilities'}
                 </p>
-                <div style="display: flex; align-items: center; gap: 6px; color: var(--dark-text-secondary); font-size: 0.8rem;">
-                    <i class="fas fa-clock" style="font-size: 0.75rem;"></i>
-                    <span>${pkg.duration}</span>
+                
+                <div style="display: grid; grid-template-columns: 1fr; gap: 12px; background: rgba(255, 255, 255, 0.02); padding: 16px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.05);">
+                    <div style="display: flex; align-items: center; gap: 10px; color: var(--dark-text-secondary); font-size: 0.85rem;">
+                        <div style="width: 28px; height: 28px; background: rgba(255,255,255,0.05); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--primary);">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <span style="font-weight: 600;">${pkg.duration}</span>
+                    </div>
+                    
+                    ${pkg.is_trainer_assisted ? `
+                    <div style="display: flex; align-items: center; gap: 10px; color: var(--dark-text-secondary); font-size: 0.85rem;">
+                        <div style="width: 28px; height: 28px; background: rgba(255,255,255,0.05); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #3b82f6;">
+                            <i class="fas fa-user-tie"></i>
+                        </div>
+                        <span style="font-weight: 600; color: #fff;">${trainerNames.length > 0 ? trainerNames.join(', ') : 'No Trainers Assigned'}</span>
+                    </div>
+                    ` : `
+                    <div style="display: flex; align-items: center; gap: 10px; color: var(--dark-text-secondary); font-size: 0.85rem; opacity: 0.5;">
+                        <div style="width: 28px; height: 28px; background: rgba(255,255,255,0.05); border-radius: 6px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-user-slash"></i>
+                        </div>
+                        <span>Self-Guided Session</span>
+                    </div>
+                    `}
                 </div>
             </div>
-            <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--dark-border);">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                    <div>
-                        <div style="font-size: 0.75rem; color: var(--dark-text-secondary); margin-bottom: 2px;">Price</div>
-                        <div style="font-weight: 800; font-size: 1.3rem; color: var(--success);">${pkg.price}</div>
-                    </div>
-                </div>
-                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 12px;">
-                    <div>
-                        <div style="font-size: 0.7rem; color: var(--dark-text-secondary);">Bookings</div>
-                        <div style="font-weight: 700; color: var(--primary); font-size: 0.95rem;">${bookingsCount}</div>
-                    </div>
-                    <div>
-                        <div style="font-size: 0.7rem; color: var(--dark-text-secondary);">Revenue</div>
-                        <div style="font-weight: 700; color: var(--success); font-size: 0.95rem;">₱${Math.round(revenue).toLocaleString()}</div>
-                    </div>
-                </div>
-                <div style="display: flex; gap: 8px;">
-                    <button class="btn btn-secondary" style="flex: 1; padding: 8px 12px; font-size: 0.85rem;" onclick="openExerciseModal(${pkg.id}, '${pkg.name}')">
-                        <i class="fas fa-list-ul"></i>
-                        Plan
-                    </button>
-                    <button class="btn btn-secondary" style="flex: 1; padding: 8px 12px; font-size: 0.85rem;" onclick="editPackage(${pkg.id})">
-                        <i class="fas fa-edit"></i>
-                        Edit
-                    </button>
-                    <button class="btn btn-secondary" style="flex: 1; padding: 8px 12px; font-size: 0.85rem; background: rgba(239, 68, 68, 0.2); color: #ef4444;" onclick="deletePackage(${pkg.id})">
-                        <i class="fas fa-trash"></i>
-                        Delete
-                    </button>
-                </div>
+
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
+                <button class="btn btn-secondary" style="padding: 10px; font-size: 0.8rem; background: rgba(255,255,255,0.05);" onclick="previewPackageHub(${pkg.id})">
+                    <i class="fas fa-th-large"></i> Hub
+                </button>
+                <button class="btn btn-secondary" style="padding: 10px; font-size: 0.8rem; background: rgba(255,255,255,0.05);" onclick="openExerciseModal(${pkg.id}, '${pkg.name}')">
+                    <i class="fas fa-list-ul"></i> Plan
+                </button>
+                <button class="btn btn-secondary" style="padding: 10px; font-size: 0.8rem; background: rgba(59, 130, 246, 0.1); color: #3b82f6;" onclick="editPackage(${pkg.id})">
+                    <i class="fas fa-edit"></i> Edit
+                </button>
+                <button class="btn btn-secondary" style="padding: 10px; font-size: 0.8rem; background: rgba(239, 68, 68, 0.1); color: #ef4444;" onclick="deletePackage(${pkg.id})">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
             </div>
         `;
         
@@ -451,6 +596,13 @@ async function updateStats(forcedStats = null) {
     document.getElementById('totalBookings').textContent = stats.totalBookings;
     document.getElementById('totalRevenue').textContent = `₱${Math.round(stats.totalRevenue).toLocaleString()}`;
     document.getElementById('popularPackage').textContent = stats.popularPackage;
+
+    // Update trends (simplified for UI)
+    const trends = ['totalPackagesTrend', 'totalBookingsTrend', 'totalRevenueTrend', 'popularPackageTrend'];
+    trends.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = '+12%';
+    });
     
     // Update pending bookings badge
     const pendingCount = stats.pendingBookings || 0;
@@ -762,6 +914,7 @@ async function initPage() {
     console.log('Packages page initializing...');
     
     try {
+        await loadTrainers(); // Load trainers first
         const changed = await loadPackages();
         console.log('Packages loaded:', allPackages.length, allPackages);
         
@@ -773,6 +926,12 @@ async function initPage() {
     } catch (error) {
         console.error('Error initializing packages page:', error);
         showNotification('Error loading packages. Please refresh the page.', 'warning');
+    }
+    
+    // Add exercise form listener
+    const form = document.getElementById('addExerciseForm');
+    if (form) {
+        form.addEventListener('submit', addExerciseToPackage);
     }
     
     // Close modals on outside click

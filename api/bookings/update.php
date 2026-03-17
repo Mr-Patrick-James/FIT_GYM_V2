@@ -122,6 +122,29 @@ try {
                 error_log("Failed to send booking verification email: " . $e->getMessage());
             }
         }
+    } elseif ($status === 'rejected') {
+        // Send rejection email to user
+        try {
+            // Get booking details for the email
+            $sql = "SELECT * FROM bookings WHERE id = ?";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("i", $bookingId);
+            $stmt->execute();
+            $bookingResult = $stmt->get_result();
+            $booking = $bookingResult->fetch_assoc();
+            
+            if ($booking) {
+                require_once '../email.php';
+                sendBookingRejectionEmail([
+                    'user_email' => $booking['email'],
+                    'user_name' => $booking['name'],
+                    'package_name' => $booking['package_name'],
+                    'rejection_reason' => $notes // The admin's rejection reason is stored in $notes
+                ]);
+            }
+        } catch (Exception $e) {
+            error_log("Failed to send booking rejection email: " . $e->getMessage());
+        }
     }
     
     sendResponse(true, 'Booking updated successfully');

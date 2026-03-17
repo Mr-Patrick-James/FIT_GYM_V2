@@ -1039,6 +1039,20 @@ function getSetting($key, $default = '', $settings = []) {
 
         <!-- Packages Section -->
         <div id="packagesSection" class="content-section">
+            <!-- Active Packages Section -->
+            <div id="activePackagesSection" style="display: none; margin-bottom: 32px;">
+                <div class="content-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-check-circle" style="color: #22c55e; margin-right: 12px;"></i>Your Active Packages</h3>
+                        <p style="color: var(--dark-text-secondary);">Manage your currently active gym memberships</p>
+                    </div>
+                    <div class="packages-grid" id="activePackagesGrid">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Available Packages Section -->
             <div class="content-card">
                 <div class="card-header">
                     <h3>Available Packages</h3>
@@ -1098,6 +1112,7 @@ function getSetting($key, $default = '', $settings = []) {
                             <tr>
                                 <th>Package</th>
                                 <th>Booking Date</th>
+                                <th>Expiry Date</th>
                                 <th>Amount</th>
                                 <th>Status</th>
                                 <th>Actions</th>

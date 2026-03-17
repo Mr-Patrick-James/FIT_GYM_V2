@@ -415,6 +415,7 @@ async function getUserCalendarEvents() {
         if (!startStr) return;
         
         const pkgName = b.package_name || b.package || 'Gym Session';
+        const isActive = isBookingActive(b);
         
         // Main booking event
         events.push({
@@ -427,8 +428,8 @@ async function getUserCalendarEvents() {
             color: b.status === 'verified' ? '#22c55e' : (b.status === 'pending' ? '#f59e0b' : '#ef4444')
         });
         
-        // Background highlight for verified multi-day packages
-        if (b.status === 'verified' && b.duration) {
+        // Background highlight for verified OR pending multi-day packages
+        if ((b.status === 'verified' || b.status === 'pending') && b.duration) {
             const days = parseDurationToDays(b.duration);
             if (days > 1) {
                 const parts = startStr.split('-');
@@ -436,12 +437,22 @@ async function getUserCalendarEvents() {
                 const endDate = new Date(startDate);
                 endDate.setDate(endDate.getDate() + days);
                 
+                // Add expiry marker
+                events.push({
+                    id: `expiry-${b.id}`,
+                    title: `EXPIRY: ${pkgName}`,
+                    start: formatDateISO(new Date(endDate.getTime() - 86400000)), // Show on the last day
+                    allDay: true,
+                    color: '#ef4444',
+                    extendedProps: { ...b, type: 'expiry' }
+                });
+
                 events.push({
                     id: `period-${b.id}`,
                     start: startStr,
                     end: formatDateISO(endDate),
                     display: 'background',
-                    color: 'rgba(34, 197, 94, 0.08)',
+                    color: b.status === 'verified' ? 'rgba(34, 197, 94, 0.08)' : 'rgba(245, 158, 11, 0.08)',
                     allDay: true
                 });
             }
@@ -594,8 +605,14 @@ function showSection(section, event) {
 // Populate packages grid
 function populatePackages() {
     const grid = document.getElementById('packagesGrid');
+    const activeGrid = document.getElementById('activePackagesGrid');
+    const activeSection = document.getElementById('activePackagesSection');
+    
     if (!grid) return;
     grid.innerHTML = '';
+    if (activeGrid) activeGrid.innerHTML = '';
+    
+    let activeCount = 0;
     
     packagesData.forEach(pkg => {
         // Check if this package is currently active for the user
@@ -662,8 +679,19 @@ function populatePackages() {
                 </div>
             </div>
         `;
-        grid.appendChild(packageCard);
+        
+        if (isActive && activeGrid) {
+            activeGrid.appendChild(packageCard);
+            activeCount++;
+        } else {
+            grid.appendChild(packageCard);
+        }
     });
+    
+    // Show/hide active section
+    if (activeSection) {
+        activeSection.style.display = activeCount > 0 ? 'block' : 'none';
+    }
 }
 
 // Preview a package Hub (before booking)
@@ -944,7 +972,7 @@ function populateBookings() {
     if (userBookings.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="5" style="text-align: center; padding: 40px; color: var(--dark-text-secondary);">
+                <td colspan="6" style="text-align: center; padding: 40px; color: var(--dark-text-secondary);">
                     No bookings yet. <a href="#" onclick="showSection('packages')" style="color: var(--primary); text-decoration: underline;">Browse packages</a> to get started!
                 </td>
             </tr>
@@ -965,14 +993,14 @@ function populateBookings() {
     // Populate main bookings table
     tbody.innerHTML = '';
     sortedBookings.forEach(booking => {
-        const row = createBookingRow(booking);
+        const row = createBookingRow(booking, true); // true means include expiry
         tbody.appendChild(row);
     });
     
     // Populate recent bookings (last 5)
     recentTbody.innerHTML = '';
     sortedBookings.slice(0, 5).forEach(booking => {
-        const row = createBookingRow(booking);
+        const row = createBookingRow(booking, false); // false means no expiry for recent table (compact)
         recentTbody.appendChild(row);
     });
     
@@ -982,32 +1010,79 @@ function populateBookings() {
 }
 
 // Create booking row
-function createBookingRow(booking) {
+function createBookingRow(booking, includeExpiry = false) {
     const row = document.createElement('tr');
     const isActive = isBookingActive(booking);
     
-    row.innerHTML = `
-        <td data-label="Package">
-            <div>${booking.package_name || booking.package}</div>
-            ${booking.status === 'verified' ? `
-                <div style="font-size: 0.75rem; margin-top: 4px;">
-                    <span class="status-badge status-${isActive ? 'verified' : 'pending'}" style="padding: 2px 8px; font-size: 0.7rem;">
-                        ${isActive ? 'Active' : 'Expired'}
-                    </span>
-                </div>
-            ` : ''}
-        </td>
-        <td data-label="Date">${formatDate(booking.booking_date || booking.date || booking.createdAt)}</td>
-        <td data-label="Amount" style="font-weight: 800;">₱${parseFloat(booking.amount).toFixed(2)}</td>
-        <td data-label="Status"><span class="status-badge status-${booking.status}">${booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}</span></td>
-        <td data-label="Actions">
-            <div class="table-actions">
-                <button class="icon-btn" onclick="viewBookingDetails(${booking.id})" title="View Details">
-                    <i class="fas fa-eye"></i>
-                </button>
+    // Calculate expiry date for display
+    let expiryDateDisplay = '-';
+    if (booking.status === 'verified' || booking.status === 'pending') {
+        const dateObj = booking.expires_at ? new Date(booking.expires_at) : new Date(new Date(booking.booking_date || booking.created_at || booking.date).getTime() + parseDurationToDays(booking.duration) * 86400000);
+        expiryDateDisplay = formatDate(dateObj);
+    }
+
+    // Add rejection reason if status is rejected
+    let statusDisplay = `<span class="status-badge status-${booking.status}">${booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}</span>`;
+    if (booking.status === 'rejected' && booking.notes) {
+        statusDisplay += `
+            <div class="rejection-hint" title="Reason: ${booking.notes}" style="margin-top: 4px; font-size: 0.7rem; color: #ef4444; cursor: help;">
+                <i class="fas fa-comment-dots"></i> View Reason
             </div>
-        </td>
-    `;
+        `;
+    }
+
+    if (includeExpiry) {
+        row.innerHTML = `
+            <td data-label="Package">
+                <div>${booking.package_name || booking.package}</div>
+                ${(booking.status === 'verified' || booking.status === 'pending') ? `
+                    <div style="font-size: 0.75rem; margin-top: 4px;">
+                        <span class="status-badge status-${isActive ? 'verified' : 'pending'}" style="padding: 2px 8px; font-size: 0.7rem;">
+                            ${isActive ? 'Active' : 'Expired'}
+                        </span>
+                    </div>
+                ` : ''}
+            </td>
+            <td data-label="Date">${formatDate(booking.booking_date || booking.date || booking.createdAt)}</td>
+            <td data-label="Expiry Date">
+                <div style="font-weight: 600; color: ${isActive ? '#22c55e' : 'var(--dark-text-secondary)'};">
+                    ${expiryDateDisplay}
+                </div>
+            </td>
+            <td data-label="Amount" style="font-weight: 800;">₱${parseFloat(booking.amount).toFixed(2)}</td>
+            <td data-label="Status">${statusDisplay}</td>
+            <td data-label="Actions">
+                <div class="table-actions">
+                    <button class="icon-btn" onclick="viewBookingDetails(${booking.id})" title="View Details">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+            </td>
+        `;
+    } else {
+        row.innerHTML = `
+            <td data-label="Package">
+                <div>${booking.package_name || booking.package}</div>
+                ${(booking.status === 'verified' || booking.status === 'pending') ? `
+                    <div style="font-size: 0.75rem; margin-top: 4px;">
+                        <span class="status-badge status-${isActive ? 'verified' : 'pending'}" style="padding: 2px 8px; font-size: 0.7rem;">
+                            ${isActive ? 'Active' : 'Expired'}
+                        </span>
+                    </div>
+                ` : ''}
+            </td>
+            <td data-label="Date">${formatDate(booking.booking_date || booking.date || booking.createdAt)}</td>
+            <td data-label="Amount" style="font-weight: 800;">₱${parseFloat(booking.amount).toFixed(2)}</td>
+            <td data-label="Status">${statusDisplay}</td>
+            <td data-label="Actions">
+                <div class="table-actions">
+                    <button class="icon-btn" onclick="viewBookingDetails(${booking.id})" title="View Details">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+            </td>
+        `;
+    }
     return row;
 }
 
@@ -1111,10 +1186,19 @@ function updateStats() {
             return expB - expA;
         })[0];
 
+        // Get all unique active package names
+        const activePackageNames = [...new Set(activeVerifiedBookings.map(b => b.package_name || b.package))];
+
         if (membershipStatus) {
-            membershipStatus.textContent = 'Active';
+            membershipStatus.textContent = activePackageNames.join(', ');
             membershipStatus.className = 'stat-value status-verified';
             membershipStatus.style.color = '';
+            // Adjust font size if multiple packages to avoid overflow
+            if (activePackageNames.length > 1) {
+                membershipStatus.style.fontSize = '1.1rem';
+            } else {
+                membershipStatus.style.fontSize = '';
+            }
         }
 
         if (statTrainer) {
@@ -1129,7 +1213,7 @@ function updateStats() {
         // Update Profile Membership Badge
         if (profileMembershipBadge) {
             profileMembershipBadge.style.display = 'block';
-            profileMembershipValue.textContent = 'Active Member';
+            profileMembershipValue.textContent = activePackageNames.join(', ');
             profileMembershipStatus.textContent = 'Active';
             profileMembershipStatus.className = 'status-badge status-verified';
             profileMembershipPlan.textContent = `${latestActive.package_name || latestActive.package} Plan`;
@@ -1641,11 +1725,30 @@ function viewBookingDetails(bookingId) {
         trainerContainer.style.display = 'none';
     }
 
-    // Handle Notes
+    // Handle Notes / Rejection Reason
     const notesSection = document.getElementById('detailNotesSection');
+    const notesTitle = notesSection.querySelector('span');
+    const notesContent = document.getElementById('detailNotes');
+    
     if (booking.notes && booking.notes.trim() !== '') {
         notesSection.style.display = 'block';
-        document.getElementById('detailNotes').textContent = booking.notes;
+        notesContent.textContent = booking.notes;
+        
+        if (booking.status === 'rejected') {
+            notesSection.style.background = 'rgba(239, 68, 68, 0.05)';
+            notesSection.style.borderLeft = '4px solid #ef4444';
+            if (notesTitle) {
+                notesTitle.textContent = 'REJECTION REASON';
+                notesTitle.style.color = '#ef4444';
+            }
+        } else {
+            notesSection.style.background = ''; // Use CSS default
+            notesSection.style.borderLeft = ''; // Use CSS default
+            if (notesTitle) {
+                notesTitle.textContent = 'ADMIN NOTES';
+                notesTitle.style.color = ''; // Use CSS default
+            }
+        }
     } else {
         notesSection.style.display = 'none';
     }

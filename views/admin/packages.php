@@ -18,6 +18,48 @@ $user = getCurrentUser();
     
     <!-- Dashboard Styles -->
     <link rel="stylesheet" href="../../assets/css/dashboard.css?v=1.6">
+    <style>
+        .package-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary) !important;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        .package-card {
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+            border-radius: 16px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+        }
+        #packagesGrid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 24px;
+            padding: 24px;
+        }
+        .modal-body .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--dark-text);
+        }
+        .modal-body .form-control, 
+        .modal-body input[type="text"],
+        .modal-body input[type="number"],
+        .modal-body select,
+        .modal-body textarea {
+            width: 100%;
+            padding: 12px;
+            background: var(--dark-bg);
+            border: 1px solid var(--dark-border);
+            border-radius: 8px;
+            color: #fff;
+            font-family: inherit;
+        }
+    </style>
     
     <!-- Apply theme immediately before page renders to prevent flash -->
     <script>
@@ -175,7 +217,7 @@ $user = getCurrentUser();
                 </div>
             </div>
             
-            <div id="packagesGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; padding: 20px;">
+            <div id="packagesGrid">
                 <!-- Populated by JavaScript -->
             </div>
             
@@ -257,9 +299,9 @@ $user = getCurrentUser();
                         </p>
                     </div>
 
-                    <div class="form-group checkbox-group">
-                        <input type="checkbox" id="isTrainerAssisted" onchange="toggleTrainerSelection()">
-                        <label for="isTrainerAssisted">Personal Trainer Assisted</label>
+                    <div class="form-group" style="display: flex; align-items: center; gap: 12px; margin-top: 10px; cursor: pointer;">
+                        <input type="checkbox" id="isTrainerAssisted" onchange="toggleTrainerSelection()" style="width: 20px; height: 20px; cursor: pointer;">
+                        <label for="isTrainerAssisted" style="margin-bottom: 0; font-weight: 700; color: var(--primary);">Personal Trainer Assisted Membership</label>
                     </div>
 
                     <!-- Trainer Selection (Hidden by default) -->
@@ -276,13 +318,12 @@ $user = getCurrentUser();
                         </p>
                     </div>
                     
-                    <div class="modal-actions">
-                        <button type="button" class="btn btn-secondary" onclick="closePackageModal()">
-                            <i class="fas fa-times"></i>
+                    <div class="modal-footer" style="padding: 24px 0 0; display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid var(--dark-border); margin-top: 24px;">
+                        <button type="button" class="btn btn-secondary" onclick="closePackageModal()" style="padding: 10px 24px;">
                             Cancel
                         </button>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save"></i>
+                        <button type="submit" class="btn btn-primary" style="padding: 10px 24px;">
+                            <i class="fas fa-save" style="margin-right: 8px;"></i>
                             Save Package
                         </button>
                     </div>
@@ -293,7 +334,7 @@ $user = getCurrentUser();
 
     <!-- Exercise Management Modal -->
     <div class="modal-overlay" id="exerciseModal">
-        <div class="modal" style="max-width: 800px;">
+        <div class="modal" style="max-width: 900px;">
             <div class="modal-header">
                 <div>
                     <h3 id="exerciseModalTitle">Manage Package Exercises</h3>
@@ -305,14 +346,46 @@ $user = getCurrentUser();
             </div>
             
             <div class="modal-body" style="padding: 24px;">
-                <!-- Current Exercises List -->
-                <div>
-                    <h4 style="margin-bottom: 16px; color: var(--primary);">Current Package Plan</h4>
-                    <p style="font-size: 0.85rem; color: var(--dark-text-secondary); margin-bottom: 20px;">
-                        <i class="fas fa-info-circle"></i> This plan is managed by the training staff. Admins can view the default exercises assigned to this package.
-                    </p>
-                    <div id="packageExercisesList" style="max-height: 500px; overflow-y: auto;">
-                        <!-- Exercises populated by JS -->
+                <div style="display: grid; grid-template-columns: 1fr 350px; gap: 32px;">
+                    <!-- Current Exercises List -->
+                    <div>
+                        <h4 style="margin-bottom: 16px; color: var(--primary);">Current Package Plan</h4>
+                        <p style="font-size: 0.85rem; color: var(--dark-text-secondary); margin-bottom: 20px;">
+                            <i class="fas fa-info-circle"></i> View and manage the exercises assigned to this package.
+                        </p>
+                        <div id="packageExercisesList" style="max-height: 500px; overflow-y: auto; padding-right: 10px;">
+                            <!-- Exercises populated by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Add Exercise Form -->
+                    <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--dark-border); border-radius: 12px; padding: 20px; height: fit-content;">
+                        <h4 style="margin-bottom: 20px; color: #fff;">Add Exercise to Plan</h4>
+                        <form id="addExerciseForm">
+                            <div class="form-group">
+                                <label>Select Exercise</label>
+                                <select id="exerciseSelect" required class="form-control" style="width: 100%; background: var(--dark-bg); border: 1px solid var(--dark-border); color: #fff; padding: 10px; border-radius: 8px;">
+                                    <option value="">Choose an exercise...</option>
+                                </select>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                <div class="form-group">
+                                    <label>Sets</label>
+                                    <input type="number" id="exerciseSets" required min="1" value="3" class="form-control" style="width: 100%; background: var(--dark-bg); border: 1px solid var(--dark-border); color: #fff; padding: 10px; border-radius: 8px;">
+                                </div>
+                                <div class="form-group">
+                                    <label>Reps</label>
+                                    <input type="text" id="exerciseReps" required placeholder="e.g. 12" class="form-control" style="width: 100%; background: var(--dark-bg); border: 1px solid var(--dark-border); color: #fff; padding: 10px; border-radius: 8px;">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Notes</label>
+                                <textarea id="exerciseNotes" rows="3" placeholder="Special instructions..." class="form-control" style="width: 100%; background: var(--dark-bg); border: 1px solid var(--dark-border); color: #fff; padding: 10px; border-radius: 8px;"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">
+                                <i class="fas fa-plus"></i> Add to Plan
+                            </button>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -352,8 +425,113 @@ $user = getCurrentUser();
         </div>
     </div>
 
+    <!-- Package Hub Modal (Preview) -->
+    <div class="modal-overlay" id="bookingDetailsModal">
+        <div class="modal" style="max-width: 800px;">
+            <div class="modal-header" style="padding: 24px 32px; border-bottom: 1px solid var(--dark-border);">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="width: 40px; height: 40px; background: rgba(255,255,255,0.05); border-radius: 10px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--dark-border);">
+                        <i class="fas fa-file-invoice" style="color: var(--primary);"></i>
+                    </div>
+                    <div>
+                        <h3 style="margin: 0;">Package Hub</h3>
+                        <span id="detailRef" style="font-size: 0.75rem; color: var(--dark-text-secondary); font-weight: 700;">PREVIEW</span>
+                    </div>
+                </div>
+                <button class="close-modal" onclick="closeBookingDetailsModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="modal-tabs" style="display: flex; gap: 24px; border-bottom: 1px solid var(--dark-border); margin: 0 24px 20px; padding-bottom: 12px;">
+                <button class="modal-tab-btn active" onclick="switchModalTab('info')" style="background: transparent; border: none; color: var(--dark-text-secondary); font-weight: 600; font-size: 0.9rem; padding: 8px 4px; cursor: pointer; transition: all 0.3s; position: relative;">Overview</button>
+                <button class="modal-tab-btn" onclick="switchModalTab('plan')" style="background: transparent; border: none; color: var(--dark-text-secondary); font-weight: 600; font-size: 0.9rem; padding: 8px 4px; cursor: pointer; transition: all 0.3s; position: relative;">Exercise Plan</button>
+                <button class="modal-tab-btn" onclick="switchModalTab('calendar')" style="background: transparent; border: none; color: var(--dark-text-secondary); font-weight: 600; font-size: 0.9rem; padding: 8px 4px; cursor: pointer; transition: all 0.3s; position: relative;">Training Calendar</button>
+                <button class="modal-tab-btn" onclick="switchModalTab('diet')" style="background: transparent; border: none; color: var(--dark-text-secondary); font-weight: 600; font-size: 0.9rem; padding: 8px 4px; cursor: pointer; transition: all 0.3s; position: relative;">Nutrition & Diet</button>
+                <button class="modal-tab-btn" onclick="switchModalTab('tips')" style="background: transparent; border: none; color: var(--dark-text-secondary); font-weight: 600; font-size: 0.9rem; padding: 8px 4px; cursor: pointer; transition: all 0.3s; position: relative;">Tips & Guidance</button>
+            </div>
+            
+            <div class="modal-body" style="padding: 0 32px 32px; max-height: 60vh; overflow-y: auto;">
+                <!-- Info Tab -->
+                <div id="modalTabInfo" class="modal-tab-content active">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
+                        <div style="background: rgba(255, 255, 255, 0.02); padding: 16px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.05);">
+                            <span style="display: block; font-size: 0.75rem; font-weight: 700; color: var(--dark-text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Package Name</span>
+                            <div class="detail-value" id="detailPackage" style="display: flex; align-items: center; gap: 10px; font-size: 1rem; font-weight: 600; color: var(--dark-text);">
+                                <i class="fas fa-dumbbell" style="color: var(--primary);"></i>
+                                <span>-</span>
+                            </div>
+                        </div>
+                        <div style="background: rgba(255, 255, 255, 0.02); padding: 16px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.05);">
+                            <span style="display: block; font-size: 0.75rem; font-weight: 700; color: var(--dark-text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Status</span>
+                            <div id="detailStatus">
+                                <span class="status-badge status-pending">Preview</span>
+                            </div>
+                        </div>
+                        <div style="background: rgba(255, 255, 255, 0.02); padding: 16px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.05);">
+                            <span style="display: block; font-size: 0.75rem; font-weight: 700; color: var(--dark-text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Start Date</span>
+                            <div class="detail-value" id="detailDate" style="display: flex; align-items: center; gap: 10px; font-size: 1rem; font-weight: 600; color: var(--dark-text);">
+                                <i class="fas fa-calendar-alt" style="color: var(--primary);"></i>
+                                <span>Starts upon booking</span>
+                            </div>
+                        </div>
+                        <div style="background: rgba(255, 255, 255, 0.02); padding: 16px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.05);">
+                            <span style="display: block; font-size: 0.75rem; font-weight: 700; color: var(--dark-text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Standard Price</span>
+                            <div class="detail-value" id="detailAmount" style="display: flex; align-items: center; gap: 10px; font-size: 1.25rem; font-weight: 800; color: var(--primary);">
+                                <i class="fas fa-tag"></i>
+                                <span>₱0.00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="detailNotesSection" class="notes-section" style="margin-top: 24px; padding: 16px; background: rgba(245, 158, 11, 0.05); border-left: 4px solid var(--warning); border-radius: 8px;">
+                        <span style="display: block; font-size: 0.75rem; font-weight: 700; color: var(--warning); margin-bottom: 6px; text-transform: uppercase;">Package Description</span>
+                        <p id="detailNotes" style="font-size: 0.9rem; color: var(--dark-text); line-height: 1.5; font-style: italic;">-</p>
+                    </div>
+                </div>
+
+                <!-- Plan Tab -->
+                <div id="modalTabPlan" class="modal-tab-content" style="display: none;">
+                    <div id="modalPlanContent" style="padding-top: 20px;">
+                        <!-- Exercises list -->
+                    </div>
+                </div>
+
+                <!-- Calendar Tab -->
+                <div id="modalTabCalendar" class="modal-tab-content" style="display: none;">
+                    <div style="padding-top: 20px;">
+                        <div id="modalCalendar" style="min-height: 400px; background: var(--dark-card); border-radius: 12px; padding: 10px; border: 1px solid var(--dark-border);"></div>
+                    </div>
+                </div>
+
+                <!-- Diet Tab -->
+                <div id="modalTabDiet" class="modal-tab-content" style="display: none;">
+                    <div id="modalDietContent" style="padding-top: 20px;">
+                        <!-- Diet preview -->
+                    </div>
+                </div>
+
+                <!-- Tips Tab -->
+                <div id="modalTabTips" class="modal-tab-content" style="display: none;">
+                    <div id="modalTipsContent" style="padding-top: 20px;">
+                        <!-- Tips preview -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer" style="padding: 24px 32px; border-top: 1px solid var(--dark-border); display: flex; justify-content: flex-end;">
+                <button class="btn btn-secondary" onclick="closeBookingDetailsModal()" style="padding: 10px 24px;">
+                    <i class="fas fa-times" style="margin-right: 8px;"></i>
+                    <span>Close Preview</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Theme Script -->
     <script src="../../assets/js/theme.js"></script>
+    <!-- FullCalendar CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
     <!-- Packages Scripts -->
     <script src="../../assets/js/packages.js"></script>
 </body>
