@@ -37,16 +37,16 @@ $user = getCurrentUser();
             border-color: rgba(255, 255, 255, 0.15);
         }
         .admin-item-avatar {
-            width: 48px;
-            height: 48px;
+            width: 32px;
+            height: 32px;
             background: var(--primary);
             color: white;
-            border-radius: 12px;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 800;
-            font-size: 1.1rem;
+            font-size: 0.85rem;
         }
         .admin-item-info {
             flex: 1;
@@ -56,12 +56,13 @@ $user = getCurrentUser();
             font-weight: 700;
             color: #fff;
             margin-bottom: 2px;
+            font-size: 0.85rem;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
         .admin-item-email {
-            font-size: 0.8rem;
+            font-size: 0.7rem;
             color: var(--premium-text-muted);
             white-space: nowrap;
             overflow: hidden;
@@ -743,23 +744,23 @@ $user = getCurrentUser();
     <!-- Add Admin Modal -->
     <div class="modal-overlay" id="addAdminModal">
         <div class="modal" style="max-width: 500px !important;">
-            <div class="modal-header" style="padding: 40px 40px 24px; border: none; background: transparent; display: flex; justify-content: space-between; align-items: flex-start;">
+            <div class="modal-header" style="padding: 24px 24px 16px; border: none; background: transparent; display: flex; justify-content: space-between; align-items: flex-start;">
                 <div>
                     <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
-                        <div style="width: 32px; height: 32px; background: var(--primary); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #fff;">
-                            <i class="fas fa-user-plus" style="font-size: 0.9rem;"></i>
+                        <div style="width: 28px; height: 28px; background: var(--primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff;">
+                            <i class="fas fa-user-plus" style="font-size: 0.8rem;"></i>
                         </div>
-                        <h3 style="font-size: 1.75rem; font-weight: 800; color: #fff; letter-spacing: -0.8px;">Add Sub-Admin</h3>
+                        <h3 style="font-size: 1.25rem; font-weight: 800; color: #fff; letter-spacing: -0.8px;">Add Sub-Admin</h3>
                     </div>
-                    <p style="color: var(--premium-text-muted); font-size: 0.95rem; font-weight: 500;">Create a new administrator account</p>
+                    <p style="color: var(--premium-text-muted); font-size: 0.8rem; font-weight: 500;">Create a new administrator account</p>
                 </div>
-                <button class="close-modal" onclick="closeAddAdminModal()" style="background: var(--premium-input-bg); border: 1px solid var(--premium-border); width: 44px; height: 44px; border-radius: 16px; color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+                <button class="close-modal" onclick="closeAddAdminModal()" style="background: var(--premium-input-bg); border: 1px solid var(--premium-border); width: 36px; height: 36px; border-radius: 12px; color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer;">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             
-            <div class="modal-body" style="padding: 0 40px 40px;">
-                <form id="addAdminForm" onsubmit="handleAddAdmin(event)" style="display: flex; flex-direction: column; gap: 24px;">
+            <div class="modal-body" style="padding: 0 24px 24px;">
+                <form id="addAdminForm" onsubmit="handleAddAdmin(event)" style="display: flex; flex-direction: column; gap: 20px;">
                     <div class="form-group">
                         <label>Full Name</label>
                         <input type="text" id="newAdminName" required class="modern-input" placeholder="e.g. John Doe">
@@ -777,7 +778,7 @@ $user = getCurrentUser();
                     </div>
                     
                     <div style="margin-top: 12px;">
-                        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 16px; border-radius: 16px; font-weight: 800; font-size: 1rem;">
+                        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; border-radius: 12px; font-weight: 800; font-size: 0.9rem;">
                             <i class="fas fa-user-check"></i>
                             Create Admin Account
                         </button>

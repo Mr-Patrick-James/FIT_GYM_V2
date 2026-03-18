@@ -34,13 +34,13 @@ $user = getCurrentUser();
         }
         
         .view-btn {
-            padding: 8px 16px;
+            padding: 6px 12px;
             border-radius: var(--radius-sm);
             border: none;
             background: transparent;
             color: var(--dark-text-secondary);
             font-weight: 600;
-            font-size: 0.9rem;
+            font-size: 0.75rem;
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -55,18 +55,18 @@ $user = getCurrentUser();
         
         #calendar-view {
             display: none;
-            margin-top: 32px;
+            margin-top: 24px;
             background: var(--dark-card);
             border-radius: var(--radius-lg);
-            padding: 24px;
+            padding: 16px;
             border: 1px solid var(--dark-border);
         }
         
         /* FullCalendar Customization */
         .fc {
             --fc-border-color: var(--dark-border);
-            --fc-daygrid-event-dot-width: 8px;
-            --fc-list-event-dot-width: 10px;
+            --fc-daygrid-event-dot-width: 6px;
+            --fc-list-event-dot-width: 8px;
             --fc-neutral-bg-color: var(--dark-card);
             --fc-page-bg-color: var(--dark-bg);
             --fc-today-bg-color: rgba(255, 255, 255, 0.05);
@@ -74,7 +74,7 @@ $user = getCurrentUser();
         }
         
         .fc .fc-toolbar-title {
-            font-size: 1.5rem;
+            font-size: 1.1rem;
             font-weight: 700;
             color: var(--dark-text);
         }
@@ -85,7 +85,8 @@ $user = getCurrentUser();
             color: var(--dark-text);
             font-weight: 600;
             text-transform: capitalize;
-            padding: 8px 16px;
+            padding: 6px 12px;
+            font-size: 0.8rem;
         }
         
         .fc .fc-button-primary:hover {
@@ -105,9 +106,9 @@ $user = getCurrentUser();
         }
         
         .fc-daygrid-event {
-            border-radius: 6px;
-            padding: 2px 4px;
-            font-size: 0.85rem;
+            border-radius: 4px;
+            padding: 1px 3px;
+            font-size: 0.7rem;
             border: none;
         }
         
@@ -353,8 +354,8 @@ $user = getCurrentUser();
             
             <div style="display: flex; gap: 16px; flex-wrap: wrap; padding: 20px;">
                 <div style="flex: 1; min-width: 200px;">
-                    <label style="display: block; margin-bottom: 8px; color: var(--dark-text-secondary); font-size: 0.9rem; font-weight: 600;">Booking Type</label>
-                    <select id="bookingTypeFilter" class="card-btn" style="width: 100%; padding: 12px 16px; cursor: pointer;">
+                    <label style="display: block; margin-bottom: 8px; color: var(--dark-text-secondary); font-size: 0.75rem; font-weight: 600;">Booking Type</label>
+                    <select id="bookingTypeFilter" class="card-btn" style="width: 100%; padding: 8px 12px; cursor: pointer;">
                         <option value="all">All Bookings</option>
                         <option value="regular">Regular Members</option>
                         <option value="walkin">Walk-in Customers</option>
@@ -362,8 +363,8 @@ $user = getCurrentUser();
                 </div>
                 
                 <div style="flex: 1; min-width: 200px;">
-                    <label style="display: block; margin-bottom: 8px; color: var(--dark-text-secondary); font-size: 0.9rem; font-weight: 600;">Status Filter</label>
-                    <select id="statusFilter" class="card-btn" style="width: 100%; padding: 12px 16px; cursor: pointer;">
+                    <label style="display: block; margin-bottom: 8px; color: var(--dark-text-secondary); font-size: 0.75rem; font-weight: 600;">Status Filter</label>
+                    <select id="statusFilter" class="card-btn" style="width: 100%; padding: 8px 12px; cursor: pointer;">
                         <option value="all">All Status</option>
                         <option value="pending">Pending</option>
                         <option value="verified">Verified</option>
@@ -372,8 +373,8 @@ $user = getCurrentUser();
                 </div>
                 
                 <div style="flex: 1; min-width: 200px;">
-                    <label style="display: block; margin-bottom: 8px; color: var(--dark-text-secondary); font-size: 0.9rem; font-weight: 600;">Sort By</label>
-                    <select id="sortBy" class="card-btn" style="width: 100%; padding: 12px 16px; cursor: pointer;">
+                    <label style="display: block; margin-bottom: 8px; color: var(--dark-text-secondary); font-size: 0.75rem; font-weight: 600;">Sort By</label>
+                    <select id="sortBy" class="card-btn" style="width: 100%; padding: 8px 12px; cursor: pointer;">
                         <option value="date-desc">Date (Newest First)</option>
                         <option value="date-asc">Date (Oldest First)</option>
                         <option value="amount-desc">Amount (High to Low)</option>
@@ -384,8 +385,8 @@ $user = getCurrentUser();
                 </div>
                 
                 <div style="flex: 1; min-width: 200px;">
-                    <label style="display: block; margin-bottom: 8px; color: var(--dark-text-secondary); font-size: 0.9rem; font-weight: 600;">Date Range</label>
-                    <select id="dateRange" class="card-btn" style="width: 100%; padding: 12px 16px; cursor: pointer;">
+                    <label style="display: block; margin-bottom: 8px; color: var(--dark-text-secondary); font-size: 0.75rem; font-weight: 600;">Date Range</label>
+                    <select id="dateRange" class="card-btn" style="width: 100%; padding: 8px 12px; cursor: pointer;">
                         <option value="all">All Time</option>
                         <option value="today">Today</option>
                         <option value="week">This Week</option>
@@ -401,7 +402,7 @@ $user = getCurrentUser();
             <div class="card-header">
                 <h3>All Bookings</h3>
                 <div class="card-actions">
-                    <span style="color: var(--dark-text-secondary); font-size: 0.9rem;">
+                    <span style="color: var(--dark-text-secondary); font-size: 0.75rem;">
                         Showing <strong id="showingCount">0</strong> of <strong id="totalCount">0</strong> bookings
                     </span>
                 </div>

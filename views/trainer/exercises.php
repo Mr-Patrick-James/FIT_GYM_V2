@@ -35,7 +35,7 @@ $user = getCurrentUser();
         }
 
         #notificationsModal .modal-header h3 {
-            font-size: 1.5rem !important;
+            font-size: 1.1rem !important;
             font-weight: 800 !important;
             letter-spacing: -0.5px;
             display: flex;
@@ -51,9 +51,9 @@ $user = getCurrentUser();
         }
 
         .notif-tab-btn {
-            padding: 10px 20px;
-            border-radius: 14px;
-            font-size: 0.85rem;
+            padding: 8px 16px;
+            border-radius: 12px;
+            font-size: 0.75rem;
             font-weight: 700;
             color: var(--premium-text-muted);
             background: transparent;
@@ -113,9 +113,9 @@ $user = getCurrentUser();
         }
 
         .date-tile {
-            width: 50px;
-            height: 50px;
-            border-radius: 16px;
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -136,15 +136,15 @@ $user = getCurrentUser();
             position: fixed;
             bottom: 32px;
             right: 32px;
-            width: 64px;
-            height: 64px;
+            width: 48px;
+            height: 48px;
             background: #fff;
             color: #000;
-            border-radius: 20px;
+            border-radius: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
+            font-size: 1.2rem;
             cursor: pointer;
             box-shadow: 0 10px 30px rgba(255, 255, 255, 0.2);
             z-index: 999;
@@ -167,10 +167,10 @@ $user = getCurrentUser();
             right: -4px;
             background: #ef4444;
             color: #fff;
-            font-size: 0.7rem;
+            font-size: 0.6rem;
             font-weight: 800;
-            width: 22px;
-            height: 22px;
+            width: 18px;
+            height: 18px;
             border-radius: 50%;
             display: none;
             align-items: center;
@@ -475,15 +475,15 @@ $user = getCurrentUser();
                     // Render Notifications
                     if (list) {
                         if (data.data.length === 0) {
-                            list.innerHTML = '<p style="text-align: center; padding: 20px; color: var(--premium-text-muted);">No notifications yet.</p>';
+                            list.innerHTML = '<p style="text-align: center; padding: 16px; color: var(--premium-text-muted); font-size: 0.75rem;">No notifications yet.</p>';
                         } else {
                             list.innerHTML = data.data.map(n => `
-                                <div style="padding: 15px; border-bottom: 1px solid var(--premium-border); position: relative; cursor: pointer; ${!n.is_read ? 'background: rgba(59, 130, 246, 0.05);' : ''}" onclick="markAsRead(${n.id})">
-                                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                                        <strong style="font-size: 0.9rem; color: ${n.type === 'assignment' ? '#3b82f6' : 'white'};">${n.title}</strong>
-                                        <span style="font-size: 0.7rem; color: var(--premium-text-muted);">${new Date(n.created_at).toLocaleDateString()}</span>
+                                <div style="padding: 12px; border-bottom: 1px solid var(--premium-border); position: relative; cursor: pointer; ${!n.is_read ? 'background: rgba(59, 130, 246, 0.05);' : ''}" onclick="markAsRead(${n.id})">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                        <strong style="font-size: 0.8rem; color: ${n.type === 'assignment' ? '#3b82f6' : 'white'};">${n.title}</strong>
+                                        <span style="font-size: 0.65rem; color: var(--premium-text-muted);">${new Date(n.created_at).toLocaleDateString()}</span>
                                     </div>
-                                    <p style="font-size: 0.85rem; color: var(--premium-text-muted); line-height: 1.4;">${n.message}</p>
+                                    <p style="font-size: 0.75rem; color: var(--premium-text-muted); line-height: 1.4;">${n.message}</p>
                                     ${!n.is_read ? '<div style="position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: #3b82f6;"></div>' : ''}
                                 </div>
                             `).join('');
@@ -493,24 +493,24 @@ $user = getCurrentUser();
                     // Render Upcoming Sessions
                     if (sessionList) {
                         if (sessions.length === 0) {
-                            sessionList.innerHTML = '<p style="text-align: center; padding: 20px; color: var(--premium-text-muted);">No upcoming sessions scheduled.</p>';
+                            sessionList.innerHTML = '<p style="text-align: center; padding: 16px; color: var(--premium-text-muted); font-size: 0.75rem;">No upcoming sessions scheduled.</p>';
                         } else {
                             sessionList.innerHTML = sessions.map(s => {
                                 const date = new Date(s.start);
                                 const isToday = date.toDateString() === new Date().toDateString();
                                 return `
-                                    <div style="padding: 15px; border-bottom: 1px solid var(--premium-border); display: flex; gap: 15px; align-items: center;">
-                                        <div style="width: 45px; height: 45px; border-radius: 12px; background: ${isToday ? '#3b82f6' : 'rgba(255,255,255,0.05)'}; color: ${isToday ? '#fff' : '#3b82f6'}; display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid ${isToday ? '#3b82f6' : 'var(--premium-border)'};">
-                                            <span style="font-size: 0.6rem; font-weight: 800; text-transform: uppercase;">${date.toLocaleDateString('en-US', { month: 'short' })}</span>
-                                            <span style="font-size: 1rem; font-weight: 900; line-height: 1;">${date.getDate()}</span>
+                                    <div style="padding: 12px; border-bottom: 1px solid var(--premium-border); display: flex; gap: 12px; align-items: center;">
+                                        <div style="width: 36px; height: 36px; border-radius: 8px; background: ${isToday ? '#3b82f6' : 'rgba(255,255,255,0.05)'}; color: ${isToday ? '#fff' : '#3b82f6'}; display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid ${isToday ? '#3b82f6' : 'var(--premium-border)'};">
+                                            <span style="font-size: 0.55rem; font-weight: 800; text-transform: uppercase;">${date.toLocaleDateString('en-US', { month: 'short' })}</span>
+                                            <span style="font-size: 0.85rem; font-weight: 900; line-height: 1;">${date.getDate()}</span>
                                         </div>
                                         <div style="flex: 1;">
                                             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                                                <h4 style="font-size: 0.9rem; font-weight: 800; color: #fff;">${s.title}</h4>
-                                                ${isToday ? '<span style="font-size: 0.6rem; background: #22c55e; color: #fff; padding: 2px 6px; border-radius: 4px; font-weight: 800; text-transform: uppercase;">Today</span>' : ''}
+                                                <h4 style="font-size: 0.8rem; font-weight: 800; color: #fff;">${s.title}</h4>
+                                                ${isToday ? '<span style="font-size: 0.55rem; background: #22c55e; color: #fff; padding: 2px 6px; border-radius: 4px; font-weight: 800; text-transform: uppercase;">Today</span>' : ''}
                                             </div>
-                                            <p style="font-size: 0.8rem; color: #3b82f6; font-weight: 700; margin: 2px 0;">Client: ${s.member_name}</p>
-                                            <p style="font-size: 0.75rem; color: var(--premium-text-muted); display: flex; align-items: center; gap: 5px;">
+                                            <p style="font-size: 0.75rem; color: #3b82f6; font-weight: 700; margin: 2px 0;">Client: ${s.member_name}</p>
+                                            <p style="font-size: 0.7rem; color: var(--premium-text-muted); display: flex; align-items: center; gap: 4px;">
                                                 <i class="far fa-clock"></i> ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                             </p>
                                         </div>

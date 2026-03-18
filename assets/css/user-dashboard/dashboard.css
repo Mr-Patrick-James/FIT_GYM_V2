@@ -86,16 +86,16 @@
     }
 
     .quick-action-card i {
-        font-size: 1.8rem;
-        margin-bottom: 8px;
+        font-size: 0.8rem;
+        margin-bottom: 4px;
     }
 
     .quick-action-card h4 {
-        font-size: 1rem;
+        font-size: 0.8rem;
     }
 
     .quick-action-card p {
-        font-size: 0.75rem;
+        font-size: 0.65rem;
     }
     
     /* Tablet table styles */
@@ -105,16 +105,16 @@
     }
     
     td {
-        font-size: 0.9rem;
+        font-size: 0.75rem;
     }
     
     td::before {
-        font-size: 0.8rem;
+        font-size: 0.65rem;
     }
     
     .status-badge {
-        font-size: 0.75rem;
-        padding: 5px 10px;
+        font-size: 0.65rem;
+        padding: 4px 8px;
     }
 }
 
@@ -135,16 +135,16 @@
     }
 
     .quick-action-card i {
-        font-size: 1.8rem;
-        margin-bottom: 8px;
+        font-size: 1.2rem;
+        margin-bottom: 4px;
     }
 
     .quick-action-card h4 {
-        font-size: 1rem;
+        font-size: 0.8rem;
     }
 
     .quick-action-card p {
-        font-size: 0.75rem;
+        font-size: 0.65rem;
     }
     
     .content-grid {
@@ -201,7 +201,7 @@
         border: none;
         border-bottom: 1px solid var(--glass-border);
         position: relative;
-        font-size: 0.95rem;
+        font-size: 0.8rem;
         white-space: normal;
         min-height: 30px;
     }
@@ -226,7 +226,7 @@
         font-weight: 700;
         color: var(--dark-text-secondary);
         text-transform: capitalize;
-        font-size: 0.9rem;
+        font-size: 0.7rem;
     }
     
     /* Make the actual data more prominent */
@@ -249,23 +249,23 @@
     
     /* Make action buttons larger for touch devices */
     .icon-btn {
-        width: 44px;
-        height: 44px;
-        font-size: 1.2rem;
+        width: 36px;
+        height: 36px;
+        font-size: 0.75rem;
     }
     
     /* Status badges should remain as is */
     .status-badge {
         margin-left: auto;
-        font-size: 0.8rem;
-        padding: 6px 12px;
+        font-size: 0.65rem;
+        padding: 4px 10px;
     }
     
     /* Amount cells should be more prominent */
     td[data-label="Amount"] {
         font-weight: 800;
         color: var(--primary);
-        font-size: 1.1rem;
+        font-size: 0.9rem;
     }
     
     .table-actions {
@@ -340,7 +340,7 @@
 
 .qr-info-dash p {
     margin: 6px 0;
-    font-size: 0.9rem;
+    font-size: 0.75rem;
     color: var(--dark-text);
 }
 
@@ -350,8 +350,8 @@
 
 .qr-instruction-dash {
     display: block;
-    margin-top: 20px;
-    font-size: 0.8rem;
+    margin-top: 16px;
+    font-size: 0.7rem;
     color: var(--dark-text-secondary);
     font-style: normal;
     padding: 0 24px;
@@ -370,7 +370,7 @@
     background: var(--glass);
     border: 2px solid var(--dark-border);
     border-radius: var(--radius-lg);
-    padding: 32px 24px;
+    padding: 20px 16px;
     text-align: center;
     cursor: pointer;
     transition: var(--transition);
@@ -381,21 +381,21 @@
 }
 
 .quick-action-card i {
-    font-size: 2.5rem;
+    font-size: 0.9rem;
     color: var(--primary);
-    margin-bottom: 8px;
+    margin-bottom: 4px;
 }
 
 .quick-action-card h4 {
     font-weight: 700;
-    font-size: 1.1rem;
+    font-size: 0.85rem;
     color: var(--primary);
-    margin-bottom: 8px;
+    margin-bottom: 4px;
 }
 
 .quick-action-card p {
     color: var(--dark-text-secondary);
-    font-size: 0.9rem;
+    font-size: 0.7rem;
 }
 
 .quick-action-card:hover {
@@ -439,7 +439,7 @@
 }
 
 .qr-code {
-    font-size: 5.5rem;
+    font-size: 3rem;
     color: var(--dark-bg);
 }
 
@@ -450,7 +450,7 @@
 .qr-info p {
     margin-bottom: 10px;
     color: var(--dark-text-secondary);
-    font-size: 0.95rem;
+    font-size: 0.75rem;
 }
 
 .qr-info strong {
@@ -490,12 +490,12 @@
     }
 
     .quick-action-card i {
-        font-size: 1.8rem;
+        font-size: 0.9rem;
         margin-bottom: 8px;
     }
 
     .quick-action-card h4 {
-        font-size: 1rem;
+        font-size: 0.75rem;
     }
 
     .quick-action-card p {
@@ -520,7 +520,7 @@
     }
 
     .quick-action-card i {
-        font-size: 1.8rem;
+        font-size: 0.9rem;
         margin-bottom: 8px;
     }
 

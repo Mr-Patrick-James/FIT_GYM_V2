@@ -103,7 +103,7 @@ $memberId = $client['member_id'];
         }
 
         .page-title h1 {
-            font-size: 2rem !important;
+            font-size: 1.5rem !important;
             font-weight: 900 !important;
             letter-spacing: -1px !important;
             color: #fff !important;
@@ -112,6 +112,7 @@ $memberId = $client['member_id'];
         .page-title p {
             color: var(--premium-text-muted) !important;
             font-weight: 500 !important;
+            font-size: 0.75rem !important;
         }
 
         .management-grid {
@@ -135,8 +136,8 @@ $memberId = $client['member_id'];
             border: none;
             color: var(--premium-text-muted);
             font-weight: 700;
-            font-size: 0.9rem;
-            padding: 12px 24px;
+            font-size: 0.75rem;
+            padding: 10px 20px;
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
             position: relative;
@@ -158,19 +159,19 @@ $memberId = $client['member_id'];
         .content-card {
             background: var(--premium-card) !important;
             border: 1px solid var(--premium-border) !important;
-            border-radius: 28px !important;
+            border-radius: 20px !important;
             overflow: hidden;
             box-shadow: 0 20px 40px rgba(0,0,0,0.3) !important;
         }
 
         .card-header {
-            padding: 24px 32px !important;
+            padding: 16px 24px !important;
             border-bottom: 1px solid var(--premium-border) !important;
             background: transparent !important;
         }
 
         .card-header h3 {
-            font-size: 1.25rem !important;
+            font-size: 1rem !important;
             font-weight: 800 !important;
             letter-spacing: -0.5px !important;
             color: #fff !important;
@@ -180,10 +181,10 @@ $memberId = $client['member_id'];
             width: 100%;
             background: var(--premium-input-bg) !important;
             border: 1px solid var(--premium-border) !important;
-            border-radius: 16px !important;
-            padding: 14px 20px !important;
+            border-radius: 12px !important;
+            padding: 12px 16px !important;
             color: #fff !important;
-            font-size: 0.95rem !important;
+            font-size: 0.85rem !important;
             font-weight: 500 !important;
             transition: all 0.3s ease !important;
             outline: none !important;
@@ -197,22 +198,22 @@ $memberId = $client['member_id'];
 
         label {
             display: block;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             font-weight: 700;
             color: var(--premium-text-muted);
             text-transform: uppercase;
             letter-spacing: 1.2px;
-            margin-bottom: 10px;
-            margin-top: 20px;
+            margin-bottom: 8px;
+            margin-top: 16px;
         }
 
         .btn-primary {
             background: #fff !important;
             color: #000 !important;
             border: none !important;
-            border-radius: 18px !important;
-            padding: 16px 24px !important;
-            font-size: 1rem !important;
+            border-radius: 14px !important;
+            padding: 12px 20px !important;
+            font-size: 0.85rem !important;
             font-weight: 800 !important;
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
@@ -231,10 +232,10 @@ $memberId = $client['member_id'];
             background: var(--premium-input-bg) !important;
             color: #fff !important;
             border: 1px solid var(--premium-border) !important;
-            border-radius: 14px !important;
-            padding: 10px 20px !important;
+            border-radius: 12px !important;
+            padding: 8px 16px !important;
             font-weight: 700 !important;
-            font-size: 0.85rem !important;
+            font-size: 0.75rem !important;
             transition: all 0.2s !important;
         }
 
@@ -254,7 +255,7 @@ $memberId = $client['member_id'];
         }
 
         .fc .fc-toolbar-title {
-            font-size: 1.25rem !important;
+            font-size: 1.1rem !important;
             font-weight: 800 !important;
             letter-spacing: -0.5px;
             color: #fff;
@@ -264,9 +265,9 @@ $memberId = $client['member_id'];
             background: var(--premium-input-bg) !important;
             border: 1px solid var(--premium-border) !important;
             border-radius: 12px !important;
-            padding: 8px 16px !important;
+            padding: 6px 12px !important;
             font-weight: 700 !important;
-            font-size: 0.85rem !important;
+            font-size: 0.75rem !important;
             transition: all 0.2s !important;
         }
 
@@ -276,8 +277,8 @@ $memberId = $client['member_id'];
         }
 
         .fc .fc-col-header-cell {
-            padding: 12px 0 !important;
-            font-size: 0.75rem !important;
+            padding: 8px 0 !important;
+            font-size: 0.65rem !important;
             font-weight: 800 !important;
             text-transform: uppercase;
             letter-spacing: 1px;
@@ -289,9 +290,9 @@ $memberId = $client['member_id'];
         }
 
         .fc-daygrid-day-number {
-            font-size: 0.85rem !important;
+            font-size: 0.75rem !important;
             font-weight: 600 !important;
-            padding: 8px !important;
+            padding: 6px !important;
             color: var(--premium-text-muted) !important;
         }
 
@@ -300,11 +301,11 @@ $memberId = $client['member_id'];
         }
         
         .history-item {
-            padding: 24px;
+            padding: 16px;
             border-bottom: 1px solid var(--premium-border);
             background: rgba(255, 255, 255, 0.01);
-            border-radius: 20px;
-            margin-bottom: 16px;
+            border-radius: 16px;
+            margin-bottom: 12px;
             transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
             border: 1px solid transparent;
         }
@@ -315,9 +316,9 @@ $memberId = $client['member_id'];
         }
 
         .status-badge {
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-size: 0.7rem;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.6rem;
             font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 0.5px;
@@ -335,15 +336,16 @@ $memberId = $client['member_id'];
             right: 32px;
             background: #fff;
             color: #000;
-            padding: 20px 32px;
-            border-radius: 20px;
+            padding: 16px 24px;
+            border-radius: 16px;
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 12px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.4);
             z-index: 10001;
             animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             font-weight: 800;
+            font-size: 0.8rem;
         }
         .fc-event:hover {
             transform: scale(1.02);

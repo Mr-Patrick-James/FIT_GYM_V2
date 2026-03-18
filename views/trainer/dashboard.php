@@ -53,15 +53,15 @@ if ($trainerId) {
             position: fixed;
             bottom: 32px;
             right: 32px;
-            width: 64px;
-            height: 64px;
+            width: 48px;
+            height: 48px;
             background: #fff;
             color: #000;
-            border-radius: 20px;
+            border-radius: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
+            font-size: 1.2rem;
             cursor: pointer;
             box-shadow: 0 10px 30px rgba(255, 255, 255, 0.2);
             z-index: 999;
@@ -84,10 +84,10 @@ if ($trainerId) {
             right: -4px;
             background: #ef4444;
             color: #fff;
-            font-size: 0.7rem;
+            font-size: 0.6rem;
             font-weight: 800;
-            width: 22px;
-            height: 22px;
+            width: 18px;
+            height: 18px;
             border-radius: 50%;
             display: none;
             align-items: center;
@@ -112,7 +112,7 @@ if ($trainerId) {
         }
 
         #notificationsModal .modal-header h3 {
-            font-size: 1.5rem !important;
+            font-size: 1.1rem !important;
             font-weight: 800 !important;
             letter-spacing: -0.5px;
             display: flex;
@@ -128,9 +128,9 @@ if ($trainerId) {
         }
 
         .notif-tab-btn {
-            padding: 10px 20px;
-            border-radius: 14px;
-            font-size: 0.85rem;
+            padding: 8px 16px;
+            border-radius: 12px;
+            font-size: 0.75rem;
             font-weight: 700;
             color: var(--premium-text-muted);
             background: transparent;
@@ -190,9 +190,9 @@ if ($trainerId) {
         }
 
         .date-tile {
-            width: 50px;
-            height: 50px;
-            border-radius: 16px;
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -349,14 +349,14 @@ if ($trainerId) {
                         </div>
                     <?php else: ?>
                         <?php foreach ($recentActivity as $act): ?>
-                            <div style="padding: 16px; border-bottom: 1px solid var(--dark-border); display: flex; justify-content: space-between; align-items: flex-start;">
+                            <div style="padding: 12px; border-bottom: 1px solid var(--dark-border); display: flex; justify-content: space-between; align-items: flex-start;">
                                 <div>
-                                    <h4 style="font-weight: 700; margin-bottom: 4px;"><?php echo htmlspecialchars($act['member_name']); ?></h4>
-                                    <p style="font-size: 0.85rem; color: var(--dark-text-secondary);"><?php echo htmlspecialchars($act['remarks']); ?></p>
+                                    <h4 style="font-weight: 700; margin-bottom: 4px; font-size: 0.85rem;"><?php echo htmlspecialchars($act['member_name']); ?></h4>
+                                    <p style="font-size: 0.7rem; color: var(--dark-text-secondary);"><?php echo htmlspecialchars($act['remarks']); ?></p>
                                 </div>
                                 <div style="text-align: right;">
-                                    <span style="display: block; font-size: 0.85rem; font-weight: 800; color: var(--primary);"><?php echo $act['weight'] ? $act['weight'] . ' kg' : ''; ?></span>
-                                    <span style="font-size: 0.75rem; color: #555;"><?php echo date('M d, Y', strtotime($act['logged_at'])); ?></span>
+                                    <span style="display: block; font-size: 0.75rem; font-weight: 800; color: var(--primary);"><?php echo $act['weight'] ? $act['weight'] . ' kg' : ''; ?></span>
+                                    <span style="font-size: 0.65rem; color: #555;"><?php echo date('M d, Y', strtotime($act['logged_at'])); ?></span>
                                 </div>
                             </div>
                         <?php endforeach; ?>
@@ -447,15 +447,15 @@ if ($trainerId) {
                     }
                     
                     list.innerHTML = data.data.map(pkg => `
-                        <div style="padding: 16px; border-bottom: 1px solid var(--dark-border); display: flex; align-items: center; gap: 15px;">
-                            <div style="width: 40px; height: 40px; border-radius: 8px; background: var(--glass); display: flex; align-items: center; justify-content: center; color: var(--primary);">
-                                <i class="fas fa-dumbbell"></i>
+                        <div style="padding: 12px; border-bottom: 1px solid var(--dark-border); display: flex; align-items: center; gap: 12px;">
+                            <div style="width: 32px; height: 32px; border-radius: 8px; background: var(--glass); display: flex; align-items: center; justify-content: center; color: var(--primary);">
+                                <i class="fas fa-dumbbell" style="font-size: 0.8rem;"></i>
                             </div>
                             <div style="flex: 1;">
-                                <h4 style="font-weight: 700;">${pkg.name}</h4>
-                                <p style="font-size: 0.8rem; color: var(--dark-text-secondary);">${pkg.duration} • ₱${parseFloat(pkg.price).toLocaleString()}</p>
+                                <h4 style="font-weight: 700; font-size: 0.85rem;">${pkg.name}</h4>
+                                <p style="font-size: 0.7rem; color: var(--dark-text-secondary);">${pkg.duration} • ₱${parseFloat(pkg.price).toLocaleString()}</p>
                             </div>
-                            <div class="status-badge status-verified" style="font-size: 0.7rem;">Active</div>
+                            <div class="status-badge status-verified" style="font-size: 0.65rem; padding: 4px 8px;">Active</div>
                         </div>
                     `).join('');
                 }
@@ -505,11 +505,11 @@ if ($trainerId) {
                     } else {
                         list.innerHTML = data.data.map(n => `
                             <div class="notif-item ${!n.is_read ? 'unread' : ''}" onclick="markAsRead(${n.id})">
-                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
-                                    <h4 style="font-size: 0.95rem; font-weight: 700; color: ${n.type === 'assignment' ? 'var(--primary)' : '#fff'};">${n.title}</h4>
-                                    <span style="font-size: 0.7rem; font-weight: 600; color: var(--premium-text-muted); opacity: 0.6;">${new Date(n.created_at).toLocaleDateString()}</span>
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
+                                    <h4 style="font-size: 0.8rem; font-weight: 700; color: ${n.type === 'assignment' ? 'var(--primary)' : '#fff'};">${n.title}</h4>
+                                    <span style="font-size: 0.6rem; font-weight: 600; color: var(--premium-text-muted); opacity: 0.6;">${new Date(n.created_at).toLocaleDateString()}</span>
                                 </div>
-                                <p style="font-size: 0.85rem; color: var(--premium-text-muted); line-height: 1.5;">${n.message}</p>
+                                <p style="font-size: 0.75rem; color: var(--premium-text-muted); line-height: 1.5;">${n.message}</p>
                             </div>
                         `).join('');
                     }
@@ -526,19 +526,19 @@ if ($trainerId) {
                             const date = new Date(s.start);
                             const isToday = date.toDateString() === new Date().toDateString();
                             return `
-                                <div class="schedule-item">
-                                    <div class="date-tile ${isToday ? 'today' : ''}">
-                                        <span style="font-size: 0.6rem; font-weight: 800; text-transform: uppercase;">${date.toLocaleDateString('en-US', { month: 'short' })}</span>
-                                        <span style="font-size: 1.1rem; font-weight: 900; line-height: 1;">${date.getDate()}</span>
+                                <div class="schedule-item" style="padding: 12px 24px;">
+                                    <div class="date-tile ${isToday ? 'today' : ''}" style="width: 36px; height: 36px;">
+                                        <span style="font-size: 0.5rem; font-weight: 800; text-transform: uppercase;">${date.toLocaleDateString('en-US', { month: 'short' })}</span>
+                                        <span style="font-size: 0.9rem; font-weight: 900; line-height: 1;">${date.getDate()}</span>
                                     </div>
                                     <div style="flex: 1;">
-                                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
-                                            <h4 style="font-size: 0.95rem; font-weight: 700; color: #fff;">${s.title}</h4>
-                                            ${isToday ? '<span style="font-size: 0.65rem; background: rgba(34, 197, 94, 0.1); color: #22c55e; padding: 4px 10px; border-radius: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">Today</span>' : ''}
+                                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2px;">
+                                            <h4 style="font-size: 0.8rem; font-weight: 700; color: #fff;">${s.title}</h4>
+                                            ${isToday ? '<span style="font-size: 0.55rem; background: rgba(34, 197, 94, 0.1); color: #22c55e; padding: 2px 8px; border-radius: 6px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">Today</span>' : ''}
                                         </div>
-                                        <div style="display: flex; flex-direction: column; gap: 4px;">
-                                            <p style="font-size: 0.85rem; color: var(--primary); font-weight: 700;">${s.member_name}</p>
-                                            <p style="font-size: 0.8rem; color: var(--premium-text-muted); display: flex; align-items: center; gap: 6px;">
+                                        <div style="display: flex; flex-direction: column; gap: 2px;">
+                                            <p style="font-size: 0.75rem; color: var(--primary); font-weight: 700;">${s.member_name}</p>
+                                            <p style="font-size: 0.7rem; color: var(--premium-text-muted); display: flex; align-items: center; gap: 6px;">
                                                 <i class="far fa-clock" style="opacity: 0.5;"></i> ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                             </p>
                                         </div>

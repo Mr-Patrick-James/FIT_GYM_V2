@@ -78,7 +78,7 @@
 
 .package-header h3 {
     font-weight: 900;
-    font-size: 1.1rem;
+    font-size: 0.9rem;
     color: var(--primary);
     letter-spacing: -0.3px;
     margin: 0;
@@ -103,7 +103,7 @@
 
 .package-description {
     color: var(--dark-text-secondary);
-    font-size: 0.8rem;
+    font-size: 0.7rem;
     line-height: 1.5;
     margin: 0;
     position: relative;
@@ -111,8 +111,7 @@
 }
 
 .package-details {
-    display: flex;
-    flex-direction: column;
+    display: flex; flex-direction: column;
     gap: 10px;
     position: relative;
     z-index: 2;
@@ -123,7 +122,7 @@
     align-items: center;
     gap: 10px;
     color: var(--dark-text);
-    font-size: 0.85rem;
+    font-size: 0.75rem;
     font-weight: 500;
     padding: 8px 12px;
     background: rgba(255, 255, 255, 0.03);
@@ -141,7 +140,7 @@
 .package-detail-item i {
     color: var(--primary);
     width: 18px;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -161,7 +160,7 @@
 
 .package-price-large {
     font-weight: 900;
-    font-size: 1.3rem;
+    font-size: 0.8rem;
     color: var(--primary);
     letter-spacing: -0.5px;
     line-height: 1;
@@ -183,7 +182,7 @@
 .package-footer .btn-primary {
     flex-shrink: 0;
     padding: 10px 20px;
-    font-size: 0.85rem;
+    font-size: 0.75rem;
     font-weight: 700;
     white-space: nowrap;
     box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15);
@@ -224,15 +223,15 @@
     }
     
     .package-header h3 {
-        font-size: 1rem;
+        font-size: 0.85rem;
     }
     
     .package-description {
-        font-size: 0.75rem;
+        font-size: 0.65rem;
     }
     
     .package-detail-item {
-        font-size: 0.8rem;
+        font-size: 0.7rem;
         padding: 6px 10px;
     }
 }

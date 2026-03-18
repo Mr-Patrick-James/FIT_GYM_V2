@@ -44,7 +44,7 @@ $conn->close();
         }
 
         #notificationsModal .modal-header h3 {
-            font-size: 1.5rem !important;
+            font-size: 1.1rem !important;
             font-weight: 800 !important;
             letter-spacing: -0.5px;
             display: flex;
@@ -60,9 +60,9 @@ $conn->close();
         }
 
         .notif-tab-btn {
-            padding: 10px 20px;
-            border-radius: 14px;
-            font-size: 0.85rem;
+            padding: 8px 16px;
+            border-radius: 12px;
+            font-size: 0.75rem;
             font-weight: 700;
             color: var(--premium-text-muted);
             background: transparent;
@@ -122,9 +122,9 @@ $conn->close();
         }
 
         .date-tile {
-            width: 50px;
-            height: 50px;
-            border-radius: 16px;
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -145,15 +145,15 @@ $conn->close();
             position: fixed;
             bottom: 32px;
             right: 32px;
-            width: 64px;
-            height: 64px;
+            width: 48px;
+            height: 48px;
             background: #fff;
             color: #000;
-            border-radius: 20px;
+            border-radius: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
+            font-size: 1.2rem;
             cursor: pointer;
             box-shadow: 0 10px 30px rgba(255, 255, 255, 0.2);
             z-index: 999;
@@ -176,10 +176,10 @@ $conn->close();
             right: -4px;
             background: #ef4444;
             color: #fff;
-            font-size: 0.7rem;
+            font-size: 0.6rem;
             font-weight: 800;
-            width: 22px;
-            height: 22px;
+            width: 18px;
+            height: 18px;
             border-radius: 50%;
             display: none;
             align-items: center;
@@ -266,9 +266,9 @@ $conn->close();
                 <h3>Trainer Details</h3>
             </div>
             
-            <div style="padding: 32px;">
-                <div style="display: flex; align-items: center; gap: 32px; margin-bottom: 40px; padding-bottom: 32px; border-bottom: 1px solid var(--dark-border);">
-                    <div class="admin-avatar" style="width: 100px; height: 100px; font-size: 2.5rem; background: var(--glass); color: var(--primary);">
+            <div style="padding: 24px;">
+                <div style="display: flex; align-items: center; gap: 24px; margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid var(--dark-border);">
+                    <div class="admin-avatar" style="width: 64px; height: 64px; font-size: 1.5rem; background: var(--glass); color: var(--primary);">
                         <?php 
                             $initials = '';
                             foreach(explode(' ', $user['name']) as $word) {
@@ -278,30 +278,30 @@ $conn->close();
                         ?>
                     </div>
                     <div>
-                        <h2 style="font-weight: 800; margin-bottom: 8px;"><?php echo htmlspecialchars($user['name']); ?></h2>
-                        <p style="color: var(--primary); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; font-size: 0.9rem;"><?php echo htmlspecialchars($trainer['specialization']); ?></p>
-                        <p style="color: var(--dark-text-secondary); margin-top: 4px;"><?php echo htmlspecialchars($user['email']); ?></p>
+                        <h2 style="font-weight: 800; margin-bottom: 4px; font-size: 1.2rem;"><?php echo htmlspecialchars($user['name']); ?></h2>
+                        <p style="color: var(--primary); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; font-size: 0.75rem;"><?php echo htmlspecialchars($trainer['specialization']); ?></p>
+                        <p style="color: var(--dark-text-secondary); margin-top: 4px; font-size: 0.75rem;"><?php echo htmlspecialchars($user['email']); ?></p>
                     </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px;">
-                    <div style="display: flex; flex-direction: column; gap: 8px;">
-                        <span style="color: var(--dark-text-secondary); font-size: 0.8rem; font-weight: 700; text-transform: uppercase;">Contact Number</span>
-                        <span style="font-weight: 600;"><?php echo htmlspecialchars($user['contact'] ?: 'Not provided'); ?></span>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                        <span style="color: var(--dark-text-secondary); font-size: 0.7rem; font-weight: 700; text-transform: uppercase;">Contact Number</span>
+                        <span style="font-weight: 600; font-size: 0.85rem;"><?php echo htmlspecialchars($user['contact'] ?: 'Not provided'); ?></span>
                     </div>
-                    <div style="display: flex; flex-direction: column; gap: 8px;">
-                        <span style="color: var(--dark-text-secondary); font-size: 0.8rem; font-weight: 700; text-transform: uppercase;">Trainer ID</span>
-                        <span style="font-weight: 600;">TRN-<?php echo str_pad($trainer['id'], 4, '0', STR_PAD_LEFT); ?></span>
+                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                        <span style="color: var(--dark-text-secondary); font-size: 0.7rem; font-weight: 700; text-transform: uppercase;">Trainer ID</span>
+                        <span style="font-weight: 600; font-size: 0.85rem;">TRN-<?php echo str_pad($trainer['id'], 4, '0', STR_PAD_LEFT); ?></span>
                     </div>
-                    <div style="grid-column: 1/-1; display: flex; flex-direction: column; gap: 8px;">
-                        <span style="color: var(--dark-text-secondary); font-size: 0.8rem; font-weight: 700; text-transform: uppercase;">Professional Bio</span>
-                        <p style="line-height: 1.6; color: var(--dark-text-secondary);"><?php echo nl2br(htmlspecialchars($trainer['bio'] ?: 'No bio provided. Update your profile via the admin panel.')); ?></p>
+                    <div style="grid-column: 1/-1; display: flex; flex-direction: column; gap: 6px;">
+                        <span style="color: var(--dark-text-secondary); font-size: 0.7rem; font-weight: 700; text-transform: uppercase;">Professional Bio</span>
+                        <p style="line-height: 1.6; color: var(--dark-text-secondary); font-size: 0.8rem;"><?php echo nl2br(htmlspecialchars($trainer['bio'] ?: 'No bio provided. Update your profile via the admin panel.')); ?></p>
                     </div>
                 </div>
                 
-                <div style="margin-top: 48px; padding: 24px; background: var(--glass); border-radius: 12px; border: 1px solid var(--glass-border);">
-                    <h4 style="margin-bottom: 16px;"><i class="fas fa-lock" style="margin-right: 8px;"></i> Security</h4>
-                    <p style="font-size: 0.9rem; color: var(--dark-text-secondary); margin-bottom: 20px;">Want to change your password or update your contact information? Please contact the gym administrator.</p>
+                <div style="margin-top: 32px; padding: 20px; background: var(--glass); border-radius: 12px; border: 1px solid var(--glass-border);">
+                    <h4 style="margin-bottom: 12px; font-size: 0.9rem;"><i class="fas fa-lock" style="margin-right: 8px;"></i> Security</h4>
+                    <p style="font-size: 0.75rem; color: var(--dark-text-secondary); margin-bottom: 16px;">Want to change your password or update your contact information? Please contact the gym administrator.</p>
                 </div>
             </div>
         </div>

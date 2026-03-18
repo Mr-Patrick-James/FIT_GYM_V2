@@ -64,9 +64,9 @@ $user = getCurrentUser();
             background: var(--premium-input-bg) !important;
             border: 1px solid var(--premium-border) !important;
             border-radius: 14px !important;
-            padding: 14px 18px !important;
+            padding: 12px 16px !important;
             color: #fff !important;
-            font-size: 0.9rem !important;
+            font-size: 0.8rem !important;
             font-weight: 500 !important;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
             width: 100%;
@@ -86,20 +86,20 @@ $user = getCurrentUser();
 
         .form-group label {
             display: block;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             font-weight: 800;
             color: var(--premium-text-muted);
             text-transform: uppercase;
             letter-spacing: 1px;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             margin-left: 4px;
         }
 
         .action-btn-modern {
-            padding: 12px 24px;
-            border-radius: 14px;
+            padding: 10px 20px;
+            border-radius: 12px;
             font-weight: 700;
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             display: flex;
             align-items: center;
             gap: 10px;
@@ -162,7 +162,7 @@ $user = getCurrentUser();
         }
 
         #notificationsModal .modal-header h3 {
-            font-size: 1.5rem !important;
+            font-size: 1.1rem !important;
             font-weight: 800 !important;
             letter-spacing: -0.5px;
             display: flex;
@@ -178,9 +178,9 @@ $user = getCurrentUser();
         }
 
         .notif-tab-btn {
-            padding: 10px 20px;
-            border-radius: 14px;
-            font-size: 0.85rem;
+            padding: 8px 16px;
+            border-radius: 12px;
+            font-size: 0.75rem;
             font-weight: 700;
             color: var(--premium-text-muted);
             background: transparent;
@@ -240,9 +240,9 @@ $user = getCurrentUser();
         }
 
         .date-tile {
-            width: 50px;
-            height: 50px;
-            border-radius: 16px;
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -263,15 +263,15 @@ $user = getCurrentUser();
             position: fixed;
             bottom: 32px;
             right: 32px;
-            width: 64px;
-            height: 64px;
+            width: 48px;
+            height: 48px;
             background: #fff;
             color: #000;
-            border-radius: 20px;
+            border-radius: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
+            font-size: 1.2rem;
             cursor: pointer;
             box-shadow: 0 10px 30px rgba(255, 255, 255, 0.2);
             z-index: 999;
@@ -294,10 +294,10 @@ $user = getCurrentUser();
             right: -4px;
             background: #ef4444;
             color: #fff;
-            font-size: 0.7rem;
+            font-size: 0.6rem;
             font-weight: 800;
-            width: 22px;
-            height: 22px;
+            width: 18px;
+            height: 18px;
             border-radius: 50%;
             display: none;
             align-items: center;
@@ -437,39 +437,39 @@ $user = getCurrentUser();
     <!-- Exercise Management Modal -->
     <div class="modal-overlay" id="exerciseModal">
         <div class="modal" style="max-width: 960px !important;">
-            <div class="modal-header" style="padding: 40px 40px 24px; border: none; background: transparent;">
+            <div class="modal-header" style="padding: 32px 32px 16px; border: none; background: transparent;">
                 <div>
-                    <h3 id="exerciseModalTitle" style="font-size: 1.8rem; font-weight: 800; color: #fff; letter-spacing: -0.5px;">Manage Package Exercises</h3>
-                    <p id="exerciseModalSubtitle" style="font-size: 0.9rem; font-weight: 500; color: var(--premium-text-muted); margin-top: 4px;"></p>
+                    <h3 id="exerciseModalTitle" style="font-size: 1.25rem; font-weight: 800; color: #fff; letter-spacing: -0.5px;">Manage Package Exercises</h3>
+                    <p id="exerciseModalSubtitle" style="font-size: 0.75rem; font-weight: 500; color: var(--premium-text-muted); margin-top: 4px;"></p>
                 </div>
                 <button class="close-modal" onclick="closeExerciseModal()">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             
-            <div class="modal-body" style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 40px; padding: 0 40px 40px;">
+            <div class="modal-body" style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 32px; padding: 0 32px 32px;">
                 <!-- Current Plan List (Left) -->
                 <div>
-                    <h4 style="font-size: 1.1rem; font-weight: 800; color: #fff; margin-bottom: 8px;">Current Package Plan</h4>
-                    <p style="font-size: 0.8rem; color: var(--premium-text-muted); margin-bottom: 24px; display: flex; align-items: center; gap: 8px;">
+                    <h4 style="font-size: 0.95rem; font-weight: 800; color: #fff; margin-bottom: 8px;">Current Package Plan</h4>
+                    <p style="font-size: 0.7rem; color: var(--premium-text-muted); margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
                         <i class="fas fa-info-circle"></i> View and manage the exercises assigned to this package.
                     </p>
-                    <div id="packageExercisesList" style="max-height: 480px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding-right: 8px;">
+                    <div id="packageExercisesList" style="max-height: 480px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 8px;">
                         <!-- Populated by JS -->
                     </div>
                 </div>
 
                 <!-- Add Exercise Form (Right) -->
-                <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--premium-border); border-radius: 24px; padding: 32px;">
-                    <h4 style="font-size: 0.9rem; font-weight: 800; color: #fff; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 24px;">Add Exercise to Plan</h4>
-                    <form id="addExerciseForm" style="display: flex; flex-direction: column; gap: 20px;">
+                <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--premium-border); border-radius: 20px; padding: 24px;">
+                    <h4 style="font-size: 0.8rem; font-weight: 800; color: #fff; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px;">Add Exercise to Plan</h4>
+                    <form id="addExerciseForm" style="display: flex; flex-direction: column; gap: 16px;">
                         <div class="form-group">
                             <label>Select Exercise</label>
                             <select id="exerciseSelect" required class="modern-input">
                                 <option value="">Choose an exercise...</option>
                             </select>
                         </div>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                             <div class="form-group">
                                 <label>Sets</label>
                                 <input type="number" id="exerciseSets" value="3" min="1" class="modern-input">
@@ -481,15 +481,15 @@ $user = getCurrentUser();
                         </div>
                         <div class="form-group">
                             <label>Notes</label>
-                            <textarea id="exerciseNotes" rows="4" placeholder="Special instructions..." class="modern-input" style="resize: none;"></textarea>
+                            <textarea id="exerciseNotes" rows="4" placeholder="Special instructions..." class="modern-input" style="resize: none; font-size: 0.8rem;"></textarea>
                         </div>
-                        <button type="submit" class="action-btn-modern primary" style="width: 100%; justify-content: center; margin-top: 12px; border-radius: 12px;">
+                        <button type="submit" class="action-btn-modern primary" style="width: 100%; justify-content: center; margin-top: 8px; border-radius: 12px;">
                             <i class="fas fa-plus"></i> Add to Plan
                         </button>
                     </form>
                 </div>
             </div>
-            <div class="modal-footer" style="padding: 24px 40px; border-top: 1px solid var(--premium-border); text-align: right; background: rgba(0,0,0,0.1);">
+            <div class="modal-footer" style="padding: 20px 32px; border-top: 1px solid var(--premium-border); text-align: right; background: rgba(0,0,0,0.1);">
                 <button class="action-btn-modern" style="background: var(--premium-input-bg); color: #fff;" onclick="closeExerciseModal()">Close Window</button>
             </div>
         </div>
@@ -667,25 +667,25 @@ $user = getCurrentUser();
             }
 
             grid.innerHTML = allPackages.map(pkg => `
-                <div class="content-card package-card" style="padding: 24px; border-top: 4px solid ${pkg.is_trainer_assisted ? 'var(--primary)' : 'var(--dark-border)'};">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+                <div class="content-card package-card" style="padding: 20px; border-top: 4px solid ${pkg.is_trainer_assisted ? 'var(--primary)' : 'var(--dark-border)'};">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
                         <div>
-                            <h3 style="font-weight: 800; color: var(--primary);">${pkg.name}</h3>
-                            <p style="font-size: 0.85rem; color: var(--dark-text-secondary);">${pkg.duration}</p>
+                            <h3 style="font-weight: 800; color: var(--primary); font-size: 0.95rem;">${pkg.name}</h3>
+                            <p style="font-size: 0.7rem; color: var(--dark-text-secondary);">${pkg.duration}</p>
                         </div>
                         ${pkg.is_trainer_assisted ? 
-                            '<span class="status-badge" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.2);"><i class="fas fa-user-tie"></i> Assisted</span>' : 
-                            '<span class="status-badge" style="background: var(--glass); color: var(--dark-text-secondary);">Basic</span>'
+                            '<span class="status-badge" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.2); font-size: 0.6rem; padding: 2px 8px;"><i class="fas fa-user-tie"></i> Assisted</span>' : 
+                            '<span class="status-badge" style="background: var(--glass); color: var(--dark-text-secondary); font-size: 0.6rem; padding: 2px 8px;">Basic</span>'
                         }
                     </div>
                     
-                    <div style="margin-bottom: 24px; min-height: 60px;">
-                        <p style="font-size: 0.9rem; color: var(--dark-text-secondary); line-height: 1.5;">
+                    <div style="margin-bottom: 20px; min-height: 50px;">
+                        <p style="font-size: 0.75rem; color: var(--dark-text-secondary); line-height: 1.5;">
                             ${pkg.description ? pkg.description.split('\n')[0] : 'No description available.'}
                         </p>
                     </div>
 
-                    <button class="card-btn primary" style="width: 100%; justify-content: center; padding: 12px;" onclick="managePackageExercises(${pkg.id}, '${pkg.name}')">
+                    <button class="card-btn primary" style="width: 100%; justify-content: center; padding: 10px; font-size: 0.75rem;" onclick="managePackageExercises(${pkg.id}, '${pkg.name}')">
                         <i class="fas fa-tasks"></i> Manage Exercises
                     </button>
                 </div>
@@ -710,14 +710,14 @@ $user = getCurrentUser();
                 
                 if (data.success && data.data.length > 0) {
                     list.innerHTML = data.data.map(ex => `
-                        <div class="template-card" style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--premium-border); border-radius: 12px; padding: 12px; display: flex; align-items: center; gap: 12px;">
-                            <img src="${ex.image_url || '../../assets/img/exercise-placeholder.jpg'}" style="width: 44px; height: 44px; border-radius: 8px; object-fit: cover; background: #000;">
+                        <div class="template-card" style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--premium-border); border-radius: 12px; padding: 10px; display: flex; align-items: center; gap: 10px;">
+                            <img src="${ex.image_url || '../../assets/img/exercise-placeholder.jpg'}" style="width: 36px; height: 36px; border-radius: 6px; object-fit: cover; background: #000;">
                             <div style="flex: 1;">
-                                <h5 style="font-size: 0.9rem; font-weight: 700; color: #fff; margin-bottom: 2px;">${ex.name}</h5>
-                                <p style="font-size: 0.75rem; color: var(--premium-text-muted); font-weight: 500;">${ex.sets} Sets × ${ex.reps} reps</p>
+                                <h5 style="font-size: 0.8rem; font-weight: 700; color: #fff; margin-bottom: 2px;">${ex.name}</h5>
+                                <p style="font-size: 0.65rem; color: var(--premium-text-muted); font-weight: 500;">${ex.sets} Sets × ${ex.reps} reps</p>
                             </div>
-                            <button class="action-btn-modern danger" style="padding: 0; width: 32px; height: 32px; justify-content: center; border-radius: 8px;" onclick="removeExercise(${ex.id})" title="Remove">
-                                <i class="fas fa-trash-alt" style="font-size: 0.8rem;"></i>
+                            <button class="action-btn-modern danger" style="padding: 0; width: 28px; height: 28px; justify-content: center; border-radius: 6px;" onclick="removeExercise(${ex.id})" title="Remove">
+                                <i class="fas fa-trash-alt" style="font-size: 0.75rem;"></i>
                             </button>
                         </div>
                     `).join('');

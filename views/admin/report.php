@@ -117,16 +117,16 @@ $user = getCurrentUser();
                         <i class="fas fa-chevron-down" style="font-size: 0.8rem; margin-left: 8px;"></i>
                     </button>
                     <div class="dropdown-content" id="reportDropdown" style="display: none; position: absolute; right: 0; background: var(--dark-bg-secondary); min-width: 180px; box-shadow: 0 8px 16px rgba(0,0,0,0.3); border-radius: 12px; z-index: 1000; padding: 8px 0; border: 1px solid rgba(255,255,255,0.05);">
-                        <a href="#" onclick="exportFullReport('pdf')" style="color: #fff; padding: 12px 16px; text-decoration: none; display: flex; align-items: center; gap: 12px; font-size: 0.9rem; transition: background 0.2s;">
+                        <a href="#" onclick="exportFullReport('pdf')" style="color: #fff; padding: 12px 16px; text-decoration: none; display: flex; align-items: center; gap: 12px; font-size: 0.75rem; transition: background 0.2s;">
                             <i class="fas fa-file-pdf" style="color: #ef4444;"></i> Download PDF
                         </a>
-                        <a href="#" onclick="exportFullReport('excel')" style="color: #fff; padding: 12px 16px; text-decoration: none; display: flex; align-items: center; gap: 12px; font-size: 0.9rem; transition: background 0.2s;">
+                        <a href="#" onclick="exportFullReport('excel')" style="color: #fff; padding: 12px 16px; text-decoration: none; display: flex; align-items: center; gap: 12px; font-size: 0.75rem; transition: background 0.2s;">
                             <i class="fas fa-file-excel" style="color: #22c55e;"></i> Download Excel
                         </a>
-                        <a href="#" onclick="exportFullReport('docx')" style="color: #fff; padding: 12px 16px; text-decoration: none; display: flex; align-items: center; gap: 12px; font-size: 0.9rem; transition: background 0.2s;">
+                        <a href="#" onclick="exportFullReport('docx')" style="color: #fff; padding: 12px 16px; text-decoration: none; display: flex; align-items: center; gap: 12px; font-size: 0.75rem; transition: background 0.2s;">
                             <i class="fas fa-file-word" style="color: #3b82f6;"></i> Download Word
                         </a>
-                        <a href="#" onclick="exportFullReport('csv')" style="color: #fff; padding: 12px 16px; text-decoration: none; display: flex; align-items: center; gap: 12px; font-size: 0.9rem; transition: background 0.2s;">
+                        <a href="#" onclick="exportFullReport('csv')" style="color: #fff; padding: 12px 16px; text-decoration: none; display: flex; align-items: center; gap: 12px; font-size: 0.75rem; transition: background 0.2s;">
                             <i class="fas fa-file-csv" style="color: #f59e0b;"></i> Download CSV
                         </a>
                     </div>
@@ -162,11 +162,11 @@ $user = getCurrentUser();
             
             <div id="customDateRange" style="display: none; padding: 20px; border-top: 1px solid var(--dark-border); flex-wrap: wrap; gap: 20px;">
                 <div style="flex: 1; min-width: 250px;">
-                    <label style="display: block; margin-bottom: 8px; color: var(--dark-text-secondary); font-size: 0.85rem; font-weight: 700; text-transform: uppercase;">Start Date & Time</label>
+                    <label style="display: block; margin-bottom: 8px; color: var(--dark-text-secondary); font-size: 0.7rem; font-weight: 700; text-transform: uppercase;">Start Date & Time</label>
                     <input type="datetime-local" id="startDate" class="settings-input" style="width: 100%;" onchange="updateAllCharts()">
                 </div>
                 <div style="flex: 1; min-width: 250px;">
-                    <label style="display: block; margin-bottom: 8px; color: var(--dark-text-secondary); font-size: 0.85rem; font-weight: 700; text-transform: uppercase;">End Date & Time</label>
+                    <label style="display: block; margin-bottom: 8px; color: var(--dark-text-secondary); font-size: 0.7rem; font-weight: 700; text-transform: uppercase;">End Date & Time</label>
                     <input type="datetime-local" id="endDate" class="settings-input" style="width: 100%;" onchange="updateAllCharts()">
                 </div>
             </div>
@@ -290,7 +290,7 @@ $user = getCurrentUser();
                 <div class="card-header">
                     <h3>Monthly Comparison</h3>
                     <div class="card-actions">
-                        <select id="monthlyYearSelect" class="card-btn" style="padding: 6px 12px; cursor: pointer; background: var(--dark-bg-secondary); border: 1px solid var(--dark-border); color: #fff; border-radius: 6px; font-size: 0.85rem;" onchange="toggleMonthlyCustomDate()">
+                        <select id="monthlyYearSelect" class="card-btn" style="padding: 6px 12px; cursor: pointer; background: var(--dark-bg-secondary); border: 1px solid var(--dark-border); color: #fff; border-radius: 6px; font-size: 0.7rem;" onchange="toggleMonthlyCustomDate()">
                             <option value="current">Current Year</option>
                             <option value="last">Last Year</option>
                             <option value="custom">Custom Range</option>

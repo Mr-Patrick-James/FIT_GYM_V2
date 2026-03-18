@@ -204,15 +204,15 @@ $user = getCurrentUser();
             
             <div style="display: flex; gap: 16px; flex-wrap: wrap; padding: 20px;">
                 <div style="flex: 1; min-width: 200px;">
-                    <label style="display: block; margin-bottom: 8px; color: var(--dark-text-secondary); font-size: 0.9rem; font-weight: 600;">Package Filter</label>
-                    <select id="packageFilter" class="card-btn" style="width: 100%; padding: 12px 16px; cursor: pointer;">
+                    <label style="display: block; margin-bottom: 8px; color: var(--dark-text-secondary); font-size: 0.75rem; font-weight: 600;">Package Filter</label>
+                    <select id="packageFilter" class="card-btn" style="width: 100%; padding: 8px 12px; cursor: pointer;">
                         <option value="all">All Packages</option>
                     </select>
                 </div>
                 
                 <div style="flex: 1; min-width: 200px;">
-                    <label style="display: block; margin-bottom: 8px; color: var(--dark-text-secondary); font-size: 0.9rem; font-weight: 600;">Sort By</label>
-                    <select id="sortBy" class="card-btn" style="width: 100%; padding: 12px 16px; cursor: pointer;">
+                    <label style="display: block; margin-bottom: 8px; color: var(--dark-text-secondary); font-size: 0.75rem; font-weight: 600;">Sort By</label>
+                    <select id="sortBy" class="card-btn" style="width: 100%; padding: 8px 12px; cursor: pointer;">
                         <option value="date-desc">Date (Newest First)</option>
                         <option value="date-asc">Date (Oldest First)</option>
                         <option value="amount-desc">Amount (High to Low)</option>
@@ -223,8 +223,8 @@ $user = getCurrentUser();
                 </div>
                 
                 <div style="flex: 1; min-width: 200px;">
-                    <label style="display: block; margin-bottom: 8px; color: var(--dark-text-secondary); font-size: 0.9rem; font-weight: 600;">Date Range</label>
-                    <select id="dateRange" class="card-btn" style="width: 100%; padding: 12px 16px; cursor: pointer;">
+                    <label style="display: block; margin-bottom: 8px; color: var(--dark-text-secondary); font-size: 0.75rem; font-weight: 600;">Date Range</label>
+                    <select id="dateRange" class="card-btn" style="width: 100%; padding: 8px 12px; cursor: pointer;">
                         <option value="all">All Time</option>
                         <option value="today">Today</option>
                         <option value="week">This Week</option>
@@ -240,7 +240,7 @@ $user = getCurrentUser();
             <div class="card-header">
                 <h3>All Payments</h3>
                 <div class="card-actions">
-                    <span style="color: var(--dark-text-secondary); font-size: 0.9rem;">
+                    <span style="color: var(--dark-text-secondary); font-size: 0.75rem;">
                         Showing <strong id="showingCount">0</strong> of <strong id="totalCount">0</strong> payments
                     </span>
                 </div>
@@ -316,7 +316,7 @@ $user = getCurrentUser();
                     </div>
                     <div class="detail-group">
                         <label>Payment Amount</label>
-                        <div class="value" id="modalAmount" style="font-size: 1.5rem; font-weight: 800; color: var(--success);">-</div>
+                        <div class="value" id="modalAmount" style="font-size: 1rem; font-weight: 800; color: var(--success);">-</div>
                     </div>
                     <div class="detail-group">
                         <label>Payment Status</label>

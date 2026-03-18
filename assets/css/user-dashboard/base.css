@@ -53,7 +53,7 @@
     background: var(--dark-card);
     border: 2px solid var(--dark-border);
     color: var(--primary);
-    font-size: 1.5rem;
+    font-size: 0.8rem;
     align-items: center;
     justify-content: center;
     cursor: pointer;
@@ -75,6 +75,7 @@ html, body {
 
 body {
     font-family: 'Inter', sans-serif;
+    font-size: 0.8rem;
     background: var(--dark-bg);
     color: var(--dark-text);
     display: flex;
@@ -105,7 +106,7 @@ body {
 
 .logo h1 {
     font-weight: 900;
-    font-size: 1.2rem;
+    font-size: 0.75rem;
     color: var(--primary);
     margin-bottom: 4px;
     letter-spacing: -0.5px;
@@ -157,7 +158,7 @@ body {
 
 .nav-links a i {
     margin-right: 12px;
-    font-size: 1rem;
+    font-size: 0.7rem;
     width: 20px;
     text-align: center;
     transition: var(--transition);
@@ -215,7 +216,7 @@ body {
     align-items: center;
     justify-content: center;
     font-weight: 800;
-    font-size: 1rem;
+    font-size: 0.75rem;
     box-shadow: var(--shadow-lg);
     transition: var(--transition);
 }
@@ -306,8 +307,8 @@ body {
 
 .page-title h1 {
     font-weight: 900;
-    font-size: 2.5rem;
-    margin-bottom: 12px;
+    font-size: 0.9rem;
+    margin-bottom: 8px;
     color: var(--primary);
     word-wrap: break-word;
     overflow-wrap: break-word;
@@ -315,7 +316,7 @@ body {
 
 .page-title p {
     color: var(--dark-text-secondary);
-    font-size: 1rem;
+    font-size: 0.75rem;
     max-width: 600px;
 }
 
@@ -376,7 +377,7 @@ body {
 .stat-card {
     background: var(--dark-card);
     border-radius: var(--radius-xl);
-    padding: 32px;
+    padding: 20px;
     border: 2px solid var(--dark-border);
     transition: var(--transition);
     position: relative;
@@ -403,31 +404,31 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 24px;
+    margin-bottom: 16px;
 }
 
 .stat-icon {
-    width: 64px;
-    height: 64px;
+    width: 48px;
+    height: 48px;
     border-radius: var(--radius-lg);
     background: var(--glass);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.8rem;
+    font-size: 0.8rem;
     color: var(--primary);
 }
 
 .stat-value {
     font-weight: 900;
-    font-size: 3.5rem;
-    margin-bottom: 8px;
+    font-size: 0.75rem;
+    margin-bottom: 4px;
     line-height: 1;
 }
 
 .stat-label {
     color: var(--dark-text-secondary);
-    font-size: 1rem;
+    font-size: 0.75rem;
     font-weight: 500;
 }
 
@@ -446,7 +447,7 @@ body {
 }
 
 .card-header {
-    padding: 28px;
+    padding: 20px;
     border-bottom: 2px solid var(--dark-border);
     display: flex;
     justify-content: space-between;
@@ -455,7 +456,7 @@ body {
 
 .card-header h3 {
     font-weight: 800;
-    font-size: 1.5rem;
+    font-size: 1rem;
 }
 
 .card-actions {
@@ -465,13 +466,13 @@ body {
 }
 
 .card-btn {
-    padding: 10px 20px;
+    padding: 8px 16px;
     background: transparent;
     border: 2px solid var(--dark-border);
     border-radius: var(--radius-full);
     color: var(--dark-text-secondary);
     font-weight: 600;
-    font-size: 0.9rem;
+    font-size: 0.75rem;
     cursor: pointer;
     transition: var(--transition);
     display: flex;
@@ -501,7 +502,7 @@ body {
 
 /* Tables */
 .table-container {
-    padding: 0 28px 28px;
+    padding: 0 20px 20px;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
 }
@@ -514,11 +515,11 @@ table {
 }
 
 th {
-    padding: 20px 16px;
+    padding: 16px 12px;
     text-align: left;
     font-weight: 700;
     color: var(--dark-text-secondary);
-    font-size: 0.85rem;
+    font-size: 0.7rem;
     text-transform: uppercase;
     letter-spacing: 1px;
     border-bottom: 2px solid var(--dark-border);
@@ -526,9 +527,9 @@ th {
 }
 
 td {
-    padding: 22px 16px;
+    padding: 16px 12px;
     border-bottom: 1px solid var(--dark-border);
-    font-size: 0.95rem;
+    font-size: 0.8rem;
     font-weight: 500;
 }
 
@@ -549,9 +550,9 @@ tr:hover td {
 
 /* Status Badges */
 .status-badge {
-    padding: 8px 16px;
+    padding: 6px 12px;
     border-radius: var(--radius-full);
-    font-size: 0.85rem;
+    font-size: 0.7rem;
     font-weight: 700;
     display: inline-flex;
     align-items: center;
@@ -623,7 +624,7 @@ tr:hover td {
     justify-content: center;
     cursor: pointer;
     transition: var(--transition);
-    font-size: 1.1rem;
+    font-size: 0.75rem;
 }
 
 .icon-btn:hover {
@@ -645,9 +646,9 @@ tr:hover td {
 .form-group label {
     display: block;
     color: var(--dark-text-secondary);
-    font-size: 0.85rem;
+    font-size: 0.75rem;
     font-weight: 700;
-    margin-bottom: 12px;
+    margin-bottom: 8px;
     text-transform: uppercase;
     letter-spacing: 1px;
 }
@@ -659,8 +660,8 @@ tr:hover td {
     background: var(--glass);
     border: 2px solid var(--dark-border);
     border-radius: var(--radius-lg);
-    padding: 16px 20px;
-    font-size: 1rem;
+    padding: 12px 16px;
+    font-size: 0.85rem;
     color: var(--primary);
     font-family: inherit;
     transition: var(--transition);
@@ -683,7 +684,7 @@ tr:hover td {
 
 .close-modal i {
     color: inherit;
-    font-size: 1.2rem;
+    font-size: 0.8rem;
     display: block;
 }
 
@@ -709,7 +710,7 @@ tr:hover td {
 }
 
 .file-upload-area i {
-    font-size: 3rem;
+    font-size: 0.8rem;
     color: var(--primary);
     margin-bottom: 16px;
     display: block;
@@ -737,7 +738,7 @@ tr:hover td {
 }
 
 .file-preview-item i {
-    font-size: 1.5rem;
+    font-size: 0.9rem;
     color: var(--primary);
 }
 
@@ -764,11 +765,11 @@ tr:hover td {
 
 /* Buttons */
 .btn {
-    padding: 16px 32px;
+    padding: 12px 24px;
     border-radius: var(--radius-full);
     border: none;
     font-weight: 700;
-    font-size: 1rem;
+    font-size: 0.85rem;
     cursor: pointer;
     transition: var(--transition);
     display: inline-flex;
@@ -826,7 +827,7 @@ tr:hover td {
         border-radius: 12px;
         align-items: center;
         justify-content: center;
-        font-size: 1.3rem;
+        font-size: 0.8rem;
         box-shadow: 0 4px 25px rgba(0,0,0,0.5), 0 0 0 2px rgba(255,255,255,0.1);
         cursor: pointer;
         transition: var(--transition);
@@ -844,7 +845,7 @@ tr:hover td {
     }
 
     .page-title h1 {
-        font-size: 2rem;
+        font-size: 0.8rem;
     }
 }
 
@@ -861,12 +862,12 @@ tr:hover td {
     }
 
     .page-title h1 {
-        font-size: 1.5rem;
+        font-size: 1.2rem;
         margin-bottom: 4px;
     }
 
     .page-title p {
-        font-size: 0.85rem;
+        font-size: 0.7rem;
     }
 
     .stats-grid {
@@ -885,17 +886,17 @@ tr:hover td {
     }
 
     .stat-icon {
-        width: 42px;
-        height: 42px;
-        font-size: 1.2rem;
+        width: 36px;
+        height: 36px;
+        font-size: 1rem;
     }
 
     .stat-value {
-        font-size: 1.6rem;
+        font-size: 0.8rem;
     }
 
     .stat-label {
-        font-size: 0.8rem;
+        font-size: 0.65rem;
     }
 
     .card-header {
@@ -923,7 +924,7 @@ tr:hover td {
     }
 
     .page-title h1 {
-        font-size: 1.4rem;
+        font-size: 0.75rem;
         word-break: break-word;
     }
 
@@ -937,11 +938,11 @@ tr:hover td {
         height: 40px;
         top: 12px;
         left: 12px;
-        font-size: 1.1rem;
+        font-size: 0.8rem;
     }
 
     .stat-value {
-        font-size: 1.6rem;
+        font-size: 1rem;
     }
 
     .stats-grid {
@@ -954,8 +955,8 @@ tr:hover td {
     }
 
     .action-btn {
-        width: 40px;
-        height: 40px;
+        width: 36px;
+        height: 36px;
     }
 }
 

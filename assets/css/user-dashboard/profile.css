@@ -84,7 +84,7 @@
 .detail-value {
     font-weight: 700;
     color: var(--primary);
-    font-size: 0.95rem;
+    font-size: 0.8rem;
 }
 
 /* Membership Status Card Styling */
@@ -95,7 +95,7 @@
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.01));
     border: 2px solid var(--dark-border);
     border-radius: var(--radius-xl);
-    padding: 24px;
+    padding: 16px;
     margin-bottom: 32px;
     transition: var(--transition);
     position: relative;
@@ -120,14 +120,14 @@
 }
 
 .membership-icon {
-    width: 64px;
-    height: 64px;
+    width: 48px;
+    height: 48px;
     background: var(--glass);
     border-radius: var(--radius-lg);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 2rem;
+    font-size: 0.85rem;
     color: var(--primary);
     border: 1px solid var(--glass-border);
     box-shadow: inset 0 0 20px rgba(255,255,255,0.05);
@@ -155,7 +155,7 @@
 }
 
 .membership-value-row h4 {
-    font-size: 1.6rem;
+    font-size: 0.8rem;
     font-weight: 900;
     color: var(--primary);
     margin: 0;
@@ -164,7 +164,7 @@
 
 #profileMembershipPlan {
     margin-top: 6px;
-    font-size: 0.95rem;
+    font-size: 0.8rem;
     color: var(--dark-text-secondary);
     font-weight: 500;
 }
@@ -209,13 +209,13 @@
     }
     
     .membership-icon {
-        width: 54px;
-        height: 54px;
-        font-size: 1.6rem;
+        width: 42px;
+        height: 42px;
+        font-size: 0.85rem;
     }
     
     .membership-value-row h4 {
-        font-size: 1.3rem;
+        font-size: 0.8rem;
     }
 }
 

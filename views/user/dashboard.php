@@ -71,9 +71,9 @@ function getSetting($key, $default = '', $settings = []) {
         }
 
         .survey-header h2, .recommendation-header h2 {
-            font-size: 2rem;
+            font-size: 1.2rem;
             font-weight: 800;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             background: linear-gradient(135deg, #fff 0%, #888 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -81,7 +81,7 @@ function getSetting($key, $default = '', $settings = []) {
 
         .survey-header p, .recommendation-header p {
             color: var(--dark-text-secondary);
-            font-size: 1rem;
+            font-size: 0.75rem;
         }
 
         .survey-body, .recommendation-body {
@@ -99,7 +99,7 @@ function getSetting($key, $default = '', $settings = []) {
 
         .question-label {
             display: block;
-            font-size: 1.1rem;
+            font-size: 0.85rem;
             font-weight: 600;
             margin-bottom: 24px;
             color: #fff;
@@ -115,7 +115,7 @@ function getSetting($key, $default = '', $settings = []) {
         .option-card {
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid var(--dark-border);
-            padding: 24px 16px;
+            padding: 16px 12px;
             border-radius: var(--radius-lg);
             cursor: pointer;
             transition: var(--transition);
@@ -127,14 +127,14 @@ function getSetting($key, $default = '', $settings = []) {
         }
 
         .option-card i {
-            font-size: 1.5rem;
+            font-size: 1.2rem;
             color: var(--dark-text-secondary);
             transition: var(--transition);
         }
 
         .option-card span {
             font-weight: 600;
-            font-size: 0.95rem;
+            font-size: 0.75rem;
         }
 
         .option-card:hover {
@@ -215,13 +215,13 @@ function getSetting($key, $default = '', $settings = []) {
         }
 
         .recommended-package-preview h3 {
-            font-size: 1.8rem;
+            font-size: 1.2rem;
             font-weight: 800;
             margin-bottom: 10px;
         }
 
         .recommended-package-preview .price {
-            font-size: 2rem;
+            font-size: 1.5rem;
             font-weight: 900;
             color: var(--primary);
             margin-bottom: 15px;
@@ -229,6 +229,7 @@ function getSetting($key, $default = '', $settings = []) {
 
         .recommended-package-preview .duration {
             color: var(--dark-text-secondary);
+            font-size: 0.75rem;
             font-weight: 600;
             margin-bottom: 20px;
         }
@@ -269,7 +270,7 @@ function getSetting($key, $default = '', $settings = []) {
             background: transparent;
             color: var(--dark-text-secondary);
             font-weight: 600;
-            font-size: 0.9rem;
+            font-size: 0.75rem;
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -313,14 +314,14 @@ function getSetting($key, $default = '', $settings = []) {
             border-bottom: 1px solid var(--dark-border) !important;
         }
         .fc .fc-col-header-cell-cushion {
-            font-size: 0.8rem;
+            font-size: 0.7rem;
             text-transform: uppercase;
             letter-spacing: 1px;
             color: var(--dark-text-secondary);
             font-weight: 700;
         }
         .fc .fc-daygrid-day-number {
-            font-size: 0.9rem;
+            font-size: 0.75rem;
             font-weight: 600;
             padding: 8px 12px;
             color: var(--dark-text-secondary);
@@ -330,7 +331,7 @@ function getSetting($key, $default = '', $settings = []) {
             font-weight: 800;
         }
         .fc .fc-toolbar-title {
-            font-size: 1.2rem;
+            font-size: 1rem;
             font-weight: 700;
             color: var(--dark-text);
         }
@@ -537,7 +538,7 @@ function getSetting($key, $default = '', $settings = []) {
             background: transparent;
             color: rgba(255, 255, 255, 0.5);
             font-weight: 700;
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             cursor: pointer;
             transition: all 0.3s;
             display: flex;
@@ -636,7 +637,7 @@ function getSetting($key, $default = '', $settings = []) {
             display: flex;
             align-items: center;
             gap: 10px;
-            font-size: 1rem;
+            font-size: 0.85rem;
             font-weight: 600;
             color: var(--dark-text);
         }
@@ -657,7 +658,7 @@ function getSetting($key, $default = '', $settings = []) {
             margin-bottom: 16px;
         }
         .receipt-preview-header h4 {
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             font-weight: 700;
             display: flex;
             align-items: center;
@@ -719,7 +720,7 @@ function getSetting($key, $default = '', $settings = []) {
             text-transform: uppercase;
         }
         .notes-text {
-            font-size: 0.9rem;
+            font-size: 0.75rem;
             color: var(--dark-text);
             line-height: 1.5;
             font-style: italic;
@@ -772,7 +773,7 @@ function getSetting($key, $default = '', $settings = []) {
         }
 
         .package-header h3 {
-            font-size: 1.25rem;
+            font-size: 1rem;
             font-weight: 700;
             color: var(--dark-text);
             margin: 0;
@@ -792,7 +793,7 @@ function getSetting($key, $default = '', $settings = []) {
 
         .package-description {
             color: var(--dark-text-secondary);
-            font-size: 0.85rem;
+            font-size: 0.7rem;
             line-height: 1.5;
             margin-bottom: 20px;
         }
@@ -809,7 +810,7 @@ function getSetting($key, $default = '', $settings = []) {
             align-items: center;
             gap: 10px;
             color: var(--dark-text-secondary);
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             padding: 8px 12px;
             background: rgba(255,255,255,0.02);
             border-radius: 10px;
@@ -832,7 +833,7 @@ function getSetting($key, $default = '', $settings = []) {
         }
 
         .package-price-large {
-            font-size: 1.5rem;
+            font-size: 1.1rem;
             font-weight: 800;
             color: var(--dark-text);
         }
@@ -846,7 +847,7 @@ function getSetting($key, $default = '', $settings = []) {
             height: 40px;
             border-radius: 10px;
             font-weight: 600;
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             padding: 0 16px;
         }
 
@@ -905,11 +906,11 @@ function getSetting($key, $default = '', $settings = []) {
         .exercise-info h4 {
             color: var(--primary);
             margin-bottom: 5px;
-            font-size: 1.1rem;
+            font-size: 0.9rem;
         }
         
         .exercise-category {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             text-transform: uppercase;
             letter-spacing: 1px;
             color: var(--dark-text-secondary);
@@ -928,7 +929,7 @@ function getSetting($key, $default = '', $settings = []) {
             display: flex;
             align-items: center;
             gap: 8px;
-            font-size: 0.9rem;
+            font-size: 0.75rem;
             color: var(--dark-text);
         }
         
@@ -981,7 +982,7 @@ function getSetting($key, $default = '', $settings = []) {
             border: none;
             color: var(--dark-text-secondary);
             font-weight: 600;
-            font-size: 0.9rem;
+            font-size: 0.75rem;
             padding: 8px 4px;
             cursor: pointer;
             transition: all 0.3s;

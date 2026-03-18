@@ -182,8 +182,8 @@ $user = getCurrentUser();
             
             <div style="display: flex; gap: 16px; flex-wrap: wrap; padding: 20px;">
                 <div style="flex: 1; min-width: 200px;">
-                    <label style="display: block; margin-bottom: 8px; color: var(--dark-text-secondary); font-size: 0.9rem; font-weight: 600;">Member Status</label>
-                    <select id="statusFilter" class="card-btn" style="width: 100%; padding: 12px 16px; cursor: pointer;">
+                    <label style="display: block; margin-bottom: 8px; color: var(--dark-text-secondary); font-size: 0.75rem; font-weight: 600;">Member Status</label>
+                    <select id="statusFilter" class="card-btn" style="width: 100%; padding: 8px 12px; cursor: pointer;">
                         <option value="all">All Members</option>
                         <option value="active">Active Members</option>
                         <option value="inactive">Expired Members</option>
@@ -191,8 +191,8 @@ $user = getCurrentUser();
                 </div>
                 
                 <div style="flex: 1; min-width: 200px;">
-                    <label style="display: block; margin-bottom: 8px; color: var(--dark-text-secondary); font-size: 0.9rem; font-weight: 600;">Sort By</label>
-                    <select id="sortBy" class="card-btn" style="width: 100%; padding: 12px 16px; cursor: pointer;">
+                    <label style="display: block; margin-bottom: 8px; color: var(--dark-text-secondary); font-size: 0.75rem; font-weight: 600;">Sort By</label>
+                    <select id="sortBy" class="card-btn" style="width: 100%; padding: 8px 12px; cursor: pointer;">
                         <option value="name-asc">Name (A-Z)</option>
                         <option value="name-desc">Name (Z-A)</option>
                         <option value="bookings-desc">Most Bookings</option>
@@ -210,7 +210,7 @@ $user = getCurrentUser();
             <div class="card-header">
                 <h3>All Members</h3>
                 <div class="card-actions">
-                    <span style="color: var(--dark-text-secondary); font-size: 0.9rem;">
+                    <span style="color: var(--dark-text-secondary); font-size: 0.75rem;">
                         Showing <strong id="showingCount">0</strong> of <strong id="totalCount">0</strong> members
                     </span>
                 </div>
