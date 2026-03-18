@@ -97,6 +97,117 @@ if ($trainerId) {
             animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
+        /* Modern Notification Modal Styling */
+        #notificationsModal .modal {
+            background: #000 !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 32px !important;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+        }
+
+        #notificationsModal .modal-header {
+            padding: 32px 32px 16px !important;
+            background: transparent !important;
+        }
+
+        #notificationsModal .modal-header h3 {
+            font-size: 1.5rem !important;
+            font-weight: 800 !important;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        #notificationsModal .notif-tabs {
+            display: flex;
+            gap: 8px;
+            padding: 0 32px 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .notif-tab-btn {
+            padding: 10px 20px;
+            border-radius: 14px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--premium-text-muted);
+            background: transparent;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .notif-tab-btn:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .notif-tab-btn.active {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .notif-item {
+            padding: 20px 32px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            transition: all 0.2s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .notif-item:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .notif-item.unread::before {
+            content: '';
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 4px;
+            background: #3b82f6;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #3b82f6;
+        }
+
+        .schedule-item {
+            padding: 16px 32px;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            transition: all 0.2s ease;
+        }
+
+        .schedule-item:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .date-tile {
+            width: 50px;
+            height: 50px;
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .date-tile.today {
+            background: #fff;
+            color: #000;
+            border-color: #fff;
+        }
+
         @keyframes bounceIn {
             from { opacity: 0; transform: scale(0.3); }
             to { opacity: 1; transform: scale(1); }
@@ -280,20 +391,36 @@ if ($trainerId) {
 
     <!-- Notifications Modal -->
     <div class="modal-overlay" id="notificationsModal">
-        <div class="modal" style="max-width: 500px;">
+        <div class="modal" style="max-width: 540px;">
             <div class="modal-header">
-                <h3><i class="fas fa-bell"></i> Notifications</h3>
+                <h3><i class="fas fa-bell" style="color: var(--primary);"></i> Notifications</h3>
                 <button class="close-modal" onclick="toggleNotifications()">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            <div class="modal-body">
-                <div id="notificationsList" style="max-height: 400px; overflow-y: auto; padding: 10px;">
-                    <!-- Populated by JS -->
+            
+            <div class="notif-tabs">
+                <button class="notif-tab-btn active" onclick="switchNotifTab('notifs')" id="notifTabNotifs">Updates</button>
+                <button class="notif-tab-btn" onclick="switchNotifTab('schedule')" id="notifTabSchedule">My Schedule</button>
+            </div>
+
+            <div class="modal-body" style="padding: 0;">
+                <div id="notifsTabContent" style="max-height: 480px; overflow-y: auto;">
+                    <div id="notificationsList">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <div id="scheduleTabContent" style="max-height: 480px; overflow-y: auto; display: none;">
+                    <div id="upcomingSessionsList">
+                        <!-- Populated by JS -->
+                    </div>
                 </div>
             </div>
-            <div class="modal-footer" style="padding: 16px 24px; border-top: 1px solid var(--dark-border); text-align: right;">
-                <button class="btn btn-secondary btn-sm" onclick="markAllAsRead()">Mark all as read</button>
+            <div class="modal-footer" style="padding: 24px 32px; border-top: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.2);">
+                <button class="action-btn-modern primary" onclick="markAllAsRead()" style="width: 100%; justify-content: center; height: 48px; border-radius: 16px;">
+                    <i class="fas fa-check-double"></i> Mark all as read
+                </button>
             </div>
         </div>
     </div>
@@ -340,45 +467,98 @@ if ($trainerId) {
 
         async function loadNotifications() {
             const list = document.getElementById('notificationsList');
+            const sessionList = document.getElementById('upcomingSessionsList');
             const badge = document.getElementById('notifBadge');
             const badgeFloat = document.getElementById('notifBadgeFloat');
             
             try {
+                // 1. Fetch Notifications
                 const response = await fetch('../../api/notifications/get-all.php');
                 const data = await response.json();
                 
+                // 2. Fetch Upcoming Sessions
+                const sResp = await fetch('../../api/trainers/get-sessions.php?upcoming=1');
+                const sessions = await sResp.json();
+                
                 if (data.success) {
                     const unreadCount = data.data.filter(n => !n.is_read).length;
+                    const upcomingCount = sessions.length;
+                    const totalBadgeCount = unreadCount + upcomingCount;
                     
                     // Update header badge
-                    badge.textContent = unreadCount;
-                    badge.style.display = unreadCount > 0 ? 'flex' : 'none';
+                    badge.textContent = totalBadgeCount;
+                    badge.style.display = totalBadgeCount > 0 ? 'flex' : 'none';
                     
                     // Update float badge
                     if (badgeFloat) {
-                        badgeFloat.textContent = unreadCount;
-                        badgeFloat.style.display = unreadCount > 0 ? 'flex' : 'none';
+                        badgeFloat.textContent = totalBadgeCount;
+                        badgeFloat.style.display = totalBadgeCount > 0 ? 'flex' : 'none';
                     }
                     
+                    // Render Notifications
                     if (data.data.length === 0) {
-                        list.innerHTML = '<p style="text-align: center; padding: 20px; color: var(--dark-text-secondary);">No notifications yet.</p>';
-                        return;
-                    }
-                    
-                    list.innerHTML = data.data.map(n => `
-                        <div style="padding: 15px; border-bottom: 1px solid var(--dark-border); position: relative; ${!n.is_read ? 'background: rgba(59, 130, 246, 0.05);' : ''}" onclick="markAsRead(${n.id})">
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                                <strong style="font-size: 0.9rem; color: ${n.type === 'assignment' ? 'var(--primary)' : 'white'};">${n.title}</strong>
-                                <span style="font-size: 0.7rem; color: #555;">${new Date(n.created_at).toLocaleDateString()}</span>
+                        list.innerHTML = `
+                            <div style="text-align: center; padding: 60px 40px; color: var(--premium-text-muted);">
+                                <i class="fas fa-bell-slash" style="font-size: 3rem; opacity: 0.1; margin-bottom: 16px; display: block;"></i>
+                                <p style="font-weight: 600;">No updates yet.</p>
+                            </div>`;
+                    } else {
+                        list.innerHTML = data.data.map(n => `
+                            <div class="notif-item ${!n.is_read ? 'unread' : ''}" onclick="markAsRead(${n.id})">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+                                    <h4 style="font-size: 0.95rem; font-weight: 700; color: ${n.type === 'assignment' ? 'var(--primary)' : '#fff'};">${n.title}</h4>
+                                    <span style="font-size: 0.7rem; font-weight: 600; color: var(--premium-text-muted); opacity: 0.6;">${new Date(n.created_at).toLocaleDateString()}</span>
+                                </div>
+                                <p style="font-size: 0.85rem; color: var(--premium-text-muted); line-height: 1.5;">${n.message}</p>
                             </div>
-                            <p style="font-size: 0.85rem; color: var(--dark-text-secondary); line-height: 1.4;">${n.message}</p>
-                            ${!n.is_read ? '<div style="position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--primary);"></div>' : ''}
-                        </div>
-                    `).join('');
+                        `).join('');
+                    }
+
+                    // Render Upcoming Sessions
+                    if (sessions.length === 0) {
+                        sessionList.innerHTML = `
+                            <div style="text-align: center; padding: 60px 40px; color: var(--premium-text-muted);">
+                                <i class="fas fa-calendar-day" style="font-size: 3rem; opacity: 0.1; margin-bottom: 16px; display: block;"></i>
+                                <p style="font-weight: 600;">No upcoming sessions.</p>
+                            </div>`;
+                    } else {
+                        sessionList.innerHTML = sessions.map(s => {
+                            const date = new Date(s.start);
+                            const isToday = date.toDateString() === new Date().toDateString();
+                            return `
+                                <div class="schedule-item">
+                                    <div class="date-tile ${isToday ? 'today' : ''}">
+                                        <span style="font-size: 0.6rem; font-weight: 800; text-transform: uppercase;">${date.toLocaleDateString('en-US', { month: 'short' })}</span>
+                                        <span style="font-size: 1.1rem; font-weight: 900; line-height: 1;">${date.getDate()}</span>
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
+                                            <h4 style="font-size: 0.95rem; font-weight: 700; color: #fff;">${s.title}</h4>
+                                            ${isToday ? '<span style="font-size: 0.65rem; background: rgba(34, 197, 94, 0.1); color: #22c55e; padding: 4px 10px; border-radius: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">Today</span>' : ''}
+                                        </div>
+                                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                                            <p style="font-size: 0.85rem; color: var(--primary); font-weight: 700;">${s.member_name}</p>
+                                            <p style="font-size: 0.8rem; color: var(--premium-text-muted); display: flex; align-items: center; gap: 6px;">
+                                                <i class="far fa-clock" style="opacity: 0.5;"></i> ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('');
+                    }
                 }
             } catch (error) {
                 console.error('Error loading notifications:', error);
             }
+        }
+
+        function switchNotifTab(tab) {
+            const isNotifs = tab === 'notifs';
+            document.getElementById('notifTabNotifs').classList.toggle('active', isNotifs);
+            document.getElementById('notifTabSchedule').classList.toggle('active', !isNotifs);
+            document.getElementById('notifsTabContent').style.display = isNotifs ? 'block' : 'none';
+            document.getElementById('scheduleTabContent').style.display = isNotifs ? 'none' : 'block';
         }
 
         async function markAsRead(id) {

@@ -1969,6 +1969,34 @@ tr:hover td {
     -moz-appearance: none;
 }
 
+/* Fix for dropdown options blending in dark mode */
+select option {
+    background-color: #1a1a1a !important; /* Solid dark background */
+    color: #ffffff !important;
+    padding: 12px !important;
+}
+
+body.light-mode select option {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+}
+
+.form-group select {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Cpath fill='%23ffffff' fill-opacity='0.7' d='M7 10L2 5h10z'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 16px center !important;
+    background-size: 14px !important;
+    padding-right: 42px !important;
+    cursor: pointer !important;
+}
+
+body.light-mode .form-group select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Cpath fill='%23000000' fill-opacity='0.6' d='M7 10L2 5h10z'/%3E%3C/svg%3E") !important;
+}
+
 .form-group input[type="text"]:focus,
 .form-group input[type="email"]:focus,
 .form-group input[type="tel"]:focus,

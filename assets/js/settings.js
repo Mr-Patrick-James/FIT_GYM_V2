@@ -303,6 +303,9 @@ function populateSettings() {
     const adminEmailEl = document.getElementById('adminEmail');
     if (adminEmailEl) adminEmailEl.value = settingsData.account.adminEmail;
 
+    // Load sub-admins
+    loadAdmins();
+
     // Render gallery
     renderGallery();
     renderHeroGallery();
@@ -551,6 +554,118 @@ async function handleLogout() {
     } catch (error) {
         console.error('Logout error:', error);
         window.location.href = '../../index.php';
+    }
+}
+
+// Manage Admins logic
+async function loadAdmins() {
+    const list = document.getElementById('admins-list');
+    if (!list) return;
+
+    try {
+        const response = await fetch('../../api/settings/manage-admins.php');
+        const result = await response.json();
+
+        if (result.success) {
+            if (result.data.length === 0) {
+                list.innerHTML = `
+                    <div style="grid-column: 1/-1; text-align: center; padding: 40px; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px dashed var(--premium-border);">
+                        <i class="fas fa-users-cog" style="font-size: 2.5rem; color: var(--premium-text-muted); opacity: 0.2; margin-bottom: 16px; display: block;"></i>
+                        <p style="color: var(--premium-text-muted);">No sub-admins found. Add one to help manage the gym.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = result.data.map(admin => {
+                const initials = admin.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+                return `
+                    <div class="admin-item-card">
+                        <div class="admin-item-avatar">${initials}</div>
+                        <div class="admin-item-info">
+                            <div class="admin-item-name">${admin.name}</div>
+                            <div class="admin-item-email">${admin.email}</div>
+                            <div class="admin-item-badge">Sub-Admin</div>
+                        </div>
+                        <div class="admin-item-actions">
+                            <button class="admin-action-btn" onclick="removeAdmin(${admin.id}, '${admin.name}')" title="Remove Admin">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+    } catch (e) {
+        console.error('Error loading admins:', e);
+    }
+}
+
+function openAddAdminModal() {
+    document.getElementById('addAdminModal').classList.add('active');
+    document.getElementById('addAdminForm').reset();
+}
+
+function closeAddAdminModal() {
+    document.getElementById('addAdminModal').classList.remove('active');
+}
+
+async function handleAddAdmin(e) {
+    e.preventDefault();
+    const name = document.getElementById('newAdminName').value.trim();
+    const email = document.getElementById('newAdminEmail').value.trim();
+    const password = document.getElementById('newAdminPassword').value;
+
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+
+    try {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
+
+        const response = await fetch('../../api/settings/manage-admins.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, email, password })
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            showNotification('Admin account created successfully!', 'success');
+            closeAddAdminModal();
+            loadAdmins();
+        } else {
+            showNotification(result.message, 'warning');
+        }
+    } catch (e) {
+        console.error('Error adding admin:', e);
+        showNotification('Failed to create admin account', 'error');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+    }
+}
+
+async function removeAdmin(id, name) {
+    if (!confirm(`Are you sure you want to remove ${name} as an administrator? They will no longer be able to access the admin panel.`)) return;
+
+    try {
+        const response = await fetch('../../api/settings/manage-admins.php', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id })
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            showNotification('Admin removed successfully', 'success');
+            loadAdmins();
+        } else {
+            showNotification(result.message, 'warning');
+        }
+    } catch (e) {
+        console.error('Error removing admin:', e);
+        showNotification('Failed to remove admin', 'error');
     }
 }
 

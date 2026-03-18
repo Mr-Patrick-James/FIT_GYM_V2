@@ -18,6 +18,94 @@ $user = getCurrentUser();
     
     <!-- Dashboard Styles -->
     <link rel="stylesheet" href="../../assets/css/dashboard.css?v=1.6">
+
+    <style>
+        /* Admin Card Styles */
+        .admin-item-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--premium-border);
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            transition: all 0.3s ease;
+        }
+        .admin-item-card:hover {
+            transform: translateY(-4px);
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+        .admin-item-avatar {
+            width: 48px;
+            height: 48px;
+            background: var(--primary);
+            color: white;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.1rem;
+        }
+        .admin-item-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .admin-item-name {
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .admin-item-email {
+            font-size: 0.8rem;
+            color: var(--premium-text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .admin-item-badge {
+            font-size: 0.65rem;
+            font-weight: 800;
+            padding: 4px 10px;
+            border-radius: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+            margin-top: 4px;
+            display: inline-block;
+        }
+        .admin-item-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .admin-action-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+            background: rgba(255,255,255,0.05);
+            color: var(--premium-text-muted);
+        }
+        .admin-action-btn:hover {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border-color: rgba(239, 68, 68, 0.2);
+        }
+
+        .package-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+    </style>
     
     <!-- Apply theme immediately before page renders to prevent flash -->
     <script>
@@ -581,6 +669,27 @@ $user = getCurrentUser();
                                 Save Changes
                             </button>
                         </div>
+
+                        <!-- Manage Sub-Admins Section -->
+                        <div class="settings-subsection" style="margin-top: 48px; border-top: 1px solid var(--premium-border); padding-top: 32px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                                <div>
+                                    <h3 style="margin-bottom: 4px;">Manage Administrators</h3>
+                                    <p class="settings-hint">Add sub-admins to help manage the gym when you're away</p>
+                                </div>
+                                <button class="btn btn-primary" onclick="openAddAdminModal()">
+                                    <i class="fas fa-user-plus"></i> Add Admin
+                                </button>
+                            </div>
+
+                            <div id="admins-list" class="admins-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+                                <!-- Admins will be listed here -->
+                                <div style="grid-column: 1/-1; text-align: center; padding: 40px; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px dashed var(--premium-border);">
+                                    <i class="fas fa-users-cog" style="font-size: 2.5rem; color: var(--premium-text-muted); opacity: 0.2; margin-bottom: 16px; display: block;"></i>
+                                    <p style="color: var(--premium-text-muted);">Loading administrators...</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -630,6 +739,53 @@ $user = getCurrentUser();
             </p>
         </div>
     </main>
+
+    <!-- Add Admin Modal -->
+    <div class="modal-overlay" id="addAdminModal">
+        <div class="modal" style="max-width: 500px !important;">
+            <div class="modal-header" style="padding: 40px 40px 24px; border: none; background: transparent; display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                        <div style="width: 32px; height: 32px; background: var(--primary); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #fff;">
+                            <i class="fas fa-user-plus" style="font-size: 0.9rem;"></i>
+                        </div>
+                        <h3 style="font-size: 1.75rem; font-weight: 800; color: #fff; letter-spacing: -0.8px;">Add Sub-Admin</h3>
+                    </div>
+                    <p style="color: var(--premium-text-muted); font-size: 0.95rem; font-weight: 500;">Create a new administrator account</p>
+                </div>
+                <button class="close-modal" onclick="closeAddAdminModal()" style="background: var(--premium-input-bg); border: 1px solid var(--premium-border); width: 44px; height: 44px; border-radius: 16px; color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body" style="padding: 0 40px 40px;">
+                <form id="addAdminForm" onsubmit="handleAddAdmin(event)" style="display: flex; flex-direction: column; gap: 24px;">
+                    <div class="form-group">
+                        <label>Full Name</label>
+                        <input type="text" id="newAdminName" required class="modern-input" placeholder="e.g. John Doe">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Email Address</label>
+                        <input type="email" id="newAdminEmail" required class="modern-input" placeholder="e.g. john@example.com">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Temporary Password</label>
+                        <input type="password" id="newAdminPassword" required class="modern-input" placeholder="Must be at least 6 characters">
+                        <p class="settings-hint" style="margin-top: 8px;">The sub-admin can change this after logging in.</p>
+                    </div>
+                    
+                    <div style="margin-top: 12px;">
+                        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 16px; border-radius: 16px; font-weight: 800; font-size: 1rem;">
+                            <i class="fas fa-user-check"></i>
+                            Create Admin Account
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
     <!-- Theme Script -->
     <script src="../../assets/js/theme.js"></script>

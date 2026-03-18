@@ -19,11 +19,15 @@ if ($_SESSION['user_role'] === 'trainer') {
     $trainerId = $res ? $res['id'] : null;
 }
 
-$query = "SELECT * FROM trainer_sessions WHERE 1=1";
-if ($booking_id > 0) $query .= " AND booking_id = " . (int)$booking_id;
-if ($trainerId) $query .= " AND trainer_id = " . (int)$trainerId;
-if ($upcoming) $query .= " AND session_date >= CURDATE() AND status = 'scheduled'";
-$query .= " ORDER BY session_date ASC, session_time ASC";
+$query = "SELECT ts.*, u.name as member_name 
+          FROM trainer_sessions ts
+          JOIN bookings b ON ts.booking_id = b.id
+          JOIN users u ON b.user_id = u.id
+          WHERE 1=1";
+if ($booking_id > 0) $query .= " AND ts.booking_id = " . (int)$booking_id;
+if ($trainerId) $query .= " AND ts.trainer_id = " . (int)$trainerId;
+if ($upcoming) $query .= " AND ts.session_date >= CURDATE() AND ts.status = 'scheduled'";
+$query .= " ORDER BY ts.session_date ASC, ts.session_time ASC";
 
 $result = $conn->query($query);
 $sessions = [];
@@ -60,6 +64,7 @@ while ($row = $result->fetch_assoc()) {
 
     $sessions[] = [
         'id' => $row['id'],
+        'member_name' => $row['member_name'],
         'title' => $row['title'] ?: ($row['type'] === 'rest_day' ? 'Rest Day' : 'Workout Session'),
         'start' => $row['session_date'] . ($row['type'] === 'rest_day' ? '' : 'T' . $row['session_time']),
         'end' => $row['type'] === 'rest_day' ? null : date('Y-m-d\TH:i:s', strtotime($row['session_date'] . ' ' . $row['session_time'] . ' + ' . $row['duration'] . ' minutes')),
