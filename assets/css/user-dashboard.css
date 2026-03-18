@@ -79,14 +79,14 @@ body {
 
 .logo h1 {
     font-weight: 900;
-    font-size: 2rem;
+    font-size: 1.2rem;
     color: var(--primary);
-    margin-bottom: 8px;
+    margin-bottom: 4px;
     letter-spacing: -0.5px;
 }
 
 .logo p {
-    font-size: 0.85rem;
+    font-size: 0.65rem;
     color: var(--dark-text-secondary);
     letter-spacing: 1.5px;
     text-transform: uppercase;
@@ -106,12 +106,13 @@ body {
 .nav-links a {
     color: var(--dark-text-secondary);
     text-decoration: none;
-    padding: 16px 20px;
+    padding: 12px 16px;
     border-radius: var(--radius-md);
     display: flex;
     align-items: center;
     transition: var(--transition);
     font-weight: 500;
+    font-size: 0.75rem;
     position: relative;
     overflow: hidden;
 }
@@ -129,9 +130,9 @@ body {
 }
 
 .nav-links a i {
-    margin-right: 16px;
-    font-size: 1.2rem;
-    width: 24px;
+    margin-right: 12px;
+    font-size: 1rem;
+    width: 20px;
     text-align: center;
     transition: var(--transition);
 }
@@ -160,27 +161,27 @@ body {
     margin-left: auto;
     background: var(--primary);
     color: var(--dark-bg);
-    font-size: 0.75rem;
-    padding: 4px 10px;
+    font-size: 0.65rem;
+    padding: 2px 8px;
     border-radius: var(--radius-full);
     font-weight: 700;
-    min-width: 24px;
+    min-width: 20px;
     text-align: center;
 }
 
 /* User Profile */
 .user-profile {
-    padding: 24px 32px;
+    padding: 16px 24px;
     border-top: 1px solid var(--dark-border);
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
     transition: var(--transition);
 }
 
 .user-avatar {
-    width: 52px;
-    height: 52px;
+    width: 40px;
+    height: 40px;
     background: var(--primary);
     color: var(--dark-bg);
     border-radius: var(--radius-lg);
@@ -188,7 +189,7 @@ body {
     align-items: center;
     justify-content: center;
     font-weight: 800;
-    font-size: 1.3rem;
+    font-size: 1rem;
     box-shadow: var(--shadow-lg);
     transition: var(--transition);
 }
@@ -199,12 +200,13 @@ body {
 
 .user-info h4 {
     font-weight: 700;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
     color: var(--primary);
+    font-size: 0.8rem;
 }
 
 .user-info p {
-    font-size: 0.85rem;
+    font-size: 0.7rem;
     color: var(--dark-text-secondary);
 }
 
