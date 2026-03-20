@@ -97,8 +97,9 @@ CREATE TABLE IF NOT EXISTS `email_configs` (
 -- Dumping data for table `email_configs`
 --
 
-INSERT INTO `email_configs` (`id`, `name`, `smtp_host`, `smtp_port`, `smtp_username`, `smtp_password`, `from_email`, `from_name`, `is_active`, `is_default`, `created_at`, `updated_at`) VALUES
-(2, 'Primary Gmail', 'smtp.gmail.com', 587, 'belugaw6@gmail.com', 'qjinidnxxfcdyvqo', 'belugaw6@gmail.com', 'Martinez Fitness', 1, 1, '2026-01-23 04:51:58', '2026-01-23 04:51:58');
+-- INSERT INTO `email_configs` (`id`, `name`, `smtp_host`, `smtp_port`, `smtp_username`, `smtp_password`, `from_email`, `from_name`, `is_active`, `is_default`, `created_at`, `updated_at`) VALUES
+-- (2, 'Primary Gmail', 'smtp.gmail.com', 587, 'your-email@gmail.com', 'your-app-password', 'your-email@gmail.com', 'Martinez Fitness', 1, 1, NOW(), NOW());
+-- NOTE: Configure email settings through the admin dashboard after installation
 
 -- --------------------------------------------------------
 
@@ -244,12 +245,12 @@ CREATE TABLE IF NOT EXISTS `gym_settings` (
 --
 
 INSERT INTO `gym_settings` (`id`, `setting_key`, `setting_value`, `created_at`, `updated_at`) VALUES
-(1, 'gym_name', 'Martinez Fitness Gym', '2026-02-05 13:43:33', '2026-02-05 13:43:33'),
-(2, 'gym_address', 'Apitong, Naujan, Oriental Mindoro', '2026-02-05 13:43:33', '2026-02-27 09:06:02'),
-(3, 'gym_contact', '0917-123-4567', '2026-02-05 13:43:33', '2026-02-05 13:43:33'),
-(4, 'gym_email', 'ventiletos12@gmail.com', '2026-02-05 13:43:33', '2026-03-01 14:15:10'),
-(5, 'gcash_number', '0956-081-82580', '2026-02-05 13:43:33', '2026-02-09 15:39:27'),
-(6, 'gcash_name', 'JE*BE*N M.', '2026-02-05 13:43:33', '2026-02-05 14:08:16'),
+(1, 'gym_name', 'Martinez Fitness Gym', NOW(), NOW()),
+(2, 'gym_address', '123 Fitness Ave, Metro Manila', NOW(), NOW()),
+(3, 'gym_contact', '0917-123-4567', NOW(), NOW()),
+(4, 'gym_email', 'info@martinezfitness.com', NOW(), NOW()),
+(5, 'gcash_number', '0917-XXX-XXXX', NOW(), NOW()),
+(6, 'gcash_name', 'Gym Owner Name', NOW(), NOW()),
 (7, 'gcash_qr_path', 'uploads/settings/gcash_qr_1770301417.jpg', '2026-02-05 13:43:33', '2026-02-05 14:23:37'),
 (8, 'payment_instructions', 'Please send payment via GCash to the number above. Include your name and booking reference in the payment notes.', '2026-02-05 13:43:33', '2026-02-05 13:43:33'),
 (9, 'about_title', 'About Martinez Fitness', '2026-02-09 15:00:24', '2026-02-09 15:00:24'),

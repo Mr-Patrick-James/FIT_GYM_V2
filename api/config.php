@@ -32,16 +32,16 @@ $is_local = true; // Set to true for WAMP, false for InfinityFree
 
 if ($is_local) {
     // LOCAL WAMP SETTINGS
-    define('DB_HOST', 'localhost');
-    define('DB_USER', 'root');
-    define('DB_PASS', '');
-    define('DB_NAME', 'fitpay_gym');
+    define('DB_HOST', getEnvVar('DB_HOST', 'localhost'));
+    define('DB_USER', getEnvVar('DB_USER', 'root'));
+    define('DB_PASS', getEnvVar('DB_PASS', ''));
+    define('DB_NAME', getEnvVar('DB_NAME', 'fitpay_gym'));
 } else {
-    // REMOTE INFINITYFREE SETTINGS
-    define('DB_HOST', 'sql109.infinityfree.com');
-    define('DB_USER', 'if0_40968761');
-    define('DB_PASS', 'griGWq3JFaJgda2');
-    define('DB_NAME', 'if0_40968761_fitpay_gym');
+    // REMOTE INFINITYFREE SETTINGS - Use environment variables for security
+    define('DB_HOST', getEnvVar('DB_HOST', 'sql109.infinityfree.com'));
+    define('DB_USER', getEnvVar('DB_USER', 'if0_40968761'));
+    define('DB_PASS', getEnvVar('DB_PASS', ''));
+    define('DB_NAME', getEnvVar('DB_NAME', 'if0_40968761_fitpay_gym'));
 }
 
 // ============================================

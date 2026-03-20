@@ -1,0 +1,115 @@
+# Environment files
+.env
+.env.local
+.env.production
+
+# Composer
+/vendor/
+composer.phar
+composer.lock
+
+# Uploads (user-generated content)
+/assets/uploads/exercises/*.jpg
+/assets/uploads/exercises/*.jpeg
+/assets/uploads/exercises/*.png
+/assets/uploads/exercises/*.gif
+/assets/uploads/exercises/*.webp
+/assets/uploads/exercises/*.avif
+/api/uploads/receipts/*.jpg
+/api/uploads/receipts/*.jpeg
+/api/uploads/receipts/*.png
+/api/uploads/receipts/*.pdf
+/api/uploads/receipts/*.html
+uploads/settings/*.jpg
+uploads/settings/*.jpeg
+uploads/settings/*.png
+uploads/settings/*.webp
+
+# Keep directory structure but ignore files
+!assets/uploads/exercises/.gitkeep
+!api/uploads/receipts/.gitkeep
+
+# Logs and debugging
+/debug/*.log
+/debug/*.txt
+*.log
+error_log
+php_errors.log
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.cache
+*.bak
+*.old
+
+# Database dumps (except schema)
+*.sql.gz
+*.sql.zip
+backup_*.sql
+dump_*.sql
+
+# System files
+.htaccess.backup
+php.ini.backup
+
+# Node modules (if using any frontend build tools)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Build files
+/dist/
+/build/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Desktop.ini
+
+# PHPStorm
+.idea/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# NetBeans
+nbproject/
+
+# Eclipse
+.project
+.buildpath
+.settings/
+
+# Backup files
+*~
+*.bak
+*.backup
+*.old
+
+# Sensitive configuration
+config.local.php
+database.local.php
+
+# Test files
+/tests/coverage/
+phpunit.xml
+.phpunit.result.cache

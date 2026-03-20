@@ -41,7 +41,7 @@ section {
 }
 
 .section-title {
-    font-size: 3rem;
+    font-size: 2rem;
     font-weight: 900;
     text-transform: uppercase;
     margin-bottom: 15px;
@@ -49,7 +49,7 @@ section {
 }
 
 .section-subtitle {
-    font-size: 1.1rem;
+    font-size: 0.9rem;
     color: #888;
     max-width: 600px;
     margin: 0 auto;
@@ -299,7 +299,7 @@ section {
 }
 
 .package-name {
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     font-weight: 800;
     margin-bottom: 20px;
     text-transform: uppercase;
@@ -310,17 +310,17 @@ section {
 }
 
 .package-price .currency {
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     font-weight: 700;
 }
 
 .package-price .amount {
-    font-size: 3.5rem;
+    font-size: 2.5rem;
     font-weight: 900;
 }
 
 .package-price .duration {
-    font-size: 1rem;
+    font-size: 0.85rem;
     color: #888;
 }
 
@@ -337,7 +337,7 @@ section {
 
 .package-features li {
     margin-bottom: 12px;
-    font-size: 0.95rem;
+    font-size: 0.85rem;
     display: flex;
     align-items: center;
     gap: 10px;
@@ -380,7 +380,7 @@ section {
 }
 
 .about-text p {
-    font-size: 1.1rem;
+    font-size: 0.95rem;
     line-height: 1.8;
     color: #aaa;
     margin-bottom: 25px;
@@ -393,13 +393,13 @@ section {
 }
 
 .stat-item h4 {
-    font-size: 2.5rem;
+    font-size: 2rem;
     font-weight: 900;
     margin-bottom: 5px;
 }
 
 .stat-item p {
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     color: #888;
     text-transform: uppercase;
     letter-spacing: 1px;
@@ -433,10 +433,11 @@ footer {
     color: #888;
     max-width: 300px;
     line-height: 1.6;
+    font-size: 0.9rem;
 }
 
 .footer-links h4, .footer-contact h4 {
-    font-size: 1.2rem;
+    font-size: 1rem;
     font-weight: 800;
     text-transform: uppercase;
     margin-bottom: 25px;
@@ -444,6 +445,7 @@ footer {
 
 .footer-links ul li, .footer-contact ul li {
     margin-bottom: 15px;
+    font-size: 0.85rem;
 }
 
 .footer-links ul li a {
@@ -486,7 +488,7 @@ footer {
 
 @media (max-width: 768px) {
     .section-title {
-        font-size: 2.2rem;
+        font-size: 1.5rem;
     }
     .footer-grid {
         grid-template-columns: 1fr;
@@ -496,7 +498,7 @@ footer {
         gap: 20px;
     }
     .stat-item h4 {
-        font-size: 2rem;
+        font-size: 1.5rem;
     }
 }
 
@@ -660,7 +662,7 @@ header {
 }
 
 .big-text {
-    font-size: clamp(3.5rem, 12vw, 9rem);
+    font-size: clamp(2.5rem, 10vw, 6rem);
     font-weight: 900;
     text-transform: uppercase;
     line-height: 0.85;
@@ -670,7 +672,7 @@ header {
 
 .script-text {
     font-family: 'Great Vibes', cursive;
-    font-size: clamp(3rem, 10vw, 7rem);
+    font-size: clamp(2rem, 8vw, 5rem);
     color: var(--primary);
     margin: -20px 0;
     transform: rotate(-5deg);
@@ -683,9 +685,9 @@ header {
     background: white;
     color: black;
     border: none;
-    padding: 15px 40px;
+    padding: 12px 35px;
     border-radius: 50px;
-    font-size: 1.2rem;
+    font-size: 1rem;
     font-weight: 900;
     text-transform: uppercase;
     display: inline-flex;

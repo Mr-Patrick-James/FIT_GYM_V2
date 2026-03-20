@@ -281,11 +281,11 @@ $user = getCurrentUser();
                     </div>
                     <div class="trend">
                         <i class="fas fa-arrow-up"></i>
-                        <span id="regularTrend">0%</span>
+                        <span id="activeTrend">0%</span>
                     </div>
                 </div>
-                <div class="stat-value" id="regularBookings">0</div>
-                <div class="stat-label">Regular Members</div>
+                <div class="stat-value" id="activeBookings">0</div>
+                <div class="stat-label">Active Members</div>
             </div>
             
             <div class="stat-card">

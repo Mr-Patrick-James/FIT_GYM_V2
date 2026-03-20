@@ -32,29 +32,7 @@ try {
         $activeMemberCount = $row['total'];
     }
 
-    // Fetch exercises for featured plans
-    $featuredPlans = [];
-    $planResult = $conn->query("
-        SELECT 
-            p.id as package_id, 
-            p.name as package_name, 
-            e.name as exercise_name, 
-            e.category, 
-            e.image_url,
-            pe.sets, 
-            pe.reps 
-        FROM packages p
-        JOIN package_exercises pe ON p.id = pe.package_id
-        JOIN exercises e ON pe.exercise_id = e.id
-        WHERE p.is_active = 1 AND p.name != 'WHO Health & Fitness Plan'
-        ORDER BY p.id, e.name
-    ");
-    if ($planResult) {
-        while ($row = $planResult->fetch_assoc()) {
-            $featuredPlans[$row['package_id']]['name'] = $row['package_name'];
-            $featuredPlans[$row['package_id']]['exercises'][] = $row;
-        }
-    }
+    // Featured plans removed - no longer displayed on landing page
 
     // --- AUTO-SETUP WHO PLAN ---
     // Check if WHO plan exists, if not, create it
@@ -193,64 +171,6 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
     </section>
 
 
-
-    <!-- Featured Plans Showcase -->
-    <section class="featured-plans-section" id="featured-plans">
-        <div class="container">
-            <div class="section-header">
-                <h2 class="section-title">Membership Workout Plans</h2>
-                <p class="section-subtitle">Take a sneak peek at the routines we've prepared for you</p>
-            </div>
-
-            <?php if (empty($featuredPlans)): ?>
-                <div style="text-align: center; color: #888; padding: 40px;">
-                    <i class="fas fa-dumbbell" style="font-size: 3rem; margin-bottom: 20px; opacity: 0.3;"></i>
-                    <p>Plans are being curated. Join now to get notified!</p>
-                </div>
-            <?php else: ?>
-                <div class="plans-showcase-grid">
-                    <?php foreach ($featuredPlans as $pkgId => $plan): ?>
-                        <div class="plan-card">
-                            <div class="plan-header">
-                                <h3 class="plan-title"><?php echo htmlspecialchars($plan['name']); ?></h3>
-                                <span class="exercise-count"><?php echo count($plan['exercises']); ?> Exercises</span>
-                            </div>
-                            
-                            <div class="plan-exercises-preview">
-                                <?php foreach (array_slice($plan['exercises'], 0, 3) as $ex): ?>
-                                    <div class="plan-exercise-item">
-                                        <div class="ex-thumb">
-                                            <?php if ($ex['image_url']): ?>
-                                                <img src="<?php echo htmlspecialchars(strpos($ex['image_url'], 'http') === 0 ? $ex['image_url'] : 'assets/uploads/exercises/'.basename($ex['image_url'])); ?>" alt="<?php echo htmlspecialchars($ex['exercise_name']); ?>">
-                                            <?php else: ?>
-                                                <i class="fas fa-image"></i>
-                                            <?php endif; ?>
-                                        </div>
-                                        <div class="ex-info">
-                                            <h4><?php echo htmlspecialchars($ex['exercise_name']); ?></h4>
-                                            <p><?php echo htmlspecialchars($ex['sets']); ?> Sets × <?php echo htmlspecialchars($ex['reps']); ?></p>
-                                        </div>
-                                    </div>
-                                <?php endforeach; ?>
-                                
-                                <?php if (count($plan['exercises']) > 3): ?>
-                                    <div class="more-exercises">
-                                        + <?php echo count($plan['exercises']) - 3; ?> more exercises
-                                    </div>
-                                <?php endif; ?>
-                            </div>
-                            
-                            <div class="plan-footer">
-                                <button class="view-full-plan-btn" onclick="showHomePlanModal(<?php echo $pkgId; ?>)">
-                                    View Full Routine
-                                </button>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            <?php endif; ?>
-        </div>
-    </section>
 
     <!-- Packages Section -->
     <section class="packages-section" id="packages">
@@ -508,36 +428,7 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
         </div>
     </div>
 
-    <!-- Exercise Plan Preview Modal -->
-    <div class="modal-overlay" id="homePlanModal">
-        <div class="auth-card" style="max-width: 800px; max-height: 90vh; overflow-y: auto; padding: 40px;">
-            <button class="close-modal" onclick="closeHomePlanModal()" style="z-index: 100;"><i class="fa-solid fa-xmark"></i></button>
-            
-            <div id="homePlanHeader" style="margin-bottom: 30px;">
-                <h2 id="homePlanTitle" style="font-size: 2rem; margin-bottom: 10px;">Plan Routine</h2>
-                <p id="homePlanSubtitle" style="color: #888;">Explore the exercises in this membership plan</p>
-            </div>
 
-            <div id="homePlanWhoRationale" style="margin-bottom: 30px; display: none;">
-                <!-- Populated by JS -->
-            </div>
-
-            <div id="homePlanExercises" class="plan-exercises-grid" style="display: grid; gap: 20px;">
-                <!-- Populated by JS -->
-            </div>
-            
-            <div style="margin-top: 40px; text-align: center;">
-                <button class="auth-btn" onclick="closeHomePlanModal(); openModal('signup')" style="width: auto; padding: 15px 40px;">
-                    Start This Plan Now
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // Pass PHP data to JavaScript
-        const featuredPlans = <?php echo json_encode($featuredPlans); ?>;
-    </script>
     <script src="assets/js/main.js?v=1.2"></script>
 
 </body>

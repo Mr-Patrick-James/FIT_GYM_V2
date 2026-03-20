@@ -317,9 +317,9 @@ function updateStats() {
     const pendingBookings = allBookings.filter(b => b.status === 'pending').length;
     const verifiedBookings = allBookings.filter(b => b.status === 'verified').length;
     
-    // Walk-in vs Regular breakdown
+    // Walk-in vs Active Members breakdown
     const walkinBookings = allBookings.filter(b => b.is_walkin).length;
-    const regularBookings = allBookings.filter(b => !b.is_walkin).length;
+    const activeBookings = allBookings.filter(b => !b.is_walkin).length;
     
     // Calculate total revenue
     let totalRevenue = 0;
@@ -338,13 +338,13 @@ function updateStats() {
     
     // Update booking type breakdown (if elements exist)
     const walkinStatElement = document.getElementById('walkinBookings');
-    const regularStatElement = document.getElementById('regularBookings');
+    const activeStatElement = document.getElementById('activeBookings');
     
     if (walkinStatElement) {
         walkinStatElement.textContent = walkinBookings;
     }
-    if (regularStatElement) {
-        regularStatElement.textContent = regularBookings;
+    if (activeStatElement) {
+        activeStatElement.textContent = activeBookings;
     }
     
     // Update badges
