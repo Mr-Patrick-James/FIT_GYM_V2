@@ -1578,7 +1578,8 @@ function getSetting($key, $default = '', $settings = []) {
                             
                             <div class="form-group">
                                 <label>Contact Number <span style="color: var(--warning);">*</span></label>
-                                <input type="tel" id="bookingContact" placeholder="0917-123-4567" required>
+                                <input type="tel" id="bookingContact" placeholder="09171234567" maxlength="11" pattern="[0-9]{11}" title="Please enter exactly 11 digits" required>
+                                <small style="color: var(--dark-text-secondary); font-size: 0.75rem; margin-top: 4px; display: block;">Enter 11 digits only (e.g., 09171234567)</small>
                             </div>
                             
                             <div class="form-group">
@@ -1637,6 +1638,34 @@ function getSetting($key, $default = '', $settings = []) {
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upgrade Modal -->
+    <div class="modal-overlay" id="upgradeModal">
+        <div class="modal" style="max-width: 900px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-arrow-up"></i> Upgrade Your Membership</h3>
+                <button class="close-modal" onclick="closeUpgradeModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body" style="padding: 24px;">
+                <p style="color: var(--dark-text-secondary); margin-bottom: 24px; text-align: center;">
+                    Choose a higher-tier package to unlock more benefits and features
+                </p>
+                
+                <div id="upgradePlansContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; max-height: 500px; overflow-y: auto; padding: 10px;">
+                    <!-- Populated by JavaScript -->
+                </div>
+            </div>
+            
+            <div class="modal-footer" style="padding: 16px 24px; border-top: 1px solid var(--dark-border); text-align: right;">
+                <button class="btn btn-secondary" onclick="closeUpgradeModal()">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
             </div>
         </div>
     </div>

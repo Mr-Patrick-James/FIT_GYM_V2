@@ -621,6 +621,25 @@ function populatePackages() {
     
     let activeCount = 0;
     
+    // Define package hierarchy (lower index = lower tier) - case-insensitive
+    const packageHierarchy = ['basic', 'popular', 'best value', 'premium', 'vip'];
+    
+    // Check if user has any active subscription and get their current tier
+    let currentUserTier = -1;
+    const activeUserBooking = userBookings.find(b => 
+        b.status === 'verified' && 
+        (!b.expires_at || new Date(b.expires_at) > new Date())
+    );
+    
+    if (activeUserBooking) {
+        const activePackage = packagesData.find(p => String(p.id) === String(activeUserBooking.package_id));
+        if (activePackage) {
+            currentUserTier = packageHierarchy.indexOf((activePackage.tag || 'Basic').toLowerCase());
+        }
+    }
+    
+    const hasActiveSubscription = currentUserTier >= 0;
+    
     packagesData.forEach(pkg => {
         // Check if this package is currently active for the user
         const activeBooking = userBookings.find(b => 
@@ -629,6 +648,10 @@ function populatePackages() {
             (!b.expires_at || new Date(b.expires_at) > new Date())
         );
         const isActive = !!activeBooking;
+        
+        // Get package tier level (case-insensitive)
+        const packageTier = packageHierarchy.indexOf((pkg.tag || 'Basic').toLowerCase());
+        const isUpgrade = hasActiveSubscription && packageTier > currentUserTier;
 
         const packageCard = document.createElement('div');
         packageCard.className = `package-card-large ${isActive ? 'active-plan' : ''}`;
@@ -673,14 +696,28 @@ function populatePackages() {
                         <i class="fas ${isActive ? 'fa-th-large' : 'fa-list-ul'}"></i>
                     </button>
                     ${isActive ? `
-                    <button class="btn btn-book" style="background: rgba(34, 197, 94, 0.1); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.2); cursor: default;" disabled>
-                        <i class="fas fa-check"></i>
-                        <span>Subscribed</span>
+                    <button class="btn btn-renew" onclick="renewBooking(${activeBooking.id})" style="background: rgba(34, 197, 94, 0.1); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.3); flex: 1;">
+                        <i class="fas fa-redo"></i>
+                        <span>Renew</span>
                     </button>
-                    ` : `
+                    <button class="btn btn-upgrade" onclick="openUpgradeModal(${pkg.id})" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3); flex: 1;">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>Upgrade</span>
+                    </button>
+                    ` : isUpgrade ? `
+                    <button class="btn btn-upgrade" onclick="openUpgradeModal(${pkg.id})" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3); flex: 1;">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>Upgrade</span>
+                    </button>
+                    ` : !hasActiveSubscription ? `
                     <button class="btn btn-book" onclick="selectPackageForBooking('${pkg.name}')">
                         <i class="fas fa-calendar-plus"></i>
                         <span style="white-space: nowrap;">Book Now</span>
+                    </button>
+                    ` : `
+                    <button class="btn btn-book" onclick="selectPackageForBooking('${pkg.name}')" style="opacity: 0.5; cursor: not-allowed;" disabled>
+                        <i class="fas fa-lock"></i>
+                        <span style="white-space: nowrap;">Lower Tier</span>
                     </button>
                     `}
                 </div>
@@ -699,6 +736,220 @@ function populatePackages() {
     if (activeSection) {
         activeSection.style.display = activeCount > 0 ? 'block' : 'none';
     }
+}
+
+// Renew booking function
+async function renewBooking(bookingId) {
+    const booking = userBookings.find(b => b.id === bookingId);
+    if (!booking) {
+        showNotification('Booking not found', 'error');
+        return;
+    }
+    
+    // Pre-fill the booking form with the same package
+    showSection('bookings');
+    await updateBookingPackageSelect();
+    
+    // Select the same package
+    const packageSelect = document.getElementById('bookingPackage');
+    if (packageSelect) {
+        packageSelect.value = booking.package_name || booking.package;
+    }
+    
+    // Open the booking modal
+    openBookingModal();
+    
+    showNotification(`Renewing ${booking.package_name || booking.package}`, 'success');
+}
+
+// Open upgrade modal
+function openUpgradeModal(clickedPackageId = null) {
+    const modal = document.getElementById('upgradeModal');
+    if (!modal) {
+        showNotification('Upgrade modal not found', 'error');
+        return;
+    }
+    
+    // Find the user's ACTIVE package, not the clicked package
+    const activeUserBooking = userBookings.find(b => 
+        b.status === 'verified' && 
+        (!b.expires_at || new Date(b.expires_at) > new Date())
+    );
+    
+    if (!activeUserBooking) {
+        showNotification('No active subscription found', 'error');
+        return;
+    }
+    
+    const activePackage = packagesData.find(p => String(p.id) === String(activeUserBooking.package_id));
+    if (!activePackage) {
+        showNotification('Active package not found', 'error');
+        return;
+    }
+    
+    // Use the ACTIVE package ID, not the clicked package ID
+    populateUpgradePlans(activePackage.id);
+    
+    // Show modal
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+// Close upgrade modal
+function closeUpgradeModal() {
+    const modal = document.getElementById('upgradeModal');
+    if (modal) {
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+}
+
+// Populate upgrade plans in modal
+function populateUpgradePlans(currentPackageId) {
+    const container = document.getElementById('upgradePlansContainer');
+    if (!container) return;
+    
+    // Define package hierarchy (case-insensitive)
+    const packageHierarchy = ['basic', 'popular', 'best value', 'premium', 'vip'];
+    
+    // Get current package tier
+    const currentPackage = packagesData.find(p => p.id === currentPackageId);
+    if (!currentPackage) {
+        console.error('Current package not found:', currentPackageId);
+        container.innerHTML = '<div style="text-align: center; padding: 40px; color: #ef4444;">Error: Current package not found</div>';
+        return;
+    }
+    
+    const currentTag = (currentPackage.tag || 'Basic').toLowerCase().trim();
+    const currentTier = packageHierarchy.indexOf(currentTag);
+    
+    console.log('=== UPGRADE MODAL DEBUG ===');
+    console.log('Current Package:', currentPackage);
+    console.log('Current Tag:', currentTag);
+    console.log('Current Tier:', currentTier);
+    console.log('All packages:', packagesData);
+    
+    // Filter packages that are higher tier
+    const upgradablePackages = packagesData.filter(pkg => {
+        // Skip the current package
+        if (pkg.id === currentPackageId) return false;
+        
+        const pkgTag = (pkg.tag || 'Basic').toLowerCase().trim();
+        const pkgTier = packageHierarchy.indexOf(pkgTag);
+        
+        console.log(`Checking ${pkg.name}: tag="${pkgTag}", tier=${pkgTier}, currentTier=${currentTier}`);
+        
+        // If tier is found and higher, include it
+        if (pkgTier !== -1 && pkgTier > currentTier) {
+            console.log(`  -> INCLUDED (tier ${pkgTier} > ${currentTier})`);
+            return true;
+        }
+        
+        // If current tier is -1 (unknown), include all packages
+        if (currentTier === -1) {
+            console.log(`  -> INCLUDED (current tier unknown)`);
+            return true;
+        }
+        
+        console.log(`  -> EXCLUDED`);
+        return false;
+    });
+    
+    console.log('Upgradable packages:', upgradablePackages);
+    
+    // Sort by tier
+    upgradablePackages.sort((a, b) => {
+        const aTier = packageHierarchy.indexOf((a.tag || 'Basic').toLowerCase().trim());
+        const bTier = packageHierarchy.indexOf((b.tag || 'Basic').toLowerCase().trim());
+        return aTier - bTier;
+    });
+    
+    // Render upgrade options
+    if (upgradablePackages.length > 0) {
+        container.innerHTML = upgradablePackages.map(pkg => `
+            <div class="upgrade-plan-card" onclick="selectUpgradePlan(${pkg.id})">
+                <div class="upgrade-plan-header">
+                    <h4>${pkg.name}</h4>
+                    <span class="upgrade-plan-tag">${pkg.tag || 'Standard'}</span>
+                </div>
+                <div class="upgrade-plan-price">${pkg.price}</div>
+                <p class="upgrade-plan-description">${pkg.description || 'Full gym access with all facilities'}</p>
+                <div class="upgrade-plan-features">
+                    <div><i class="fas fa-clock"></i> ${pkg.duration}</div>
+                    <div><i class="fas fa-check-circle"></i> Full gym access</div>
+                    ${pkg.is_trainer_assisted ? '<div><i class="fas fa-user-tie"></i> Trainer Assisted</div>' : ''}
+                </div>
+                <button class="btn btn-upgrade-select">
+                    <i class="fas fa-arrow-up"></i> Upgrade to ${pkg.name}
+                </button>
+            </div>
+        `).join('');
+    } else {
+        container.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--dark-text-secondary);"><i class="fas fa-crown" style="font-size: 3rem; opacity: 0.2; margin-bottom: 16px;"></i><p>You\'re already on the highest tier!</p><p style="font-size: 0.85rem; margin-top: 8px;">Current package: ' + currentPackage.name + ' (' + currentPackage.tag + ')</p></div>';
+    }
+}
+
+// Select upgrade plan
+function selectUpgradePlan(packageId) {
+    const pkg = packagesData.find(p => p.id === packageId);
+    if (!pkg) return;
+    
+    // Close upgrade modal
+    closeUpgradeModal();
+    
+    // Pre-fill booking form
+    showSection('bookings');
+    updateBookingPackageSelect().then(() => {
+        const packageSelect = document.getElementById('bookingPackage');
+        if (packageSelect) {
+            packageSelect.value = pkg.name;
+        }
+        openBookingModal();
+    });
+    
+    showNotification(`Upgrading to ${pkg.name}`, 'success');
+}
+
+// Show notification helper
+function showNotification(message, type = 'info') {
+    // Check if notification container exists
+    let container = document.getElementById('notificationContainer');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'notificationContainer';
+        container.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 10000;';
+        document.body.appendChild(container);
+    }
+    
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.style.cssText = `
+        background: ${type === 'success' ? 'rgba(34, 197, 94, 0.9)' : type === 'error' ? 'rgba(239, 68, 68, 0.9)' : 'rgba(59, 130, 246, 0.9)'};
+        color: white;
+        padding: 16px 24px;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        animation: slideInRight 0.3s ease;
+        min-width: 300px;
+    `;
+    
+    const icon = type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle';
+    notification.innerHTML = `
+        <i class="fas ${icon}"></i>
+        <span>${message}</span>
+    `;
+    
+    container.appendChild(notification);
+    
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+        notification.style.animation = 'slideOutRight 0.3s ease';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
 }
 
 // Preview a package Hub (before booking)
@@ -1400,6 +1651,12 @@ async function submitBooking(event) {
     const date = document.getElementById('bookingDate').value;
     const contact = document.getElementById('bookingContact').value;
     const notes = document.getElementById('bookingNotes').value;
+    
+    // Validate contact number
+    if (!validateContactNumber(contact)) {
+        showNotification('Contact number must be exactly 11 digits (numbers only)', 'error');
+        return;
+    }
     
     // Validate required fields
     if (!packageName || !date || !contact) {
@@ -2798,3 +3055,77 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+// Contact number validation function
+function validateContactNumber(contact) {
+    // Remove any non-digit characters for validation
+    const cleanContact = contact.replace(/\D/g, '');
+    
+    // Check if it's exactly 11 digits
+    return cleanContact.length === 11 && /^\d{11}$/.test(cleanContact);
+}
+
+// Add real-time input validation for contact number
+document.addEventListener('DOMContentLoaded', function() {
+    const contactInput = document.getElementById('bookingContact');
+    
+    if (contactInput) {
+        // Restrict input to numbers only and limit to 11 digits
+        contactInput.addEventListener('input', function(e) {
+            // Remove any non-digit characters
+            let value = e.target.value.replace(/\D/g, '');
+            
+            // Limit to 11 digits
+            if (value.length > 11) {
+                value = value.slice(0, 11);
+            }
+            
+            // Update the input value
+            e.target.value = value;
+            
+            // Visual feedback
+            const isValid = value.length === 11;
+            if (value.length > 0) {
+                if (isValid) {
+                    e.target.style.borderColor = '#22c55e';
+                    e.target.style.boxShadow = '0 0 0 2px rgba(34, 197, 94, 0.1)';
+                } else {
+                    e.target.style.borderColor = '#ef4444';
+                    e.target.style.boxShadow = '0 0 0 2px rgba(239, 68, 68, 0.1)';
+                }
+            } else {
+                e.target.style.borderColor = '';
+                e.target.style.boxShadow = '';
+            }
+        });
+        
+        // Prevent pasting non-numeric content
+        contactInput.addEventListener('paste', function(e) {
+            e.preventDefault();
+            const paste = (e.clipboardData || window.clipboardData).getData('text');
+            const numericOnly = paste.replace(/\D/g, '').slice(0, 11);
+            e.target.value = numericOnly;
+            
+            // Trigger input event to apply validation styling
+            e.target.dispatchEvent(new Event('input'));
+        });
+        
+        // Prevent non-numeric key presses
+        contactInput.addEventListener('keypress', function(e) {
+            // Allow backspace, delete, tab, escape, enter
+            if ([8, 9, 27, 13, 46].indexOf(e.keyCode) !== -1 ||
+                // Allow Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
+                (e.keyCode === 65 && e.ctrlKey === true) ||
+                (e.keyCode === 67 && e.ctrlKey === true) ||
+                (e.keyCode === 86 && e.ctrlKey === true) ||
+                (e.keyCode === 88 && e.ctrlKey === true)) {
+                return;
+            }
+            
+            // Ensure that it is a number and stop the keypress
+            if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+                e.preventDefault();
+            }
+        });
+    }
+});

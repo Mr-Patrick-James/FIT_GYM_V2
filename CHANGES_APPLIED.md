@@ -243,3 +243,94 @@ Successfully analyzed the FitPay Gym Management System and applied critical secu
 **Analysis completed successfully. No further automated changes required.**
 
 The system is now ready for manual configuration and deployment following the provided guides.
+
+
+## 7. Added Renew and Upgrade Buttons to Active Packages (2026-03-20)
+
+### Changes Made:
+- **Modified**: `assets/js/user-dashboard.js`
+  - Replaced disabled "Subscribed" button with two action buttons for active packages:
+    - "Renew" button (green) - allows users to renew their current subscription
+    - "Upgrade" button (blue) - opens upgrade modal to switch to a different package
+  - Both buttons appear in the active packages section alongside the "View My Hub" button
+  - Implemented package hierarchy system: Basic → Popular → Best Value → Premium → VIP
+  - Available packages now show "Upgrade to [Package Name]" button ONLY for higher-tier packages
+  - Lower-tier packages show disabled "Lower Tier" button when user has active subscription
+  - Hierarchy is dynamic and based on package tags, not hardcoded
+  - Added functions:
+    - `renewBooking(bookingId)` - Pre-fills booking form with same package
+    - `openUpgradeModal(currentPackageId)` - Opens upgrade comparison modal
+    - `closeUpgradeModal()` - Closes upgrade modal
+    - `populateUpgradePlans(currentPackageId)` - Populates upgrade options based on hierarchy
+    - `selectUpgradePlan(packageId)` - Handles upgrade selection
+    - `showNotification(message, type)` - Shows toast notifications
+
+- **Modified**: `views/user/dashboard.php`
+  - Added upgrade modal HTML structure with:
+    - Modal overlay and container
+    - Header with title and close button
+    - Body with upgrade plans grid container
+    - Footer with cancel button
+  - Modal is populated dynamically by JavaScript based on user's current tier
+
+- **Modified**: `assets/css/user-dashboard/packages.css`
+  - Added styling for `.btn-renew` and `.btn-upgrade` buttons
+  - Green theme for Renew button with hover effects
+  - Blue theme for Upgrade button with hover effects
+  - Ensured proper button group layout with flexbox
+  - Added upgrade modal card styles
+  - Added notification animations (slideInRight, slideOutRight)
+  - Added upgrade plan card hover effects
+
+### Package Hierarchy:
+1. Basic (lowest tier)
+2. Popular
+3. Best Value
+4. Premium
+5. VIP (highest tier)
+
+### User Experience:
+- Active packages now show actionable buttons instead of a disabled "Subscribed" button
+- Users can quickly renew their membership directly from the packages view
+- Users can only upgrade to higher-tier packages (prevents downgrading)
+- Available packages show "Upgrade to [Package Name]" only for packages above user's current tier
+- Lower-tier packages are disabled with "Lower Tier" label when user has active subscription
+- No active subscription: All packages show "Book Now" button
+- Upgrade modal shows only higher-tier packages with comparison
+- Toast notifications provide feedback for user actions
+- Consistent button styling with hover animations and visual feedback
+
+## 8. Added Contact Number Validation (2026-03-20)
+
+### Changes Made:
+- **Modified**: `views/user/dashboard.php`
+  - Updated contact number input field with:
+    - `maxlength="11"` attribute to limit input length
+    - `pattern="[0-9]{11}"` for HTML5 validation
+    - Updated placeholder to show format without dashes
+    - Added helper text explaining the format requirement
+
+- **Modified**: `assets/js/user-dashboard.js`
+  - Added `validateContactNumber()` function for server-side validation
+  - Added real-time input validation with event listeners:
+    - Restricts input to numbers only (no letters, symbols, or special characters)
+    - Automatically removes non-numeric characters
+    - Limits input to exactly 11 digits
+    - Provides visual feedback (green border for valid, red for invalid)
+    - Prevents pasting non-numeric content
+    - Blocks non-numeric key presses
+  - Updated `submitBooking()` function to validate contact number before submission
+
+### Validation Rules:
+- **Length**: Exactly 11 digits required
+- **Characters**: Numbers only (0-9)
+- **Format**: No dashes, spaces, or special characters allowed
+- **Example**: 09171234567 (valid), 0917-123-4567 (invalid)
+
+### User Experience:
+- Real-time validation as user types
+- Visual feedback with color-coded borders
+- Automatic removal of invalid characters
+- Clear error messages for invalid input
+- Prevents form submission with invalid contact numbers
+- Helper text shows expected format
