@@ -260,16 +260,37 @@ function getSetting($key, $default = '', $settings = []) {
                     <div class="card-header">
                         <h3>Revenue Reports</h3>
                         <div class="card-actions">
-                            <select class="card-btn" style="padding: 10px 16px; cursor: pointer;">
-                                <option>Last 6 Months</option>
-                                <option>Last 3 Months</option>
-                                <option>This Year</option>
+                            <select class="card-btn" id="revenuePeriod" style="padding: 10px 16px; cursor: pointer;">
+                                <option value="6">Last 6 Months</option>
+                                <option value="3">Last 3 Months</option>
+                                <option value="12">This Year</option>
                             </select>
                         </div>
                     </div>
                     
                     <div class="chart-container">
                         <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Package Statistics -->
+                <div class="content-card" style="margin-top: 32px;">
+                    <div class="card-header">
+                        <h3>Package Popularity</h3>
+                        <div class="card-actions" style="display: flex; gap: 10px; align-items: center;">
+                            <div class="date-filter" style="display: flex; gap: 8px; align-items: center;">
+                                <input type="date" id="statsStartDate" class="card-btn" style="padding: 8px 12px; font-size: 0.8rem;">
+                                <span style="color: var(--dark-text-secondary); font-size: 0.8rem;">to</span>
+                                <input type="date" id="statsEndDate" class="card-btn" style="padding: 8px 12px; font-size: 0.8rem;">
+                                <button class="card-btn primary" onclick="filterPackageStats()" style="padding: 8px 12px;">
+                                    <i class="fas fa-filter"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-container" style="height: 300px;">
+                        <canvas id="packageStatsChart"></canvas>
                     </div>
                 </div>
             </div>

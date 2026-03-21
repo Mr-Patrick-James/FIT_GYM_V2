@@ -1197,6 +1197,16 @@ function getSetting($key, $default = '', $settings = []) {
                                     <i class="far fa-calendar-times" style="color: #ef4444;"></i> 
                                     <span>Expires: <strong id="membershipExpiryDate" style="color: #fff;">--</strong></span>
                                 </div>
+                                
+                                <!-- Membership Quick Actions (Renew/Upgrade) -->
+                                <div id="membershipQuickActions" style="margin-top: 12px; display: flex; gap: 8px; width: 100%;">
+                                    <button id="dashRenewBtn" class="btn btn-sm" style="flex: 1; padding: 6px; font-size: 0.65rem; background: rgba(34, 197, 94, 0.1); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.2); border-radius: 6px; cursor: pointer; transition: all 0.2s;">
+                                        <i class="fas fa-redo"></i> Renew
+                                    </button>
+                                    <button id="dashUpgradeBtn" class="btn btn-sm" style="flex: 1; padding: 6px; font-size: 0.65rem; background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 6px; cursor: pointer; transition: all 0.2s; display: none;">
+                                        <i class="fas fa-arrow-up"></i> Upgrade
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1754,6 +1764,18 @@ function getSetting($key, $default = '', $settings = []) {
                         <span class="notes-label">Admin/User Notes</span>
                         <p class="notes-text" id="detailNotes">-</p>
                     </div>
+
+                    <!-- Booking Hub Quick Actions -->
+                    <div id="detailActions" style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--dark-border); display: flex; gap: 12px;">
+                        <button id="detailRenewBtn" class="btn btn-renew" style="flex: 1; background: rgba(34, 197, 94, 0.1); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.3); justify-content: center;">
+                            <i class="fas fa-redo"></i>
+                            <span>Renew Plan</span>
+                        </button>
+                        <button id="detailUpgradeBtn" class="btn btn-upgrade" style="flex: 1; background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3); justify-content: center; display: none;">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>Upgrade Tier</span>
+                        </button>
+                    </div>
                     
                     <div class="receipt-preview-container" id="receiptSection" style="display: none; margin-top: 24px;">
                         <div class="receipt-preview-header">
@@ -1895,8 +1917,30 @@ function getSetting($key, $default = '', $settings = []) {
                     </div>
                 </div>
 
-                <!-- Step 3: Commitment -->
+                <!-- Step 3: Measurements -->
                 <div class="survey-step" data-step="3">
+                    <label class="question-label">What are your current measurements?</label>
+                    <p style="color: var(--dark-text-secondary); font-size: 0.75rem; margin-bottom: 20px;">This helps your trainer track your progress over time.</p>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div class="form-group">
+                            <label style="display: block; color: #fff; font-size: 0.75rem; font-weight: 700; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">Weight (kg)</label>
+                            <div style="position: relative;">
+                                <input type="number" id="surveyWeight" step="0.1" placeholder="e.g. 70.5" class="modern-input" style="width: 100%; background: rgba(255,255,255,0.03); border: 1px solid var(--dark-border); border-radius: 12px; padding: 12px 16px; color: #fff; font-size: 0.9rem;" oninput="checkMeasurementsInput()">
+                                <span style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); color: var(--dark-text-secondary); font-size: 0.7rem; font-weight: 800;">KG</span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label style="display: block; color: #fff; font-size: 0.75rem; font-weight: 700; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">Height (cm)</label>
+                            <div style="position: relative;">
+                                <input type="number" id="surveyHeight" step="0.1" placeholder="e.g. 175" class="modern-input" style="width: 100%; background: rgba(255,255,255,0.03); border: 1px solid var(--dark-border); border-radius: 12px; padding: 12px 16px; color: #fff; font-size: 0.9rem;" oninput="checkMeasurementsInput()">
+                                <span style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); color: var(--dark-text-secondary); font-size: 0.7rem; font-weight: 800;">CM</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 4: Commitment -->
+                <div class="survey-step" data-step="4">
                     <label class="question-label">What's your preferred commitment length?</label>
                     <div class="options-grid">
                         <div class="option-card" onclick="selectSurveyOption(this, 'commitment', 'long_term')">

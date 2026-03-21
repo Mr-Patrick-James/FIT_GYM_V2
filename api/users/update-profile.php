@@ -16,6 +16,8 @@ $userId = $_SESSION['user_id'];
 $name = trim($data['name'] ?? '');
 $contact = trim($data['contact'] ?? '');
 $address = trim($data['address'] ?? '');
+$weight = $data['weight'] ?? null;
+$height = $data['height'] ?? null;
 
 if (empty($name)) {
     sendResponse(false, 'Name is required', null, 400);
@@ -24,15 +26,38 @@ if (empty($name)) {
 try {
     $conn = getDBConnection();
     
-    // Update user info
-    $stmt = $conn->prepare("UPDATE users SET name = ?, contact = ?, address = ? WHERE id = ?");
-    $stmt->bind_param("sssi", $name, $contact, $address, $userId);
+    // Update user info - support weight and height if provided
+    $sql = "UPDATE users SET name = ?, contact = ?, address = ?";
+    $types = "sss";
+    $params = [$name, $contact, $address];
+    
+    if ($weight !== null) {
+        $sql .= ", weight = ?";
+        $types .= "d";
+        $params[] = $weight;
+    }
+    
+    if ($height !== null) {
+        $sql .= ", height = ?";
+        $types .= "d";
+        $params[] = $height;
+    }
+    
+    $sql .= " WHERE id = ?";
+    $types .= "i";
+    $params[] = $userId;
+    
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param($types, ...$params);
     
     if ($stmt->execute()) {
         // Update session variables
         $_SESSION['user_name'] = $name;
         $_SESSION['user_contact'] = $contact;
         $_SESSION['user_address'] = $address;
+        
+        if ($weight !== null) $_SESSION['user_weight'] = $weight;
+        if ($height !== null) $_SESSION['user_height'] = $height;
         
         // Return updated user data
         $updatedUser = [
@@ -41,7 +66,9 @@ try {
             'email' => $_SESSION['user_email'],
             'role' => $_SESSION['user_role'],
             'contact' => $contact,
-            'address' => $address
+            'address' => $address,
+            'weight' => $weight,
+            'height' => $height
         ];
         
         sendResponse(true, 'Profile updated successfully', $updatedUser);

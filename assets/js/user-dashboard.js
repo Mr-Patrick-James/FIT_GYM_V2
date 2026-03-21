@@ -4,6 +4,7 @@
 let userBookings = [];
 let selectedFile = null;
 let activeExercisesByPackage = {}; // Cache for package exercises
+let userData = null;
 
 // Helper to fix receipt URLs for display
 function fixReceiptUrl(url) {
@@ -240,9 +241,25 @@ async function initDashboard() {
 let surveyData = {
     goal: null,
     frequency: null,
+    weight: null,
+    height: null,
     commitment: null
 };
 let currentSurveyStep = 1;
+
+function checkMeasurementsInput() {
+    const weight = document.getElementById('surveyWeight').value;
+    const height = document.getElementById('surveyHeight').value;
+    
+    // Enable next button if both are filled and greater than 0
+    const isValid = weight > 0 && height > 0;
+    document.getElementById('surveyNextBtn').disabled = !isValid;
+    
+    if (isValid) {
+        surveyData.weight = weight;
+        surveyData.height = height;
+    }
+}
 
 function checkSurveyStatus() {
     // We check if the survey has been completed for the current user
@@ -383,14 +400,14 @@ document.addEventListener('DOMContentLoaded', initDashboard);
 async function loadUserData() {
     const savedUser = localStorage.getItem('userData');
     if (savedUser) {
-        const user = JSON.parse(savedUser);
-        document.getElementById('userName').textContent = user.name;
-        document.getElementById('userEmail').textContent = user.email;
-        document.getElementById('userAvatar').textContent = getInitials(user.name);
-        document.getElementById('profileName').value = user.name;
-        document.getElementById('profileEmail').value = user.email;
-        document.getElementById('profileContact').value = user.contact || '';
-        document.getElementById('profileAddress').value = user.address || '';
+        userData = JSON.parse(savedUser);
+        document.getElementById('userName').textContent = userData.name;
+        document.getElementById('userEmail').textContent = userData.email;
+        document.getElementById('userAvatar').textContent = getInitials(userData.name);
+        document.getElementById('profileName').value = userData.name;
+        document.getElementById('profileEmail').value = userData.email;
+        document.getElementById('profileContact').value = userData.contact || '';
+        document.getElementById('profileAddress').value = userData.address || '';
     }
     
     // Load bookings from database
@@ -624,18 +641,23 @@ function populatePackages() {
     // Define package hierarchy (lower index = lower tier) - case-insensitive
     const packageHierarchy = ['basic', 'popular', 'best value', 'premium', 'vip'];
     
-    // Check if user has any active subscription and get their current tier
+    // Check if user has any active subscription and get their highest current tier
     let currentUserTier = -1;
-    const activeUserBooking = userBookings.find(b => 
+    const activeVerifiedBookings = userBookings.filter(b => 
         b.status === 'verified' && 
         (!b.expires_at || new Date(b.expires_at) > new Date())
     );
     
-    if (activeUserBooking) {
-        const activePackage = packagesData.find(p => String(p.id) === String(activeUserBooking.package_id));
-        if (activePackage) {
-            currentUserTier = packageHierarchy.indexOf((activePackage.tag || 'Basic').toLowerCase());
-        }
+    if (activeVerifiedBookings.length > 0) {
+        activeVerifiedBookings.forEach(b => {
+            const pkg = packagesData.find(p => String(p.id) === String(b.package_id));
+            if (pkg) {
+                const tier = packageHierarchy.indexOf((pkg.tag || 'Basic').toLowerCase().trim());
+                if (tier > currentUserTier) {
+                    currentUserTier = tier;
+                }
+            }
+        });
     }
     
     const hasActiveSubscription = currentUserTier >= 0;
@@ -652,6 +674,36 @@ function populatePackages() {
         // Get package tier level (case-insensitive)
         const packageTier = packageHierarchy.indexOf((pkg.tag || 'Basic').toLowerCase());
         const isUpgrade = hasActiveSubscription && packageTier > currentUserTier;
+        
+        // Check if this specific active package has already been superseded by a higher tier active package
+        const isAlreadyUpgraded = isActive && currentUserTier > packageTier;
+        
+        let expiryDisplay = '';
+        if (isActive) {
+            const expiryDate = activeBooking.expires_at ? new Date(activeBooking.expires_at) : new Date(new Date(activeBooking.booking_date || activeBooking.created_at).getTime() + parseDurationToDays(activeBooking.duration) * 86400000);
+            const diffTime = expiryDate.getTime() - new Date().getTime();
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            let timeRemaining = '';
+            if (diffDays > 0) timeRemaining = `${diffDays}d left`;
+            else if (diffDays === 0) timeRemaining = `Expires today`;
+            else timeRemaining = 'Expired';
+
+            expiryDisplay = `
+                <div style="margin-top: 12px; padding: 10px; background: rgba(255,255,255,0.02); border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; flex-direction: column; gap: 2px;">
+                        <span style="font-size: 0.6rem; color: var(--dark-text-secondary); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Expires on</span>
+                        <span style="font-size: 0.75rem; color: #fff; font-weight: 700;">${formatDate(expiryDate)}</span>
+                    </div>
+                    <span style="font-size: 0.65rem; padding: 4px 8px; background: ${diffDays <= 7 ? 'rgba(245, 158, 11, 0.1)' : 'rgba(34, 197, 94, 0.1)'}; color: ${diffDays <= 7 ? 'var(--warning)' : '#22c55e'}; border-radius: 6px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">
+                        ${timeRemaining}
+                    </span>
+                </div>
+            `;
+        }
+
+        const canRenew = isActive && !isAlreadyUpgraded && canRenewBooking(activeBooking);
+        const canUpgrade = (isActive && canUpgradeBooking(activeBooking)) || isUpgrade;
 
         const packageCard = document.createElement('div');
         packageCard.className = `package-card-large ${isActive ? 'active-plan' : ''}`;
@@ -667,6 +719,11 @@ function populatePackages() {
                         ${isActive ? `
                         <span style="font-size: 0.65rem; padding: 2px 8px; background: rgba(34, 197, 94, 0.1); color: #22c55e; border-radius: 4px; border: 1px solid rgba(34, 197, 94, 0.2); font-weight: 800; text-transform: uppercase;">
                             <i class="fas fa-check-circle"></i> Currently Active
+                        </span>
+                        ` : ''}
+                        ${isAlreadyUpgraded ? `
+                        <span style="font-size: 0.65rem; padding: 2px 8px; background: rgba(34, 197, 94, 0.05); color: #22c55e; border-radius: 4px; border: 1px solid rgba(34, 197, 94, 0.1); font-weight: 800; text-transform: uppercase;">
+                            <i class="fas fa-arrow-up"></i> Upgraded
                         </span>
                         ` : ''}
                     </div>
@@ -688,6 +745,7 @@ function populatePackages() {
                     <span>Trainer Assisted</span>
                 </div>
                 ` : ''}
+                ${expiryDisplay}
             </div>
             <div class="package-footer">
                 <div class="package-price-large">${pkg.price}</div>
@@ -695,31 +753,33 @@ function populatePackages() {
                     <button class="btn btn-exercise" onclick="${isActive ? `viewBookingDetails(${activeBooking.id})` : `previewPackageHub(${pkg.id})`}" title="${isActive ? 'View My Hub' : 'View Package Details'}">
                         <i class="fas ${isActive ? 'fa-th-large' : 'fa-list-ul'}"></i>
                     </button>
-                    ${isActive ? `
+                    ${canRenew ? `
                     <button class="btn btn-renew" onclick="renewBooking(${activeBooking.id})" style="background: rgba(34, 197, 94, 0.1); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.3); flex: 1;">
                         <i class="fas fa-redo"></i>
                         <span>Renew</span>
                     </button>
+                    ` : ''}
+                    ${isAlreadyUpgraded ? `
+                    <button class="btn btn-upgrade" style="background: rgba(34, 197, 94, 0.05); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.1); flex: 1; opacity: 0.8; cursor: default;" disabled>
+                        <i class="fas fa-check"></i>
+                        <span>Upgraded</span>
+                    </button>
+                    ` : canUpgrade ? `
                     <button class="btn btn-upgrade" onclick="openUpgradeModal(${pkg.id})" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3); flex: 1;">
                         <i class="fas fa-arrow-up"></i>
                         <span>Upgrade</span>
                     </button>
-                    ` : isUpgrade ? `
-                    <button class="btn btn-upgrade" onclick="openUpgradeModal(${pkg.id})" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3); flex: 1;">
-                        <i class="fas fa-arrow-up"></i>
-                        <span>Upgrade</span>
-                    </button>
-                    ` : !hasActiveSubscription ? `
-                    <button class="btn btn-book" onclick="selectPackageForBooking('${pkg.name}')">
-                        <i class="fas fa-calendar-plus"></i>
-                        <span style="white-space: nowrap;">Book Now</span>
-                    </button>
-                    ` : `
+                    ` : !isActive && hasActiveSubscription ? `
                     <button class="btn btn-book" onclick="selectPackageForBooking('${pkg.name}')" style="opacity: 0.5; cursor: not-allowed;" disabled>
                         <i class="fas fa-lock"></i>
                         <span style="white-space: nowrap;">Lower Tier</span>
                     </button>
-                    `}
+                    ` : !isActive ? `
+                    <button class="btn btn-book" onclick="selectPackageForBooking('${pkg.name}')">
+                        <i class="fas fa-calendar-plus"></i>
+                        <span style="white-space: nowrap;">Book Now</span>
+                    </button>
+                    ` : ''}
                 </div>
             </div>
         `;
@@ -770,24 +830,32 @@ function openUpgradeModal(clickedPackageId = null) {
         return;
     }
     
-    // Find the user's ACTIVE package, not the clicked package
-    const activeUserBooking = userBookings.find(b => 
-        b.status === 'verified' && 
-        (!b.expires_at || new Date(b.expires_at) > new Date())
-    );
+    let upgradeFromId = clickedPackageId;
     
-    if (!activeUserBooking) {
-        showNotification('No active subscription found', 'error');
+    // If no specific package ID provided, try to find the user's active one
+    if (!upgradeFromId) {
+        const activeUserBooking = userBookings.find(b => 
+            b.status === 'verified' && 
+            (!b.expires_at || new Date(b.expires_at) > new Date())
+        );
+        
+        if (activeUserBooking) {
+            upgradeFromId = activeUserBooking.package_id;
+        }
+    }
+    
+    if (!upgradeFromId) {
+        showNotification('No active subscription found to upgrade', 'error');
         return;
     }
     
-    const activePackage = packagesData.find(p => String(p.id) === String(activeUserBooking.package_id));
+    const activePackage = packagesData.find(p => String(p.id) === String(upgradeFromId));
     if (!activePackage) {
-        showNotification('Active package not found', 'error');
+        showNotification('Selected package not found', 'error');
         return;
     }
     
-    // Use the ACTIVE package ID, not the clicked package ID
+    // Use the specific package ID to show higher tiers for it
     populateUpgradePlans(activePackage.id);
     
     // Show modal
@@ -823,12 +891,6 @@ function populateUpgradePlans(currentPackageId) {
     const currentTag = (currentPackage.tag || 'Basic').toLowerCase().trim();
     const currentTier = packageHierarchy.indexOf(currentTag);
     
-    console.log('=== UPGRADE MODAL DEBUG ===');
-    console.log('Current Package:', currentPackage);
-    console.log('Current Tag:', currentTag);
-    console.log('Current Tier:', currentTier);
-    console.log('All packages:', packagesData);
-    
     // Filter packages that are higher tier
     const upgradablePackages = packagesData.filter(pkg => {
         // Skip the current package
@@ -837,21 +899,16 @@ function populateUpgradePlans(currentPackageId) {
         const pkgTag = (pkg.tag || 'Basic').toLowerCase().trim();
         const pkgTier = packageHierarchy.indexOf(pkgTag);
         
-        console.log(`Checking ${pkg.name}: tag="${pkgTag}", tier=${pkgTier}, currentTier=${currentTier}`);
-        
         // If tier is found and higher, include it
         if (pkgTier !== -1 && pkgTier > currentTier) {
-            console.log(`  -> INCLUDED (tier ${pkgTier} > ${currentTier})`);
             return true;
         }
         
         // If current tier is -1 (unknown), include all packages
         if (currentTier === -1) {
-            console.log(`  -> INCLUDED (current tier unknown)`);
             return true;
         }
         
-        console.log(`  -> EXCLUDED`);
         return false;
     });
     
@@ -1272,12 +1329,46 @@ function populateBookings() {
 function createBookingRow(booking, includeExpiry = false) {
     const row = document.createElement('tr');
     const isActive = isBookingActive(booking);
+    const isUpgradable = canUpgradeBooking(booking);
+    
+    // Check if this specific booking is already superseded by a higher tier active booking
+    let isAlreadyUpgraded = false;
+    const packageHierarchy = ['basic', 'popular', 'best value', 'premium', 'vip'];
+    const currentPkg = packagesData.find(p => String(p.id) === String(booking.package_id));
+    
+    if (isActive && currentPkg) {
+        const packageTier = packageHierarchy.indexOf((currentPkg.tag || 'Basic').toLowerCase().trim());
+        let highestTier = -1;
+        userBookings.forEach(b => {
+            if (isBookingActive(b)) {
+                const p = packagesData.find(pkg => String(pkg.id) === String(b.package_id));
+                if (p) {
+                    const tier = packageHierarchy.indexOf((p.tag || 'Basic').toLowerCase().trim());
+                    if (tier > highestTier) highestTier = tier;
+                }
+            }
+        });
+        isAlreadyUpgraded = highestTier > packageTier;
+    }
+    
+    const canRenew = (booking.status === 'verified') && !isAlreadyUpgraded && canRenewBooking(booking);
     
     // Calculate expiry date for display
     let expiryDateDisplay = '-';
+    let remainingDaysDisplay = '';
     if (booking.status === 'verified' || booking.status === 'pending') {
         const dateObj = booking.expires_at ? new Date(booking.expires_at) : new Date(new Date(booking.booking_date || booking.created_at || booking.date).getTime() + parseDurationToDays(booking.duration) * 86400000);
         expiryDateDisplay = formatDate(dateObj);
+        
+        if (isActive) {
+            const diffTime = dateObj.getTime() - new Date().getTime();
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            if (diffDays > 0) {
+                remainingDaysDisplay = `<div style="font-size: 0.65rem; color: #22c55e; margin-top: 2px;">${diffDays} days left</div>`;
+            } else if (diffDays === 0) {
+                remainingDaysDisplay = `<div style="font-size: 0.65rem; color: var(--warning); margin-top: 2px;">Expires today</div>`;
+            }
+        }
     }
 
     // Add rejection reason if status is rejected
@@ -1290,10 +1381,32 @@ function createBookingRow(booking, includeExpiry = false) {
         `;
     }
 
+    const commonActions = `
+        <div class="table-actions">
+            <button class="icon-btn" onclick="viewBookingDetails(${booking.id})" title="View Hub">
+                <i class="fas fa-eye"></i>
+            </button>
+            ${canRenew ? `
+            <button class="icon-btn" onclick="renewBooking(${booking.id})" title="Renew Package" style="color: #22c55e; background: rgba(34, 197, 94, 0.1); border-color: rgba(34, 197, 94, 0.2);">
+                <i class="fas fa-redo"></i>
+            </button>
+            ` : ''}
+            ${isAlreadyUpgraded ? `
+            <button class="icon-btn" title="Already Upgraded" style="color: #22c55e; background: rgba(34, 197, 94, 0.05); border-color: rgba(34, 197, 94, 0.1); cursor: default;" disabled>
+                <i class="fas fa-check"></i>
+            </button>
+            ` : isUpgradable ? `
+            <button class="icon-btn" onclick="openUpgradeModal(${booking.package_id})" title="Upgrade Package" style="color: #3b82f6; background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.2);">
+                <i class="fas fa-arrow-up"></i>
+            </button>
+            ` : ''}
+        </div>
+    `;
+
     if (includeExpiry) {
         row.innerHTML = `
             <td data-label="Package">
-                <div>${booking.package_name || booking.package}</div>
+                <div style="font-weight: 700;">${booking.package_name || booking.package}</div>
                 ${(booking.status === 'verified' || booking.status === 'pending') ? `
                     <div style="font-size: 0.75rem; margin-top: 4px;">
                         <span class="status-badge status-${isActive ? 'verified' : 'pending'}" style="padding: 2px 8px; font-size: 0.7rem;">
@@ -1307,21 +1420,16 @@ function createBookingRow(booking, includeExpiry = false) {
                 <div style="font-weight: 600; color: ${isActive ? '#22c55e' : 'var(--dark-text-secondary)'};">
                     ${expiryDateDisplay}
                 </div>
+                ${remainingDaysDisplay}
             </td>
-            <td data-label="Amount" style="font-weight: 800;">₱${parseFloat(booking.amount).toFixed(2)}</td>
+            <td data-label="Amount" style="font-weight: 800; color: var(--primary);">₱${parseFloat(booking.amount).toFixed(2)}</td>
             <td data-label="Status">${statusDisplay}</td>
-            <td data-label="Actions">
-                <div class="table-actions">
-                    <button class="icon-btn" onclick="viewBookingDetails(${booking.id})" title="View Details">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                </div>
-            </td>
+            <td data-label="Actions">${commonActions}</td>
         `;
     } else {
         row.innerHTML = `
             <td data-label="Package">
-                <div>${booking.package_name || booking.package}</div>
+                <div style="font-weight: 700;">${booking.package_name || booking.package}</div>
                 ${(booking.status === 'verified' || booking.status === 'pending') ? `
                     <div style="font-size: 0.75rem; margin-top: 4px;">
                         <span class="status-badge status-${isActive ? 'verified' : 'pending'}" style="padding: 2px 8px; font-size: 0.7rem;">
@@ -1331,15 +1439,9 @@ function createBookingRow(booking, includeExpiry = false) {
                 ` : ''}
             </td>
             <td data-label="Date">${formatDate(booking.booking_date || booking.date || booking.createdAt)}</td>
-            <td data-label="Amount" style="font-weight: 800;">₱${parseFloat(booking.amount).toFixed(2)}</td>
+            <td data-label="Amount" style="font-weight: 800; color: var(--primary);">₱${parseFloat(booking.amount).toFixed(2)}</td>
             <td data-label="Status">${statusDisplay}</td>
-            <td data-label="Actions">
-                <div class="table-actions">
-                    <button class="icon-btn" onclick="viewBookingDetails(${booking.id})" title="View Details">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                </div>
-            </td>
+            <td data-label="Actions">${commonActions}</td>
         `;
     }
     return row;
@@ -1418,11 +1520,82 @@ function isBookingActive(booking) {
     return now <= expiryDate;
 }
 
+// Check if a booking can be upgraded
+function canUpgradeBooking(booking) {
+    if (!isBookingActive(booking)) return false;
+    
+    const packageHierarchy = ['basic', 'popular', 'best value', 'premium', 'vip'];
+    const currentPkg = packagesData.find(p => String(p.id) === String(booking.package_id));
+    if (!currentPkg) return false;
+    
+    const currentTier = packageHierarchy.indexOf((currentPkg.tag || 'Basic').toLowerCase().trim());
+    
+    // Check if there's any package with a higher tier
+    return packagesData.some(pkg => {
+        const pkgTier = packageHierarchy.indexOf((pkg.tag || 'Basic').toLowerCase().trim());
+        return pkgTier > currentTier;
+    });
+}
+
+// Helper to check if a booking is superseded by a higher tier active plan
+function checkIsAlreadyUpgraded(booking) {
+    if (!isBookingActive(booking)) return false;
+    
+    const packageHierarchy = ['basic', 'popular', 'best value', 'premium', 'vip'];
+    const currentPkg = packagesData.find(p => String(p.id) === String(booking.package_id));
+    if (!currentPkg) return false;
+    
+    const packageTier = packageHierarchy.indexOf((currentPkg.tag || 'Basic').toLowerCase().trim());
+    
+    let highestTier = -1;
+    userBookings.forEach(b => {
+        if (isBookingActive(b)) {
+            const p = packagesData.find(pkg => String(pkg.id) === String(b.package_id));
+            if (p) {
+                const tier = packageHierarchy.indexOf((p.tag || 'Basic').toLowerCase().trim());
+                if (tier > highestTier) highestTier = tier;
+            }
+        }
+    });
+    
+    return highestTier > packageTier;
+}
+
+// Check if a booking can be renewed (either expired or close to expiry, e.g. 7 days or less)
+function canRenewBooking(booking) {
+    if (booking.status !== 'verified') return false;
+    
+    const now = new Date();
+    const expiryDate = booking.expires_at ? new Date(booking.expires_at) : new Date(new Date(booking.booking_date || booking.created_at).getTime() + parseDurationToDays(booking.duration) * 86400000);
+    
+    // If it's already expired, they can definitely renew
+    if (now > expiryDate) return true;
+    
+    // If it's close to expiry (e.g. 7 days or less), they can renew
+    const diffTime = expiryDate.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    return diffDays <= 7;
+}
+
 function updateStats() {
     // Active membership = any verified booking that is NOT expired
     const activeVerifiedBookings = userBookings.filter(b => isBookingActive(b));
     const totalVerified = userBookings.filter(b => b.status === 'verified').length;
     
+    // Calculate current highest tier for upgrade logic
+    const packageHierarchy = ['basic', 'popular', 'best value', 'premium', 'vip'];
+    let currentUserTier = -1;
+    if (activeVerifiedBookings.length > 0) {
+        activeVerifiedBookings.forEach(b => {
+            const pkg = packagesData.find(p => String(p.id) === String(b.package_id));
+            if (pkg) {
+                const tier = packageHierarchy.indexOf((pkg.tag || 'Basic').toLowerCase().trim());
+                if (tier > currentUserTier) currentUserTier = tier;
+            }
+        });
+    }
+
     document.getElementById('activeBookingsCount').textContent = activeVerifiedBookings.length;
     document.getElementById('verifiedBookingsCount').textContent = totalVerified;
     
@@ -1471,6 +1644,59 @@ function updateStats() {
             }
             const expiryDate = latestActive.expires_at ? new Date(latestActive.expires_at) : new Date(new Date(latestActive.booking_date || latestActive.created_at).getTime() + parseDurationToDays(latestActive.duration) * 86400000);
             membershipExpiryDate.textContent = formatDate(expiryDate);
+            
+            // Handle Dash Quick Actions
+            const dashRenewBtn = document.getElementById('dashRenewBtn');
+            const dashUpgradeBtn = document.getElementById('dashUpgradeBtn');
+            if (dashRenewBtn) {
+                // Determine if we should show renew for the latest active package
+                // 1. Must NOT be already upgraded
+                // 2. Must be verified
+                // 3. Must be close to expiry (7 days or less)
+                const currentPkg = packagesData.find(p => String(p.id) === String(latestActive.package_id));
+                const packageTier = currentPkg ? packageHierarchy.indexOf((currentPkg.tag || 'Basic').toLowerCase().trim()) : -1;
+                const isAlreadyUpgraded = currentUserTier > packageTier;
+                const isCloseToExpiry = canRenewBooking(latestActive);
+                
+                dashRenewBtn.style.display = (!isAlreadyUpgraded && isCloseToExpiry) ? 'block' : 'none';
+                dashRenewBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    renewBooking(latestActive.id);
+                };
+            }
+            if (dashUpgradeBtn) {
+                const isUpgradable = canUpgradeBooking(latestActive);
+                const currentPkg = packagesData.find(p => String(p.id) === String(latestActive.package_id));
+                let isAlreadyUpgraded = false;
+                
+                if (currentPkg) {
+                    const packageTier = packageHierarchy.indexOf((currentPkg.tag || 'Basic').toLowerCase().trim());
+                    // currentUserTier is calculated at the beginning of updateStats
+                    isAlreadyUpgraded = currentUserTier > packageTier;
+                }
+
+                if (isAlreadyUpgraded) {
+                    dashUpgradeBtn.style.display = 'block';
+                    dashUpgradeBtn.style.background = 'rgba(34, 197, 94, 0.05)';
+                    dashUpgradeBtn.style.color = '#22c55e';
+                    dashUpgradeBtn.style.border = '1px solid rgba(34, 197, 94, 0.1)';
+                    dashUpgradeBtn.style.opacity = '0.8';
+                    dashUpgradeBtn.style.cursor = 'default';
+                    dashUpgradeBtn.disabled = true;
+                    dashUpgradeBtn.innerHTML = '<i class="fas fa-check"></i> Upgraded';
+                    dashUpgradeBtn.onclick = null;
+                } else {
+                    dashUpgradeBtn.style.display = isUpgradable ? 'block' : 'none';
+                    dashUpgradeBtn.style.opacity = '';
+                    dashUpgradeBtn.style.cursor = 'pointer';
+                    dashUpgradeBtn.disabled = false;
+                    dashUpgradeBtn.innerHTML = '<i class="fas fa-arrow-up"></i> Upgrade';
+                    dashUpgradeBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        openUpgradeModal(latestActive.package_id);
+                    };
+                }
+            }
         }
 
         if (statTrainer) {
@@ -1573,6 +1799,34 @@ function formatDate(dateString) {
     
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+// Save initial measurements from survey
+async function saveInitialMeasurements(weight, height) {
+    try {
+        const response = await fetch('../../api/users/update-profile.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name: userData.name, // Required by API
+                contact: userData.contact || '',
+                address: userData.address || '',
+                weight: weight,
+                height: height
+            })
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            // Update local userData
+            userData.weight = weight;
+            userData.height = height;
+            localStorage.setItem('userData', JSON.stringify(userData));
+            console.log('Measurements saved successfully');
+        }
+    } catch (error) {
+        console.error('Error saving measurements:', error);
+    }
 }
 
 // Open booking modal
@@ -1976,13 +2230,14 @@ function switchModalTab(tabId) {
     }
 }
 
-async function loadModalPlan(bookingId) {
+async function loadModalPlan(bookingId, packageId = null) {
     const content = document.getElementById('modalPlanContent');
     try {
+        // 1. Try to fetch trainer-assigned plan first
         const response = await fetch(`../../api/trainers/get-member-plan.php?booking_id=${bookingId}`);
         const data = await response.json();
         
-        if (data.success && data.data.exercises.length > 0) {
+        if (data.success && data.data.exercises && data.data.exercises.length > 0) {
             content.innerHTML = data.data.exercises.map(ex => `
                 <div class="exercise-item" style="display: flex; gap: 20px; padding: 20px; border-bottom: 1px solid var(--dark-border); align-items: center;">
                     <img src="${ex.image_url || '../../assets/img/exercise-placeholder.jpg'}" style="width: 80px; height: 80px; border-radius: 8px; object-fit: cover; background: #1a1a1a;">
@@ -1996,10 +2251,34 @@ async function loadModalPlan(bookingId) {
                     </div>
                 </div>
             `).join('');
-        } else {
-            content.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--dark-text-secondary);">Your coach hasn\'t assigned specific exercises to this plan yet.</div>';
+            return;
         }
+
+        // 2. Fallback to package-default exercises if packageId is provided
+        if (packageId) {
+            const pkgResponse = await fetch(`../../api/packages/get-exercises.php?package_id=${packageId}`);
+            const pkgData = await pkgResponse.json();
+            
+            if (pkgData.success && pkgData.data && pkgData.data.length > 0) {
+                content.innerHTML = pkgData.data.map(ex => `
+                    <div class="exercise-item" style="display: flex; gap: 20px; padding: 20px; border-bottom: 1px solid var(--dark-border); align-items: center;">
+                        <img src="${ex.image_url || '../../assets/img/exercise-placeholder.jpg'}" style="width: 80px; height: 80px; border-radius: 8px; object-fit: cover; background: #1a1a1a;">
+                        <div style="flex: 1;">
+                            <h4 style="margin-bottom: 4px; font-weight: 700; color: white;">${ex.name}</h4>
+                            <div style="display: flex; gap: 15px; font-size: 0.85rem; color: var(--primary);">
+                                <span><i class="fas fa-redo"></i> ${ex.sets} Sets</span>
+                                <span><i class="fas fa-running"></i> ${ex.reps} Reps</span>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+                return;
+            }
+        }
+
+        content.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--dark-text-secondary);">This plan has general gym access. No specific exercises assigned yet.</div>';
     } catch (error) {
+        console.error('Error loading plan:', error);
         content.innerHTML = '<div style="text-align: center; padding: 40px; color: #ef4444;">Failed to load plan.</div>';
     }
 }
@@ -2390,10 +2669,21 @@ function viewBookingDetails(bookingId) {
     // Handle Expiry
     const expiryContainer = document.getElementById('detailExpiryContainer');
     const expiryValue = document.getElementById('detailExpiry').querySelector('span');
-    if (booking.status === 'verified' && booking.duration) {
+    if ((booking.status === 'verified' || booking.status === 'pending') && booking.duration) {
         expiryContainer.style.display = 'block';
         const expiryDate = booking.expires_at ? new Date(booking.expires_at) : new Date(new Date(booking.booking_date || booking.created_at).getTime() + parseDurationToDays(booking.duration) * 86400000);
         expiryValue.textContent = formatDate(expiryDate);
+        
+        // Add remaining days indicator if active
+        const isActive = isBookingActive(booking);
+        if (isActive) {
+            const diffTime = expiryDate.getTime() - new Date().getTime();
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            let remainingText = '';
+            if (diffDays > 0) remainingText = ` (${diffDays} days left)`;
+            else if (diffDays === 0) remainingText = ` (Expires today)`;
+            expiryValue.textContent += remainingText;
+        }
     } else {
         expiryContainer.style.display = 'none';
     }
@@ -2401,26 +2691,23 @@ function viewBookingDetails(bookingId) {
     // Handle Trainer
     const trainerContainer = document.getElementById('detailTrainerContainer');
     const trainerValue = document.getElementById('detailTrainer').querySelector('span');
-    const trainerActions = document.getElementById('trainerActions');
     
     if (booking.trainer_name) {
         trainerContainer.style.display = 'block';
         trainerValue.textContent = booking.trainer_name;
-        
-        // Store current booking ID for plan/progress viewing
-        currentViewingBookingId = booking.id;
-        
-        // Load all data for the Hub
-        initModalCalendar(booking.id);
-        loadModalPlan(booking.id);
-        loadModalDiet(booking.userId || booking.user_id || userData.id);
-        loadModalTips(booking.userId || booking.user_id || userData.id);
-        
-        // Reset to Info tab
-        switchModalTab('info');
     } else {
         trainerContainer.style.display = 'none';
     }
+
+    // Always load the Hub data (it will fallback to package-defaults if no trainer plan exists)
+    currentViewingBookingId = booking.id;
+    initModalCalendar(booking.id);
+    loadModalPlan(booking.id, booking.package_id);
+    loadModalDiet(booking.userId || booking.user_id || userData.id);
+    loadModalTips(booking.userId || booking.user_id || userData.id);
+    
+    // Reset to Info tab
+    switchModalTab('info');
 
     // Handle Notes / Rejection Reason
     const notesSection = document.getElementById('detailNotesSection');
@@ -2462,6 +2749,47 @@ function viewBookingDetails(bookingId) {
         receiptWrapper.onclick = () => window.open(fixedUrl, '_blank');
     } else {
         document.getElementById('receiptSection').style.display = 'none';
+    }
+
+    // Handle Quick Actions in Hub
+    const detailRenewBtn = document.getElementById('detailRenewBtn');
+    const detailUpgradeBtn = document.getElementById('detailUpgradeBtn');
+    
+    if (detailRenewBtn) {
+        const isAlreadyUpgraded = checkIsAlreadyUpgraded(booking);
+        const canRenew = (booking.status === 'verified') && !isAlreadyUpgraded && canRenewBooking(booking);
+        detailRenewBtn.style.display = canRenew ? 'flex' : 'none';
+        detailRenewBtn.onclick = () => {
+            closeBookingDetailsModal();
+            renewBooking(booking.id);
+        };
+    }
+    
+    if (detailUpgradeBtn) {
+        const isUpgradable = canUpgradeBooking(booking);
+        const isAlreadyUpgraded = checkIsAlreadyUpgraded(booking);
+
+        if (isAlreadyUpgraded) {
+            detailUpgradeBtn.style.display = 'flex';
+            detailUpgradeBtn.style.background = 'rgba(34, 197, 94, 0.05)';
+            detailUpgradeBtn.style.color = '#22c55e';
+            detailUpgradeBtn.style.border = '1px solid rgba(34, 197, 94, 0.1)';
+            detailUpgradeBtn.style.opacity = '0.8';
+            detailUpgradeBtn.style.cursor = 'default';
+            detailUpgradeBtn.disabled = true;
+            detailUpgradeBtn.innerHTML = '<i class="fas fa-check"></i><span>Already Upgraded</span>';
+            detailUpgradeBtn.onclick = null;
+        } else {
+            detailUpgradeBtn.style.display = isUpgradable ? 'flex' : 'none';
+            detailUpgradeBtn.style.opacity = '';
+            detailUpgradeBtn.style.cursor = '';
+            detailUpgradeBtn.disabled = false;
+            detailUpgradeBtn.innerHTML = '<i class="fas fa-arrow-up"></i><span>Upgrade Tier</span>';
+            detailUpgradeBtn.onclick = () => {
+                closeBookingDetailsModal();
+                openUpgradeModal(booking.package_id);
+            };
+        }
     }
     
     document.getElementById('bookingDetailsModal').classList.add('active');
@@ -2708,23 +3036,29 @@ function selectSurveyOption(element, category, value) {
 }
 
 function nextSurveyStep() {
-    if (currentSurveyStep < 3) {
+    if (currentSurveyStep < 4) {
         // Move to next step
         document.querySelector(`.survey-step[data-step="${currentSurveyStep}"]`).classList.remove('active');
         currentSurveyStep++;
         document.querySelector(`.survey-step[data-step="${currentSurveyStep}"]`).classList.add('active');
         
         // Update progress bar
-        const progress = (currentSurveyStep / 3) * 100;
+        const progress = (currentSurveyStep / 4) * 100;
         document.getElementById('surveyProgress').style.width = `${progress}%`;
         
         // Update button text for last step
-        if (currentSurveyStep === 3) {
+        if (currentSurveyStep === 4) {
             document.getElementById('surveyNextBtn').innerHTML = '<span>Get My Plan</span> <i class="fas fa-check"></i>';
+        } else {
+            document.getElementById('surveyNextBtn').innerHTML = '<span>Next Step</span> <i class="fas fa-arrow-right"></i>';
         }
         
-        // Disable next button until option is selected for the new step
-        document.getElementById('surveyNextBtn').disabled = true;
+        // Disable next button until option is selected or inputs are filled for the new step
+        if (currentSurveyStep === 3) {
+            checkMeasurementsInput(); // Check if they already typed something
+        } else {
+            document.getElementById('surveyNextBtn').disabled = true;
+        }
     } else {
         // Survey complete - calculate recommendation
         finishSurvey();
@@ -2757,6 +3091,11 @@ function finishSurvey() {
         }
     } catch (e) {
         console.error('Error getting user identifier for survey:', e);
+    }
+    
+    // Save measurements if available
+    if (surveyData.weight && surveyData.height) {
+        saveInitialMeasurements(surveyData.weight, surveyData.height);
     }
     
     localStorage.setItem('gym_survey_completed_' + userId, 'true');

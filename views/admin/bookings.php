@@ -140,6 +140,17 @@ $user = getCurrentUser();
             --fc-page-bg-color: #ffffff;
             --fc-today-bg-color: rgba(0, 0, 0, 0.05);
         }
+        
+        /* Fix Date Input Calendar Icon Visibility */
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            opacity: 0.6;
+            cursor: pointer;
+        }
+        
+        .light-mode input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: none;
+        }
     </style>
     
     <!-- Apply theme immediately before page renders to prevent flash -->
@@ -263,20 +274,6 @@ $user = getCurrentUser();
             <div class="stat-card">
                 <div class="stat-header">
                     <div class="stat-icon">
-                        <i class="fas fa-walking"></i>
-                    </div>
-                    <div class="trend">
-                        <i class="fas fa-arrow-up"></i>
-                        <span id="walkinTrend">0%</span>
-                    </div>
-                </div>
-                <div class="stat-value" id="walkinBookings">0</div>
-                <div class="stat-label">Walk-in Customers</div>
-            </div>
-            
-            <div class="stat-card">
-                <div class="stat-header">
-                    <div class="stat-icon">
                         <i class="fas fa-users"></i>
                     </div>
                     <div class="trend">
@@ -357,8 +354,8 @@ $user = getCurrentUser();
                     <label style="display: block; margin-bottom: 8px; color: var(--dark-text-secondary); font-size: 0.75rem; font-weight: 600;">Booking Type</label>
                     <select id="bookingTypeFilter" class="card-btn" style="width: 100%; padding: 8px 12px; cursor: pointer;">
                         <option value="all">All Bookings</option>
-                        <option value="regular">Regular Members</option>
-                        <option value="walkin">Walk-in Customers</option>
+                        <option value="regular">Online Booking</option>
+                        <option value="walkin">Walk-in Booking</option>
                     </select>
                 </div>
                 
@@ -392,7 +389,19 @@ $user = getCurrentUser();
                         <option value="week">This Week</option>
                         <option value="month">This Month</option>
                         <option value="year">This Year</option>
+                        <option value="custom">Custom Range</option>
                     </select>
+                </div>
+                
+                <div id="customDateContainer" style="display: none; flex: 2; min-width: 300px; gap: 16px;">
+                    <div style="flex: 1;">
+                        <label style="display: block; margin-bottom: 8px; color: var(--dark-text-secondary); font-size: 0.75rem; font-weight: 600;">Start Date</label>
+                        <input type="date" id="customStartDate" class="card-btn" style="width: 100%; padding: 7px 12px; cursor: pointer;">
+                    </div>
+                    <div style="flex: 1;">
+                        <label style="display: block; margin-bottom: 8px; color: var(--dark-text-secondary); font-size: 0.75rem; font-weight: 600;">End Date</label>
+                        <input type="date" id="customEndDate" class="card-btn" style="width: 100%; padding: 7px 12px; cursor: pointer;">
+                    </div>
                 </div>
             </div>
         </div>

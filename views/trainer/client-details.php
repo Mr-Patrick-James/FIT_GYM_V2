@@ -22,7 +22,9 @@ $trainerId = $trainer['id'];
 
 // Get client and booking details
 $stmt = $conn->prepare("
-    SELECT b.*, u.name as member_name, u.email as member_email, u.contact as member_contact, u.id as member_id, p.name as package_name, p.is_trainer_assisted
+    SELECT b.*, u.name as member_name, u.email as member_email, u.contact as member_contact, u.id as member_id, 
+           u.weight as initial_weight, u.height as initial_height,
+           p.name as package_name, p.is_trainer_assisted
     FROM bookings b 
     JOIN users u ON b.user_id = u.id 
     JOIN packages p ON b.package_id = p.id 
@@ -541,6 +543,43 @@ $memberId = $client['member_id'];
         <!-- Progress Tab -->
         <div id="progressTab" class="tab-content">
             <div class="management-grid">
+                <div class="content-card">
+                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                        <h3>Member Initial Profile</h3>
+                        <span class="status-badge" style="background: rgba(255, 255, 255, 0.05); color: #fff; font-size: 0.6rem;">FROM SURVEY</span>
+                    </div>
+                    <div style="padding: 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div style="background: rgba(255, 255, 255, 0.02); padding: 16px; border-radius: 12px; border: 1px solid var(--dark-border);">
+                            <p style="font-size: 0.65rem; font-weight: 800; color: var(--dark-text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Initial Weight</p>
+                            <p style="font-size: 1.2rem; font-weight: 800; color: #fff;">
+                                <?php echo $client['initial_weight'] ? number_format($client['initial_weight'], 1) . ' <span style="font-size: 0.7rem; color: var(--dark-text-secondary);">kg</span>' : 'Not Set'; ?>
+                            </p>
+                        </div>
+                        <div style="background: rgba(255, 255, 255, 0.02); padding: 16px; border-radius: 12px; border: 1px solid var(--dark-border);">
+                            <p style="font-size: 0.65rem; font-weight: 800; color: var(--dark-text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Initial Height</p>
+                            <p style="font-size: 1.2rem; font-weight: 800; color: #fff;">
+                                <?php echo $client['initial_height'] ? number_format($client['initial_height'], 1) . ' <span style="font-size: 0.7rem; color: var(--dark-text-secondary);">cm</span>' : 'Not Set'; ?>
+                            </p>
+                        </div>
+                        <?php if ($client['initial_weight'] && $client['initial_height']): 
+                            $bmi = $client['initial_weight'] / (($client['initial_height']/100) * ($client['initial_height']/100));
+                            $bmiStatus = 'Normal';
+                            $bmiColor = '#22c55e';
+                            if ($bmi < 18.5) { $bmiStatus = 'Underweight'; $bmiColor = '#3b82f6'; }
+                            else if ($bmi >= 25 && $bmi < 30) { $bmiStatus = 'Overweight'; $bmiColor = '#f59e0b'; }
+                            else if ($bmi >= 30) { $bmiStatus = 'Obese'; $bmiColor = '#ef4444'; }
+                        ?>
+                        <div style="grid-column: span 2; background: rgba(255, 255, 255, 0.02); padding: 16px; border-radius: 12px; border: 1px solid var(--dark-border); display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <p style="font-size: 0.65rem; font-weight: 800; color: var(--dark-text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Calculated BMI</p>
+                                <p style="font-size: 1rem; font-weight: 800; color: #fff;"><?php echo number_format($bmi, 1); ?></p>
+                            </div>
+                            <span class="status-badge" style="background: <?php echo $bmiColor; ?>20; color: <?php echo $bmiColor; ?>; border: 1px solid <?php echo $bmiColor; ?>40;"><?php echo $bmiStatus; ?></span>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
                 <div class="content-card">
                     <div class="card-header">
                         <h3>Log Member Progress</h3>

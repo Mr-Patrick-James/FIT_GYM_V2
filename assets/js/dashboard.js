@@ -78,8 +78,17 @@ document.addEventListener('DOMContentLoaded', async function() {
     populateBookingsTable();
     populatePackages();
     await initializeChart();
+    await initializePackageStatsChart();
     updateStats();
     setupEventListeners();
+    
+    // Set default dates for statistics filter
+    const now = new Date();
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+    const statsStartDate = document.getElementById('statsStartDate');
+    const statsEndDate = document.getElementById('statsEndDate');
+    if (statsStartDate) statsStartDate.value = firstDay.toISOString().split('T')[0];
+    if (statsEndDate) statsEndDate.value = now.toISOString().split('T')[0];
     
     // Refresh bookings every 3 seconds
     setInterval(async () => {
@@ -89,6 +98,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             populateBookingsTable();
             updateStats();
             await initializeChart();
+            await initializePackageStatsChart();
         }
     }, 3000);
     
@@ -309,15 +319,15 @@ function populatePackages() {
 }
 
 // Initialize revenue chart
-async function initializeChart() {
+async function initializeChart(months = 6) {
     const canvas = document.getElementById('revenueChart');
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     
-    // Group revenue by month for the last 6 months
+    // Group revenue by month for the specified number of months
     const monthlyRevenue = {};
     const now = new Date();
-    for (let i = 5; i >= 0; i--) {
+    for (let i = months - 1; i >= 0; i--) {
         const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
         const key = d.toLocaleDateString('en-US', { month: 'short' });
         monthlyRevenue[key] = 0;
@@ -417,6 +427,132 @@ async function initializeChart() {
             }
         }
     });
+}
+
+// Initialize package statistics chart
+async function initializePackageStatsChart(startDate = null, endDate = null) {
+    const canvas = document.getElementById('packageStatsChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    
+    // Default to current month if no dates provided
+    if (!startDate || !endDate) {
+        const now = new Date();
+        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+        startDate = firstDay.toISOString().split('T')[0];
+        endDate = now.toISOString().split('T')[0];
+    }
+    
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999);
+    
+    // Count packages within the date range
+    const packageCounts = {};
+    
+    allBookings
+        .filter(b => b.status === 'verified')
+        .forEach(b => {
+            const date = new Date(b.booking_date || b.created_at);
+            if (date >= start && date <= end) {
+                const pkgName = b.package_name || b.package || 'Other';
+                packageCounts[pkgName] = (packageCounts[pkgName] || 0) + 1;
+            }
+        });
+
+    const labels = Object.keys(packageCounts);
+    const data = Object.values(packageCounts);
+    
+    if (window.packageStatsChart instanceof Chart) {
+        window.packageStatsChart.destroy();
+    }
+    
+    // If no data, show a message
+    if (labels.length === 0) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#888';
+        ctx.textAlign = 'center';
+        ctx.font = '14px Inter';
+        ctx.fillText('No verified bookings found for this period', canvas.width / 2, canvas.height / 2);
+        return;
+    }
+
+    window.packageStatsChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Users',
+                data: data,
+                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                borderColor: '#ffffff',
+                borderWidth: 2,
+                borderRadius: 8,
+                hoverBackgroundColor: 'rgba(255, 255, 255, 0.4)'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(17, 17, 17, 0.95)',
+                    titleColor: '#ffffff',
+                    bodyColor: '#ffffff',
+                    borderColor: '#ffffff',
+                    borderWidth: 2,
+                    cornerRadius: 12
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.05)'
+                    },
+                    ticks: {
+                        color: '#888',
+                        stepSize: 1,
+                        font: {
+                            weight: '600'
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        color: '#888',
+                        font: {
+                            weight: '600'
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Filter package stats by date range
+function filterPackageStats() {
+    const startDate = document.getElementById('statsStartDate').value;
+    const endDate = document.getElementById('statsEndDate').value;
+    
+    if (!startDate || !endDate) {
+        showNotification('Please select both start and end dates', 'warning');
+        return;
+    }
+    
+    if (new Date(startDate) > new Date(endDate)) {
+        showNotification('Start date cannot be after end date', 'warning');
+        return;
+    }
+    
+    initializePackageStatsChart(startDate, endDate);
 }
 
 // Current viewing booking
@@ -787,6 +923,14 @@ function setupEventListeners() {
             row.style.display = text.includes(term) ? '' : 'none';
         });
     });
+    
+    // Revenue Period change
+    const revenuePeriod = document.getElementById('revenuePeriod');
+    if (revenuePeriod) {
+        revenuePeriod.addEventListener('change', function() {
+            initializeChart(parseInt(this.value));
+        });
+    }
     
     // Close modal on outside click
     document.getElementById('bookingModal').addEventListener('click', function(e) {

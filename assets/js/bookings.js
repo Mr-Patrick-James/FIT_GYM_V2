@@ -144,6 +144,8 @@ async function applyFilters() {
     const sortBy = document.getElementById('sortBy').value;
     const dateRange = document.getElementById('dateRange').value;
     const searchTerm = document.getElementById('searchInput').value;
+    const customStartDate = document.getElementById('customStartDate') ? document.getElementById('customStartDate').value : '';
+    const customEndDate = document.getElementById('customEndDate') ? document.getElementById('customEndDate').value : '';
     
     // Update current filters
     currentFilters = {
@@ -187,6 +189,19 @@ async function applyFilters() {
                     const yearAgo = new Date(today);
                     yearAgo.setFullYear(yearAgo.getFullYear() - 1);
                     return bookingDate >= yearAgo;
+                case 'custom':
+                    let isValid = true;
+                    if (customStartDate) {
+                        const start = new Date(customStartDate);
+                        start.setHours(0, 0, 0, 0);
+                        if (bookingDate < start) isValid = false;
+                    }
+                    if (customEndDate) {
+                        const end = new Date(customEndDate);
+                        end.setHours(23, 59, 59, 999);
+                        if (bookingDate > end) isValid = false;
+                    }
+                    return isValid;
                 default:
                     return true;
             }
@@ -274,8 +289,8 @@ function populateBookingsTable() {
             <td data-label="Booking Type">
                 <div class="booking-type-cell">
                     ${booking.is_walkin 
-                        ? '<span class="walkin-badge"><i class="fas fa-person-walking"></i> Walk-in</span>' 
-                        : '<span class="regular-badge"><i class="fas fa-user-check"></i> Member</span>'}
+                        ? '<span class="walkin-badge"><i class="fas fa-person-walking"></i> Walk-in Booking</span>' 
+                        : '<span class="regular-badge"><i class="fas fa-wifi"></i> Online Booking</span>'}
                 </div>
             </td>
             <td data-label="Package">
@@ -319,7 +334,15 @@ function updateStats() {
     
     // Walk-in vs Active Members breakdown
     const walkinBookings = allBookings.filter(b => b.is_walkin).length;
-    const activeBookings = allBookings.filter(b => !b.is_walkin).length;
+    
+    // Active Members (Unique non-walkin members with an active booking)
+    const activeMembers = new Set();
+    allBookings.forEach(b => {
+        if (!b.is_walkin && isBookingActive(b)) {
+            activeMembers.add(b.user_id || b.email || b.name);
+        }
+    });
+    const activeBookings = activeMembers.size;
     
     // Calculate total revenue
     let totalRevenue = 0;
@@ -373,8 +396,8 @@ function viewBooking(id) {
         // Populate modal
         document.getElementById('modalBookingId').textContent = `#${booking.id}`;
         document.getElementById('modalBookingType').innerHTML = booking.is_walkin 
-            ? '<span class="walkin-badge"><i class="fas fa-person-walking"></i> Walk-in</span>' 
-            : '<span class="regular-badge"><i class="fas fa-user-check"></i> Member</span>';
+            ? '<span class="walkin-badge"><i class="fas fa-person-walking"></i> Walk-in Booking</span>' 
+            : '<span class="regular-badge"><i class="fas fa-wifi"></i> Online Booking</span>';
         
         const statusBadge = `<span class="status-badge status-${booking.status || 'pending'}">${(booking.status || 'pending').charAt(0).toUpperCase() + (booking.status || 'pending').slice(1)}</span>`;
         document.getElementById('modalStatus').innerHTML = statusBadge;
@@ -947,9 +970,19 @@ async function initPage() {
     document.getElementById('sortBy').addEventListener('change', async () => {
         await applyFilters();
     });
-    document.getElementById('dateRange').addEventListener('change', async () => {
+    document.getElementById('dateRange').addEventListener('change', async (e) => {
+        const customContainer = document.getElementById('customDateContainer');
+        if (customContainer) {
+            customContainer.style.display = e.target.value === 'custom' ? 'flex' : 'none';
+        }
         await applyFilters();
     });
+    
+    // Custom date listeners
+    const customStartEl = document.getElementById('customStartDate');
+    const customEndEl = document.getElementById('customEndDate');
+    if (customStartEl) customStartEl.addEventListener('change', applyFilters);
+    if (customEndEl) customEndEl.addEventListener('change', applyFilters);
     document.getElementById('searchInput').addEventListener('input', async () => {
         await applyFilters();
     });
@@ -1311,8 +1344,8 @@ async function generateWalkinReceipt(bookingId, existingWindow = null) {
 // Update renderBookingRow to show walk-in indicator
 function renderBookingRow(booking) {
     const bookingTypeBadge = booking.is_walkin 
-        ? '<span class="walkin-badge"><i class="fas fa-person-walking"></i> Walk-in</span>' 
-        : '<span class="regular-badge"><i class="fas fa-user-check"></i> Member</span>';
+        ? '<span class="walkin-badge"><i class="fas fa-person-walking"></i> Walk-in Booking</span>' 
+        : '<span class="regular-badge"><i class="fas fa-wifi"></i> Online Booking</span>';
     
     return `
         <tr class="booking-row" data-id="${booking.id}">
