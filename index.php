@@ -360,43 +360,51 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
     <section class="testimonials-section">
         <div class="container">
             <div class="section-header">
-                <span class="section-eyebrow">Member Stories</span>
-                <h2 class="section-title">Real Members,<br>Real Results</h2>
+                <span class="section-eyebrow">Google Reviews &bull; 5.0 ★★★★★</span>
+                <h2 class="section-title">What Members Say</h2>
             </div>
             <div class="testimonials-grid">
                 <div class="testimonial-card">
                     <div class="stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
-                    <p>"Martinez Fitness Gym completely changed my lifestyle. The trainers are incredibly supportive and the equipment is top-notch. Lost 15kg in 4 months!"</p>
+                    <p>"Good"</p>
                     <div class="testimonial-author">
-                        <div class="author-avatar">JR</div>
+                        <div class="author-avatar">LJ</div>
                         <div>
-                            <strong>Juan Reyes</strong>
-                            <span>Member since 2023</span>
+                            <strong>Lowell Jay Ola</strong>
+                            <span>Google Review &bull; 2 reviews &bull; 14 photos</span>
                         </div>
                     </div>
+                    <a href="https://maps.app.goo.gl/kiaoEoL586Bnzzi57" target="_blank" class="review-source"><i class="fab fa-google"></i> View on Google</a>
                 </div>
                 <div class="testimonial-card">
                     <div class="stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
-                    <p>"Best gym in Naujan! The online booking system makes it so easy to manage my sessions. The community here keeps me motivated every single day."</p>
+                    <p>5-star rating from a Local Guide with 82 reviews and 482 photos across Google Maps.</p>
                     <div class="testimonial-author">
-                        <div class="author-avatar">MC</div>
+                        <div class="author-avatar">AU</div>
                         <div>
-                            <strong>Maria Cruz</strong>
-                            <span>Member since 2022</span>
+                            <strong>AU TU MN</strong>
+                            <span>Google Local Guide &bull; 82 reviews</span>
                         </div>
                     </div>
+                    <a href="https://maps.app.goo.gl/kiaoEoL586Bnzzi57" target="_blank" class="review-source"><i class="fab fa-google"></i> View on Google</a>
                 </div>
                 <div class="testimonial-card">
                     <div class="stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
-                    <p>"I've tried other gyms but nothing compares. The trainers actually know your name and your goals. It feels personal, not just transactional."</p>
+                    <p>5-star rating — one of the gym's loyal members who keeps coming back.</p>
                     <div class="testimonial-author">
-                        <div class="author-avatar">RL</div>
+                        <div class="author-avatar">TS</div>
                         <div>
-                            <strong>Rico Lim</strong>
-                            <span>Member since 2024</span>
+                            <strong>Tramz Suison</strong>
+                            <span>Google Review</span>
                         </div>
                     </div>
+                    <a href="https://maps.app.goo.gl/kiaoEoL586Bnzzi57" target="_blank" class="review-source"><i class="fab fa-google"></i> View on Google</a>
                 </div>
+            </div>
+            <div style="text-align:center; margin-top: 40px;">
+                <a href="https://maps.app.goo.gl/kiaoEoL586Bnzzi57" target="_blank" class="directions-btn">
+                    <i class="fab fa-google"></i> See All Reviews on Google
+                </a>
             </div>
         </div>
     </section>

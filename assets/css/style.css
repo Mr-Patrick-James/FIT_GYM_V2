@@ -1331,3 +1331,11 @@ header {
     .testimonials-grid { grid-template-columns: 1fr; gap: 0; }
     .map-embed { height: 280px; }
 }
+
+.review-source {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 0.72rem; font-weight: 700; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 1px;
+    margin-top: 4px; transition: color 0.3s;
+}
+.review-source:hover { color: white; }
