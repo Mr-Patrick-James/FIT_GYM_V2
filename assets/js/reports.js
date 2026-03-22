@@ -1,1374 +1,901 @@
-// Reports Charts
-let revenueChart = null;
-let packageChart = null;
-let statusChart = null;
-let monthlyChart = null;
-let currentPeriod = '30days';
+// ── FitPay Reports v2.0 ──────────────────────────────────────────────────────
+'use strict';
 
-// Load all data from database
-async function loadReportsData() {
-    try {
-        const [bookingsRes, paymentsRes, membersRes] = await Promise.all([
-            fetch('../../api/bookings/get-all.php'),
-            fetch('../../api/payments/get-all.php'),
-            fetch('../../api/users/get-all.php?role=user')
-        ]);
+// ── State ────────────────────────────────────────────────────────────────────
+let salesData    = null;   // raw API response
+let salesChart   = null;
+let statusChart  = null;
+let pkgRevChart  = null;
+let pkgDistChart = null;
+let selectedFmt  = 'pdf';
+let activeTab    = 'sales';
 
-        const bookingsData = await bookingsRes.json();
-        const paymentsData = await paymentsRes.json();
-        const membersData = await membersRes.json();
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function peso(v) { return '₱' + (parseFloat(v) || 0).toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 0 }); }
+function num(v)  { return (parseInt(v) || 0).toLocaleString(); }
 
+function toast(msg, type = 'info') {
+    const c = document.getElementById('toastContainer');
+    if (!c) return;
+    const icons = { success: 'check-circle', error: 'times-circle', info: 'info-circle', warning: 'exclamation-triangle' };
+    const el = document.createElement('div');
+    el.className = `rpt-toast-item ${type}`;
+    el.innerHTML = `<i class="fas fa-${icons[type] || 'info-circle'}"></i><span>${msg}</span>`;
+    c.appendChild(el);
+    setTimeout(() => el.remove(), 4000);
+}
+
+function getDateRange() {
+    const preset = document.getElementById('periodPreset').value;
+    if (preset === 'all') return { start: null, end: null };
+    if (preset === 'custom') {
         return {
-            bookings: bookingsData.success ? bookingsData.data : [],
-            payments: paymentsData.success ? paymentsData.data : [],
-            members: membersData.success ? membersData.data : []
+            start: document.getElementById('startDate').value || null,
+            end:   document.getElementById('endDate').value   || null
         };
-    } catch (error) {
-        console.error('Error loading reports data:', error);
-        return { bookings: [], payments: [], members: [] };
     }
-}
-
-// Get date range based on period
-function getDateRange(period) {
-    const now = new Date();
-    const ranges = {
-        '7days': new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000),
-        '30days': new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000),
-        '3months': new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000),
-        '6months': new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000),
-        'year': new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000),
-        'all': new Date(0)
-    };
-    
-    return ranges[period] || ranges['30days'];
-}
-
-// Toggle custom date range inputs
-function toggleCustomDate() {
-    const period = document.getElementById('periodSelect').value;
-    const customRange = document.getElementById('customDateRange');
-    
-    if (period === 'custom') {
-        customRange.style.display = 'flex';
-        // Set default values if empty
-        if (!document.getElementById('startDate').value) {
-            const lastWeek = new Date();
-            lastWeek.setDate(lastWeek.getDate() - 7);
-            document.getElementById('startDate').value = lastWeek.toISOString().slice(0, 16);
-        }
-        if (!document.getElementById('endDate').value) {
-            document.getElementById('endDate').value = new Date().toISOString().slice(0, 16);
-        }
-    } else {
-        customRange.style.display = 'none';
-        updateAllCharts();
-    }
-}
-
-// Filter data by period
-function filterByPeriod(data, period) {
-    if (period === 'all') return data;
-    
-    let startDate, endDate;
-    
-    if (period === 'custom') {
-        const startVal = document.getElementById('startDate').value;
-        const endVal = document.getElementById('endDate').value;
-        startDate = startVal ? new Date(startVal) : new Date(0);
-        endDate = endVal ? new Date(endVal) : new Date();
-    } else {
-        startDate = getDateRange(period);
-        endDate = new Date();
-    }
-    
-    return data.filter(item => {
-        const rawDate = item.created_at || item.booking_date || item.date || item.createdAt || null;
-        const itemDate = rawDate ? new Date(rawDate) : new Date(0);
-        return itemDate >= startDate && itemDate <= endDate;
-    });
-}
-
-// Update key metrics
-async function updateKeyMetrics() {
-    const { bookings, payments, members } = await loadReportsData();
-    const filteredPayments = filterByPeriod(payments, currentPeriod);
-    const filteredBookings = filterByPeriod(bookings, currentPeriod);
-    
-    // Calculate current period metrics
-    let totalRevenue = 0;
-    filteredPayments.forEach(payment => {
-        totalRevenue += parseFloat(payment.amount) || 0;
-    });
-    
-    const days = getDaysInPeriod(currentPeriod);
-    const avgRevenue = days > 0 ? totalRevenue / days : 0;
-    
-    // Calculate previous period metrics for growth calculation
-    const prevPeriodData = await getPreviousPeriodMetrics(payments, bookings, members, currentPeriod);
-    
-    // Update UI
-    document.getElementById('totalRevenue').textContent = `₱${Math.round(totalRevenue).toLocaleString()}`;
-    document.getElementById('totalBookings').textContent = filteredBookings.length;
-    
-    // Active members = unique users (registered + walk-ins) with at least one verified booking that is NOT expired
-    const activeMemberIdentifiers = new Set();
-    bookings.forEach(booking => {
-        if (isBookingActive(booking)) {
-            activeMemberIdentifiers.add(booking.user_id || booking.email || booking.name);
-        }
-    });
-    
-    const activeMembersCount = activeMemberIdentifiers.size;
-    document.getElementById('totalMembers').textContent = activeMembersCount;
-    document.getElementById('avgRevenue').textContent = `₱${Math.round(avgRevenue).toLocaleString()}`;
-
-    // Update Growth Percentages
-    updateGrowthUI('revenueGrowth', totalRevenue, prevPeriodData.revenue);
-    updateGrowthUI('bookingsGrowth', filteredBookings.length, prevPeriodData.bookings);
-    updateGrowthUI('membersGrowth', activeMembersCount, prevPeriodData.members);
-    updateGrowthUI('avgRevenueGrowth', avgRevenue, prevPeriodData.avgRevenue);
-}
-
-// Calculate metrics for the previous period to show growth
-async function getPreviousPeriodMetrics(payments, bookings, members, period) {
-    if (period === 'all') return { revenue: 0, bookings: 0, members: 0, avgRevenue: 0 };
-
-    const now = new Date();
-    const periodDays = getDaysInPeriod(period);
-    const endPrevDate = getDateRange(period);
-    const startPrevDate = new Date(endPrevDate.getTime() - periodDays * 24 * 60 * 60 * 1000);
-
-    const prevPayments = payments.filter(p => {
-        const d = new Date(p.created_at || p.date || 0);
-        return d >= startPrevDate && d < endPrevDate;
-    });
-
-    const prevBookings = bookings.filter(b => {
-        const d = new Date(b.created_at || b.booking_date || 0);
-        return d >= startPrevDate && d < endPrevDate;
-    });
-
-    let prevRevenue = 0;
-    prevPayments.forEach(p => prevRevenue += parseFloat(p.amount) || 0);
-    
-    const prevAvgRevenue = periodDays > 0 ? prevRevenue / periodDays : 0;
-
-    // For active members, we'd need historical data which is complex. 
-    // Let's use a simplified approach or just compare to total members if historical is unavailable.
-    const prevActiveMembers = members.filter(m => {
-        const d = new Date(m.created_at || 0);
-        return d < endPrevDate;
-    }).length;
-
+    const days = parseInt(preset);
+    const end  = new Date();
+    const start = new Date(end.getTime() - days * 86400000);
     return {
-        revenue: prevRevenue,
-        bookings: prevBookings.length,
-        members: prevActiveMembers,
-        avgRevenue: prevAvgRevenue
+        start: start.toISOString().split('T')[0],
+        end:   end.toISOString().split('T')[0]
     };
 }
 
-// Update growth percentage in UI
-function updateGrowthUI(elementId, current, previous) {
-    const el = document.getElementById(elementId);
-    if (!el) return;
-
-    let growth = 0;
-    if (previous > 0) {
-        growth = ((current - previous) / previous) * 100;
-    } else if (current > 0) {
-        growth = 100;
+function getPeriodLabel() {
+    const preset = document.getElementById('periodPreset');
+    const v = preset.value;
+    if (v === 'custom') {
+        const s = document.getElementById('startDate').value;
+        const e = document.getElementById('endDate').value;
+        return `${s || '?'} to ${e || '?'}`;
     }
+    return preset.selectedOptions[0]?.text || 'Selected Period';
+}
 
-    const isPositive = growth >= 0;
-    el.innerHTML = `<i class="fas fa-arrow-${isPositive ? 'up' : 'down'}"></i> ${Math.abs(Math.round(growth))}%`;
-    
-    const trendContainer = el.parentElement;
-    if (trendContainer) {
-        trendContainer.className = `trend ${isPositive ? '' : 'down'}`;
+// ── Tab switching ─────────────────────────────────────────────────────────────
+function switchTab(tab) {
+    activeTab = tab;
+    document.querySelectorAll('.report-tab').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.add('active');
+    document.getElementById('panel-' + tab).classList.add('active');
+    if (salesData) renderTab(tab);
+}
+
+// ── Period preset change ──────────────────────────────────────────────────────
+function onPresetChange() {
+    const v = document.getElementById('periodPreset').value;
+    const cd = document.getElementById('customDates');
+    if (v === 'custom') {
+        cd.classList.add('visible');
+        if (!document.getElementById('startDate').value) {
+            const d = new Date(); d.setDate(d.getDate() - 30);
+            document.getElementById('startDate').value = d.toISOString().split('T')[0];
+            document.getElementById('endDate').value   = new Date().toISOString().split('T')[0];
+        }
+    } else {
+        cd.classList.remove('visible');
+        loadAll();
     }
 }
 
-// Parse duration string to days
-function parseDurationToDays(durationStr) {
-    if (!durationStr) return 0;
-    const parts = String(durationStr).toLowerCase().split(' ');
-    const value = parseInt(parts[0], 10);
-    const unit = parts[1] || '';
-    if (isNaN(value)) return 0;
-    if (unit.includes('day')) return value;
-    if (unit.includes('week')) return value * 7;
-    if (unit.includes('month')) return value * 30;
-    if (unit.includes('year')) return value * 365;
-    return value;
+// ── Load data from API ────────────────────────────────────────────────────────
+async function loadAll() {
+    const { start, end } = getDateRange();
+    let url = '../../api/reports/get-sales.php?';
+    if (start) url += `start_date=${start}&`;
+    if (end)   url += `end_date=${end}&`;
+
+    try {
+        const res  = await fetch(url);
+        const json = await res.json();
+        if (!json.success) { toast('Failed to load report data', 'error'); return; }
+        salesData = json.data;
+        renderTab(activeTab);
+        renderAllCharts();
+    } catch (e) {
+        console.error(e);
+        toast('Network error loading data', 'error');
+    }
 }
 
-// Determine if a booking is currently active (verified and unexpired)
-function isBookingActive(booking) {
-    if (!booking || !booking.status) return false;
-    
-    const status = String(booking.status).toLowerCase();
-    if (status !== 'verified') return false;
-    
-    const now = new Date();
-    
-    // If backend provided expires_at use it
-    if (booking.expires_at) {
-        const exp = new Date(booking.expires_at);
-        if (!isNaN(exp.getTime())) {
-            return now <= exp;
+function renderTab(tab) {
+    if (tab === 'sales')    { renderSummary(); renderSalesTable(); renderSalesChart(); renderStatusChart(); }
+    if (tab === 'packages') { renderPackageTable(); renderPkgCharts(); }
+}
+
+function renderAllCharts() {
+    renderSummary();
+    renderSalesTable();
+    renderSalesChart();
+    renderStatusChart();
+    renderPackageTable();
+    renderPkgCharts();
+}
+
+// ── Summary cards ─────────────────────────────────────────────────────────────
+function renderSummary() {
+    if (!salesData) return;
+    const s = salesData.summary;
+    document.getElementById('s-total-sales').textContent  = num(s.total_bookings);
+    document.getElementById('s-total-rev').textContent    = peso(s.total_revenue);
+    document.getElementById('s-verified-rev').textContent = peso(s.verified_revenue);
+    document.getElementById('s-clients').textContent      = num(s.unique_clients);
+    document.getElementById('s-walkin').textContent       = num(s.walkin_bookings);
+    document.getElementById('s-pending').textContent      = num(s.pending_bookings);
+}
+
+// ── Sales by date table ───────────────────────────────────────────────────────
+function renderSalesTable() {
+    const wrap = document.getElementById('salesTableWrap');
+    if (!salesData || !salesData.sales_by_date.length) {
+        wrap.innerHTML = `<div class="empty-state"><i class="fas fa-calendar-times"></i><p>No sales data for this period</p></div>`;
+        return;
+    }
+    const rows = salesData.sales_by_date.map(r => `
+        <tr>
+            <td class="bold">${formatDate(r.sale_date)}</td>
+            <td class="num">${num(r.total_sales)}</td>
+            <td class="num">${peso(r.total_revenue)}</td>
+            <td class="num">${peso(r.verified_revenue)}</td>
+            <td class="num">${num(r.member_count)}</td>
+            <td class="num">${num(r.walkin_count)}</td>
+        </tr>`).join('');
+    wrap.innerHTML = `
+        <table class="data-table">
+            <thead><tr>
+                <th>Date</th>
+                <th class="num">Sales</th>
+                <th class="num">Revenue</th>
+                <th class="num">Verified Rev.</th>
+                <th class="num">Members</th>
+                <th class="num">Walk-ins</th>
+            </tr></thead>
+            <tbody>${rows}</tbody>
+        </table>`;
+}
+
+function formatDate(d) {
+    if (!d) return '—';
+    const dt = new Date(d + 'T00:00:00');
+    return dt.toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+// ── Package table ─────────────────────────────────────────────────────────────
+function renderPackageTable() {
+    const wrap = document.getElementById('pkgTableWrap');
+    if (!salesData || !salesData.package_sales.length) {
+        wrap.innerHTML = `<div class="empty-state"><i class="fas fa-dumbbell"></i><p>No package data for this period</p></div>`;
+        return;
+    }
+    const total = salesData.package_sales.reduce((a, p) => a + parseInt(p.total_availed || 0), 0);
+    const rows = salesData.package_sales.map((p, i) => {
+        const pct = total > 0 ? Math.round((p.total_availed / total) * 100) : 0;
+        const rankClass = i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : 'rank-n';
+        return `
+        <tr>
+            <td><span class="rank-badge ${rankClass}">${i + 1}</span></td>
+            <td class="bold">${p.package_name}</td>
+            <td>${p.package_tag ? `<span class="pill pill-verified">${p.package_tag}</span>` : '—'}</td>
+            <td class="num bold">${num(p.total_availed)}</td>
+            <td class="num">${num(p.unique_users)}</td>
+            <td class="num">${num(p.verified_count)}</td>
+            <td class="num">${num(p.pending_count)}</td>
+            <td class="num">${peso(p.total_revenue)}</td>
+            <td>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <div class="prog-wrap" style="flex:1;">
+                        <div class="prog-fill" style="width:${pct}%;"></div>
+                    </div>
+                    <span style="font-size:.72rem;color:var(--dark-text-secondary);min-width:32px;">${pct}%</span>
+                </div>
+            </td>
+        </tr>`;
+    }).join('');
+    wrap.innerHTML = `
+        <table class="data-table">
+            <thead><tr>
+                <th>#</th>
+                <th>Package</th>
+                <th>Tag</th>
+                <th class="num">Total Availed</th>
+                <th class="num">Unique Users</th>
+                <th class="num">Verified</th>
+                <th class="num">Pending</th>
+                <th class="num">Revenue</th>
+                <th>Share</th>
+            </tr></thead>
+            <tbody>${rows}</tbody>
+        </table>`;
+}
+
+// ── Charts ────────────────────────────────────────────────────────────────────
+const CHART_DEFAULTS = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+        legend: { display: false },
+        tooltip: {
+            backgroundColor: 'rgba(15,15,15,.95)',
+            titleColor: '#fff',
+            bodyColor: '#ccc',
+            borderColor: 'rgba(255,255,255,.1)',
+            borderWidth: 1
         }
     }
-    
-    // Fallback compute from booking_date/created_at and duration
-    const startRaw = booking.booking_date || booking.created_at || booking.createdAt || booking.date;
-    const days = parseDurationToDays(booking.duration);
-    
-    if (!startRaw || !days) return false;
-    
-    const start = new Date(startRaw);
-    if (isNaN(start.getTime())) return false;
-    
-    const expiry = new Date(start);
-    expiry.setDate(expiry.getDate() + days);
-    
-    // Be generous with end-of-day
-    const endOfExpiryDay = new Date(expiry);
-    endOfExpiryDay.setHours(23, 59, 59, 999);
-    
-    return now <= endOfExpiryDay;
-}
+};
 
-// Get days in period
-function getDaysInPeriod(period) {
-    if (period === 'custom') {
-        const start = new Date(document.getElementById('startDate').value);
-        const end = new Date(document.getElementById('endDate').value);
-        const diffTime = Math.abs(end - start);
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-        return diffDays || 1; // Return at least 1 day to avoid division by zero
-    }
-    const days = {
-        '7days': 7,
-        '30days': 30,
-        '3months': 90,
-        '6months': 180,
-        'year': 365,
-        'all': 365
-    };
-    return days[period] || 30;
-}
+function renderSalesChart() {
+    const canvas = document.getElementById('salesChart');
+    if (!canvas || !salesData) return;
+    if (salesChart) salesChart.destroy();
 
-// Initialize Revenue Chart
-async function initializeRevenueChart() {
-    const ctx = document.getElementById('revenueChart').getContext('2d');
-    const { payments } = await loadReportsData();
-    const filteredPayments = filterByPeriod(payments, currentPeriod);
-    
-    // Group by date
-    const revenueByDate = {};
-    filteredPayments.forEach(payment => {
-        const date = new Date(payment.created_at);
-        const dateKey = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        
-        if (!revenueByDate[dateKey]) {
-            revenueByDate[dateKey] = 0;
-        }
-        
-        const amount = parseFloat(payment.amount) || 0;
-        revenueByDate[dateKey] += amount;
-    });
-    
-    const labels = Object.keys(revenueByDate).sort((a, b) => {
-        return new Date(a) - new Date(b);
-    });
-    const data = labels.map(label => revenueByDate[label]);
-    
-    const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-    gradient.addColorStop(0, 'rgba(255, 255, 255, 0.3)');
-    gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-    
-    revenueChart = new Chart(ctx, {
+    const mode   = document.getElementById('salesChartMode').value;
+    const rows   = salesData.sales_by_date;
+    const labels = rows.map(r => formatDate(r.sale_date));
+    const data   = rows.map(r => mode === 'revenue' ? parseFloat(r.total_revenue) || 0 : parseInt(r.total_sales) || 0);
+
+    const ctx = canvas.getContext('2d');
+    const grad = ctx.createLinearGradient(0, 0, 0, 300);
+    grad.addColorStop(0, 'rgba(255,255,255,.25)');
+    grad.addColorStop(1, 'rgba(255,255,255,0)');
+
+    salesChart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: labels,
+            labels,
             datasets: [{
-                label: 'Revenue',
-                data: data,
-                borderColor: '#ffffff',
-                backgroundColor: gradient,
-                borderWidth: 3,
+                label: mode === 'revenue' ? 'Revenue' : 'Sales',
+                data,
+                borderColor: '#fff',
+                backgroundColor: grad,
+                borderWidth: 2.5,
                 fill: true,
                 tension: 0.4,
-                pointBackgroundColor: '#ffffff',
+                pointBackgroundColor: '#fff',
                 pointBorderColor: '#0a0a0a',
-                pointBorderWidth: 3,
-                pointRadius: 6,
-                pointHoverRadius: 10
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 7
             }]
         },
         options: {
-            responsive: true,
-            maintainAspectRatio: false,
+            ...CHART_DEFAULTS,
             plugins: {
-                legend: {
-                    display: false
-                },
+                ...CHART_DEFAULTS.plugins,
                 tooltip: {
-                    backgroundColor: 'rgba(17, 17, 17, 0.95)',
-                    titleColor: '#ffffff',
-                    bodyColor: '#ffffff',
-                    borderColor: '#ffffff',
-                    borderWidth: 2,
+                    ...CHART_DEFAULTS.plugins.tooltip,
                     callbacks: {
-                        label: function(context) {
-                            return `₱${context.parsed.y.toLocaleString()}`;
-                        }
+                        label: ctx => mode === 'revenue' ? peso(ctx.parsed.y) : ctx.parsed.y + ' sales'
                     }
                 }
             },
             scales: {
-                y: {
-                    beginAtZero: true,
-                    grid: {
-                        color: 'rgba(255, 255, 255, 0.05)'
-                    },
-                    ticks: {
-                        color: '#888',
-                        callback: function(value) {
-                            return '₱' + value.toLocaleString();
-                        }
-                    }
-                },
-                x: {
-                    grid: {
-                        color: 'rgba(255, 255, 255, 0.05)'
-                    },
-                    ticks: {
-                        color: '#888'
-                    }
-                }
+                y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,.05)' }, ticks: { color: '#888', callback: v => mode === 'revenue' ? '₱' + v.toLocaleString() : v } },
+                x: { grid: { color: 'rgba(255,255,255,.05)' }, ticks: { color: '#888', maxTicksLimit: 10 } }
             }
         }
     });
 }
 
-// Initialize Package Chart
-async function initializePackageChart() {
-    const canvas = document.getElementById('packageChart');
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    const { payments } = await loadReportsData();
-    const filteredPayments = filterByPeriod(payments, currentPeriod);
-    
-    // Count by package
-    const packageCount = {};
-    filteredPayments.forEach(payment => {
-        const pkg = payment.package_name || 'Unknown';
-        packageCount[pkg] = (packageCount[pkg] || 0) + 1;
-    });
-    
-    const labels = Object.keys(packageCount);
-    const data = Object.values(packageCount);
-    
-    packageChart = new Chart(ctx, {
+function renderStatusChart() {
+    const canvas = document.getElementById('statusChart');
+    if (!canvas || !salesData) return;
+    if (statusChart) statusChart.destroy();
+
+    const s = salesData.summary;
+    statusChart = new Chart(canvas.getContext('2d'), {
         type: 'doughnut',
         data: {
-            labels: labels,
+            labels: ['Verified', 'Pending', 'Rejected'],
             datasets: [{
-                data: data,
-                backgroundColor: [
-                    '#ffffff',
-                    'rgba(255, 255, 255, 0.8)',
-                    'rgba(255, 255, 255, 0.6)',
-                    'rgba(255, 255, 255, 0.4)',
-                    'rgba(255, 255, 255, 0.2)'
-                ],
+                data: [s.verified_bookings, s.pending_bookings, s.rejected_bookings],
+                backgroundColor: ['rgba(34,197,94,.8)', 'rgba(245,158,11,.8)', 'rgba(239,68,68,.8)'],
                 borderColor: '#0a0a0a',
-                borderWidth: 2
+                borderWidth: 3
             }]
         },
         options: {
-            responsive: true,
-            maintainAspectRatio: false,
+            ...CHART_DEFAULTS,
             plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: {
-                        color: '#ffffff',
-                        padding: 15,
-                        font: {
-                            size: 11
-                        }
-                    }
-                },
-                tooltip: {
-                    backgroundColor: 'rgba(17, 17, 17, 0.95)',
-                    titleColor: '#ffffff',
-                    bodyColor: '#ffffff',
-                    borderColor: '#ffffff',
-                    borderWidth: 2
-                }
+                ...CHART_DEFAULTS.plugins,
+                legend: { display: true, position: 'bottom', labels: { color: '#aaa', padding: 14, font: { size: 11 } } }
             },
-            cutout: '70%'
+            cutout: '68%'
         }
     });
-
-    // Update Trending Packages List
-    updateTrendingPackages(packageCount, filteredPayments.length);
 }
 
-// Update Trending Packages UI
-function updateTrendingPackages(packageCount, totalSales) {
-    const listContainer = document.getElementById('trendingPackagesList');
-    if (!listContainer) return;
+function renderPkgCharts() {
+    const pkgs = salesData?.package_sales;
+    if (!pkgs || !pkgs.length) return;
 
-    // Convert object to array and sort by count
-    const trending = Object.entries(packageCount)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 5); // Top 5
+    const labels   = pkgs.map(p => p.package_name);
+    const revenues = pkgs.map(p => parseFloat(p.total_revenue) || 0);
+    const counts   = pkgs.map(p => parseInt(p.total_availed) || 0);
+    const colors   = ['rgba(255,255,255,.85)', 'rgba(255,255,255,.65)', 'rgba(255,255,255,.5)', 'rgba(255,255,255,.35)', 'rgba(255,255,255,.2)', 'rgba(255,255,255,.12)'];
 
-    if (trending.length === 0) {
-        listContainer.innerHTML = `
-            <div style="text-align: center; padding: 40px; color: var(--dark-text-secondary);">
-                <p>No sales data for this period</p>
-            </div>`;
-        return;
-    }
-
-    let html = '';
-    trending.forEach(([name, count], index) => {
-        const percentage = totalSales > 0 ? Math.round((count / totalSales) * 100) : 0;
-        const iconColor = index === 0 ? '#f59e0b' : index === 1 ? '#94a3b8' : index === 2 ? '#b45309' : '#4b5563';
-        const rankIcon = index < 3 ? `<i class="fas fa-crown" style="color: ${iconColor}; font-size: 0.85rem;"></i>` : `<span style="font-size: 0.8rem; font-weight: 800; color: var(--dark-text-secondary);">#${index + 1}</span>`;
-
-        html += `
-            <div style="display: flex; align-items: center; gap: 15px; background: rgba(255,255,255,0.04); padding: 14px 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.06); transition: transform 0.2s, background 0.2s; cursor: default;" onmouseover="this.style.background='rgba(255,255,255,0.07)'" onmouseout="this.style.background='rgba(255,255,255,0.04)'">
-                <div style="width: 36px; height: 36px; min-width: 36px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.06); border-radius: 10px; border: 1px solid rgba(255,255,255,0.05);">
-                    ${rankIcon}
-                </div>
-                <div style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span style="font-weight: 700; font-size: 0.95rem; color: #fff; text-transform: uppercase; letter-spacing: 0.5px;">${name}</span>
-                        <div style="text-align: right;">
-                            <span style="font-weight: 800; color: #fff; font-size: 1rem;">${count}</span>
-                            <span style="font-weight: 500; font-size: 0.75rem; color: var(--dark-text-secondary); margin-left: 2px;">sold</span>
-                        </div>
-                    </div>
-                    <div style="height: 8px; background: rgba(255,255,255,0.08); border-radius: 20px; overflow: hidden; position: relative;">
-                        <div style="height: 100%; width: ${percentage}%; background: linear-gradient(90deg, #fff, rgba(255,255,255,0.7)); border-radius: 20px; transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);"></div>
-                    </div>
-                </div>
-            </div>
-        `;
-    });
-
-    listContainer.innerHTML = html;
-}
-
-// Initialize Status Chart
-async function initializeStatusChart() {
-    const ctx = document.getElementById('statusChart').getContext('2d');
-    const { bookings } = await loadReportsData();
-    const filteredBookings = filterByPeriod(bookings, currentPeriod);
-    
-    // Count by status
-    const statusCount = {
-        'pending': 0,
-        'verified': 0,
-        'rejected': 0
-    };
-    
-    filteredBookings.forEach(booking => {
-        const status = booking.status || 'pending';
-        statusCount[status] = (statusCount[status] || 0) + 1;
-    });
-    
-    statusChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: ['Pending', 'Verified', 'Rejected'],
-            datasets: [{
-                label: 'Bookings',
-                data: [statusCount.pending, statusCount.verified, statusCount.rejected],
-                backgroundColor: [
-                    'rgba(245, 158, 11, 0.8)',
-                    'rgba(34, 197, 94, 0.8)',
-                    'rgba(239, 68, 68, 0.8)'
-                ],
-                borderColor: [
-                    '#f59e0b',
-                    '#22c55e',
-                    '#ef4444'
-                ],
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
-                },
-                tooltip: {
-                    backgroundColor: 'rgba(17, 17, 17, 0.95)',
-                    titleColor: '#ffffff',
-                    bodyColor: '#ffffff',
-                    borderColor: '#ffffff',
-                    borderWidth: 2
-                }
+    // Revenue bar chart
+    const rc = document.getElementById('pkgRevenueChart');
+    if (rc) {
+        if (pkgRevChart) pkgRevChart.destroy();
+        pkgRevChart = new Chart(rc.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [{
+                    label: 'Revenue',
+                    data: revenues,
+                    backgroundColor: colors,
+                    borderRadius: 6,
+                    borderSkipped: false
+                }]
             },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    grid: {
-                        color: 'rgba(255, 255, 255, 0.05)'
-                    },
-                    ticks: {
-                        color: '#888',
-                        stepSize: 1
-                    }
+            options: {
+                ...CHART_DEFAULTS,
+                plugins: {
+                    ...CHART_DEFAULTS.plugins,
+                    tooltip: { ...CHART_DEFAULTS.plugins.tooltip, callbacks: { label: ctx => peso(ctx.parsed.y) } }
                 },
-                x: {
-                    grid: {
-                        color: 'rgba(255, 255, 255, 0.05)'
-                    },
-                    ticks: {
-                        color: '#888'
-                    }
+                scales: {
+                    y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,.05)' }, ticks: { color: '#888', callback: v => '₱' + v.toLocaleString() } },
+                    x: { grid: { display: false }, ticks: { color: '#888' } }
                 }
             }
-        }
-    });
-}
-
-// Toggle custom date range inputs for monthly chart
-function toggleMonthlyCustomDate() {
-    const yearSelect = document.getElementById('monthlyYearSelect');
-    const customRange = document.getElementById('monthlyCustomRange');
-    
-    if (yearSelect && yearSelect.value === 'custom') {
-        if (customRange) customRange.style.display = 'flex';
-        
-        // Set default values if empty
-        const startInput = document.getElementById('monthlyStartDate');
-        const endInput = document.getElementById('monthlyEndDate');
-        
-        if (startInput && !startInput.value) {
-            const startOfYear = new Date(new Date().getFullYear(), 0, 1);
-            startInput.value = startOfYear.toISOString().split('T')[0];
-        }
-        if (endInput && !endInput.value) {
-            endInput.value = new Date().toISOString().split('T')[0];
-        }
-    } else {
-        if (customRange) customRange.style.display = 'none';
-    }
-    initializeMonthlyChart();
-}
-
-// Initialize Monthly Chart
-async function initializeMonthlyChart() {
-    const canvas = document.getElementById('monthlyChart');
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    
-    // If chart exists, destroy it before creating new one
-    if (monthlyChart) {
-        monthlyChart.destroy();
-    }
-    
-    const { payments } = await loadReportsData();
-    
-    // Get filter values specifically for this chart
-    const yearSelect = document.getElementById('monthlyYearSelect');
-    const selectedFilter = yearSelect ? yearSelect.value : 'current';
-    
-    let filteredPayments;
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    
-    if (selectedFilter === 'current') {
-        filteredPayments = payments.filter(p => {
-            const d = new Date(p.created_at || p.date);
-            return d.getFullYear() === currentYear;
-        });
-    } else if (selectedFilter === 'last') {
-        filteredPayments = payments.filter(p => {
-            const d = new Date(p.created_at || p.date);
-            return d.getFullYear() === currentYear - 1;
-        });
-    } else if (selectedFilter === 'custom') {
-        const startVal = document.getElementById('monthlyStartDate').value;
-        const endVal = document.getElementById('monthlyEndDate').value;
-        const startDate = startVal ? new Date(startVal) : new Date(0);
-        const endDate = endVal ? new Date(endVal) : new Date();
-        // Set end date to end of day
-        endDate.setHours(23, 59, 59, 999);
-        
-        filteredPayments = payments.filter(p => {
-            const d = new Date(p.created_at || p.date);
-            return d >= startDate && d <= endDate;
-        });
-    } else {
-        filteredPayments = payments; // All time
-    }
-    
-    // Group by month
-    const monthlyRevenue = {};
-    
-    // If current/last year, pre-fill all 12 months for better comparison
-    if (selectedFilter === 'current' || selectedFilter === 'last') {
-        const year = selectedFilter === 'current' ? currentYear : currentYear - 1;
-        const shortMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        shortMonths.forEach(m => {
-            monthlyRevenue[`${m} ${year}`] = 0;
         });
     }
 
-    filteredPayments.forEach(payment => {
-        const date = new Date(payment.created_at || payment.date);
-        const monthKey = date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
-        
-        if (!monthlyRevenue[monthKey]) {
-            monthlyRevenue[monthKey] = 0;
-        }
-        
-        const amount = parseFloat(payment.amount) || 0;
-        monthlyRevenue[monthKey] += amount;
-    });
-    
-    const labels = Object.keys(monthlyRevenue).sort((a, b) => {
-        return new Date(a) - new Date(b);
-    });
-    const data = labels.map(label => monthlyRevenue[label]);
-    
-    monthlyChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Revenue',
-                data: data,
-                backgroundColor: 'rgba(255, 255, 255, 0.6)',
-                borderColor: '#ffffff',
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
-                },
-                tooltip: {
-                    backgroundColor: 'rgba(17, 17, 17, 0.95)',
-                    titleColor: '#ffffff',
-                    bodyColor: '#ffffff',
-                    borderColor: '#ffffff',
-                    borderWidth: 2,
-                    callbacks: {
-                        label: function(context) {
-                            return `₱${context.parsed.y.toLocaleString()}`;
-                        }
-                    }
-                }
+    // Distribution doughnut
+    const dc = document.getElementById('pkgDistChart');
+    if (dc) {
+        if (pkgDistChart) pkgDistChart.destroy();
+        pkgDistChart = new Chart(dc.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels,
+                datasets: [{
+                    data: counts,
+                    backgroundColor: colors,
+                    borderColor: '#0a0a0a',
+                    borderWidth: 3
+                }]
             },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    grid: {
-                        color: 'rgba(255, 255, 255, 0.05)'
-                    },
-                    ticks: {
-                        color: '#888',
-                        callback: function(value) {
-                            return '₱' + value.toLocaleString();
-                        }
-                    }
+            options: {
+                ...CHART_DEFAULTS,
+                plugins: {
+                    ...CHART_DEFAULTS.plugins,
+                    legend: { display: true, position: 'bottom', labels: { color: '#aaa', padding: 12, font: { size: 11 } } }
                 },
-                x: {
-                    grid: {
-                        color: 'rgba(255, 255, 255, 0.05)'
-                    },
-                    ticks: {
-                        color: '#888'
-                    }
-                }
+                cutout: '65%'
             }
-        }
+        });
+    }
+}
+
+// ── CSV Exports ───────────────────────────────────────────────────────────────
+function exportSalesCsv() {
+    if (!salesData?.sales_by_date.length) { toast('No data to export', 'warning'); return; }
+    let csv = 'Date,Total Sales,Revenue,Verified Revenue,Members,Walk-ins\n';
+    salesData.sales_by_date.forEach(r => {
+        csv += `${r.sale_date},${r.total_sales},${r.total_revenue},${r.verified_revenue},${r.member_count},${r.walkin_count}\n`;
     });
+    downloadBlob(csv, 'text/csv', `sales_by_date_${today()}.csv`);
+    toast('CSV exported', 'success');
 }
 
-// Update all charts
-async function updateAllCharts() {
-    const periodSelect = document.getElementById('periodSelect');
-    if (!periodSelect) return;
-    
-    currentPeriod = periodSelect.value;
-    
-    // Destroy existing charts
-    if (revenueChart) revenueChart.destroy();
-    if (packageChart) packageChart.destroy();
-    if (statusChart) statusChart.destroy();
-    if (monthlyChart) monthlyChart.destroy();
-    
-    // Update metrics
-    await updateKeyMetrics();
-    
-    // Reinitialize charts
-    await initializeRevenueChart();
-    await initializePackageChart();
-    await initializeStatusChart();
-    await initializeMonthlyChart();
+function exportPackageCsv() {
+    if (!salesData?.package_sales.length) { toast('No data to export', 'warning'); return; }
+    let csv = 'Package,Tag,Total Availed,Unique Users,Verified,Pending,Rejected,Revenue\n';
+    salesData.package_sales.forEach(p => {
+        csv += `"${p.package_name}","${p.package_tag || ''}",${p.total_availed},${p.unique_users},${p.verified_count},${p.pending_count},${p.rejected_count},${p.total_revenue}\n`;
+    });
+    downloadBlob(csv, 'text/csv', `package_sales_${today()}.csv`);
+    toast('CSV exported', 'success');
 }
 
-// Export chart
-function exportChart(chartId) {
-    const canvas = document.getElementById(chartId);
-    const url = canvas.toDataURL('image/png');
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${chartId}_${new Date().toISOString().split('T')[0]}.png`;
-    a.click();
-    showNotification('Chart exported successfully!', 'success');
+function downloadBlob(content, type, filename) {
+    const blob = new Blob([content], { type });
+    const url  = URL.createObjectURL(blob);
+    const a    = Object.assign(document.createElement('a'), { href: url, download: filename });
+    document.body.appendChild(a); a.click();
+    setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 200);
 }
 
-// Export data
-async function exportData(type) {
-    const { bookings, payments } = await loadReportsData();
-    const filteredData = type === 'revenue' ? filterByPeriod(payments, currentPeriod) : filterByPeriod(bookings, currentPeriod);
-    
-    if (filteredData.length === 0) {
-        showNotification('No data to export', 'warning');
-        return;
-    }
-    
-    let csv = '';
-    if (type === 'revenue') {
-        csv = 'Date,Client,Package,Amount\n';
-        filteredData.forEach(payment => {
-            const date = new Date(payment.created_at).toLocaleDateString();
-            const name = (payment.user_name || 'Unknown').replace(/,/g, '');
-            const pkg = (payment.package_name || 'N/A').replace(/,/g, '');
-            const amount = (payment.amount || '0').toString().replace(/[₱,]/g, '');
-            csv += `${date},${name},${pkg},${amount}\n`;
-        });
-    } else {
-        csv = 'Date,Client,Package,Amount,Status\n';
-        filteredData.forEach(booking => {
-            const date = new Date(booking.created_at).toLocaleDateString();
-            const name = (booking.user_name || 'Unknown').replace(/,/g, '');
-            const pkg = (booking.package_name || 'N/A').replace(/,/g, '');
-            const amount = (booking.amount || '0').toString().replace(/[₱,]/g, '');
-            const status = (booking.status || 'pending').replace(/,/g, '');
-            csv += `${date},${name},${pkg},${amount},${status}\n`;
-        });
-    }
-    
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${type}_report_${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-    window.URL.revokeObjectURL(url);
-    
-    showNotification(`${type.charAt(0).toUpperCase() + type.slice(1)} data exported successfully!`, 'success');
+function today() { return new Date().toISOString().split('T')[0]; }
+
+// ── Report Builder ────────────────────────────────────────────────────────────
+function selectFormat(fmt) {
+    selectedFmt = fmt;
+    document.querySelectorAll('.fmt-btn').forEach(b => b.classList.remove('selected'));
+    document.getElementById('fmt-' + fmt).classList.add('selected');
 }
 
-
-// Generate comprehensive report
-async function generateReport() {
+// ── Fetch gym settings once ───────────────────────────────────────────────────
+let _gymSettings = null;
+async function getGymSettings() {
+    if (_gymSettings) return _gymSettings;
     try {
-        showNotification('Generating comprehensive report...', 'info');
-        
-        const { bookings, payments } = await loadReportsData();
-        const filteredPayments = filterByPeriod(payments, currentPeriod);
-        const filteredBookings = filterByPeriod(bookings, currentPeriod);
-        
-        let totalRevenue = 0;
-        filteredPayments.forEach(payment => {
-            const amount = parseFloat(payment.amount) || 0;
-            totalRevenue += amount;
-        });
-        
-        const periodSelect = document.getElementById('periodSelect');
-        let periodText = periodSelect && periodSelect.selectedOptions && periodSelect.selectedOptions.length > 0 
-            ? periodSelect.selectedOptions[0].text 
-            : 'All Time';
-            
-        if (currentPeriod === 'custom') {
-            const start = new Date(document.getElementById('startDate').value).toLocaleString();
-            const end = new Date(document.getElementById('endDate').value).toLocaleString();
-            periodText = `Custom (${start} to ${end})`;
+        const res  = await fetch('../../api/settings/get.php');
+        const json = await res.json();
+        if (json.success) {
+            _gymSettings = {};
+            json.data.forEach(item => { _gymSettings[item.setting_key] = item.setting_value; });
         }
-        
-        const report = `
-COMPREHENSIVE GYM REPORT
-Generated: ${new Date().toLocaleString()}
-Period: ${periodText}
+    } catch (_) {}
+    return _gymSettings || {};
+}
 
-KEY METRICS:
-- Total Revenue: ₱${Math.round(totalRevenue).toLocaleString()}
-- Total Bookings: ${filteredBookings.length}
-- Verified Payments: ${filteredPayments.length}
-- Pending Bookings: ${filteredBookings.filter(b => b.status === 'pending').length}
+async function generateReport() {
+    if (!salesData) { toast('Load data first by clicking Apply', 'warning'); return; }
 
-PACKAGE PERFORMANCE:
-${getPackagePerformance(filteredPayments)}
+    const title      = document.getElementById('reportTitle').value.trim() || 'Gym Sales Report';
+    const notes      = document.getElementById('reportNotes').value.trim();
+    const period     = getPeriodLabel();
+    const incSummary  = document.getElementById('inc-summary').checked;
+    const incSales    = document.getElementById('inc-sales').checked;
+    const incPackages = document.getElementById('inc-packages').checked;
+    const incStatus   = document.getElementById('inc-status').checked;
+    const incWalkin   = document.getElementById('inc-walkin').checked;
 
-BOOKING STATUS:
-- Verified: ${filteredBookings.filter(b => b.status === 'verified').length}
-- Pending: ${filteredBookings.filter(b => b.status === 'pending').length}
-- Rejected: ${filteredBookings.filter(b => b.status === 'rejected').length}
-    `;
-        
-        const blob = new Blob([report], { type: 'text/plain' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `gym_report_${new Date().toISOString().split('T')[0]}.txt`;
-        a.style.display = 'none';
-        
-        // Append to body, click, then remove
-        document.body.appendChild(a);
-        a.click();
-        
-        // Clean up after a short delay
-        setTimeout(() => {
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
-        }, 100);
-        
-        showNotification('Report generated successfully!', 'success');
-    } catch (error) {
-        console.error('Error generating report:', error);
-        showNotification('Error generating report. Please try again.', 'warning');
+    if (selectedFmt === 'excel') { await exportExcel(title, period, incSummary, incSales, incPackages, incStatus, incWalkin); return; }
+    if (selectedFmt === 'csv')   { exportSalesCsv(); exportPackageCsv(); return; }
+
+    toast('Generating PDF…', 'info');
+    const gym = await getGymSettings();
+    const html = buildReportHTML(gym, title, period, notes, incSummary, incSales, incPackages, incStatus, incWalkin);
+
+    const container = document.createElement('div');
+    container.style.cssText = 'position:fixed;left:-9999px;top:0;width:210mm;';
+    container.innerHTML = html;
+    document.body.appendChild(container);
+
+    html2pdf().from(container).set({
+        margin:      [15, 15, 20, 15],
+        filename:    `${title.replace(/\s+/g,'_')}_${today()}.pdf`,
+        image:       { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, logging: false, letterRendering: true },
+        jsPDF:       { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak:   { mode: ['avoid-all', 'css', 'legacy'] }
+    }).save().then(() => {
+        document.body.removeChild(container);
+        toast('PDF downloaded', 'success');
+    });
+}
+
+async function exportExcel(title, period, incSummary, incSales, incPackages, incStatus, incWalkin) {
+    const gym = await getGymSettings();
+    const gymName    = gym.gym_name    || 'Martinez Fitness Gym';
+    const gymAddress = gym.gym_address || '';
+    const gymContact = gym.gym_contact || '';
+    const gymEmail   = gym.gym_email   || '';
+    const wb = XLSX.utils.book_new();
+    const s  = salesData.summary;
+    const now = new Date().toLocaleString('en-PH');
+
+    // ── Cover / Summary sheet ──────────────────────────────────────────────
+    if (incSummary) {
+        const totalSales   = parseInt(s.total_bookings)   || 0;
+        const totalRev     = parseFloat(s.total_revenue)  || 0;
+        const verifiedRev  = parseFloat(s.verified_revenue) || 0;
+        const pendingRev   = totalRev - verifiedRev;
+        const convRate     = totalSales > 0 ? ((parseInt(s.verified_bookings) / totalSales) * 100).toFixed(1) : '0.0';
+
+        const aoa = [
+            [gymName],
+            [gymAddress],
+            [gymContact + (gymEmail ? '  |  ' + gymEmail : '')],
+            [''],
+            [title.toUpperCase()],
+            ['Report Period:', period],
+            ['Generated On:', now],
+            ['Generated By:', 'FitPay Management System'],
+            [''],
+            ['─────────────────────────────────────────'],
+            ['KEY PERFORMANCE SUMMARY'],
+            ['─────────────────────────────────────────'],
+            ['Metric', 'Value'],
+            ['Total Bookings',       totalSales],
+            ['Total Revenue (PHP)',  totalRev],
+            ['Verified Revenue (PHP)', verifiedRev],
+            ['Pending Revenue (PHP)',  pendingRev],
+            ['Unique Clients',       parseInt(s.unique_clients) || 0],
+            ['Walk-in Bookings',     parseInt(s.walkin_bookings) || 0],
+            ['Member Bookings',      totalSales - (parseInt(s.walkin_bookings) || 0)],
+            ['Verified Bookings',    parseInt(s.verified_bookings) || 0],
+            ['Pending Bookings',     parseInt(s.pending_bookings) || 0],
+            ['Rejected Bookings',    parseInt(s.rejected_bookings) || 0],
+            ['Conversion Rate (%)',  convRate],
+            [''],
+            ['─────────────────────────────────────────'],
+            ['This report was generated automatically by FitPay Gym Management System.'],
+            ['All figures are based on booking records within the selected date range.'],
+        ];
+
+        if (incStatus) {
+            aoa.push(['']);
+            aoa.push(['BOOKING STATUS BREAKDOWN']);
+            aoa.push(['Status', 'Count', '% of Total']);
+            const tot = totalSales || 1;
+            aoa.push(['Verified', parseInt(s.verified_bookings), ((parseInt(s.verified_bookings)/tot)*100).toFixed(1)+'%']);
+            aoa.push(['Pending',  parseInt(s.pending_bookings),  ((parseInt(s.pending_bookings)/tot)*100).toFixed(1)+'%']);
+            aoa.push(['Rejected', parseInt(s.rejected_bookings), ((parseInt(s.rejected_bookings)/tot)*100).toFixed(1)+'%']);
+        }
+
+        if (incWalkin) {
+            const tot = totalSales || 1;
+            const wc  = parseInt(s.walkin_bookings) || 0;
+            const mc  = totalSales - wc;
+            aoa.push(['']);
+            aoa.push(['WALK-IN VS MEMBER SPLIT']);
+            aoa.push(['Type', 'Count', '% of Total']);
+            aoa.push(['Walk-in', wc, ((wc/tot)*100).toFixed(1)+'%']);
+            aoa.push(['Member',  mc, ((mc/tot)*100).toFixed(1)+'%']);
+        }
+
+        const ws = XLSX.utils.aoa_to_sheet(aoa);
+        ws['!cols'] = [{ wch: 35 }, { wch: 20 }, { wch: 20 }];
+        XLSX.utils.book_append_sheet(wb, ws, 'Summary');
     }
+
+    // ── Sales by Date sheet ────────────────────────────────────────────────
+    if (incSales && salesData.sales_by_date.length) {
+        const header = [
+            [gymName + ' — ' + title],
+            ['Period: ' + period + '   |   Generated: ' + now],
+            [''],
+            ['SALES BY DATE'],
+            ['Date', 'Total Sales', 'Revenue (PHP)', 'Verified Revenue (PHP)', 'Pending Revenue (PHP)', 'Member Bookings', 'Walk-in Bookings']
+        ];
+        const dataRows = salesData.sales_by_date.map(r => [
+            r.sale_date,
+            parseInt(r.total_sales),
+            parseFloat(r.total_revenue),
+            parseFloat(r.verified_revenue),
+            parseFloat(r.total_revenue) - parseFloat(r.verified_revenue),
+            parseInt(r.member_count),
+            parseInt(r.walkin_count)
+        ]);
+        // Totals row
+        const totals = ['TOTAL',
+            dataRows.reduce((a,r) => a + r[1], 0),
+            dataRows.reduce((a,r) => a + r[2], 0),
+            dataRows.reduce((a,r) => a + r[3], 0),
+            dataRows.reduce((a,r) => a + r[4], 0),
+            dataRows.reduce((a,r) => a + r[5], 0),
+            dataRows.reduce((a,r) => a + r[6], 0)
+        ];
+        const ws2 = XLSX.utils.aoa_to_sheet([...header, ...dataRows, [''], totals]);
+        ws2['!cols'] = [{ wch: 14 }, { wch: 13 }, { wch: 18 }, { wch: 22 }, { wch: 22 }, { wch: 18 }, { wch: 18 }];
+        XLSX.utils.book_append_sheet(wb, ws2, 'Sales by Date');
+    }
+
+    // ── Package Sales sheet ────────────────────────────────────────────────
+    if (incPackages && salesData.package_sales.length) {
+        const totalAvailed = salesData.package_sales.reduce((a, p) => a + parseInt(p.total_availed || 0), 0);
+        const header = [
+            [gymName + ' — ' + title],
+            ['Period: ' + period + '   |   Generated: ' + now],
+            [''],
+            ['PACKAGE SALES BREAKDOWN'],
+            ['Rank', 'Package Name', 'Tag / Category', 'Total Availed', 'Unique Users', 'Verified', 'Pending', 'Rejected', 'Revenue (PHP)', 'Share (%)']
+        ];
+        const dataRows = salesData.package_sales.map((p, i) => {
+            const pct = totalAvailed > 0 ? ((parseInt(p.total_availed) / totalAvailed) * 100).toFixed(1) : '0.0';
+            return [
+                i + 1,
+                p.package_name,
+                p.package_tag || '—',
+                parseInt(p.total_availed),
+                parseInt(p.unique_users),
+                parseInt(p.verified_count),
+                parseInt(p.pending_count),
+                parseInt(p.rejected_count),
+                parseFloat(p.total_revenue),
+                pct + '%'
+            ];
+        });
+        const totals = ['TOTAL', '', '',
+            dataRows.reduce((a,r) => a + r[3], 0),
+            '',
+            dataRows.reduce((a,r) => a + r[5], 0),
+            dataRows.reduce((a,r) => a + r[6], 0),
+            dataRows.reduce((a,r) => a + r[7], 0),
+            dataRows.reduce((a,r) => a + r[8], 0),
+            '100%'
+        ];
+        const ws3 = XLSX.utils.aoa_to_sheet([...header, ...dataRows, [''], totals]);
+        ws3['!cols'] = [{ wch: 6 }, { wch: 28 }, { wch: 16 }, { wch: 14 }, { wch: 13 }, { wch: 11 }, { wch: 11 }, { wch: 11 }, { wch: 16 }, { wch: 11 }];
+        XLSX.utils.book_append_sheet(wb, ws3, 'Package Sales');
+    }
+
+    XLSX.writeFile(wb, `${title.replace(/\s+/g,'_')}_${today()}.xlsx`);
+    toast('Excel downloaded', 'success');
 }
 
-// Get package performance
-function getPackagePerformance(payments) {
-    const packageStats = {};
-    
-    payments.forEach(payment => {
-        const pkg = payment.package_name || 'Unknown';
-        if (!packageStats[pkg]) {
-            packageStats[pkg] = { count: 0, revenue: 0 };
-        }
-        packageStats[pkg].count++;
-        const amount = parseFloat(payment.amount) || 0;
-        packageStats[pkg].revenue += amount;
-    });
-    
-    let report = '';
-    Object.keys(packageStats).forEach(pkg => {
-        report += `- ${pkg}: ${packageStats[pkg].count} bookings, ₱${Math.round(packageStats[pkg].revenue).toLocaleString()} revenue\n`;
-    });
-    
-    return report;
-}
+// ── PDF HTML builder ──────────────────────────────────────────────────────────
+const PDF_STYLES = `
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:Inter,Arial,sans-serif;color:#111;background:#fff;font-size:12px;line-height:1.5;}
+.doc{width:100%;max-width:780px;margin:0 auto;}
+.doc-header{background:#111;color:#fff;padding:28px 32px 22px;display:flex;justify-content:space-between;align-items:flex-start;}
+.doc-header .gym-name{font-size:20px;font-weight:900;letter-spacing:-0.5px;margin-bottom:4px;}
+.doc-header .gym-meta{font-size:10px;color:rgba(255,255,255,.65);line-height:1.7;}
+.doc-header .report-info{text-align:right;}
+.doc-header .report-title{font-size:13px;font-weight:700;color:#fff;margin-bottom:6px;}
+.doc-header .report-meta{font-size:10px;color:rgba(255,255,255,.6);line-height:1.7;}
+.doc-divider{height:4px;background:linear-gradient(90deg,#333,#888,#333);}
+.doc-body{padding:24px 32px;}
+.sec-heading{display:flex;align-items:center;gap:10px;margin:24px 0 12px;}
+.sec-heading .sec-num{width:22px;height:22px;background:#111;color:#fff;border-radius:50%;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.sec-heading h3{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#111;}
+.sec-heading .sec-line{flex:1;height:1px;background:#ddd;}
+.metric-grid{display:grid;gap:10px;margin-bottom:4px;}
+.metric-grid.cols-3{grid-template-columns:repeat(3,1fr);}
+.metric-grid.cols-2{grid-template-columns:repeat(2,1fr);}
+.metric-box{background:#f8f9fa;border:1px solid #e5e7eb;border-radius:8px;padding:14px 16px;}
+.metric-box .m-label{font-size:9px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:5px;letter-spacing:.4px;}
+.metric-box .m-value{font-size:18px;font-weight:800;color:#111;line-height:1;}
+.metric-box .m-sub{font-size:9px;color:#aaa;margin-top:4px;}
+.metric-box.accent{border-color:#111;background:#111;}
+.metric-box.accent .m-label{color:rgba(255,255,255,.6);}
+.metric-box.accent .m-value{color:#fff;}
+.metric-box.accent .m-sub{color:rgba(255,255,255,.4);}
+.doc-table{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:4px;}
+.doc-table thead tr{background:#111;}
+.doc-table thead th{padding:9px 11px;text-align:left;color:#fff;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;}
+.doc-table thead th.r{text-align:right;}
+.doc-table tbody td{padding:8px 11px;border-bottom:1px solid #f0f0f0;color:#333;vertical-align:middle;}
+.doc-table tbody td.r{text-align:right;font-variant-numeric:tabular-nums;}
+.doc-table tbody td.bold{font-weight:700;}
+.doc-table tbody tr:nth-child(even) td{background:#fafafa;}
+.doc-table tfoot tr{background:#f0f0f0;}
+.doc-table tfoot td{padding:9px 11px;font-weight:800;font-size:11px;border-top:2px solid #111;}
+.doc-table tfoot td.r{text-align:right;}
+.pill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:9px;font-weight:700;text-transform:uppercase;}
+.pill-v{background:#dcfce7;color:#166534;}
+.pill-p{background:#fef9c3;color:#854d0e;}
+.pill-r{background:#fee2e2;color:#991b1b;}
+.notes-box{background:#f9f9f9;border-left:3px solid #111;padding:12px 16px;font-size:11px;color:#555;line-height:1.6;margin-top:8px;}
+.notes-box strong{color:#111;}
+.doc-footer{background:#f4f4f4;border-top:2px solid #111;padding:14px 32px;display:flex;justify-content:space-between;align-items:center;margin-top:32px;}
+.doc-footer .footer-left{font-size:9.5px;color:#555;line-height:1.6;}
+.doc-footer .footer-right{font-size:9px;color:#999;text-align:right;}
+.doc-footer .footer-brand{font-weight:800;color:#111;font-size:10px;}
+.page-break{page-break-before:always;}
+`;
 
-// Show notification
-function showNotification(message, type = 'info') {
-    const notification = document.createElement('div');
-    notification.className = `notification ${type}`;
-    notification.innerHTML = `
-        <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle'}"></i>
-        <span>${message}</span>
-        <button onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>
-    `;
-    
-    notification.style.cssText = `
-        position: fixed;
-        top: 100px;
-        right: 32px;
-        background: ${type === 'success' ? '#22c55e' : type === 'warning' ? '#f59e0b' : '#3b82f6'};
-        color: white;
-        padding: 16px 24px;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-        z-index: 10000;
-        animation: slideIn 0.3s ease-out;
-        font-weight: 600;
-    `;
-    
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-        if (notification.parentElement) {
-            notification.remove();
-        }
-    }, 5000);
-}
+function buildReportHTML(gym, title, period, notes, incSummary, incSales, incPackages, incStatus, incWalkin) {
+    const gymName    = gym.gym_name    || 'Martinez Fitness Gym';
+    const gymAddress = gym.gym_address || '';
+    const gymContact = gym.gym_contact || '';
+    const gymEmail   = gym.gym_email   || '';
+    const now        = new Date().toLocaleString('en-PH', { dateStyle: 'long', timeStyle: 'short' });
 
-// Generate professional report HTML for PDF/Word
-function generateProfessionalReportHTML(data, periodText) {
-    const { bookings, payments, members } = data;
-    const filteredPayments = filterByPeriod(payments, currentPeriod);
-    const filteredBookings = filterByPeriod(bookings, currentPeriod);
-    
-    let totalRevenue = 0;
-    filteredPayments.forEach(p => totalRevenue += parseFloat(p.amount) || 0);
-    
-    const now = new Date().toLocaleString();
-    
-    return `
-        <div style="font-family: 'Inter', Arial, sans-serif; color: #333; padding: 40px; max-width: 1000px; margin: 0 auto; background: #fff;">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 20px; margin-bottom: 30px;">
-                <div>
-                    <h1 style="margin: 0; color: #000; font-size: 28px; font-weight: 800; letter-spacing: -0.5px;">MARTINEZ FITNESS</h1>
-                    <p style="margin: 5px 0 0 0; color: #666; font-size: 14px;">Gym Management Performance Report</p>
-                </div>
-                <div style="text-align: right;">
-                    <p style="margin: 0; font-weight: 600; font-size: 14px;">Report Period: ${periodText}</p>
-                    <p style="margin: 5px 0 0 0; color: #888; font-size: 12px;">Generated on: ${now}</p>
-                </div>
-            </div>
+    const s          = salesData.summary;
+    const totalSales = parseInt(s.total_bookings) || 0;
+    const totalRev   = parseFloat(s.total_revenue) || 0;
+    const verRev     = parseFloat(s.verified_revenue) || 0;
+    const pendRev    = totalRev - verRev;
+    const convRate   = totalSales > 0 ? ((parseInt(s.verified_bookings) / totalSales) * 100).toFixed(1) : '0.0';
+    let sectionNum   = 0;
 
-            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 40px;">
-                <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; border: 1px solid #eee; text-align: center;">
-                    <p style="margin: 0 0 10px 0; color: #666; font-size: 12px; font-weight: 600; text-transform: uppercase;">Total Revenue</p>
-                    <h2 style="margin: 0; color: #000; font-size: 20px;">₱${Math.round(totalRevenue).toLocaleString()}</h2>
-                </div>
-                <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; border: 1px solid #eee; text-align: center;">
-                    <p style="margin: 0 0 10px 0; color: #666; font-size: 12px; font-weight: 600; text-transform: uppercase;">Total Bookings</p>
-                    <h2 style="margin: 0; color: #000; font-size: 20px;">${filteredBookings.length}</h2>
-                </div>
-                <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; border: 1px solid #eee; text-align: center;">
-                    <p style="margin: 0 0 10px 0; color: #666; font-size: 12px; font-weight: 600; text-transform: uppercase;">Active Members</p>
-                    <h2 style="margin: 0; color: #000; font-size: 20px;">${document.getElementById('totalMembers').textContent}</h2>
-                </div>
-                <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; border: 1px solid #eee; text-align: center;">
-                    <p style="margin: 0 0 10px 0; color: #666; font-size: 12px; font-weight: 600; text-transform: uppercase;">Avg. Daily</p>
-                    <h2 style="margin: 0; color: #000; font-size: 20px;">₱${Math.round(totalRevenue / getDaysInPeriod(currentPeriod)).toLocaleString()}</h2>
-                </div>
-            </div>
+    function secHead(label) {
+        sectionNum++;
+        return `<div class="sec-heading"><div class="sec-num">${sectionNum}</div><h3>${label}</h3><div class="sec-line"></div></div>`;
+    }
 
-            <div style="margin-bottom: 40px;">
-                <h3 style="border-left: 4px solid #000; padding-left: 15px; margin-bottom: 20px; font-size: 18px;">Revenue Breakdown</h3>
-                <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-                    <thead>
-                        <tr style="background: #f8f9fa;">
-                            <th style="padding: 12px; text-align: left; border-bottom: 2px solid #eee;">Date</th>
-                            <th style="padding: 12px; text-align: left; border-bottom: 2px solid #eee;">Client</th>
-                            <th style="padding: 12px; text-align: left; border-bottom: 2px solid #eee;">Package</th>
-                            <th style="padding: 12px; text-align: right; border-bottom: 2px solid #eee;">Amount</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${filteredPayments.length > 0 ? filteredPayments.map(p => `
-                            <tr>
-                                <td style="padding: 10px 12px; border-bottom: 1px solid #eee;">${new Date(p.created_at).toLocaleDateString()}</td>
-                                <td style="padding: 10px 12px; border-bottom: 1px solid #eee;">${p.user_name || 'Walk-in'}</td>
-                                <td style="padding: 10px 12px; border-bottom: 1px solid #eee;">${p.package_name || 'N/A'}</td>
-                                <td style="padding: 10px 12px; border-bottom: 1px solid #eee; text-align: right; font-weight: 600;">₱${parseFloat(p.amount).toLocaleString()}</td>
-                            </tr>
-                        `).join('') : '<tr><td colspan="4" style="padding: 20px; text-align: center; color: #999;">No revenue records for this period</td></tr>'}
-                    </tbody>
-                </table>
-            </div>
-
-            <div style="margin-bottom: 40px;">
-                <h3 style="border-left: 4px solid #000; padding-left: 15px; margin-bottom: 20px; font-size: 18px;">Package Performance</h3>
-                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 30px;">
-                    <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-                        <thead>
-                            <tr style="background: #f8f9fa;">
-                                <th style="padding: 12px; text-align: left; border-bottom: 2px solid #eee;">Package Name</th>
-                                <th style="padding: 12px; text-align: right; border-bottom: 2px solid #eee;">Sales</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${Object.entries(filteredPayments.reduce((acc, p) => {
-                                const pkg = p.package_name || 'Unknown';
-                                acc[pkg] = (acc[pkg] || 0) + 1;
-                                return acc;
-                            }, {})).map(([name, count]) => `
-                                <tr>
-                                    <td style="padding: 10px 12px; border-bottom: 1px solid #eee;">${name}</td>
-                                    <td style="padding: 10px 12px; border-bottom: 1px solid #eee; text-align: right;">${count}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                    <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; border: 1px solid #eee;">
-                        <p style="margin: 0 0 15px 0; font-weight: 600; font-size: 14px;">Summary Notes</p>
-                        <p style="margin: 0; font-size: 12px; line-height: 1.6; color: #555;">
-                            This report provides a comprehensive overview of gym operations during the selected period. 
-                            Revenue is calculated based on verified payments only. Active members count includes all users 
-                            with non-expired subscriptions as of the report generation date.
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            <div style="margin-top: 60px; border-top: 1px solid #eee; padding-top: 20px; text-align: center; color: #999; font-size: 11px;">
-                <p>© ${new Date().getFullYear()} Martinez Fitness Gym • Generated by FitPay Management System</p>
+    // ── DOCUMENT HEADER ───────────────────────────────────────────────────
+    let html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>${PDF_STYLES}</style></head><body><div class="doc">
+    <div class="doc-header">
+        <div>
+            <div class="gym-name">${gymName.toUpperCase()}</div>
+            <div class="gym-meta">
+                ${gymAddress ? gymAddress + '<br>' : ''}
+                ${gymContact ? 'Tel: ' + gymContact : ''}${gymContact && gymEmail ? '&nbsp;&nbsp;|&nbsp;&nbsp;' : ''}${gymEmail || ''}
             </div>
         </div>
-    `;
-}
+        <div class="report-info">
+            <div class="report-title">${title}</div>
+            <div class="report-meta">
+                Period: ${period}<br>
+                Generated: ${now}<br>
+                System: FitPay Management v2.0
+            </div>
+        </div>
+    </div>
+    <div class="doc-divider"></div>
+    <div class="doc-body">`;
 
-function generatePdfDocDefinition(data, periodText) {
-    const { bookings, payments } = data;
-    const filteredPayments = filterByPeriod(payments, currentPeriod);
-    const filteredBookings = filterByPeriod(bookings, currentPeriod);
-    let totalRevenue = 0;
-    filteredPayments.forEach(p => totalRevenue += parseFloat(p.amount) || 0);
-    const days = getDaysInPeriod(currentPeriod);
-    const avgDaily = days > 0 ? totalRevenue / days : 0;
-    const activeMemberIdentifiers = new Set();
-    bookings.forEach(booking => {
-        if (isBookingActive(booking)) {
-            activeMemberIdentifiers.add(booking.user_id || booking.email || booking.name);
-        }
-    });
-    const activeMembersCount = activeMemberIdentifiers.size;
-    const now = new Date().toLocaleString();
-    const revenueRows = filteredPayments.length > 0 ? filteredPayments.map(p => ([
-        { text: new Date(p.created_at).toLocaleDateString(), margin: [0, 6, 0, 6] },
-        { text: p.user_name || 'Walk-in', margin: [0, 6, 0, 6] },
-        { text: p.package_name || 'N/A', margin: [0, 6, 0, 6] },
-        { text: `₱${(parseFloat(p.amount) || 0).toLocaleString()}`, alignment: 'right', margin: [0, 6, 0, 6] }
-    ])) : [[{ text: 'No revenue records for this period', colSpan: 4, alignment: 'center', margin: [0, 10, 0, 10] }, {}, {}, {}]];
-    const packageStats = filteredPayments.reduce((acc, p) => {
-        const pkg = p.package_name || 'Unknown';
-        acc[pkg] = (acc[pkg] || 0) + 1;
-        return acc;
-    }, {});
-    const packageRows = Object.entries(packageStats).map(([name, count]) => ([
-        { text: name, margin: [0, 6, 0, 6] },
-        { text: String(count), alignment: 'right', margin: [0, 6, 0, 6] }
-    ]));
-    return {
-        pageMargins: [30, 30, 30, 40],
-        content: [
-            {
-                columns: [
-                    [
-                        { text: 'MARTINEZ FITNESS', style: 'title' },
-                        { text: 'Gym Management Performance Report', style: 'subtitle' }
-                    ],
-                    [
-                        { text: `Report Period: ${periodText}`, alignment: 'right', style: 'label' },
-                        { text: `Generated on: ${now}`, alignment: 'right', style: 'small' }
-                    ]
-                ]
-            },
-            {
-                table: {
-                    widths: ['*', '*', '*', '*'],
-                    body: [
-                        [
-                            { stack: [{ text: 'Total Revenue', style: 'metricLabel' }, { text: `₱${Math.round(totalRevenue).toLocaleString()}`, style: 'metricValue' }], fillColor: '#f8f9fa' },
-                            { stack: [{ text: 'Total Bookings', style: 'metricLabel' }, { text: String(filteredBookings.length), style: 'metricValue' }], fillColor: '#f8f9fa' },
-                            { stack: [{ text: 'Active Members', style: 'metricLabel' }, { text: String(activeMembersCount), style: 'metricValue' }], fillColor: '#f8f9fa' },
-                            { stack: [{ text: 'Avg. Daily', style: 'metricLabel' }, { text: `₱${Math.round(avgDaily).toLocaleString()}`, style: 'metricValue' }], fillColor: '#f8f9fa' }
-                        ]
-                    ]
-                },
-                layout: {
-                    hLineWidth: () => 1,
-                    vLineWidth: () => 1,
-                    hLineColor: () => '#eeeeee',
-                    vLineColor: () => '#eeeeee',
-                    paddingLeft: () => 12,
-                    paddingRight: () => 12,
-                    paddingTop: () => 12,
-                    paddingBottom: () => 12
-                },
-                margin: [0, 20, 0, 20]
-            },
-            { text: 'Revenue Breakdown', style: 'sectionTitle', margin: [0, 0, 0, 10] },
-            {
-                table: {
-                    widths: ['auto', '*', '*', 'auto'],
-                    headerRows: 1,
-                    body: [
-                        [
-                            { text: 'Date', style: 'tableHeader' },
-                            { text: 'Client', style: 'tableHeader' },
-                            { text: 'Package', style: 'tableHeader' },
-                            { text: 'Amount', alignment: 'right', style: 'tableHeader' }
-                        ],
-                        ...revenueRows
-                    ]
-                },
-                layout: 'lightHorizontalLines',
-                margin: [0, 0, 0, 20]
-            },
-            { text: 'Package Performance', style: 'sectionTitle', margin: [0, 0, 0, 10] },
-            {
-                table: {
-                    widths: ['*', 'auto'],
-                    headerRows: 1,
-                    body: [
-                        [
-                            { text: 'Package Name', style: 'tableHeader' },
-                            { text: 'Sales', alignment: 'right', style: 'tableHeader' }
-                        ],
-                        ...packageRows
-                    ]
-                },
-                layout: 'lightHorizontalLines',
-                margin: [0, 0, 0, 20]
-            },
-            { text: `© ${new Date().getFullYear()} Martinez Fitness Gym • Generated by FitPay Management System`, alignment: 'center', style: 'small', margin: [0, 20, 0, 0] }
-        ],
-        styles: {
-            title: { fontSize: 18, bold: true, color: '#000' },
-            subtitle: { fontSize: 12, color: '#666', margin: [0, 4, 0, 0] },
-            label: { fontSize: 12, bold: true },
-            small: { fontSize: 10, color: '#888' },
-            sectionTitle: { fontSize: 14, bold: true },
-            tableHeader: { bold: true, fillColor: '#f8f9fa' },
-            metricLabel: { fontSize: 10, color: '#666' },
-            metricValue: { fontSize: 14, bold: true, color: '#000', margin: [0, 6, 0, 0] }
-        }
-    };
-}
-
-// Export Full Report in various formats
-async function exportFullReport(format) {
-    try {
-        const reportsData = await loadReportsData();
-        const { bookings, payments } = reportsData;
-        const filteredPayments = filterByPeriod(payments, currentPeriod);
-        const filteredBookings = filterByPeriod(bookings, currentPeriod);
-        
-        const filename = `Gym_Report_${new Date().toISOString().split('T')[0]}`;
-        const periodText = document.getElementById('periodSelect').selectedOptions[0].text;
-
-        if (format === 'pdf') {
-            showNotification('Generating PDF report...', 'info');
-            if (window.pdfMake) {
-                const docDefinition = generatePdfDocDefinition(reportsData, periodText);
-                pdfMake.createPdf(docDefinition).download(`${filename}.pdf`);
-                showNotification('PDF exported successfully!', 'success');
-            } else {
-                const reportHTML = generateProfessionalReportHTML(reportsData, periodText);
-                const container = document.createElement('div');
-                container.innerHTML = reportHTML;
-                document.body.appendChild(container);
-                const opt = {
-                    margin: 0,
-                    filename: `${filename}.pdf`,
-                    image: { type: 'jpeg', quality: 0.98 },
-                    html2canvas: { scale: 2, useCORS: true, logging: false, letterRendering: true },
-                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-                };
-                html2pdf().from(container).set(opt).save().then(() => {
-                    document.body.removeChild(container);
-                    showNotification('PDF exported successfully!', 'success');
-                });
-            }
-
-        } else if (format === 'excel') {
-            showNotification('Generating Excel report...', 'info');
-            
-            // Summary Sheet
-            let totalRevenue = 0;
-            filteredPayments.forEach(p => totalRevenue += parseFloat(p.amount) || 0);
-            
-            const summaryData = [
-                ['GYM PERFORMANCE REPORT'],
-                ['Period', periodText],
-                ['Generated On', new Date().toLocaleString()],
-                [],
-                ['METRIC', 'VALUE'],
-                ['Total Revenue', `₱${Math.round(totalRevenue).toLocaleString()}`],
-                ['Total Bookings', filteredBookings.length],
-                ['Active Members', document.getElementById('totalMembers').textContent],
-                ['Avg. Daily Revenue', `₱${Math.round(totalRevenue / getDaysInPeriod(currentPeriod)).toLocaleString()}`]
-            ];
-            
-            const wb = XLSX.utils.book_new();
-            const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
-            XLSX.utils.book_append_sheet(wb, wsSummary, "Summary");
-
-            // Revenue Sheet
-            const revData = filteredPayments.map(p => ({
-                'Date': new Date(p.created_at).toLocaleDateString(),
-                'Client': p.user_name || 'Walk-in',
-                'Package': p.package_name || 'N/A',
-                'Amount (PHP)': parseFloat(p.amount) || 0,
-                'Payment Method': p.payment_method || 'N/A'
-            }));
-            const wsRevenue = XLSX.utils.json_to_sheet(revData);
-            XLSX.utils.book_append_sheet(wb, wsRevenue, "Revenue Details");
-            
-            // Bookings Sheet
-            const bookData = filteredBookings.map(b => ({
-                'Date': new Date(b.created_at).toLocaleDateString(),
-                'Client': b.user_name || 'Walk-in',
-                'Package': b.package_name || 'N/A',
-                'Amount (PHP)': parseFloat(b.amount) || 0,
-                'Status': b.status
-            }));
-            const wsBookings = XLSX.utils.json_to_sheet(bookData);
-            XLSX.utils.book_append_sheet(wb, wsBookings, "Bookings Details");
-            
-            XLSX.writeFile(wb, `${filename}.xlsx`);
-            showNotification('Excel exported successfully!', 'success');
-
-        } else if (format === 'docx') {
-            showNotification('Generating Word report...', 'info');
-            const reportHTML = generateProfessionalReportHTML(reportsData, periodText);
-            
-            const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' "+
-                "xmlns:w='urn:schemas-microsoft-com:office:word' "+
-                "xmlns='http://www.w3.org/TR/REC-html40'>"+
-                "<head><meta charset='utf-8'><title>Gym Report</title>"+
-                "<style>body { font-family: 'Calibri', Arial, sans-serif; }</style></head><body>";
-            const footer = "</body></html>";
-            const sourceHTML = header + reportHTML + footer;
-            
-            const blob = new Blob(['\ufeff', sourceHTML], {
-                type: 'application/msword'
-            });
-            
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `${filename}.doc`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-            
-            showNotification('Word report exported successfully!', 'success');
-
-        } else if (format === 'csv') {
-            exportData('revenue');
-        }
-    } catch (error) {
-        console.error('Export error:', error);
-        showNotification('Error exporting report', 'warning');
+    // ── SECTION 1: KEY METRICS ─────────────────────────────────────────────
+    if (incSummary) {
+        html += secHead('Key Performance Summary');
+        html += `<div class="metric-grid cols-3">
+            <div class="metric-box accent"><div class="m-label">Total Bookings</div><div class="m-value">${num(totalSales)}</div><div class="m-sub">in selected period</div></div>
+            <div class="metric-box accent"><div class="m-label">Total Revenue</div><div class="m-value">${peso(totalRev)}</div><div class="m-sub">all bookings</div></div>
+            <div class="metric-box accent"><div class="m-label">Verified Revenue</div><div class="m-value">${peso(verRev)}</div><div class="m-sub">confirmed payments</div></div>
+        </div>
+        <div class="metric-grid cols-3" style="margin-top:10px;">
+            <div class="metric-box"><div class="m-label">Unique Clients</div><div class="m-value">${num(s.unique_clients)}</div><div class="m-sub">members + walk-ins</div></div>
+            <div class="metric-box"><div class="m-label">Pending Revenue</div><div class="m-value">${peso(pendRev)}</div><div class="m-sub">awaiting verification</div></div>
+            <div class="metric-box"><div class="m-label">Conversion Rate</div><div class="m-value">${convRate}%</div><div class="m-sub">verified / total bookings</div></div>
+        </div>`;
     }
-}
 
-// Handle logout
-async function handleLogout() {
-    if (!confirm('Are you sure you want to logout?')) {
-        return;
+    // ── SECTION 2: BOOKING STATUS ──────────────────────────────────────────
+    if (incStatus) {
+        const tot = totalSales || 1;
+        const vb  = parseInt(s.verified_bookings) || 0;
+        const pb  = parseInt(s.pending_bookings)  || 0;
+        const rb  = parseInt(s.rejected_bookings) || 0;
+        html += secHead('Booking Status Breakdown');
+        html += `<table class="doc-table">
+            <thead><tr><th>Status</th><th class="r">Count</th><th class="r">% of Total</th><th class="r">Revenue (PHP)</th></tr></thead>
+            <tbody>
+                <tr><td><span class="pill pill-v">Verified</span></td><td class="r bold">${num(vb)}</td><td class="r">${((vb/tot)*100).toFixed(1)}%</td><td class="r">${peso(verRev)}</td></tr>
+                <tr><td><span class="pill pill-p">Pending</span></td><td class="r bold">${num(pb)}</td><td class="r">${((pb/tot)*100).toFixed(1)}%</td><td class="r">${peso(pendRev)}</td></tr>
+                <tr><td><span class="pill pill-r">Rejected</span></td><td class="r bold">${num(rb)}</td><td class="r">${((rb/tot)*100).toFixed(1)}%</td><td class="r">—</td></tr>
+            </tbody>
+            <tfoot><tr><td class="bold">TOTAL</td><td class="r bold">${num(totalSales)}</td><td class="r">100%</td><td class="r bold">${peso(totalRev)}</td></tr></tfoot>
+        </table>`;
     }
-    
-    try {
-        // Call logout API to clear PHP session
-        const response = await fetch('../../api/auth/logout.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
+
+    // ── SECTION 3: WALK-IN VS MEMBER ──────────────────────────────────────
+    if (incWalkin) {
+        const tot = totalSales || 1;
+        const wc  = parseInt(s.walkin_bookings) || 0;
+        const mc  = totalSales - wc;
+        html += secHead('Walk-in vs Member Split');
+        html += `<div class="metric-grid cols-2">
+            <div class="metric-box"><div class="m-label">Walk-in Bookings</div><div class="m-value">${num(wc)}</div><div class="m-sub">${((wc/tot)*100).toFixed(1)}% of total bookings</div></div>
+            <div class="metric-box"><div class="m-label">Member Bookings</div><div class="m-value">${num(mc)}</div><div class="m-sub">${((mc/tot)*100).toFixed(1)}% of total bookings</div></div>
+        </div>`;
+    }
+
+    // ── SECTION 4: PACKAGE SALES ───────────────────────────────────────────
+    if (incPackages && salesData.package_sales.length) {
+        const pkgTotal = salesData.package_sales.reduce((a,p) => a + parseInt(p.total_availed||0), 0);
+        const pkgRev   = salesData.package_sales.reduce((a,p) => a + (parseFloat(p.total_revenue)||0), 0);
+        const pkgVer   = salesData.package_sales.reduce((a,p) => a + parseInt(p.verified_count||0), 0);
+        const pkgPend  = salesData.package_sales.reduce((a,p) => a + parseInt(p.pending_count||0), 0);
+        html += secHead('Package Sales Breakdown');
+        html += `<table class="doc-table">
+            <thead><tr>
+                <th style="width:28px;">#</th><th>Package Name</th><th>Category</th>
+                <th class="r">Availed</th><th class="r">Unique Users</th>
+                <th class="r">Verified</th><th class="r">Pending</th>
+                <th class="r">Revenue</th><th class="r">Share</th>
+            </tr></thead><tbody>`;
+        salesData.package_sales.forEach((p, i) => {
+            const pct = pkgTotal > 0 ? ((parseInt(p.total_availed)/pkgTotal)*100).toFixed(1) : '0.0';
+            html += `<tr>
+                <td class="bold" style="color:#888;">${i+1}</td>
+                <td class="bold">${p.package_name}</td>
+                <td>${p.package_tag ? `<span class="pill pill-v">${p.package_tag}</span>` : '—'}</td>
+                <td class="r bold">${num(p.total_availed)}</td>
+                <td class="r">${num(p.unique_users)}</td>
+                <td class="r">${num(p.verified_count)}</td>
+                <td class="r">${num(p.pending_count)}</td>
+                <td class="r bold">${peso(p.total_revenue)}</td>
+                <td class="r">${pct}%</td>
+            </tr>`;
         });
-        
-        // Clear localStorage
-        localStorage.removeItem('isLoggedIn');
-        localStorage.removeItem('userRole');
-        localStorage.removeItem('userData');
-        
-        // Redirect to login page
-        window.location.href = '../../index.php';
-    } catch (error) {
-        console.error('Logout error:', error);
-        // Still clear localStorage and redirect even if API fails
-        localStorage.removeItem('isLoggedIn');
-        localStorage.removeItem('userRole');
-        localStorage.removeItem('userData');
-        window.location.href = '../../index.php';
+        html += `</tbody><tfoot><tr>
+            <td colspan="3" class="bold">TOTAL</td>
+            <td class="r bold">${num(pkgTotal)}</td><td class="r">—</td>
+            <td class="r bold">${num(pkgVer)}</td><td class="r bold">${num(pkgPend)}</td>
+            <td class="r bold">${peso(pkgRev)}</td><td class="r">100%</td>
+        </tr></tfoot></table>`;
     }
+
+    // ── SECTION 5: SALES BY DATE ───────────────────────────────────────────
+    if (incSales && salesData.sales_by_date.length) {
+        const dTotal   = salesData.sales_by_date.reduce((a,r) => a + parseInt(r.total_sales||0), 0);
+        const dRev     = salesData.sales_by_date.reduce((a,r) => a + (parseFloat(r.total_revenue)||0), 0);
+        const dVer     = salesData.sales_by_date.reduce((a,r) => a + (parseFloat(r.verified_revenue)||0), 0);
+        const dMem     = salesData.sales_by_date.reduce((a,r) => a + parseInt(r.member_count||0), 0);
+        const dWalk    = salesData.sales_by_date.reduce((a,r) => a + parseInt(r.walkin_count||0), 0);
+        html += `<div class="page-break"></div>`;
+        html += secHead('Daily Sales Detail');
+        html += `<table class="doc-table">
+            <thead><tr>
+                <th>Date</th><th class="r">Sales</th><th class="r">Revenue</th>
+                <th class="r">Verified Rev.</th><th class="r">Pending Rev.</th>
+                <th class="r">Members</th><th class="r">Walk-ins</th>
+            </tr></thead><tbody>`;
+        salesData.sales_by_date.forEach(r => {
+            const pRev = (parseFloat(r.total_revenue)||0) - (parseFloat(r.verified_revenue)||0);
+            html += `<tr>
+                <td class="bold">${formatDate(r.sale_date)}</td>
+                <td class="r">${num(r.total_sales)}</td>
+                <td class="r">${peso(r.total_revenue)}</td>
+                <td class="r">${peso(r.verified_revenue)}</td>
+                <td class="r">${peso(pRev)}</td>
+                <td class="r">${num(r.member_count)}</td>
+                <td class="r">${num(r.walkin_count)}</td>
+            </tr>`;
+        });
+        html += `</tbody><tfoot><tr>
+            <td class="bold">TOTAL (${salesData.sales_by_date.length} days)</td>
+            <td class="r bold">${num(dTotal)}</td>
+            <td class="r bold">${peso(dRev)}</td>
+            <td class="r bold">${peso(dVer)}</td>
+            <td class="r bold">${peso(dRev - dVer)}</td>
+            <td class="r bold">${num(dMem)}</td>
+            <td class="r bold">${num(dWalk)}</td>
+        </tr></tfoot></table>`;
+    }
+
+    // ── ADMIN NOTES ────────────────────────────────────────────────────────
+    if (notes) {
+        html += `<div style="margin-top:20px;"><div class="notes-box"><strong>Admin Notes:</strong><br>${notes.replace(/\n/g,'<br>')}</div></div>`;
+    }
+
+    html += `</div>`; // end doc-body
+
+    // ── DOCUMENT FOOTER ────────────────────────────────────────────────────
+    html += `<div class="doc-footer">
+        <div class="footer-left">
+            <div class="footer-brand">${gymName}</div>
+            ${gymAddress ? '<div>' + gymAddress + '</div>' : ''}
+            ${gymContact ? '<div>Tel: ' + gymContact + (gymEmail ? '&nbsp;&nbsp;|&nbsp;&nbsp;' + gymEmail : '') + '</div>' : ''}
+        </div>
+        <div class="footer-right">
+            <div>Report: ${title}</div>
+            <div>Period: ${period}</div>
+            <div style="margin-top:4px;color:#bbb;">© ${new Date().getFullYear()} ${gymName} &bull; FitPay Management System</div>
+        </div>
+    </div>`;
+
+    html += `</div></body></html>`;
+    return html;
 }
 
-// Mobile menu toggle functionality
-const mobileMenuToggle = document.getElementById('mobileMenuToggle');
-const sidebar = document.querySelector('.sidebar');
+// ── Misc ──────────────────────────────────────────────────────────────────────
+async function handleLogout() {
+    if (!confirm('Are you sure you want to logout?')) return;
+    try { await fetch('../../api/auth/logout.php', { method: 'POST' }); } catch (_) {}
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('userData');
+    window.location.href = '../../index.php';
+}
 
-if (mobileMenuToggle && sidebar) {
-    mobileMenuToggle.addEventListener('click', function(e) {
+const mobileBtn = document.getElementById('mobileMenuToggle');
+const sidebar   = document.querySelector('.sidebar');
+if (mobileBtn && sidebar) {
+    mobileBtn.addEventListener('click', e => {
         e.stopPropagation();
         sidebar.classList.toggle('active');
-        
-        // Change icon based on state
-        const icon = this.querySelector('i');
-        if (sidebar.classList.contains('active')) {
-            icon.classList.remove('fa-bars');
-            icon.classList.add('fa-times');
-        } else {
-            icon.classList.remove('fa-times');
-            icon.classList.add('fa-bars');
-        }
+        const ic = mobileBtn.querySelector('i');
+        ic.classList.toggle('fa-bars');
+        ic.classList.toggle('fa-times');
     });
-    
-    // Close sidebar when clicking outside
-    document.addEventListener('click', function(e) {
-        if (!sidebar.contains(e.target) && 
-            e.target !== mobileMenuToggle && 
-            !mobileMenuToggle.contains(e.target) &&
-            sidebar.classList.contains('active')) {
+    document.addEventListener('click', e => {
+        if (!sidebar.contains(e.target) && !mobileBtn.contains(e.target) && sidebar.classList.contains('active')) {
             sidebar.classList.remove('active');
-            const icon = mobileMenuToggle.querySelector('i');
-            icon.classList.remove('fa-times');
-            icon.classList.add('fa-bars');
+            const ic = mobileBtn.querySelector('i');
+            ic.classList.add('fa-bars');
+            ic.classList.remove('fa-times');
         }
     });
 }
 
-// Initialize page
-document.addEventListener('DOMContentLoaded', async function() {
-    await updateAllCharts();
-    
-    // Dropdown toggle
-    const generateReportBtn = document.getElementById('generateReportBtn');
-    const reportDropdown = document.getElementById('reportDropdown');
-    
-    if (generateReportBtn && reportDropdown) {
-        generateReportBtn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            const parent = this.parentElement;
-            const isVisible = reportDropdown.style.display === 'block';
-            reportDropdown.style.display = isVisible ? 'none' : 'block';
-            if (isVisible) parent.classList.remove('active');
-            else parent.classList.add('active');
-        });
-        
-        document.addEventListener('click', function() {
-            reportDropdown.style.display = 'none';
-            if (generateReportBtn.parentElement) {
-                generateReportBtn.parentElement.classList.remove('active');
-            }
-        });
-    }
+async function updatePendingBadge() {
+    try {
+        const res  = await fetch('../../api/bookings/get-all.php?status=pending');
+        const data = await res.json();
+        const cnt  = data.success ? data.data.length : 0;
+        const b1   = document.getElementById('bookingsBadge');
+        const b2   = document.getElementById('notificationBadge');
+        if (b1) b1.textContent = cnt || '';
+        if (b2) b2.textContent = cnt || '';
+    } catch (_) {}
+}
 
-    // Update pending bookings badge
-    async function updatePendingBadge() {
-        try {
-            const response = await fetch('../../api/bookings/get-all.php?status=pending');
-            const data = await response.json();
-            const pendingCount = data.success ? data.data.length : 0;
-            
-            const bookingsBadge = document.getElementById('bookingsBadge');
-            if (bookingsBadge) {
-                bookingsBadge.textContent = pendingCount || '';
-            }
-            
-            const notificationBadge = document.getElementById('notificationBadge');
-            if (notificationBadge) {
-                notificationBadge.textContent = pendingCount || '';
-            }
-        } catch (e) {}
-    }
-    
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadAll();
     await updatePendingBadge();
-    
-    // Refresh charts every 10 seconds
-    setInterval(async () => {
-        await updateAllCharts();
-        await updatePendingBadge();
-    }, 10000);
+    setInterval(updatePendingBadge, 30000);
 });

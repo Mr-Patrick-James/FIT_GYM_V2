@@ -299,19 +299,7 @@ $user = getCurrentUser();
                 <div class="stat-label">Verified Bookings</div>
             </div>
             
-            <div class="stat-card">
-                <div class="stat-header">
-                    <div class="stat-icon">
-                        <i class="fas fa-wallet"></i>
-                    </div>
-                    <div class="trend">
-                        <i class="fas fa-arrow-up"></i>
-                        <span id="revenueTrend">0%</span>
-                    </div>
-                </div>
-                <div class="stat-value" id="totalRevenue">₱0</div>
-                <div class="stat-label">Total Revenue</div>
-            </div>
+
         </div>
 
         <!-- Calendar View -->
