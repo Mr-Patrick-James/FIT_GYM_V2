@@ -360,51 +360,49 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
     <section class="testimonials-section">
         <div class="container">
             <div class="section-header">
-                <span class="section-eyebrow">Google Reviews &bull; 5.0 ★★★★★</span>
+                <span class="section-eyebrow">Reviews &bull; 5.0 ★★★★★</span>
                 <h2 class="section-title">What Members Say</h2>
             </div>
-            <div class="testimonials-grid">
+            <div class="testimonials-grid" id="testimonialsGrid">
                 <div class="testimonial-card">
                     <div class="stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
-                    <p>"Good"</p>
+                    <p>"What I like about this gym is mura sya unlike other gyms na 50, 60 minsan nga 100, sa gym ng Martinez kasi 35 lang which is so okay para sakin and sa mga beginners also. Sa mga equipment, goods denn, malinis and quality din. Hoping na mag dadagdag kayu ng equipments para mas mapaganda yung gym."</p>
                     <div class="testimonial-author">
-                        <div class="author-avatar">LJ</div>
+                        <div class="author-avatar"><img src="assets/testimonies/img1.jpg" alt="Jeux Burn Martinez" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"></div>
                         <div>
-                            <strong>Lowell Jay Ola</strong>
-                            <span>Google Review &bull; 2 reviews &bull; 14 photos</span>
+                            <strong>Jeux Burn Martinez</strong>
+                            <span>Gym Member</span>
                         </div>
                     </div>
-                    <a href="https://maps.app.goo.gl/kiaoEoL586Bnzzi57" target="_blank" class="review-source"><i class="fab fa-google"></i> View on Google</a>
                 </div>
                 <div class="testimonial-card">
                     <div class="stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
-                    <p>5-star rating from a Local Guide with 82 reviews and 482 photos across Google Maps.</p>
+                    <p>"5-star rating from a Local Guide with 82 reviews and 482 photos across Google Maps."</p>
                     <div class="testimonial-author">
                         <div class="author-avatar">AU</div>
                         <div>
                             <strong>AU TU MN</strong>
-                            <span>Google Local Guide &bull; 82 reviews</span>
+                            <span>Local Guide &bull; 82 reviews</span>
                         </div>
                     </div>
-                    <a href="https://maps.app.goo.gl/kiaoEoL586Bnzzi57" target="_blank" class="review-source"><i class="fab fa-google"></i> View on Google</a>
                 </div>
                 <div class="testimonial-card">
                     <div class="stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
-                    <p>5-star rating — one of the gym's loyal members who keeps coming back.</p>
+                    <p>"One of the gym's loyal members who keeps coming back."</p>
                     <div class="testimonial-author">
                         <div class="author-avatar">TS</div>
                         <div>
                             <strong>Tramz Suison</strong>
-                            <span>Google Review</span>
+                            <span>Gym Member</span>
                         </div>
                     </div>
-                    <a href="https://maps.app.goo.gl/kiaoEoL586Bnzzi57" target="_blank" class="review-source"><i class="fab fa-google"></i> View on Google</a>
                 </div>
+                <!-- Hidden extra cards — shown when "See All Reviews" is clicked -->
             </div>
             <div style="text-align:center; margin-top: 40px;">
-                <a href="https://maps.app.goo.gl/kiaoEoL586Bnzzi57" target="_blank" class="directions-btn">
-                    <i class="fab fa-google"></i> See All Reviews on Google
-                </a>
+                <button class="directions-btn" id="seeAllReviewsBtn" onclick="toggleAllReviews()">
+                    See All Reviews
+                </button>
             </div>
         </div>
     </section>
@@ -424,13 +422,7 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
                                 <p>Apitong Proper B, Naujan,<br>5204 Oriental Mindoro</p>
                             </div>
                         </div>
-                        <div class="contact-item">
-                            <div class="contact-icon"><i class="fas fa-phone"></i></div>
-                            <div>
-                                <strong>Phone</strong>
-                                <p><a href="tel:09560818258">0956 081 8258</a></p>
-                            </div>
-                        </div>
+                    
                         <div class="contact-item">
                             <div class="contact-icon"><i class="fas fa-clock"></i></div>
                             <div>
@@ -609,6 +601,24 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
 
 
     <script src="assets/js/main.js?v=1.2"></script>
+    <script>
+        function toggleAllReviews() {
+            const grid = document.getElementById('testimonialsGrid');
+            const btn = document.getElementById('seeAllReviewsBtn');
+            const hidden = grid.querySelectorAll('.testimonial-card.extra');
+            const isExpanded = btn.dataset.expanded === 'true';
+
+            if (isExpanded) {
+                hidden.forEach(c => c.style.display = 'none');
+                btn.textContent = 'See All Reviews';
+                btn.dataset.expanded = 'false';
+            } else {
+                hidden.forEach(c => c.style.display = 'flex');
+                btn.textContent = 'Show Less';
+                btn.dataset.expanded = 'true';
+            }
+        }
+    </script>
 
 </body>
 </html>

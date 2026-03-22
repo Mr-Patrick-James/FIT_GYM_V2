@@ -12,7 +12,7 @@ $user = getCurrentUser();
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../../assets/css/dashboard.css?v=1.7">
     <script>
         (function() {
@@ -22,25 +22,20 @@ $user = getCurrentUser();
         })();
     </script>
     <style>
-        /* Trainer card inactive dim */
-        .trainer-card.inactive { opacity:e(40%); }
-        .trainer-card.inactive:hover { opacity: 0.85; filter: graysca; }
+        .trainer-card.inactive { opacity: 0.5; }
+        .trainer-card.inactive:hover { opacity: 0.85; }
 
-        /* Client load bar */
         .load-bar-wrap { margin: 12px 0 4px; }
         .load-bar-track { height: 6px; background: var(--glass); border-radius: 99px; overflow: hidden; }
         .load-bar-fill { height: 100%; border-radius: 99px; transition: width 0.6s ease; }
 
-        /* Cert tags */
         .cert-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-        .cert-tag { padding: 3px 10px; background: rgba(13x; font-size: 0.7rem; font-weight: 700; color: #a78bfa; }
+        .cert-tag { padding: 3px 10px; background: rgba(139,92,246,0.1); border: 1px solid rgba(139,92,246,0.2); border-radius: 99px; font-size: 0.7rem; font-weight: 700; color: #a78bfa; }
 
-        /* Availability pills */
         .avail-pills { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
         .avail-pill { padding: 2px 8px; background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.2); border-radius: 99px; font-size: 0.68rem; font-weight: 600; color: #60a5fa; }
 
-        /* Filter bar */
-        .filter-bar { displpx solid var(--dark-border); background: var(--glass); }
+        .filter-bar { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; padding: 16px 24px; border-bottom: 1px solid var(--dark-border); background: var(--glass); }
         .filter-bar select, .filter-bar input[type=text] {
             padding: 8px 14px; background: var(--dark-card); border: 1.5px solid var(--dark-border);
             border-radius: var(--radius-md); color: var(--dark-text); font-size: 0.8rem; font-weight: 500; outline: none;
@@ -48,7 +43,6 @@ $user = getCurrentUser();
         .filter-bar select:focus, .filter-bar input[type=text]:focus { border-color: var(--primary); }
         .filter-bar label { font-size: 0.75rem; color: var(--dark-text-secondary); font-weight: 600; }
 
-        /* Profile drawer */
         .drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 2000; display: none; }
         .drawer-overlay.active { display: block; }
         .profile-drawer {
@@ -67,21 +61,20 @@ $user = getCurrentUser();
         .stat-mini-val { font-size: 1.4rem; font-weight: 900; }
         .stat-mini-lbl { font-size: 0.65rem; color: var(--dark-text-secondary); font-weight: 600; margin-top: 2px; }
 
-        /* Photo upload preview */
-        .photo-upload-wrap { display: flexap: 16px; margin-bottom: 8px; }
-        .photo-preview { width: 72px; height: 72px; border-radius: var(--radius-lg); object-fit: cover; border: 2px solid var(--dark-border); background: var(--glass); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .photo-upload-wrap { display: flex; gap: 16px; margin-bottom: 8px; align-items: center; }
+        .photo-preview { width: 72px; height: 72px; border-radius: var(--radius-lg); object-fit: cover; border: 2px solid var(--dark-border); background: var(--glass); display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; }
         .photo-preview img { width: 100%; height: 100%; object-fit: cover; }
         .photo-preview i { font-size: 2rem; color: var(--dark-text-secondary); }
 
-        /* Day checkboxes */
-        .day-checks { display:  wrap; gap: 8px; }
+        .day-checks { display: flex; flex-wrap: wrap; gap: 8px; }
         .day-check-label { display: flex; align-items: center; gap: 6px; padding: 6px 12px; border: 1.5px solid var(--dark-border); border-radius: var(--radius-full); cursor: pointer; font-size: 0.78rem; font-weight: 600; transition: all 0.2s; }
-        .day-check-label:has(input:checked) { border-color: #3b82f6; background: rgba(59,130,246,0.1); color: #60a5fa; }
+        .day-check-label.checked { border-color: #3b82f6; background: rgba(59,130,246,0.1); color: #60a5fa; }
         .day-check-label input { display: none; }
 
-        /* Inactive section separator */
-        .inactive-d-column: 1/-1; display: flex; align-items: center; gap: 12px; color: var(--dark-text-secondary); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-top: 8px; }
+        .inactive-section-label { grid-column: 1/-1; display: flex; align-items: center; gap: 12px; color: var(--dark-text-secondary); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-top: 8px; }
         .inactive-section-label::before, .inactive-section-label::after { content: ''; flex: 1; height: 1px; background: var(--dark-border); }
+
+        #trainersGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px; padding: 24px; }
     </style>
 </head>
 <body>
@@ -98,7 +91,7 @@ $user = getCurrentUser();
             <li><a href="packages.php"><i class="fas fa-dumbbell"></i> <span>Packages</span></a></li>
             <li><a href="equipment.php"><i class="fas fa-tools"></i> <span>Equipment</span></a></li>
             <li><a href="exercises.php"><i class="fas fa-running"></i> <span>Exercises</span></a></li>
-dollar"></i> <span>Reports</span></a></li>
+            <li><a href="report.php"><i class="fas fa-file-invoice-dollar"></i> <span>Reports</span></a></li>
             <li><a href="settings.php"><i class="fas fa-cog"></i> <span>Settings</span></a></li>
         </ul>
         <div class="admin-profile">
@@ -130,7 +123,7 @@ dollar"></i> <span>Reports</span></a></li>
                     <i class="fas fa-bell"></i>
                     <span class="notification-badge" id="notificationBadge">0</span>
                 </button>
-ut()">
+                <button class="action-btn" title="Logout" onclick="handleLogout()">
                     <i class="fas fa-sign-out-alt"></i>
                 </button>
             </div>
@@ -140,50 +133,50 @@ ut()">
         <div class="stats-grid" style="grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));">
             <div class="stat-card">
                 <div class="stat-header">
-                    <div class="stat-icon" style="background: rgba(59,130,246,0.1); color: #3b82f6;"><i class="fas fa-user-tie"></i></div>
+                    <div class="stat-icon" style="background:rgba(59,130,246,0.1);color:#3b82f6;"><i class="fas fa-user-tie"></i></div>
                 </div>
                 <div class="stat-value" id="totalTrainers">0</div>
                 <div class="stat-label">Total Trainers</div>
             </div>
             <div class="stat-card">
                 <div class="stat-header">
-                    <div class="stat-icon" style="background: rgba(16,185,129,0.1); color: #10b981;"><i class="fas fa-user-check"></i></div>
+                    <div class="stat-icon" style="background:rgba(16,185,129,0.1);color:#10b981;"><i class="fas fa-user-check"></i></div>
                 </div>
                 <div class="stat-value" id="activeTrainers">0</div>
                 <div class="stat-label">Active Trainers</div>
-  </div>
+            </div>
             <div class="stat-card">
                 <div class="stat-header">
-                    <div class="stat-icon" style="background: rgba(245,158,11,0.1); color: #f59e0b;"><i class="fas fa-star"></i></div>
+                    <div class="stat-icon" style="background:rgba(245,158,11,0.1);color:#f59e0b;"><i class="fas fa-star"></i></div>
                 </div>
                 <div class="stat-value" id="specializationsCount">0</div>
                 <div class="stat-label">Specializations</div>
             </div>
             <div class="stat-card">
                 <div class="stat-header">
-                    <dat-icon" style="background: rgba(139,92,246,0.1); color: #8b5cf6;"><i class="fas fa-dumbbell"></i></div>
+                    <div class="stat-icon" style="background:rgba(139,92,246,0.1);color:#8b5cf6;"><i class="fas fa-dumbbell"></i></div>
                 </div>
                 <div class="stat-value" id="totalAssignedPackages">0</div>
                 <div class="stat-label">Assigned Packages</div>
             </div>
             <div class="stat-card">
                 <div class="stat-header">
-                    <div class="stat-icon" style="background: rgba(34,197,94,0.1); color: #22c55e;"><i class="fas fa-users"></i></div>
+                    <div class="stat-icon" style="background:rgba(34,197,94,0.1);color:#22c55e;"><i class="fas fa-users"></i></div>
                 </div>
                 <div class="stat-value" id="totalActiveClients">0</div>
                 <div class="stat-label">Total Active Clients</div>
             </div>
-            <div class="stat-card" style="cursor: pointer;" onclick="openAddTrainerModal()">
+            <div class="stat-card" style="cursor:pointer;" onclick="openAddTrainerModal()">
                 <div class="stat-header">
-                    <div class="stat-icon" style="background: var(--glass); color: var(--primary);"><i class="fas fa-plus"></i></div>
+                    <div class="stat-icon" style="background:var(--glass);color:var(--primary);"><i class="fas fa-plus"></i></div>
                 </div>
                 <div class="stat-value">Add New</div>
-            <div class="stat-label">Click to add trainer</div>
+                <div class="stat-label">Click to add trainer</div>
             </div>
         </div>
 
         <!-- Trainers Content -->
-        <div class="content-card" style="margin-top: 32px;">
+        <div class="content-card" style="margin-top:32px;">
             <div class="card-header">
                 <h3>All Trainers</h3>
                 <div class="card-actions">
@@ -222,20 +215,20 @@ ut()">
                 </div>
             </div>
 
-fr)); gap: 24px; padding: 24px;">
+            <div id="trainersGrid">
                 <div style="grid-column:1/-1;text-align:center;padding:40px;">
                     <i class="fas fa-spinner fa-spin" style="font-size:2rem;color:var(--primary);"></i>
                     <p style="margin-top:10px;">Loading trainers...</p>
                 </div>
             </div>
             <div id="noTrainersMessage" style="display:none;text-align:center;padding:60px 20px;color:var(--dark-text-secondary);">
-                <i class="nt-size:3rem;margin-bottom:16px;opacity:0.5;"></i>
+                <i class="fas fa-user-tie" style="font-size:3rem;margin-bottom:16px;opacity:0.5;"></i>
                 <h3 style="margin-bottom:8px;">No trainers found</h3>
                 <p>Click "Add New" to create your first trainer entry.</p>
             </div>
         </div>
 
-                            <input type="tel" id="trainerContact" placeholder="e.g. 09123456789" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'')">putmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+        <div class="footer">
             <p><i class="fas fa-heart" style="color:var(--primary);"></i> © <?php echo date('Y'); ?> Martinez Fitness Gym • FitPay Management System v2.0</p>
         </div>
     </main>
@@ -259,7 +252,7 @@ fr)); gap: 24px; padding: 24px;">
                                 <i class="fas fa-user-tie"></i>
                             </div>
                             <div style="flex:1;">
-          ">
+                                <input type="file" id="trainerPhotoFile" accept="image/*" style="display:none;" onchange="previewPhoto(this)">
                                 <button type="button" class="card-btn" onclick="document.getElementById('trainerPhotoFile').click()">
                                     <i class="fas fa-camera"></i> Choose Photo
                                 </button>
@@ -275,7 +268,7 @@ fr)); gap: 24px; padding: 24px;">
                             <input type="text" id="trainerName" required placeholder="e.g. John Doe">
                         </div>
                         <div class="form-group">
-                    style="color:var(--warning);">*</span></label>
+                            <label>Specialization <span style="color:var(--warning);">*</span></label>
                             <input type="text" id="trainerSpecialization" required placeholder="e.g. Strength & Conditioning">
                         </div>
                     </div>
@@ -283,11 +276,11 @@ fr)); gap: 24px; padding: 24px;">
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
                         <div class="form-group">
                             <label>Email Address <span style="color:var(--warning);">*</span></label>
-l" id="trainerEmail" required placeholder="e.g. john@example.com">
+                            <input type="email" id="trainerEmail" required placeholder="e.g. john@example.com">
                         </div>
                         <div class="form-group">
                             <label>Contact Number</label>
-                            <input type="text" id="trainerContact" placeholder="e.g. 0912 345 6789">
+                            <input type="tel" id="trainerContact" placeholder="e.g. 09123456789" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
                         </div>
                     </div>
 
@@ -308,34 +301,67 @@ l" id="trainerEmail" required placeholder="e.g. john@example.com">
                         <input type="text" id="trainerCertifications" placeholder="e.g. NSCA-CPT, ACE, NASM (comma-separated)">
                         <p style="font-size:0.72rem;color:var(--dark-text-secondary);margin-top:4px;">Separate multiple certifications with commas.</p>
                     </div>
-/div>
 
-    <script src="../../assets/js/main.js"></script>
-    <script src="../../assets/js/trainers.js?v=2.0"></script>
-</body>
-</html>
-r Overlay -->
-    <div class="drawer-overlay" id="drawerOverlay" onclick="closeProfileDrawer()"></div>
+                    <!-- Availability -->
+                    <div class="form-group">
+                        <label>Available Days</label>
+                        <div class="day-checks" id="availDays">
+                            <?php foreach(['Mon','Tue','Wed','Thu','Fri','Sat','Sun'] as $d): ?>
+                            <label class="day-check-label" onclick="toggleDay(this)">
+                                <input type="checkbox" name="avail_day" value="<?= $d ?>"> <?= $d ?>
+                            </label>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
 
-    <!-- Trainer Profile Drawer -->
-    <div class="profile-drawer" id="profileDrawer">
-        <div class="drawer-header">
-            <h3 id="drawerTitle">Trainer Profile</h3>
-            <button class="close-modal" onclick="closeProfileDrawer()"><i class="fas fa-times"></i></button>
-        </div>
-        <div class="drawer-body" id="drawerBody">
-            <!-- Populated by JS -->
-        </div>
-    <<div class="modal-body" style="padding:24px;">
-                <div id="trainerMembersList" style="display:flex;flex-direction:column;gap:16px;max-height:500px;overflow-y:auto;padding-right:8px;"></div>
-            </div>
-            <div class="modal-footer" style="padding:16px 24px;border-top:1px solid var(--dark-border);text-align:right;">
-                <button class="btn btn-secondary" onclick="closeTrainerMembersModal()">Close</button>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                        <div class="form-group">
+                            <label>Available From</label>
+                            <input type="time" id="availFrom" value="06:00">
+                        </div>
+                        <div class="form-group">
+                            <label>Available Until</label>
+                            <input type="time" id="availUntil" value="18:00">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Short Bio</label>
+                        <textarea id="trainerBio" rows="3" placeholder="Trainer's experience and background..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;">
+                            <input type="checkbox" id="trainerActive" checked style="width:18px;height:18px;cursor:pointer;">
+                            <span style="font-weight:600;">Active Trainer</span>
+                        </label>
+                        <p style="font-size:0.78rem;color:var(--dark-text-secondary);margin-top:4px;margin-left:28px;">Inactive trainers won't be visible to members.</p>
+                    </div>
+
+                    <div class="modal-actions" style="margin-top:24px;display:flex;justify-content:flex-end;gap:12px;">
+                        <button type="button" class="btn btn-secondary" onclick="closeTrainerModal()"><i class="fas fa-times"></i> Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="saveTrainerBtn"><i class="fas fa-save"></i> Save Trainer</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 
-    <!-- Profile Drawecolor:white;" onclick="confirmDeleteTrainer()">Delete</button>
+    <!-- Delete Confirmation Modal -->
+    <div class="modal-overlay" id="deleteTrainerModal">
+        <div class="modal" style="max-width:400px;">
+            <div class="modal-header">
+                <h3 style="color:#ef4444;">Delete Trainer</h3>
+                <button class="close-modal" onclick="closeDeleteTrainerModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body" style="padding:24px;text-align:center;">
+                <i class="fas fa-exclamation-triangle" style="font-size:3rem;color:#ef4444;margin-bottom:16px;"></i>
+                <p>Are you sure you want to delete <strong id="deleteTrainerName">this trainer</strong>?</p>
+                <p style="font-size:0.85rem;color:var(--dark-text-secondary);margin-top:8px;">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer" style="padding:16px 24px;display:flex;gap:12px;border-top:1px solid var(--dark-border);">
+                <button class="btn btn-secondary" style="flex:1;" onclick="closeDeleteTrainerModal()">Cancel</button>
+                <button class="btn" style="flex:1;background:#ef4444;color:white;" onclick="confirmDeleteTrainer()">Delete</button>
             </div>
         </div>
     </div>
@@ -347,64 +373,28 @@ r Overlay -->
                 <h3 id="viewMembersModalTitle">Assigned Members</h3>
                 <button class="close-modal" onclick="closeTrainerMembersModal()"><i class="fas fa-times"></i></button>
             </div>
-            ng id="deleteTrainerName">this trainer</strong>?</p>
-                <p style="font-size:0.85rem;color:var(--dark-text-secondary);margin-top:8px;">This action cannot be undone.</p>
+            <div class="modal-body" style="padding:24px;">
+                <div id="trainerMembersList" style="display:flex;flex-direction:column;gap:16px;max-height:500px;overflow-y:auto;padding-right:8px;"></div>
             </div>
-            <div class="modal-footer" style="padding:16px 24px;display:flex;gap:12px;border-top:1px solid var(--dark-border);">
-                <button class="btn btn-secondary" style="flex:1;" onclick="closeDeleteTrainerModal()">Cancel</button>
-                <button class="btn" style="flex:1;background:#ef4444;le="max-width:400px;">
-            <div class="modal-header">
-                <h3 style="color:#ef4444;">Delete Trainer</h3>
-                <button class="close-modal" onclick="closeDeleteTrainerModal()"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="modal-body" style="padding:24px;text-align:center;">
-                <i class="fas fa-exclamation-triangle" style="font-size:3rem;color:#ef4444;margin-bottom:16px;"></i>
-                <p>Are you sure you want to delete <stro">
-                        <button type="button" class="btn btn-secondary" onclick="closeTrainerModal()"><i class="fas fa-times"></i> Cancel</button>
-                        <button type="submit" class="btn btn-primary" id="saveTrainerBtn"><i class="fas fa-save"></i> Save Trainer</button>
-                    </div>
-                </form>
+            <div class="modal-footer" style="padding:16px 24px;border-top:1px solid var(--dark-border);text-align:right;">
+                <button class="btn btn-secondary" onclick="closeTrainerMembersModal()">Close</button>
             </div>
         </div>
     </div>
 
-    <!-- Delete Confirmation Modal -->
-    <div class="modal-overlay" id="deleteTrainerModal">
-        <div class="modal" styeckbox" id="trainerActive" checked style="width:18px;height:18px;cursor:pointer;">
-                            <span style="font-weight:600;">Active Trainer</span>
-                        </label>
-                        <p style="font-size:0.78rem;color:var(--dark-text-secondary);margin-top:4px;margin-left:28px;">Inactive trainers won't be visible to members.</p>
-                    </div>
+    <!-- Profile Drawer Overlay -->
+    <div class="drawer-overlay" id="drawerOverlay" onclick="closeProfileDrawer()"></div>
 
-                    <div class="modal-actions" style="margin-top:24px;display:flex;justify-content:flex-end;gap:12px;8:00">
-                        </div>
-                    </div>
+    <!-- Trainer Profile Drawer -->
+    <div class="profile-drawer" id="profileDrawer">
+        <div class="drawer-header">
+            <h3 id="drawerTitle">Trainer Profile</h3>
+            <button class="close-modal" onclick="closeProfileDrawer()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="drawer-body" id="drawerBody"></div>
+    </div>
 
-                    <div class="form-group">
-                        <label>Short Bio</label>
-                        <textarea id="trainerBio" rows="3" placeholder="Trainer's experience and background..."></textarea>
-                    </div>
-
-                    <div class="form-group">
-                        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;">
-                            <input type="chdiv>
-                    </div>
-
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-                        <div class="form-group">
-                            <label>Available From</label>
-                            <input type="time" id="availFrom" value="06:00">
-                        </div>
-                        <div class="form-group">
-                            <label>Available Until</label>
-                            <input type="time" id="availUntil" value="1<div class="form-group">
-                        <label>Available Days</label>
-                        <div class="day-checks" id="availDays">
-                            <?php foreach(['Mon','Tue','Wed','Thu','Fri','Sat','Sun'] as $d): ?>
-                            <label class="day-check-label">
-                                <input type="checkbox" name="avail_day" value="<?= $d ?>"> <?= $d ?>
-                            </label>
-                            <?php endforeach; ?>
-                        </
-                    <!-- Availability -->
-                    
+    <script src="../../assets/js/main.js"></script>
+    <script src="../../assets/js/trainers.js?v=2.0"></script>
+</body>
+</html>
