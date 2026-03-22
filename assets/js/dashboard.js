@@ -3,6 +3,7 @@ let allBookings = [];
 let lastBookingsJSON = '';
 let lastPackagesJSON = '';
 let packagesData = [];
+let currentPackageMetric = 'bookings';
 
 // Load all bookings from database
 async function loadAllBookings() {
@@ -301,21 +302,41 @@ function populateBookingsTable() {
 // Populate packages
 function populatePackages() {
     const packagesList = document.getElementById('packagesList');
-    packagesList.innerHTML = '';
+    const packageFilter = document.getElementById('packageFilter');
+    const currentFilterValue = packageFilter ? packageFilter.value : 'all';
+    
+    if (packagesList) packagesList.innerHTML = '';
+    if (packageFilter) {
+        packageFilter.innerHTML = '<option value="all">All Packages</option>';
+    }
     
     packagesData.forEach(pkg => {
-        const packageCard = document.createElement('div');
-        packageCard.className = 'package-card';
-        packageCard.innerHTML = `
-            <div class="package-info">
-                <h4>${pkg.name}</h4>
-                <p>${pkg.duration} • ${pkg.description ? pkg.description.split('\n')[0] : 'Full gym access with all facilities'}</p>
-                <span class="package-tag">${pkg.tag}</span>
-            </div>
-            <div class="package-price">${pkg.price}</div>
-        `;
-        packagesList.appendChild(packageCard);
+        if (packagesList) {
+            const packageCard = document.createElement('div');
+            packageCard.className = 'package-card';
+            packageCard.innerHTML = `
+                <div class="package-info">
+                    <h4>${pkg.name}</h4>
+                    <p>${pkg.duration} • ${pkg.description ? pkg.description.split('\n')[0] : 'Full gym access with all facilities'}</p>
+                    <span class="package-tag">${pkg.tag}</span>
+                </div>
+                <div class="package-price">${pkg.price}</div>
+            `;
+            packagesList.appendChild(packageCard);
+        }
+        
+        if (packageFilter) {
+            const option = document.createElement('option');
+            option.value = pkg.name;
+            option.textContent = pkg.name;
+            packageFilter.appendChild(option);
+        }
     });
+
+    // Restore filter value if it still exists
+    if (packageFilter && Array.from(packageFilter.options).some(opt => opt.value === currentFilterValue)) {
+        packageFilter.value = currentFilterValue;
+    }
 }
 
 // Initialize revenue chart
@@ -437,18 +458,37 @@ async function initializePackageStatsChart(startDate = null, endDate = null) {
     
     // Default to current month if no dates provided
     if (!startDate || !endDate) {
-        const now = new Date();
-        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-        startDate = firstDay.toISOString().split('T')[0];
-        endDate = now.toISOString().split('T')[0];
+        const statsStartDateEl = document.getElementById('statsStartDate');
+        const statsEndDateEl = document.getElementById('statsEndDate');
+        startDate = statsStartDateEl ? statsStartDateEl.value : null;
+        endDate = statsEndDateEl ? statsEndDateEl.value : null;
+        
+        if (!startDate || !endDate) {
+            const now = new Date();
+            const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+            startDate = firstDay.toISOString().split('T')[0];
+            endDate = now.toISOString().split('T')[0];
+        }
     }
     
     const start = new Date(startDate);
     const end = new Date(endDate);
     end.setHours(23, 59, 59, 999);
     
+    const packageFilter = document.getElementById('packageFilter');
+    const selectedPkgName = packageFilter ? packageFilter.value : 'all';
+    
     // Count packages within the date range
-    const packageCounts = {};
+    const packageStats = {};
+    
+    // Initialize stats for all packages if we're showing all
+    if (selectedPkgName === 'all') {
+        packagesData.forEach(pkg => {
+            packageStats[pkg.name] = { bookings: 0, revenue: 0 };
+        });
+    } else {
+        packageStats[selectedPkgName] = { bookings: 0, revenue: 0 };
+    }
     
     allBookings
         .filter(b => b.status === 'verified')
@@ -456,18 +496,29 @@ async function initializePackageStatsChart(startDate = null, endDate = null) {
             const date = new Date(b.booking_date || b.created_at);
             if (date >= start && date <= end) {
                 const pkgName = b.package_name || b.package || 'Other';
-                packageCounts[pkgName] = (packageCounts[pkgName] || 0) + 1;
+                
+                if (selectedPkgName === 'all' || pkgName === selectedPkgName) {
+                    if (!packageStats[pkgName]) {
+                        packageStats[pkgName] = { bookings: 0, revenue: 0 };
+                    }
+                    packageStats[pkgName].bookings += 1;
+                    packageStats[pkgName].revenue += parseFloat(b.amount) || 0;
+                }
             }
         });
 
-    const labels = Object.keys(packageCounts);
-    const data = Object.values(packageCounts);
+    const labels = Object.keys(packageStats);
+    const bookingsData = labels.map(label => packageStats[label].bookings);
+    const revenueData = labels.map(label => packageStats[label].revenue);
+    
+    // Update summary cards
+    updatePackageSummaryCards(packageStats, selectedPkgName);
     
     if (window.packageStatsChart instanceof Chart) {
         window.packageStatsChart.destroy();
     }
     
-    // If no data, show a message
+    // If no data and we're not showing all packages (which are initialized to 0), show a message
     if (labels.length === 0) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = '#888';
@@ -477,18 +528,32 @@ async function initializePackageStatsChart(startDate = null, endDate = null) {
         return;
     }
 
+    const currentData = currentPackageMetric === 'bookings' ? bookingsData : revenueData;
+    const isRevenue = currentPackageMetric === 'revenue';
+    
+    // Generate colors based on the data
+    const backgroundColors = labels.map((_, i) => {
+        const hue = (i * 137.5) % 360; // Use golden angle for distributed colors
+        return `hsla(${hue}, 70%, 60%, 0.2)`;
+    });
+    const borderColors = labels.map((_, i) => {
+        const hue = (i * 137.5) % 360;
+        return `hsla(${hue}, 70%, 60%, 1)`;
+    });
+
     window.packageStatsChart = new Chart(ctx, {
         type: 'bar',
         data: {
             labels: labels,
             datasets: [{
-                label: 'Users',
-                data: data,
-                backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                borderColor: '#ffffff',
+                label: isRevenue ? 'Revenue' : 'Bookings',
+                data: currentData,
+                backgroundColor: isRevenue ? 'rgba(34, 197, 94, 0.2)' : 'rgba(255, 255, 255, 0.15)',
+                borderColor: isRevenue ? '#22c55e' : '#ffffff',
                 borderWidth: 2,
-                borderRadius: 8,
-                hoverBackgroundColor: 'rgba(255, 255, 255, 0.4)'
+                borderRadius: 12,
+                hoverBackgroundColor: isRevenue ? 'rgba(34, 197, 94, 0.4)' : 'rgba(255, 255, 255, 0.3)',
+                barThickness: selectedPkgName === 'all' ? 'flex' : 60
             }]
         },
         options: {
@@ -502,22 +567,39 @@ async function initializePackageStatsChart(startDate = null, endDate = null) {
                     backgroundColor: 'rgba(17, 17, 17, 0.95)',
                     titleColor: '#ffffff',
                     bodyColor: '#ffffff',
-                    borderColor: '#ffffff',
+                    borderColor: isRevenue ? '#22c55e' : '#ffffff',
                     borderWidth: 2,
-                    cornerRadius: 12
+                    cornerRadius: 12,
+                    padding: 12,
+                    callbacks: {
+                        label: function(context) {
+                            let val = context.parsed.y;
+                            if (isRevenue) {
+                                return `Revenue: ₱${val.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
+                            }
+                            return `Bookings: ${val}`;
+                        }
+                    }
                 }
             },
             scales: {
                 y: {
                     beginAtZero: true,
                     grid: {
-                        color: 'rgba(255, 255, 255, 0.05)'
+                        color: 'rgba(255, 255, 255, 0.05)',
+                        drawBorder: false
                     },
                     ticks: {
                         color: '#888',
-                        stepSize: 1,
                         font: {
-                            weight: '600'
+                            weight: '600',
+                            family: 'Inter'
+                        },
+                        callback: function(value) {
+                            if (isRevenue) {
+                                return '₱' + (value >= 1000 ? (value / 1000) + 'k' : value);
+                            }
+                            return value;
                         }
                     }
                 },
@@ -528,16 +610,111 @@ async function initializePackageStatsChart(startDate = null, endDate = null) {
                     ticks: {
                         color: '#888',
                         font: {
-                            weight: '600'
+                            weight: '600',
+                            family: 'Inter'
                         }
                     }
                 }
+            },
+            animation: {
+                duration: 1000,
+                easing: 'easeOutQuart'
             }
         }
     });
 }
 
-// Filter package stats by date range
+// Update package summary cards
+function updatePackageSummaryCards(packageStats, selectedPkgName) {
+    const selectedPkgNameEl = document.getElementById('selectedPackageName');
+    const selectedPkgBookingsEl = document.getElementById('selectedPkgBookings');
+    const selectedPkgRevenueEl = document.getElementById('selectedPkgRevenue');
+    const topPackageNameEl = document.getElementById('topPackageName');
+    const topPackageStatEl = document.getElementById('topPackageStat');
+    
+    if (!selectedPkgNameEl) return;
+    
+    let totalBookings = 0;
+    let totalRevenue = 0;
+    let topPkg = { name: 'None', bookings: -1 };
+    
+    const statsArray = Object.entries(packageStats);
+    
+    if (selectedPkgName === 'all') {
+        selectedPkgNameEl.textContent = 'All Packages';
+        statsArray.forEach(([name, data]) => {
+            totalBookings += data.bookings;
+            totalRevenue += data.revenue;
+            if (data.bookings > topPkg.bookings) {
+                topPkg = { name: name, bookings: data.bookings };
+            }
+        });
+    } else {
+        selectedPkgNameEl.textContent = selectedPkgName;
+        const data = packageStats[selectedPkgName] || { bookings: 0, revenue: 0 };
+        totalBookings = data.bookings;
+        totalRevenue = data.revenue;
+        
+        // For top package, we still want to look at all packages even if one is filtered
+        // So we need to re-calculate top package from allBookings within date range
+        const allPackageStats = {};
+        const startDate = document.getElementById('statsStartDate').value;
+        const endDate = document.getElementById('statsEndDate').value;
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        
+        allBookings
+            .filter(b => b.status === 'verified')
+            .forEach(b => {
+                const date = new Date(b.booking_date || b.created_at);
+                if (date >= start && date <= end) {
+                    const pkgName = b.package_name || b.package || 'Other';
+                    allPackageStats[pkgName] = (allPackageStats[pkgName] || 0) + 1;
+                }
+            });
+            
+        Object.entries(allPackageStats).forEach(([name, count]) => {
+            if (count > topPkg.bookings) {
+                topPkg = { name: name, bookings: count };
+            }
+        });
+    }
+    
+    selectedPkgBookingsEl.textContent = totalBookings;
+    selectedPkgRevenueEl.textContent = `₱${totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
+    
+    if (topPkg.bookings >= 0) {
+        topPackageNameEl.textContent = topPkg.name;
+        topPackageStatEl.textContent = `${topPkg.bookings} booking${topPkg.bookings !== 1 ? 's' : ''}`;
+    } else {
+        topPackageNameEl.textContent = 'No data';
+        topPackageStatEl.textContent = '0 bookings';
+    }
+}
+
+// Switch between bookings and revenue metric
+function switchPackageMetric(metric) {
+    currentPackageMetric = metric;
+    
+    // Update UI buttons
+    const buttons = document.querySelectorAll('.metric-toggle .toggle-btn');
+    buttons.forEach(btn => {
+        if (btn.getAttribute('data-metric') === metric) {
+            btn.classList.add('active');
+            btn.style.background = 'var(--primary)';
+            btn.style.color = 'white';
+        } else {
+            btn.classList.remove('active');
+            btn.style.background = 'transparent';
+            btn.style.color = 'var(--dark-text-secondary)';
+        }
+    });
+    
+    initializePackageStatsChart();
+}
+
+// Filter package stats by date range or package
 function filterPackageStats() {
     const startDate = document.getElementById('statsStartDate').value;
     const endDate = document.getElementById('statsEndDate').value;

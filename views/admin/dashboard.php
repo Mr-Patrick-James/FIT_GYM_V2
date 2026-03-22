@@ -161,20 +161,6 @@ function getSetting($key, $default = '', $settings = []) {
             <div class="stat-card">
                 <div class="stat-header">
                     <div class="stat-icon">
-                        <i class="fas fa-wallet"></i>
-                    </div>
-                    <div class="trend">
-                        <i class="fas fa-arrow-up"></i>
-                        <span>24%</span>
-                    </div>
-                </div>
-                <div class="stat-value" id="monthlyRevenueStat">₱12,450</div>
-                <div class="stat-label">Monthly Revenue</div>
-            </div>
-            
-            <div class="stat-card">
-                <div class="stat-header">
-                    <div class="stat-icon">
                         <i class="fas fa-users"></i>
                     </div>
                     <div class="trend">
@@ -255,42 +241,65 @@ function getSetting($key, $default = '', $settings = []) {
                     </div>
                 </div>
                 
-                <!-- Revenue Chart -->
-                <div class="content-card" style="margin-top: 32px;">
-                    <div class="card-header">
-                        <h3>Revenue Reports</h3>
-                        <div class="card-actions">
-                            <select class="card-btn" id="revenuePeriod" style="padding: 10px 16px; cursor: pointer;">
-                                <option value="6">Last 6 Months</option>
-                                <option value="3">Last 3 Months</option>
-                                <option value="12">This Year</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="chart-container">
-                        <canvas id="revenueChart"></canvas>
-                    </div>
-                </div>
+
 
                 <!-- Package Statistics -->
                 <div class="content-card" style="margin-top: 32px;">
-                    <div class="card-header">
-                        <h3>Package Popularity</h3>
-                        <div class="card-actions" style="display: flex; gap: 10px; align-items: center;">
-                            <div class="date-filter" style="display: flex; gap: 8px; align-items: center;">
-                                <input type="date" id="statsStartDate" class="card-btn" style="padding: 8px 12px; font-size: 0.8rem;">
-                                <span style="color: var(--dark-text-secondary); font-size: 0.8rem;">to</span>
-                                <input type="date" id="statsEndDate" class="card-btn" style="padding: 8px 12px; font-size: 0.8rem;">
-                                <button class="card-btn primary" onclick="filterPackageStats()" style="padding: 8px 12px;">
+                    <div class="pkg-card-header">
+                        <div class="pkg-header-top">
+                            <div class="header-main">
+                                <h3>Package Performance</h3>
+                                <p>Track how each gym plan is performing</p>
+                            </div>
+                            <div class="metric-toggle">
+                                <button class="toggle-btn active" data-metric="bookings" onclick="switchPackageMetric('bookings')">Bookings</button>
+                                <button class="toggle-btn" data-metric="revenue" onclick="switchPackageMetric('revenue')">Revenue</button>
+                            </div>
+                        </div>
+                        <div class="pkg-header-controls">
+                            <select id="packageFilter" class="card-btn" onchange="filterPackageStats()">
+                                <option value="all">All Packages</option>
+                            </select>
+                            <div class="date-filter">
+                                <input type="date" id="statsStartDate" class="card-btn">
+                                <span class="date-sep">to</span>
+                                <input type="date" id="statsEndDate" class="card-btn">
+                                <button class="card-btn primary" onclick="filterPackageStats()">
                                     <i class="fas fa-filter"></i>
+                                    <span>Filter</span>
                                 </button>
                             </div>
                         </div>
                     </div>
                     
-                    <div class="chart-container" style="height: 300px;">
-                        <canvas id="packageStatsChart"></canvas>
+                    <div class="package-stats-content">
+                        <div class="chart-container" style="height: 350px;">
+                            <canvas id="packageStatsChart"></canvas>
+                        </div>
+                        
+                        <div class="package-summary-cards">
+                            <div class="summary-card">
+                                <label style="font-size: 0.8rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px;">Selected Package</label>
+                                <h4 id="selectedPackageName">All Packages</h4>
+                                
+                                <div class="stat-mini-grid">
+                                    <div class="mini-stat">
+                                        <label>Bookings</label>
+                                        <div id="selectedPkgBookings" class="value">0</div>
+                                    </div>
+                                    <div class="mini-stat">
+                                        <label>Revenue</label>
+                                        <div id="selectedPkgRevenue" class="value" style="color: var(--success);">₱0</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="summary-card highlight">
+                                <label style="font-size: 0.8rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px;">Top Performing Plan</label>
+                                <h4 id="topPackageName">Loading...</h4>
+                                <p id="topPackageStat" style="font-size: 0.85rem; color: var(--dark-text-secondary);">0 bookings</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
