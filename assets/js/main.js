@@ -20,6 +20,8 @@ document.addEventListener('DOMContentLoaded', () => {
     updateActiveNavLink();
 });
 
+window.addEventListener('scroll', updateActiveNavLink);
+
 const modal = document.getElementById('authModal');
 const loginForm = document.getElementById('loginForm');
 const signupForm = document.getElementById('signupForm');
@@ -376,33 +378,25 @@ const TEMP_CREDENTIALS = {
 function updateActiveNavLink() {
     const sections = document.querySelectorAll('section[id]');
     const navLinks = document.querySelectorAll('.nav-links a');
-    
-    let currentSectionId = 'home';
-    const scrollPosition = window.scrollY + 100; // Offset for header
+    const headerOffset = 80;
+    const scrollY = window.scrollY + headerOffset;
 
+    // Find the last section whose top is at or above the scroll position
+    let activeSectionId = sections[0]?.getAttribute('id') || 'home';
     sections.forEach(section => {
-        const sectionTop = section.offsetTop;
-        const sectionHeight = section.offsetHeight;
-        
-        if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
-            currentSectionId = section.getAttribute('id');
+        if (scrollY >= section.offsetTop) {
+            activeSectionId = section.getAttribute('id');
         }
     });
 
     navLinks.forEach(link => {
         link.classList.remove('active');
-        if (link.getAttribute('href') === `#${currentSectionId}`) {
+        if (link.getAttribute('href') === `#${activeSectionId}`) {
             link.classList.add('active');
         }
     });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    initHeroSlider();
-    updateActiveNavLink();
-});
-
-window.addEventListener('scroll', updateActiveNavLink);
 
 function scrollToSection(id) {
     const el = document.getElementById(id);
@@ -1232,29 +1226,6 @@ document.querySelector('#otpVerificationForm form').addEventListener('submit', a
 document.addEventListener('DOMContentLoaded', function() {
     setupOTPInputs();
     
-    // Scroll Spy for active navigation state
-    const sections = document.querySelectorAll('section[id]');
-    const navLinks = document.querySelectorAll('.nav-links a');
-
-    function updateActiveNav() {
-        let scrollY = window.pageYOffset;
-
-        sections.forEach(current => {
-            const sectionHeight = current.offsetHeight;
-            const sectionTop = current.offsetTop - 100; // Offset for header height
-            const sectionId = current.getAttribute('id');
-
-            if (scrollY > sectionTop && scrollY <= sectionTop + sectionHeight) {
-                navLinks.forEach(link => {
-                    link.classList.remove('active');
-                    if (link.getAttribute('href') === `#${sectionId}`) {
-                        link.classList.add('active');
-                    }
-                });
-            }
-        });
-    }
-
     // Gallery Slider Logic
     let currentSlide = 0;
     let slideInterval;
@@ -1264,7 +1235,30 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!slider) return;
 
         const slides = slider.querySelectorAll('.slide');
-        if (slides.length <= 1) return;
+        if (slides.length === 0) return;
+
+        function updateSlider(newIndex) {
+            slides[currentSlide].classList.remove('active');
+            const dots = slider.querySelectorAll('.slider-dot');
+            if (dots.length > 0) dots[currentSlide].classList.remove('active');
+
+            currentSlide = (newIndex + slides.length) % slides.length;
+
+            slides[currentSlide].classList.add('active');
+            if (dots.length > 0) dots[currentSlide].classList.add('active');
+
+            const counter = document.getElementById('slideCurrentNum');
+            if (counter) counter.textContent = currentSlide + 1;
+        }
+
+        window.changeSlide = (direction) => updateSlider(currentSlide + direction);
+
+        window.goToSlide = (index) => {
+            if (index === currentSlide) return;
+            updateSlider(index);
+            clearInterval(slideInterval);
+            startSlideTimer();
+        };
 
         // Start auto-rotation
         startSlideTimer();
@@ -1272,48 +1266,15 @@ document.addEventListener('DOMContentLoaded', function() {
         // Pause on hover
         slider.addEventListener('mouseenter', () => clearInterval(slideInterval));
         slider.addEventListener('mouseleave', () => startSlideTimer());
-
-        // Export functions to window for global access
-        window.changeSlide = (direction) => {
-            const slides = slider.querySelectorAll('.slide');
-            const dots = slider.querySelectorAll('.slider-dot');
-            
-            slides[currentSlide].classList.remove('active');
-            if (dots.length > 0) dots[currentSlide].classList.remove('active');
-            
-            currentSlide = (currentSlide + direction + slides.length) % slides.length;
-            
-            slides[currentSlide].classList.add('active');
-            if (dots.length > 0) dots[currentSlide].classList.add('active');
-        };
-
-        window.goToSlide = (index) => {
-            const slides = slider.querySelectorAll('.slide');
-            const dots = slider.querySelectorAll('.slider-dot');
-            
-            if (index === currentSlide) return;
-            
-            slides[currentSlide].classList.remove('active');
-            if (dots.length > 0) dots[currentSlide].classList.remove('active');
-            
-            currentSlide = index;
-            
-            slides[currentSlide].classList.add('active');
-            if (dots.length > 0) dots[currentSlide].classList.add('active');
-            
-            clearInterval(slideInterval);
-            startSlideTimer();
-        };
     }
 
     function startSlideTimer() {
+        clearInterval(slideInterval);
         slideInterval = setInterval(() => {
             if (window.changeSlide) window.changeSlide(1);
-        }, 5000);
+        }, 4000);
     }
 
-    window.addEventListener('scroll', updateActiveNav);
-    updateActiveNav(); // Initial check
     initSlider(); // Initialize gallery slider
 
     // Check if user is already logged in

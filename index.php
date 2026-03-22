@@ -258,26 +258,38 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
                     $gallery = json_decode($galleryJson, true);
                     
                     if (empty($gallery)) {
-                        $gallery = ['https://images.unsplash.com/photo-1540497077202-7c8a3999166f?q=80&w=2070&auto=format&fit=crop'];
+                        $gallery = [
+                            'assets/uploads/gym/IMG_20230402_094207.webp',
+                            'assets/uploads/gym/IMG_20230402_094327.webp',
+                            'assets/uploads/gym/IMG_20230402_094345.webp',
+                            'assets/uploads/gym/received_1255449418403705.webp',
+                            'assets/uploads/gym/received_243674931470652.webp',
+                            'assets/uploads/gym/received_252530697123903.webp',
+                            'assets/uploads/gym/received_253763833748985.webp',
+                            'assets/uploads/gym/received_3639542122989348.webp',
+                            'assets/uploads/gym/received_618114340334349.webp',
+                        ];
                     }
                     ?>
                     <div class="slider-container" id="aboutSlider">
                         <?php foreach ($gallery as $index => $imagePath): ?>
                             <div class="slide <?php echo $index === 0 ? 'active' : ''; ?>">
-                                <img src="<?php echo htmlspecialchars(strpos($imagePath, 'http') === 0 ? $imagePath : $imagePath); ?>" alt="Gym Interior">
+                                <img src="<?php echo htmlspecialchars($imagePath); ?>" alt="Martinez Fitness Gym">
                             </div>
                         <?php endforeach; ?>
-                        
-                        <?php if (count($gallery) > 1): ?>
-                            <button class="slider-btn prev" onclick="changeSlide(-1)"><i class="fas fa-chevron-left"></i></button>
-                            <button class="slider-btn next" onclick="changeSlide(1)"><i class="fas fa-chevron-right"></i></button>
-                            
-                            <div class="slider-nav">
-                                <?php foreach ($gallery as $index => $imagePath): ?>
-                                    <div class="slider-dot <?php echo $index === 0 ? 'active' : ''; ?>" onclick="goToSlide(<?php echo $index; ?>)"></div>
-                                <?php endforeach; ?>
-                            </div>
-                        <?php endif; ?>
+
+                        <button class="slider-btn prev" onclick="changeSlide(-1)"><i class="fas fa-chevron-left"></i></button>
+                        <button class="slider-btn next" onclick="changeSlide(1)"><i class="fas fa-chevron-right"></i></button>
+
+                        <div class="slider-nav">
+                            <?php foreach ($gallery as $index => $imagePath): ?>
+                                <div class="slider-dot <?php echo $index === 0 ? 'active' : ''; ?>" onclick="goToSlide(<?php echo $index; ?>)"></div>
+                            <?php endforeach; ?>
+                        </div>
+
+                        <div class="slide-counter">
+                            <span id="slideCurrentNum">1</span> / <span><?php echo count($gallery); ?></span>
+                        </div>
                     </div>
                 </div>
             </div>
