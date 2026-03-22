@@ -130,6 +130,7 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
                     <li><a href="#home">Home</a></li>
                     <li><a href="#packages">Packages</a></li>
                     <li><a href="#about">About</a></li>
+                    <li><a href="#contact">Contact</a></li>
                 </ul>
             </nav>
             <button class="login-btn-nav" onclick="openModal('login')">Login</button>
@@ -283,6 +284,163 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
         </div>
     </section>
 
+    <!-- Why Join Section -->
+    <section class="why-section">
+        <div class="container">
+            <div class="why-grid">
+                <div class="why-text">
+                    <span class="section-eyebrow">Why Choose Us</span>
+                    <h2 class="section-title">Built to Push<br>You Further</h2>
+                    <p class="section-subtitle">More than a gym — a community where every rep counts and every goal matters.</p>
+                    <button class="main-cta" style="margin-top:36px;" onclick="openModal('signup')">
+                        Start Today <div class="icon-circle"><i class="fa-solid fa-arrow-right"></i></div>
+                    </button>
+                </div>
+                <div class="why-features">
+                    <div class="why-item">
+                        <div class="why-icon"><i class="fas fa-dumbbell"></i></div>
+                        <div>
+                            <h4>Complete Equipment</h4>
+                            <p>Free weights, machines, cardio — everything you need under one roof in Naujan, Oriental Mindoro.</p>
+                        </div>
+                    </div>
+                    <div class="why-item">
+                        <div class="why-icon"><i class="fas fa-user-tie"></i></div>
+                        <div>
+                            <h4>Expert Trainers</h4>
+                            <p>Our certified coaches build personalized programs tailored to your body and your goals.</p>
+                        </div>
+                    </div>
+                    <div class="why-item">
+                        <div class="why-icon"><i class="fas fa-star"></i></div>
+                        <div>
+                            <h4>5-Star Rated</h4>
+                            <p>Consistently rated 5 stars by our members on Google. Real results, real community.</p>
+                        </div>
+                    </div>
+                    <div class="why-item">
+                        <div class="why-icon"><i class="fas fa-clock"></i></div>
+                        <div>
+                            <h4>Open Daily</h4>
+                            <p>We're open every day so your schedule never gets in the way of your progress.</p>
+                        </div>
+                    </div>
+                    <div class="why-item">
+                        <div class="why-icon"><i class="fas fa-mobile-alt"></i></div>
+                        <div>
+                            <h4>Online Booking</h4>
+                            <p>Book sessions, track progress, and manage your membership right from this platform.</p>
+                        </div>
+                    </div>
+                    <div class="why-item">
+                        <div class="why-icon"><i class="fas fa-heart"></i></div>
+                        <div>
+                            <h4>Supportive Community</h4>
+                            <p>A welcoming environment for all fitness levels — beginners to advanced athletes.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section class="testimonials-section">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-eyebrow">Member Stories</span>
+                <h2 class="section-title">Real Members,<br>Real Results</h2>
+            </div>
+            <div class="testimonials-grid">
+                <div class="testimonial-card">
+                    <div class="stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+                    <p>"Martinez Fitness Gym completely changed my lifestyle. The trainers are incredibly supportive and the equipment is top-notch. Lost 15kg in 4 months!"</p>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">JR</div>
+                        <div>
+                            <strong>Juan Reyes</strong>
+                            <span>Member since 2023</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card">
+                    <div class="stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+                    <p>"Best gym in Naujan! The online booking system makes it so easy to manage my sessions. The community here keeps me motivated every single day."</p>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">MC</div>
+                        <div>
+                            <strong>Maria Cruz</strong>
+                            <span>Member since 2022</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card">
+                    <div class="stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+                    <p>"I've tried other gyms but nothing compares. The trainers actually know your name and your goals. It feels personal, not just transactional."</p>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">RL</div>
+                        <div>
+                            <strong>Rico Lim</strong>
+                            <span>Member since 2024</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Location & Contact Section -->
+    <section class="location-section" id="contact">
+        <div class="container">
+            <div class="location-grid">
+                <div class="location-info">
+                    <span class="section-eyebrow">Find Us</span>
+                    <h2 class="section-title">Visit the Gym</h2>
+                    <div class="contact-items">
+                        <div class="contact-item">
+                            <div class="contact-icon"><i class="fas fa-location-dot"></i></div>
+                            <div>
+                                <strong>Address</strong>
+                                <p>Apitong Proper B, Naujan,<br>5204 Oriental Mindoro</p>
+                            </div>
+                        </div>
+                        <div class="contact-item">
+                            <div class="contact-icon"><i class="fas fa-phone"></i></div>
+                            <div>
+                                <strong>Phone</strong>
+                                <p><a href="tel:09560818258">0956 081 8258</a></p>
+                            </div>
+                        </div>
+                        <div class="contact-item">
+                            <div class="contact-icon"><i class="fas fa-clock"></i></div>
+                            <div>
+                                <strong>Hours</strong>
+                                <p>Open Daily &bull; Closes 10 PM</p>
+                            </div>
+                        </div>
+                        <div class="contact-item">
+                            <div class="contact-icon"><i class="fas fa-star"></i></div>
+                            <div>
+                                <strong>Rating</strong>
+                                <p>5.0 ★★★★★ on Google Maps</p>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="https://maps.app.goo.gl/kiaoEoL586Bnzzi57" target="_blank" class="directions-btn">
+                        <i class="fas fa-map-marked-alt"></i> Get Directions
+                    </a>
+                </div>
+                <div class="map-embed">
+                    <iframe
+                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d241.5!2d121.1975408!3d13.2357103!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x33bc9551816b9149%3A0x15997831d4a777f1!2sMartinez%20Fitness%20Gym!5e0!3m2!1sen!2sph!4v1"
+                        width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"
+                        referrerpolicy="no-referrer-when-downgrade">
+                    </iframe>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Footer -->
     <footer>
         <div class="container">
@@ -303,6 +461,7 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
                         <li><a href="#home">Home</a></li>
                         <li><a href="#packages">Packages</a></li>
                         <li><a href="#about">About</a></li>
+                        <li><a href="#contact">Contact</a></li>
                     </ul>
                 </div>
                 <div class="footer-contact">
