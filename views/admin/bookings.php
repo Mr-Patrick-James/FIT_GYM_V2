@@ -274,20 +274,6 @@ $user = getCurrentUser();
             <div class="stat-card">
                 <div class="stat-header">
                     <div class="stat-icon">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <div class="trend">
-                        <i class="fas fa-arrow-up"></i>
-                        <span id="activeTrend">0%</span>
-                    </div>
-                </div>
-                <div class="stat-value" id="activeBookings">0</div>
-                <div class="stat-label">Active Members</div>
-            </div>
-            
-            <div class="stat-card">
-                <div class="stat-header">
-                    <div class="stat-icon">
                         <i class="fas fa-clock"></i>
                     </div>
                     <div class="trend down">

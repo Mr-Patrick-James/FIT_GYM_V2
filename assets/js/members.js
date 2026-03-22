@@ -215,12 +215,12 @@ function applyFilters() {
     updateStats();
 }
 
-// Populate members grid
+// Populate members list (table rows)
 function populateMembersGrid() {
     const grid = document.getElementById('membersGrid');
     const noMembersMessage = document.getElementById('noMembersMessage');
     grid.innerHTML = '';
-    
+
     if (filteredMembers.length === 0) {
         grid.style.display = 'none';
         noMembersMessage.style.display = 'block';
@@ -228,50 +228,48 @@ function populateMembersGrid() {
         document.getElementById('totalCount').textContent = allMembers.length;
         return;
     }
-    
-    grid.style.display = 'grid';
+
+    grid.style.display = 'block';
     noMembersMessage.style.display = 'none';
-    
+
     filteredMembers.forEach(member => {
         const isActive = isMemberActive(member);
-        const memberCard = document.createElement('div');
-        memberCard.className = 'package-card';
-        memberCard.style.cursor = 'pointer';
-        memberCard.onclick = () => viewMember(member.id);
-        
-        memberCard.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px; min-width: 0;">
-                <div class="admin-avatar" style="width: 60px; height: 60px; font-size: 1.5rem; flex-shrink: 0;">
-                    ${getInitials(member.name)}
-                </div>
-                <div style="flex: 1; min-width: 0; overflow: hidden;">
-                    <h4 style="margin-bottom: 4px; color: var(--primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${member.name || 'Unknown User'}</h4>
-                    <p style="font-size: 0.85rem; color: var(--dark-text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${member.email || 'No email'}</p>
-                </div>
-                <span class="status-badge status-${isActive ? 'verified' : 'pending'}" style="flex-shrink: 0;">
-                    ${isActive ? 'Active' : 'Inactive'}
-                </span>
-            </div>
-            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--dark-border);">
-                <div>
-                    <div style="font-size: 0.85rem; color: var(--dark-text-secondary); margin-bottom: 4px;">Bookings</div>
-                    <div style="font-weight: 800; font-size: 1.2rem; color: var(--primary);">${member.bookings.length}</div>
-                </div>
-                <div>
-                    <div style="font-size: 0.85rem; color: var(--dark-text-secondary); margin-bottom: 4px;">Total Spent</div>
-                    <div style="font-weight: 800; font-size: 1.2rem; color: var(--success);">₱${Math.round(member.totalSpent).toLocaleString()}</div>
+
+        // Get latest verified booking package name
+        const latestVerified = [...member.verifiedBookings].sort((a, b) =>
+            new Date(b.booking_date || b.created_at) - new Date(a.booking_date || a.created_at)
+        )[0];
+        const packageName = latestVerified?.package_name || latestVerified?.package || '—';
+
+        const row = document.createElement('div');
+        row.className = 'members-list-row';
+        row.onclick = () => viewMember(member.id);
+        row.innerHTML = `
+            <div class="ml-col ml-name">
+                <div class="admin-avatar" style="width:36px;height:36px;font-size:0.8rem;flex-shrink:0;">${getInitials(member.name)}</div>
+                <div style="min-width:0;">
+                    <div style="font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${member.name || 'Unknown'}</div>
+                    <div style="font-size:0.75rem;color:var(--dark-text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${member.email || '—'}</div>
                 </div>
             </div>
-            <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--dark-border);">
-                <div style="font-size: 0.85rem; color: var(--dark-text-secondary);">
-                    <i class="fas fa-phone" style="margin-right: 8px;"></i>${member.contact || 'N/A'}
-                </div>
+            <div class="ml-col ml-package">
+                <span class="pkg-badge">${packageName}</span>
+            </div>
+            <div class="ml-col ml-bookings" style="font-weight:700;">${member.bookings.length}</div>
+            <div class="ml-col ml-spent" style="font-weight:800;color:var(--success);">₱${Math.round(member.totalSpent).toLocaleString()}</div>
+            <div class="ml-col ml-joined" style="font-size:0.8rem;color:var(--dark-text-secondary);">${formatDateForDisplay(member.joinedDate)}</div>
+            <div class="ml-col ml-status">
+                <span class="status-badge status-${isActive ? 'verified' : 'pending'}">${isActive ? 'Active' : 'Inactive'}</span>
+            </div>
+            <div class="ml-col ml-action">
+                <button class="card-btn primary" onclick="event.stopPropagation();viewMember('${member.id}')">
+                    <i class="fas fa-eye"></i> View
+                </button>
             </div>
         `;
-        
-        grid.appendChild(memberCard);
+        grid.appendChild(row);
     });
-    
+
     document.getElementById('showingCount').textContent = filteredMembers.length;
     document.getElementById('totalCount').textContent = allMembers.length;
 }
@@ -280,20 +278,12 @@ function populateMembersGrid() {
 async function updateStats() {
     const totalMembers = allMembers.length;
     const activeMembers = allMembers.filter(m => isMemberActive(m)).length;
-    
-    let totalBookings = 0;
-    let totalRevenue = 0;
-    
-    allMembers.forEach(member => {
-        totalBookings += member.bookings.length;
-        totalRevenue += member.totalSpent;
-    });
-    
+    const inactiveMembers = totalMembers - activeMembers;
+
     // Update stat cards
     document.getElementById('totalMembers').textContent = totalMembers;
     document.getElementById('activeMembers').textContent = activeMembers;
-    document.getElementById('totalBookings').textContent = totalBookings;
-    document.getElementById('totalRevenue').textContent = `₱${Math.round(totalRevenue).toLocaleString()}`;
+    document.getElementById('inactiveMembers').textContent = inactiveMembers;
     
     // Update pending bookings badge from API
     try {
@@ -313,82 +303,152 @@ async function updateStats() {
     } catch (e) {}
 }
 
+// Tab switching
+function switchTab(tab) {
+    document.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.style.display = 'none');
+    document.querySelector(`.modal-tab[onclick="switchTab('${tab}')"]`).classList.add('active');
+    document.getElementById('tab-' + tab).style.display = 'block';
+    if (tab === 'calendar') renderCalendar();
+}
+
+// Calendar state
+let calendarYear = new Date().getFullYear();
+let calendarMonth = new Date().getMonth();
+
+function changeCalendarMonth(dir) {
+    calendarMonth += dir;
+    if (calendarMonth > 11) { calendarMonth = 0; calendarYear++; }
+    if (calendarMonth < 0)  { calendarMonth = 11; calendarYear--; }
+    renderCalendar();
+}
+
+function renderCalendar() {
+    const member = currentViewingMember;
+    if (!member) return;
+
+    const label = document.getElementById('calendarMonthLabel');
+    const cal = document.getElementById('memberCalendar');
+
+    const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    label.textContent = `${monthNames[calendarMonth]} ${calendarYear}`;
+
+    // Build a map of date → status
+    const dateMap = {};
+    member.bookings.forEach(b => {
+        const d = new Date(b.booking_date || b.created_at);
+        const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+        dateMap[key] = b.status || 'pending';
+    });
+
+    const firstDay = new Date(calendarYear, calendarMonth, 1).getDay();
+    const daysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate();
+    const today = new Date();
+
+    let html = '<div class="cal-grid">';
+    ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d => {
+        html += `<div class="cal-day-name">${d}</div>`;
+    });
+
+    for (let i = 0; i < firstDay; i++) html += '<div class="cal-cell empty"></div>';
+
+    for (let d = 1; d <= daysInMonth; d++) {
+        const key = `${calendarYear}-${calendarMonth}-${d}`;
+        const status = dateMap[key];
+        const isToday = today.getFullYear() === calendarYear && today.getMonth() === calendarMonth && today.getDate() === d;
+        html += `<div class="cal-cell ${status ? 'has-booking ' + status : ''} ${isToday ? 'today' : ''}">
+            <span>${d}</span>
+            ${status ? `<div class="cal-dot ${status}"></div>` : ''}
+        </div>`;
+    }
+    html += '</div>';
+    cal.innerHTML = html;
+}
+
 // View member details
 function viewMember(memberId) {
     const member = allMembers.find(m => m.id === memberId);
-    if (!member) {
-        showNotification('Member not found', 'warning');
-        return;
-    }
-    
+    if (!member) { showNotification('Member not found', 'warning'); return; }
+
     currentViewingMember = member;
     const isActive = isMemberActive(member);
-    
-    // Populate modal
+
+    // Header
     document.getElementById('memberAvatar').textContent = getInitials(member.name);
     document.getElementById('memberName').textContent = member.name || 'Unknown User';
     document.getElementById('memberEmail').textContent = member.email || 'No email';
-    document.getElementById('modalEmail').textContent = member.email || 'No email';
+    document.getElementById('modalStatus').textContent = isActive ? 'Active' : 'Inactive';
+    document.getElementById('modalStatus').className = `status-badge status-${isActive ? 'verified' : 'pending'}`;
+
+    // Overview tab
+    document.getElementById('modalEmail').textContent = member.email || 'N/A';
     document.getElementById('modalContact').textContent = member.contact || 'N/A';
     document.getElementById('modalAddress').textContent = member.address || 'N/A';
+    document.getElementById('modalJoinedDate').textContent = formatDateForDisplay(member.joinedDate);
     document.getElementById('modalTotalBookings').textContent = member.bookings.length;
     document.getElementById('modalVerifiedPayments').textContent = member.verifiedBookings.length;
     document.getElementById('modalTotalSpent').textContent = `₱${Math.round(member.totalSpent).toLocaleString()}`;
-    document.getElementById('modalStatus').textContent = isActive ? 'Active' : 'Inactive';
-    document.getElementById('modalStatus').className = `status-badge status-${isActive ? 'verified' : 'pending'}`;
-    document.getElementById('modalJoinedDate').textContent = formatDateForDisplay(member.joinedDate);
-    
-    // Populate bookings list
+    document.getElementById('modalMemberType').textContent = member.type === 'walkin' ? 'Walk-in' : 'Registered';
+
+    // Current package banner
+    const latestVerified = [...member.verifiedBookings].sort((a, b) =>
+        new Date(b.booking_date || b.created_at) - new Date(a.booking_date || a.created_at)
+    )[0];
+
+    if (latestVerified) {
+        const pkgName = latestVerified.package_name || latestVerified.package || '—';
+        document.getElementById('modalCurrentPackage').textContent = pkgName;
+
+        // Calculate expiry
+        const bookingDate = new Date(latestVerified.booking_date || latestVerified.created_at);
+        const days = parseDurationToDays(latestVerified.duration);
+        if (days > 0) {
+            const expiry = new Date(bookingDate);
+            expiry.setDate(expiry.getDate() + days);
+            const expired = new Date() > expiry;
+            document.getElementById('modalPackageExpiry').textContent = formatDateForDisplay(expiry);
+            document.getElementById('modalPackageExpiry').style.color = expired ? 'var(--danger, #ef4444)' : 'var(--success)';
+        } else {
+            document.getElementById('modalPackageExpiry').textContent = '—';
+        }
+        document.getElementById('currentPackageBanner').style.display = 'flex';
+    } else {
+        document.getElementById('currentPackageBanner').style.display = 'none';
+    }
+
+    // Transactions tab
     const bookingsList = document.getElementById('memberBookingsList');
     bookingsList.innerHTML = '';
-    
+
     if (member.bookings.length === 0) {
-        bookingsList.innerHTML = '<p style="color: var(--dark-text-secondary); text-align: center; padding: 20px;">No bookings found</p>';
+        bookingsList.innerHTML = '<p style="color:var(--dark-text-secondary);text-align:center;padding:40px;">No transactions found</p>';
     } else {
-        // Sort bookings by date (newest first)
-        const sortedBookings = [...member.bookings].sort((a, b) => {
-            const dateA = new Date(a.booking_date || a.created_at || 0);
-            const dateB = new Date(b.booking_date || b.created_at || 0);
-            return dateB - dateA;
-        });
-        
-        sortedBookings.forEach(booking => {
-            const bookingItem = document.createElement('div');
-            bookingItem.style.cssText = `
-                padding: 16px;
-                margin-bottom: 12px;
-                background: var(--dark-card);
-                border: 1px solid var(--dark-border);
-                border-radius: var(--radius-md);
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-            `;
-            
-            bookingItem.innerHTML = `
-                <div>
-                    <div style="font-weight: 700; color: var(--primary); margin-bottom: 4px;">
-                        ${booking.package_name || 'N/A'}
-                    </div>
-                    <div style="font-size: 0.85rem; color: var(--dark-text-secondary);">
-                        ${booking.date_formatted || formatDateForDisplay(booking.booking_date || booking.created_at)}
-                    </div>
+        const sorted = [...member.bookings].sort((a, b) =>
+            new Date(b.booking_date || b.created_at) - new Date(a.booking_date || a.created_at)
+        );
+        sorted.forEach((booking, i) => {
+            const item = document.createElement('div');
+            item.className = 'txn-row';
+            item.innerHTML = `
+                <div class="txn-num">#${i + 1}</div>
+                <div class="txn-info">
+                    <div class="txn-pkg">${booking.package_name || booking.package || 'N/A'}</div>
+                    <div class="txn-date">${formatDateForDisplay(booking.booking_date || booking.created_at)}</div>
                 </div>
-                <div style="text-align: right;">
-                    <div style="font-weight: 800; color: var(--success); margin-bottom: 4px;">
-                        ${booking.amount_formatted || ('₱' + parseFloat(booking.amount).toFixed(2))}
-                    </div>
-                    <span class="status-badge status-${booking.status || 'pending'}">
-                        ${(booking.status || 'pending').charAt(0).toUpperCase() + (booking.status || 'pending').slice(1)}
-                    </span>
-                </div>
+                <div class="txn-amount">₱${parseFloat(booking.amount || 0).toFixed(2)}</div>
+                <div><span class="status-badge status-${booking.status || 'pending'}">${(booking.status || 'pending').charAt(0).toUpperCase() + (booking.status || 'pending').slice(1)}</span></div>
             `;
-            
-            bookingsList.appendChild(bookingItem);
+            bookingsList.appendChild(item);
         });
     }
-    
-    // Show modal
+
+    // Reset to overview tab
+    switchTab('overview');
+
+    // Reset calendar to current month
+    calendarYear = new Date().getFullYear();
+    calendarMonth = new Date().getMonth();
+
     document.getElementById('memberModal').classList.add('active');
 }
 

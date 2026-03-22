@@ -134,34 +134,20 @@ $user = getCurrentUser();
                 <div class="stat-value" id="activeMembers">0</div>
                 <div class="stat-label">Active Members</div>
             </div>
-            
             <div class="stat-card">
                 <div class="stat-header">
                     <div class="stat-icon">
-                        <i class="fas fa-calendar-check"></i>
+                        <i class="fas fa-user-slash"></i>
                     </div>
                     <div class="trend">
-                        <i class="fas fa-arrow-up"></i>
-                        <span id="totalBookingsTrend">0%</span>
+                        <i class="fas fa-arrow-down"></i>
+                        <span id="inactiveMembersTrend">0%</span>
                     </div>
                 </div>
-                <div class="stat-value" id="totalBookings">0</div>
-                <div class="stat-label">Total Bookings</div>
+                <div class="stat-value" id="inactiveMembers">0</div>
+                <div class="stat-label">Inactive Members</div>
             </div>
             
-            <div class="stat-card">
-                <div class="stat-header">
-                    <div class="stat-icon">
-                        <i class="fas fa-wallet"></i>
-                    </div>
-                    <div class="trend">
-                        <i class="fas fa-arrow-up"></i>
-                        <span id="totalRevenueTrend">0%</span>
-                    </div>
-                </div>
-                <div class="stat-value" id="totalRevenue">₱0</div>
-                <div class="stat-label">Total Revenue</div>
-            </div>
         </div>
 
         <!-- Filters and Actions -->
@@ -205,7 +191,7 @@ $user = getCurrentUser();
             </div>
         </div>
 
-        <!-- Members Grid -->
+        <!-- Members List -->
         <div class="content-card" style="margin-top: 32px;">
             <div class="card-header">
                 <h3>All Members</h3>
@@ -215,8 +201,19 @@ $user = getCurrentUser();
                     </span>
                 </div>
             </div>
-            
-            <div id="membersGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 24px; padding: 24px;">
+
+            <!-- Table Header -->
+            <div class="members-list-header">
+                <div class="ml-col ml-name">Member</div>
+                <div class="ml-col ml-package">Current Package</div>
+                <div class="ml-col ml-bookings">Bookings</div>
+                <div class="ml-col ml-spent">Total Spent</div>
+                <div class="ml-col ml-joined">Joined</div>
+                <div class="ml-col ml-status">Status</div>
+                <div class="ml-col ml-action"></div>
+            </div>
+
+            <div id="membersGrid">
                 <!-- Populated by JavaScript -->
             </div>
             
@@ -239,74 +236,102 @@ $user = getCurrentUser();
 
     <!-- Member Details Modal -->
     <div class="modal-overlay" id="memberModal">
-        <div class="modal" style="max-width: 800px;">
+        <div class="modal" style="max-width: 860px;">
             <div class="modal-header">
-                <h3>Member Details</h3>
-                <button class="close-modal" onclick="closeModal()">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            
-            <div class="modal-body">
-                <div style="display: flex; align-items: center; gap: 24px; margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid var(--dark-border);">
-                    <div class="admin-avatar" id="memberAvatar" style="width: 80px; height: 80px; font-size: 2rem;">JD</div>
+                <div style="display:flex; align-items:center; gap:16px;">
+                    <div class="admin-avatar" id="memberAvatar" style="width:52px;height:52px;font-size:1.2rem;flex-shrink:0;">JD</div>
                     <div>
-                        <h2 id="memberName" style="margin-bottom: 8px;">-</h2>
-                        <p id="memberEmail" style="color: var(--dark-text-secondary);">-</p>
+                        <h3 id="memberName" style="margin:0;">-</h3>
+                        <p id="memberEmail" style="margin:0;font-size:0.8rem;color:var(--dark-text-secondary);">-</p>
                     </div>
+                    <span class="status-badge status-verified" id="modalStatus" style="margin-left:8px;">Active</span>
                 </div>
-                
-                <div class="detail-grid">
-                    <div class="detail-group">
-                        <label>Email Address</label>
-                        <div class="value" id="modalEmail">-</div>
-                    </div>
-                    <div class="detail-group">
-                        <label>Contact Number</label>
-                        <div class="value" id="modalContact">-</div>
-                    </div>
-                    <div class="detail-group">
-                        <label>Address</label>
-                        <div class="value" id="modalAddress">-</div>
-                    </div>
-                    <div class="detail-group">
-                        <label>Total Bookings</label>
-                        <div class="value" id="modalTotalBookings">0</div>
-                    </div>
-                    <div class="detail-group">
-                        <label>Verified Payments</label>
-                        <div class="value" id="modalVerifiedPayments">0</div>
-                    </div>
-                    <div class="detail-group">
-                        <label>Total Spent</label>
-                        <div class="value" id="modalTotalSpent" style="font-weight: 800; color: var(--success);">₱0</div>
-                    </div>
-                    <div class="detail-group">
-                        <label>Member Status</label>
-                        <div class="value">
-                            <span class="status-badge status-verified" id="modalStatus">Active</span>
+                <button class="close-modal" onclick="closeModal()"><i class="fas fa-times"></i></button>
+            </div>
+
+            <!-- Tabs -->
+            <div class="modal-tabs">
+                <button class="modal-tab active" onclick="switchTab('overview')"><i class="fas fa-user"></i> Overview</button>
+                <button class="modal-tab" onclick="switchTab('history')"><i class="fas fa-receipt"></i> Transactions</button>
+                <button class="modal-tab" onclick="switchTab('calendar')"><i class="fas fa-calendar-alt"></i> Calendar</button>
+            </div>
+
+            <div class="modal-body">
+
+                <!-- TAB: Overview -->
+                <div id="tab-overview" class="tab-pane active">
+                    <!-- Current Package Banner -->
+                    <div id="currentPackageBanner" class="current-pkg-banner">
+                        <div>
+                            <div class="cpb-label">Current Package</div>
+                            <div class="cpb-name" id="modalCurrentPackage">—</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div class="cpb-label">Expires</div>
+                            <div class="cpb-expiry" id="modalPackageExpiry">—</div>
                         </div>
                     </div>
-                    <div class="detail-group">
-                        <label>Joined Date</label>
-                        <div class="value" id="modalJoinedDate">-</div>
+
+                    <div class="detail-grid" style="margin-top:24px;">
+                        <div class="detail-group">
+                            <label>Email</label>
+                            <div class="value" id="modalEmail">-</div>
+                        </div>
+                        <div class="detail-group">
+                            <label>Contact</label>
+                            <div class="value" id="modalContact">-</div>
+                        </div>
+                        <div class="detail-group">
+                            <label>Address</label>
+                            <div class="value" id="modalAddress">-</div>
+                        </div>
+                        <div class="detail-group">
+                            <label>Joined</label>
+                            <div class="value" id="modalJoinedDate">-</div>
+                        </div>
+                        <div class="detail-group">
+                            <label>Total Bookings</label>
+                            <div class="value" id="modalTotalBookings">0</div>
+                        </div>
+                        <div class="detail-group">
+                            <label>Verified Payments</label>
+                            <div class="value" id="modalVerifiedPayments">0</div>
+                        </div>
+                        <div class="detail-group">
+                            <label>Total Spent</label>
+                            <div class="value" id="modalTotalSpent" style="font-weight:800;color:var(--success);">₱0</div>
+                        </div>
+                        <div class="detail-group">
+                            <label>Member Type</label>
+                            <div class="value" id="modalMemberType">-</div>
+                        </div>
                     </div>
                 </div>
-                
-                <div style="margin-top: 32px;">
-                    <h4 style="margin-bottom: 16px; color: var(--primary);">
-                        <i class="fas fa-calendar-check"></i> Booking History
-                    </h4>
-                    <div id="memberBookingsList" style="max-height: 300px; overflow-y: auto;">
-                        <!-- Populated by JavaScript -->
+
+                <!-- TAB: Transactions -->
+                <div id="tab-history" class="tab-pane" style="display:none;">
+                    <div id="memberBookingsList" style="max-height:460px;overflow-y:auto;">
+                        <!-- Populated by JS -->
                     </div>
                 </div>
-                
+
+                <!-- TAB: Calendar -->
+                <div id="tab-calendar" class="tab-pane" style="display:none;">
+                    <div class="calendar-nav">
+                        <button class="card-btn" onclick="changeCalendarMonth(-1)"><i class="fas fa-chevron-left"></i></button>
+                        <span id="calendarMonthLabel" style="font-weight:800;font-size:0.95rem;"></span>
+                        <button class="card-btn" onclick="changeCalendarMonth(1)"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+                    <div id="memberCalendar" class="member-calendar"></div>
+                    <div class="calendar-legend">
+                        <span><span class="legend-dot verified"></span> Verified</span>
+                        <span><span class="legend-dot pending"></span> Pending</span>
+                        <span><span class="legend-dot rejected"></span> Rejected</span>
+                    </div>
+                </div>
+
                 <div class="modal-actions">
-                    <button class="btn btn-secondary" onclick="closeModal()">
-                        <i class="fas fa-times"></i>
-                        Close
-                    </button>
+                    <button class="btn btn-secondary" onclick="closeModal()"><i class="fas fa-times"></i> Close</button>
                 </div>
             </div>
         </div>
