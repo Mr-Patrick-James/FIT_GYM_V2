@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Generation Time: Mar 18, 2026 at 09:36 AM
+-- Generation Time: Mar 22, 2026 at 10:27 AM
 -- Server version: 8.3.0
 -- PHP Version: 8.3.14
 
@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS `bookings` (
   `contact` varchar(50) DEFAULT NULL,
   `package_id` int DEFAULT NULL,
   `trainer_id` int DEFAULT NULL,
+  `is_upgrade` tinyint(1) DEFAULT '0',
   `package_name` varchar(100) DEFAULT NULL,
   `amount` decimal(10,2) NOT NULL,
   `booking_date` date DEFAULT NULL,
@@ -53,20 +54,22 @@ CREATE TABLE IF NOT EXISTS `bookings` (
   KEY `idx_user_id` (`user_id`),
   KEY `idx_package_id` (`package_id`),
   KEY `fk_booking_trainer` (`trainer_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=56 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=64 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `bookings`
 --
 
-INSERT INTO `bookings` (`id`, `user_id`, `name`, `email`, `contact`, `package_id`, `trainer_id`, `package_name`, `amount`, `booking_date`, `expires_at`, `status`, `verified_at`, `receipt_url`, `invoice_url`, `notes`, `created_at`, `updated_at`) VALUES
-(49, 13, 'user', 'user@martinezfitness.com', '09989134598', 21, 2, 'WEEKLY PASS', 150.00, '2026-03-16', '2026-03-23 13:51:48', 'verified', '2026-03-16 05:51:48', 'uploads/receipts/receipt_13_1773669034_69b80aaa3ae76.jpg', NULL, '', '2026-03-16 13:50:34', '2026-03-16 13:51:48'),
-(50, 9, 'patrick', 'patrickmontero833@gmail.com', '09989134598', 22, NULL, 'Annual Membership', 800.00, '2026-03-17', NULL, 'rejected', NULL, 'uploads/receipts/receipt_9_1773704354_69b894a26145c.jpg', NULL, 'invalid image', '2026-03-16 23:39:14', '2026-03-17 00:03:41'),
-(51, 9, 'patrick', 'patrickmontero833@gmail.com', '09989134598', 21, NULL, 'WEEKLY PASS', 150.00, '2026-03-17', NULL, 'rejected', NULL, 'uploads/receipts/receipt_9_1773706023_69b89b2715e56.jpg', NULL, 'mali', '2026-03-17 00:07:03', '2026-03-17 00:08:27'),
-(52, 9, 'patrick', 'patrickmontero833@gmail.com', '09989134598', 21, NULL, 'WEEKLY PASS', 150.00, '2026-03-17', NULL, 'rejected', NULL, 'uploads/receipts/receipt_9_1773706198_69b89bd624286.jpg', NULL, NULL, '2026-03-17 00:09:58', '2026-03-17 05:22:33'),
-(53, 9, 'patrick', 'patrickmontero833@gmail.com', '09989134598', 22, NULL, 'Annual Membership', 800.00, '2026-03-17', NULL, 'rejected', NULL, 'uploads/receipts/receipt_9_1773763842_69b97d02af1f1.jpg', NULL, 'wadq', '2026-03-17 16:10:42', '2026-03-17 16:11:20'),
-(54, 9, 'patrick', 'patrickmontero833@gmail.com', '09989134598', 21, 2, 'WEEKLY PASS', 150.00, '2026-03-17', '2026-03-24 16:15:00', 'verified', '2026-03-17 08:15:00', 'uploads/receipts/receipt_9_1773763941_69b97d6507539.jpg', NULL, '', '2026-03-17 16:12:21', '2026-03-17 16:15:00'),
-(55, 9, 'patrick', 'patrickmontero833@gmail.com', '09989134598', 22, NULL, 'Annual Membership', 800.00, '2026-03-18', NULL, 'pending', NULL, 'uploads/receipts/receipt_9_1773815876_69ba484402083.jpg', NULL, 'huguyjh', '2026-03-18 06:37:56', '2026-03-18 06:37:56');
+INSERT INTO `bookings` (`id`, `user_id`, `name`, `email`, `contact`, `package_id`, `trainer_id`, `is_upgrade`, `package_name`, `amount`, `booking_date`, `expires_at`, `status`, `verified_at`, `receipt_url`, `invoice_url`, `notes`, `created_at`, `updated_at`) VALUES
+(49, 13, 'user', 'user@martinezfitness.com', '09989134598', 21, 2, 0, 'WEEKLY PASS', 150.00, '2026-03-16', '2026-03-23 13:51:48', 'verified', '2026-03-16 05:51:48', 'uploads/receipts/receipt_13_1773669034_69b80aaa3ae76.jpg', NULL, '', '2026-03-16 13:50:34', '2026-03-16 13:51:48'),
+(50, 9, 'patrick', 'patrickmontero833@gmail.com', '09989134598', 22, NULL, 0, 'Annual Membership', 800.00, '2026-03-17', NULL, 'rejected', NULL, 'uploads/receipts/receipt_9_1773704354_69b894a26145c.jpg', NULL, 'invalid image', '2026-03-16 23:39:14', '2026-03-17 00:03:41'),
+(51, 9, 'patrick', 'patrickmontero833@gmail.com', '09989134598', 21, NULL, 0, 'WEEKLY PASS', 150.00, '2026-03-17', NULL, 'rejected', NULL, 'uploads/receipts/receipt_9_1773706023_69b89b2715e56.jpg', NULL, 'mali', '2026-03-17 00:07:03', '2026-03-17 00:08:27'),
+(52, 9, 'patrick', 'patrickmontero833@gmail.com', '09989134598', 21, NULL, 0, 'WEEKLY PASS', 150.00, '2026-03-17', NULL, 'rejected', NULL, 'uploads/receipts/receipt_9_1773706198_69b89bd624286.jpg', NULL, NULL, '2026-03-17 00:09:58', '2026-03-17 05:22:33'),
+(53, 9, 'patrick', 'patrickmontero833@gmail.com', '09989134598', 22, NULL, 0, 'Annual Membership', 800.00, '2026-03-17', NULL, 'rejected', NULL, 'uploads/receipts/receipt_9_1773763842_69b97d02af1f1.jpg', NULL, 'wadq', '2026-03-17 16:10:42', '2026-03-17 16:11:20'),
+(54, 9, 'patrick', 'patrickmontero833@gmail.com', '09989134598', 21, 2, 0, 'WEEKLY PASS', 150.00, '2026-03-17', '2026-03-24 16:15:00', 'verified', '2026-03-17 08:15:00', 'uploads/receipts/receipt_9_1773763941_69b97d6507539.jpg', NULL, '', '2026-03-17 16:12:21', '2026-03-17 16:15:00'),
+(55, 9, 'patrick', 'patrickmontero833@gmail.com', '09989134598', 22, NULL, 0, 'Annual Membership', 800.00, '2026-03-18', NULL, 'pending', NULL, 'uploads/receipts/receipt_9_1773815876_69ba484402083.jpg', NULL, 'huguyjh', '2026-03-18 06:37:56', '2026-03-18 06:37:56'),
+(56, 13, 'user', 'user@martinezfitness.com', '09989134598', 22, 2, 0, 'Annual Membership', 800.00, '2026-03-23', '2026-04-22 13:51:48', 'verified', '2026-03-20 04:17:24', 'uploads/receipts/receipt_13_1774008984_69bd3a984ace0.jpg', NULL, '', '2026-03-20 12:16:24', '2026-03-20 12:17:24'),
+(63, 20, 'pat', 'ventiletos12@gmail.com', '09989134598', 23, NULL, 0, 'Monthly Membership', 1500.00, '2026-03-22', NULL, 'pending', NULL, 'uploads/receipts/receipt_20_1774167819_69bfa70bddc9f.jpg', NULL, '', '2026-03-22 08:23:39', '2026-03-22 08:23:39');
 
 -- --------------------------------------------------------
 
@@ -97,9 +100,8 @@ CREATE TABLE IF NOT EXISTS `email_configs` (
 -- Dumping data for table `email_configs`
 --
 
--- INSERT INTO `email_configs` (`id`, `name`, `smtp_host`, `smtp_port`, `smtp_username`, `smtp_password`, `from_email`, `from_name`, `is_active`, `is_default`, `created_at`, `updated_at`) VALUES
--- (2, 'Primary Gmail', 'smtp.gmail.com', 587, 'your-email@gmail.com', 'your-app-password', 'your-email@gmail.com', 'Martinez Fitness', 1, 1, NOW(), NOW());
--- NOTE: Configure email settings through the admin dashboard after installation
+INSERT INTO `email_configs` (`id`, `name`, `smtp_host`, `smtp_port`, `smtp_username`, `smtp_password`, `from_email`, `from_name`, `is_active`, `is_default`, `created_at`, `updated_at`) VALUES
+(2, 'Primary Gmail', 'smtp.gmail.com', 587, 'ventiletos@gmail.com', 'njqjkaxuysdwyrsy', 'ventiletos@gmail.com', 'Martinez Fitness', 1, 1, '2026-01-23 04:51:58', '2026-03-22 08:13:58');
 
 -- --------------------------------------------------------
 
@@ -245,12 +247,12 @@ CREATE TABLE IF NOT EXISTS `gym_settings` (
 --
 
 INSERT INTO `gym_settings` (`id`, `setting_key`, `setting_value`, `created_at`, `updated_at`) VALUES
-(1, 'gym_name', 'Martinez Fitness Gym', NOW(), NOW()),
-(2, 'gym_address', '123 Fitness Ave, Metro Manila', NOW(), NOW()),
-(3, 'gym_contact', '0917-123-4567', NOW(), NOW()),
-(4, 'gym_email', 'info@martinezfitness.com', NOW(), NOW()),
-(5, 'gcash_number', '0917-XXX-XXXX', NOW(), NOW()),
-(6, 'gcash_name', 'Gym Owner Name', NOW(), NOW()),
+(1, 'gym_name', 'Martinez Fitness Gym', '2026-02-05 13:43:33', '2026-02-05 13:43:33'),
+(2, 'gym_address', 'Apitong, Naujan, Oriental Mindoro', '2026-02-05 13:43:33', '2026-02-27 09:06:02'),
+(3, 'gym_contact', '0917-123-4567', '2026-02-05 13:43:33', '2026-02-05 13:43:33'),
+(4, 'gym_email', 'ventiletos12@gmail.com', '2026-02-05 13:43:33', '2026-03-01 14:15:10'),
+(5, 'gcash_number', '0956-081-82580', '2026-02-05 13:43:33', '2026-02-09 15:39:27'),
+(6, 'gcash_name', 'JE*BE*N M.', '2026-02-05 13:43:33', '2026-02-05 14:08:16'),
 (7, 'gcash_qr_path', 'uploads/settings/gcash_qr_1770301417.jpg', '2026-02-05 13:43:33', '2026-02-05 14:23:37'),
 (8, 'payment_instructions', 'Please send payment via GCash to the number above. Include your name and booking reference in the payment notes.', '2026-02-05 13:43:33', '2026-02-05 13:43:33'),
 (9, 'about_title', 'About Martinez Fitness', '2026-02-09 15:00:24', '2026-02-09 15:00:24'),
@@ -272,7 +274,7 @@ INSERT INTO `gym_settings` (`id`, `setting_key`, `setting_value`, `created_at`, 
 (25, 'opening_time', '06:00', '2026-02-10 10:45:06', '2026-02-10 10:45:06'),
 (26, 'closing_time', '22:00', '2026-02-10 10:45:06', '2026-02-10 10:45:06'),
 (27, 'timezone', 'Asia/Manila', '2026-02-10 10:45:06', '2026-02-10 10:45:06'),
-(28, 'last_expiry_check', '2026-03-18', '2026-02-10 13:13:29', '2026-03-18 06:26:55'),
+(28, 'last_expiry_check', '2026-03-22', '2026-02-10 13:13:29', '2026-03-22 02:14:41'),
 (29, 'home_background_images', '[]', '2026-03-16 06:07:11', '2026-03-16 06:07:11'),
 (30, 'hero_bg_image', 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=2070&auto=format&fit=crop', '2026-03-17 00:49:43', '2026-03-17 00:49:43'),
 (31, 'hero_images', '[\"uploads\\/settings\\/hero_bg_69b8e0afd38159.07214953.webp\",\"uploads\\/settings\\/hero_bg_69b8e2a785f060.83529062.webp\",\"uploads\\/settings\\/hero_bg_69b8e2a7863473.72386538.webp\",\"uploads\\/settings\\/hero_bg_69b8e2a7865e55.96416334.webp\",\"uploads\\/settings\\/hero_bg_69b8e2a7868127.79057633.webp\",\"uploads\\/settings\\/hero_bg_69b8e2a786a567.04521492.webp\",\"uploads\\/settings\\/hero_bg_69b8e2a786cb14.19228465.webp\"]', '2026-03-17 04:35:55', '2026-03-17 05:12:07');
@@ -349,7 +351,7 @@ CREATE TABLE IF NOT EXISTS `notifications` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `idx_user_read` (`user_id`,`is_read`)
-) ENGINE=MyISAM AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=25 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `notifications`
@@ -363,7 +365,23 @@ INSERT INTO `notifications` (`id`, `user_id`, `title`, `message`, `type`, `is_re
 (5, 9, 'New Workout Session Scheduled', 'Coach Jane Smith scheduled a session for you on 2026-03-18 at 08:00:00.', 'session', 0, '2026-03-17 16:40:06'),
 (6, 9, 'New Workout Session Scheduled', 'Coach Jane Smith scheduled a session for you on 2026-03-19 at 08:00:00.', 'session', 0, '2026-03-17 16:40:42'),
 (7, 9, 'Rest Day Scheduled', 'Coach Jane Smith scheduled a rest day for you on 2026-03-20.', 'session', 0, '2026-03-17 16:40:52'),
-(8, 9, 'New Workout Session Scheduled', 'Coach Jane Smith scheduled a session for you on 2026-03-21 at 08:00:00.', 'session', 0, '2026-03-18 06:32:15');
+(8, 9, 'New Workout Session Scheduled', 'Coach Jane Smith scheduled a session for you on 2026-03-21 at 08:00:00.', 'session', 0, '2026-03-18 06:32:15'),
+(9, 9, 'New Workout Session Scheduled', 'Coach Jane Smith scheduled a session for you on 2026-03-19 at 08:00:00.', 'session', 0, '2026-03-19 05:51:36'),
+(10, 13, 'New Workout Session Scheduled', 'Coach Jane Smith scheduled a session for you on 2026-03-20 at 08:00:00.', 'session', 0, '2026-03-19 05:53:48'),
+(11, 15, 'New Package Assignment', 'You have been assigned to handle the package: Monthly Membership.', 'assignment', 0, '2026-03-20 12:22:28'),
+(12, 17, 'Package Assignment Updated', 'You are assigned to handle the package: Monthly Membership.', 'assignment', 0, '2026-03-22 07:27:58'),
+(13, 17, 'Package Assignment Updated', 'You are assigned to handle the package: Monthly Membership.', 'assignment', 0, '2026-03-22 07:28:00'),
+(14, 17, 'Package Assignment Updated', 'You are assigned to handle the package: Monthly Membership.', 'assignment', 0, '2026-03-22 07:28:01'),
+(15, 17, 'Package Assignment Updated', 'You are assigned to handle the package: Monthly Membership.', 'assignment', 0, '2026-03-22 07:28:01'),
+(16, 17, 'Package Assignment Updated', 'You are assigned to handle the package: Monthly Membership.', 'assignment', 0, '2026-03-22 07:28:01'),
+(17, 17, 'Package Assignment Updated', 'You are assigned to handle the package: Monthly Membership.', 'assignment', 0, '2026-03-22 07:28:01'),
+(18, 17, 'Package Assignment Updated', 'You are assigned to handle the package: Monthly Membership.', 'assignment', 0, '2026-03-22 07:30:57'),
+(19, 17, 'Package Assignment Updated', 'You are assigned to handle the package: Monthly Membership.', 'assignment', 0, '2026-03-22 07:36:47'),
+(20, 17, 'Package Assignment Updated', 'You are assigned to handle the package: Monthly Membership.', 'assignment', 0, '2026-03-22 07:38:53'),
+(21, 17, 'Package Assignment Updated', 'You are assigned to handle the package: Monthly Membership.', 'assignment', 0, '2026-03-22 07:44:58'),
+(22, 17, 'Package Assignment Updated', 'You are assigned to handle the package: Monthly Membership.', 'assignment', 0, '2026-03-22 07:46:22'),
+(23, 21, 'Package Assignment Updated', 'You are assigned to handle the package: Monthly Membership.', 'assignment', 0, '2026-03-22 08:20:54'),
+(24, 21, 'New Booking Pending', 'pat submitted a booking for your package: Monthly Membership', 'info', 0, '2026-03-22 08:23:50');
 
 -- --------------------------------------------------------
 
@@ -383,7 +401,7 @@ CREATE TABLE IF NOT EXISTS `otps` (
   KEY `idx_email` (`email`),
   KEY `idx_code` (`code`),
   KEY `idx_expires` (`expires_at`)
-) ENGINE=MyISAM AUTO_INCREMENT=21 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=27 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `otps`
@@ -391,10 +409,10 @@ CREATE TABLE IF NOT EXISTS `otps` (
 
 INSERT INTO `otps` (`id`, `email`, `code`, `expires_at`, `used`, `created_at`) VALUES
 (9, 'patrickmontero833@gmail.com', '983350', '2026-02-05 22:33:16', 1, '2026-02-05 14:28:16'),
-(2, 'ventiletos12@gmail.com', '486439', '2026-01-18 23:24:00', 1, '2026-01-18 15:19:00'),
+(26, 'ventiletos12@gmail.com', '944232', '2026-03-22 16:21:21', 1, '2026-03-22 08:16:21'),
 (3, 'monalizawaing41@gmail.com', '765414', '2026-01-19 08:25:12', 1, '2026-01-19 00:20:12'),
 (5, 'raphaelbugayong848@gmail.com', '711863', '2026-01-19 14:47:03', 0, '2026-01-19 06:42:03'),
-(20, 'patrickromasanta296@gmail.com', '410684', '2026-03-12 05:54:42', 0, '2026-03-11 21:49:42'),
+(25, 'patrickromasanta296@gmail.com', '480694', '2026-03-22 15:55:04', 0, '2026-03-22 07:50:04'),
 (7, 'admin@gmail.com', '224746', '2026-02-03 16:04:47', 1, '2026-02-03 07:59:47'),
 (8, 'user@gmail.com', '846488', '2026-02-03 16:08:15', 1, '2026-02-03 08:03:15'),
 (10, 'try@gmail.com', '799000', '2026-02-05 22:36:17', 1, '2026-02-05 14:31:17'),
@@ -425,7 +443,7 @@ CREATE TABLE IF NOT EXISTS `packages` (
   PRIMARY KEY (`id`),
   KEY `idx_active` (`is_active`),
   KEY `idx_tag` (`tag`)
-) ENGINE=MyISAM AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=24 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `packages`
@@ -434,7 +452,8 @@ CREATE TABLE IF NOT EXISTS `packages` (
 INSERT INTO `packages` (`id`, `name`, `duration`, `price`, `tag`, `description`, `is_trainer_assisted`, `goal`, `is_active`, `created_at`, `updated_at`) VALUES
 (20, 'WHO Health & Fitness Plan', 'Weekly (WHO Standard)', 450.00, 'Health Standard', 'Scientifically designed plan based on WHO (World Health Organization) physical activity guidelines for adults. Focuses on 150-300 minutes of moderate aerobic activity and 2+ days of strength training per week.', 0, 'General Fitness', 0, '2026-03-16 12:14:55', '2026-03-16 13:48:49'),
 (21, 'WEEKLY PASS', '7 Days', 150.00, 'Basic', '', 1, 'General Fitness', 1, '2026-03-16 12:29:43', '2026-03-16 12:29:43'),
-(22, 'Annual Membership', '30 Day', 800.00, 'Best Value', '', 1, 'General Fitness', 1, '2026-03-16 23:22:01', '2026-03-16 23:22:01');
+(22, 'Annual Membership', '30 Day', 800.00, 'Best Value', '', 1, 'General Fitness', 1, '2026-03-16 23:22:01', '2026-03-16 23:22:01'),
+(23, 'Monthly Membership', '30 Day', 1500.00, 'Premium', '', 1, 'Weight Loss', 1, '2026-03-20 12:22:28', '2026-03-22 08:20:54');
 
 -- --------------------------------------------------------
 
@@ -522,7 +541,8 @@ CREATE TABLE IF NOT EXISTS `package_trainers` (
 
 INSERT INTO `package_trainers` (`package_id`, `trainer_id`) VALUES
 (21, 2),
-(22, 2);
+(22, 2),
+(23, 5);
 
 -- --------------------------------------------------------
 
@@ -550,13 +570,14 @@ CREATE TABLE IF NOT EXISTS `payments` (
   KEY `idx_transaction_id` (`transaction_id`),
   KEY `idx_user_id` (`user_id`),
   KEY `idx_booking_id` (`booking_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=45 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=46 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `payments`
 --
 
 INSERT INTO `payments` (`id`, `user_id`, `booking_id`, `amount`, `status`, `payment_method`, `transaction_id`, `receipt_url`, `notes`, `created_at`, `updated_at`) VALUES
+(45, 13, 56, 800.00, 'completed', 'Booking Payment', 'BK_56', 'uploads/receipts/receipt_13_1774008984_69bd3a984ace0.jpg', NULL, '2026-03-20 12:17:24', '2026-03-20 12:17:24'),
 (43, 13, 49, 150.00, 'completed', 'Booking Payment', 'BK_49', 'uploads/receipts/receipt_13_1773669034_69b80aaa3ae76.jpg', NULL, '2026-03-16 13:51:48', '2026-03-16 13:51:48'),
 (44, 9, 54, 150.00, 'completed', 'Booking Payment', 'BK_54', 'uploads/receipts/receipt_9_1773763941_69b97d6507539.jpg', NULL, '2026-03-17 16:15:00', '2026-03-17 16:15:00');
 
@@ -579,19 +600,21 @@ CREATE TABLE IF NOT EXISTS `trainers` (
   `is_active` tinyint(1) DEFAULT '1',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `availability` varchar(500) DEFAULT NULL,
+  `certifications` text,
+  `max_clients` int DEFAULT '10',
   PRIMARY KEY (`id`),
   KEY `idx_active` (`is_active`),
   KEY `fk_trainer_user` (`user_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `trainers`
 --
 
-INSERT INTO `trainers` (`id`, `user_id`, `name`, `specialization`, `contact`, `email`, `bio`, `photo_url`, `is_active`, `created_at`, `updated_at`) VALUES
-(1, 15, 'John Doe', 'Strength & Conditioning', '09123456789', 'john@example.com', 'Certified strength coach with 5 years experience.', NULL, 1, '2026-03-16 11:03:03', '2026-03-16 11:24:55'),
-(2, 16, 'Jane Smith', 'Yoga & Flexibility', '09987654321', 'jane@example.com', 'Yoga instructor specializing in Vinyasa and Hatha.', NULL, 1, '2026-03-16 11:03:03', '2026-03-16 11:24:55'),
-(3, 17, 'Mike Ross', 'Bodybuilding', '09112223333', 'mike@example.com', 'Former competitive bodybuilder helping clients gain muscle.', NULL, 1, '2026-03-16 11:03:03', '2026-03-16 11:24:55');
+INSERT INTO `trainers` (`id`, `user_id`, `name`, `specialization`, `contact`, `email`, `bio`, `photo_url`, `is_active`, `created_at`, `updated_at`, `availability`, `certifications`, `max_clients`) VALUES
+(2, 16, 'Jane Smith', 'Yoga & Flexibility', '09987654321', 'jane@example.com', 'Yoga instructor specializing in Vinyasa and Hatha.', '', 1, '2026-03-16 11:03:03', '2026-03-22 08:22:53', '{\"days\":[\"Mon\",\"Tue\",\"Wed\",\"Thu\",\"Fri\",\"Sat\",\"Sun\"],\"from\":\"06:00\",\"until\":\"18:00\"}', '', 10),
+(5, 21, 'test', 'Running', '09989134593', 'ventiletos13@gmail.com', '', '', 1, '2026-03-22 08:20:22', '2026-03-22 08:20:22', '{\"days\":[\"Mon\",\"Tue\",\"Wed\",\"Thu\",\"Fri\",\"Sat\",\"Sun\"],\"from\":\"06:00\",\"until\":\"18:00\"}', '', 10);
 
 -- --------------------------------------------------------
 
@@ -618,7 +641,7 @@ CREATE TABLE IF NOT EXISTS `trainer_sessions` (
   KEY `trainer_id` (`trainer_id`),
   KEY `member_id` (`member_id`),
   KEY `booking_id` (`booking_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `trainer_sessions`
@@ -628,7 +651,9 @@ INSERT INTO `trainer_sessions` (`id`, `trainer_id`, `member_id`, `booking_id`, `
 (1, 2, 9, 54, '2026-03-18', '08:00:00', 60, 'scheduled', 'workout', 'Workout A', '', '107', '2026-03-17 16:40:06'),
 (2, 2, 9, 54, '2026-03-19', '08:00:00', 60, 'scheduled', 'workout', 'Workout B', '', '107', '2026-03-17 16:40:42'),
 (3, 2, 9, 54, '2026-03-20', '08:00:00', 60, 'scheduled', 'rest_day', 'Rest Day', '', '', '2026-03-17 16:40:52'),
-(4, 2, 9, 54, '2026-03-21', '08:00:00', 60, 'scheduled', 'workout', 'Workout D', '', '107', '2026-03-18 06:32:15');
+(4, 2, 9, 54, '2026-03-21', '08:00:00', 60, 'scheduled', 'workout', 'Workout D', '', '107', '2026-03-18 06:32:15'),
+(5, 2, 9, 54, '2026-03-19', '08:00:00', 60, 'scheduled', 'workout', 'Workout Session', '', '', '2026-03-19 05:51:36'),
+(6, 2, 13, 49, '2026-03-20', '08:00:00', 60, 'scheduled', 'workout', 'Workout Session', '', '', '2026-03-19 05:53:48');
 
 -- --------------------------------------------------------
 
@@ -676,7 +701,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `email` (`email`)
-) ENGINE=MyISAM AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=22 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `users`
@@ -685,11 +710,11 @@ CREATE TABLE IF NOT EXISTS `users` (
 INSERT INTO `users` (`id`, `name`, `email`, `password`, `role`, `contact`, `address`, `email_verified`, `created_at`, `updated_at`) VALUES
 (12, 'admin', 'admin@martinezfitness.com', '$2y$10$H.22KkotBIDq3ifRNHQMRuOY4wHYNpuuErIkO.p0/BYccc41LHEga', 'admin', '', '', 1, '2026-02-26 15:14:27', '2026-02-26 15:15:11'),
 (13, 'user', 'user@martinezfitness.com', '$2y$10$rgUEFkUmKgXiX4nsI9sS8eq9PNG7obwzld8GCYDxcqK9ZNZXnfMIa', 'user', '', '', 1, '2026-02-26 15:31:56', '2026-02-26 15:31:56'),
+(21, 'test', 'ventiletos13@gmail.com', '$2y$10$fpDEvWoyXW/zJS1XGqNFZuDjllCf9m1Z.TAr457qnlKutAvP2GwQG', 'trainer', '09989134593', NULL, 1, '2026-03-22 08:20:22', '2026-03-22 08:20:22'),
+(20, 'pat', 'ventiletos12@gmail.com', '$2y$10$dhxLF0aXwOf1GyPDfJeZyOS7KPSEuzmt1i1sn8nXAyjiw7m84zp.a', 'user', '', '', 1, '2026-03-22 08:17:11', '2026-03-22 08:17:11'),
 (18, 'subadmin', 'subadmin@martinezfitness.com', '$2y$10$o49JO5YERP6GcT.04idpF.Mqcwg.jP6ItmvZd2/gExwxjnZI6jptm', 'admin', NULL, NULL, 1, '2026-03-17 23:27:17', '2026-03-17 23:27:17'),
 (9, 'patrick', 'patrickmontero833@gmail.com', '$2y$10$/n.VssP8ZxX8vxZQI1w9Ye1yks5gHqwR0KH7nRj.bJfIffvrLBmIi', 'user', '', '', 1, '2026-02-05 14:28:45', '2026-02-05 14:28:45'),
-(17, 'Mike Ross', 'mike@example.com', '$2y$10$kXmwcRRvaF6J0Pq66HGEfelAtpM87FjLoO9ty2.zjW6KhNTmi6uy6', 'trainer', '09112223333', NULL, 1, '2026-03-16 11:24:55', '2026-03-16 11:24:55'),
-(16, 'Jane Smith', 'jane@example.com', '$2y$10$kXmwcRRvaF6J0Pq66HGEfelAtpM87FjLoO9ty2.zjW6KhNTmi6uy6', 'trainer', '09987654321', NULL, 1, '2026-03-16 11:24:55', '2026-03-16 11:24:55'),
-(15, 'John Doe', 'john@example.com', '$2y$10$kXmwcRRvaF6J0Pq66HGEfelAtpM87FjLoO9ty2.zjW6KhNTmi6uy6', 'trainer', '09123456789', NULL, 1, '2026-03-16 11:24:55', '2026-03-16 11:24:55');
+(16, 'Jane Smith', 'jane@example.com', '$2y$10$dvHX82MgkQHY1yiRcpQ7oel5lUX3nFpPprBYqrl527pVL7Q2LkhIC', 'trainer', '09987654321', NULL, 1, '2026-03-16 11:24:55', '2026-03-22 08:22:53');
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
