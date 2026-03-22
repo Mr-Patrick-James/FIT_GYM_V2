@@ -1,5 +1,8 @@
 <?php
+ob_start();
 require_once '../config.php';
+require_once '../email.php';
+ob_end_clean();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
     sendResponse(false, 'Method not allowed', null, 405);
@@ -55,13 +58,18 @@ try {
 
     // Update package
     $stmt = $conn->prepare("UPDATE packages SET name = ?, duration = ?, price = ?, tag = ?, description = ?, is_trainer_assisted = ?, goal = ?, updated_at = NOW() WHERE id = ?");
+    if (!$stmt) {
+        throw new Exception('Prepare failed: ' . $conn->error);
+    }
     $isTrainerAssistedInt = $isTrainerAssisted ? 1 : 0;
     $stmt->bind_param("ssdssisi", $name, $duration, $priceValue, $tag, $description, $isTrainerAssistedInt, $goal, $id);
 
     if ($stmt->execute()) {
         // Sync trainers
         $conn->query("DELETE FROM package_trainers WHERE package_id = $id");
-        
+
+        $notifyTrainers = []; // collect for post-commit notifications
+
         if (!empty($trainerIds) && $isTrainerAssisted) {
             $trainerStmt = $conn->prepare("INSERT INTO package_trainers (package_id, trainer_id) VALUES (?, ?)");
             foreach ($trainerIds as $trainerId) {
@@ -69,17 +77,27 @@ try {
                 $trainerStmt->bind_param("ii", $id, $tId);
                 $trainerStmt->execute();
 
-                // Notify trainer (could be optimized to only notify new ones, but for simplicity)
-                $tUserQuery = $conn->query("SELECT user_id FROM trainers WHERE id = $tId");
+                $tUserQuery = $conn->query("SELECT t.user_id, t.email, t.name FROM trainers t WHERE t.id = $tId");
                 if ($tUserQuery && $tUser = $tUserQuery->fetch_assoc()) {
-                    createNotification($tUser['user_id'], 'Package Assignment Updated', "You are assigned to handle the package: $name.", 'assignment');
+                    $notifyTrainers[] = $tUser;
                 }
             }
             $trainerStmt->close();
         }
-        
+
         $conn->commit();
         $stmt->close();
+
+        // Send notifications after commit (avoids interfering with transaction)
+        foreach ($notifyTrainers as $tUser) {
+            try {
+                createNotification($tUser['user_id'], 'Package Assignment Updated', "You are assigned to handle the package: $name.", 'assignment');
+                sendTrainerPackageAssignmentEmail($tUser['email'], $tUser['name'], $name, $description);
+            } catch (Exception $emailEx) {
+                error_log("Trainer assignment notification failed: " . $emailEx->getMessage());
+            }
+        }
+
         $conn->close();
         sendResponse(true, 'Package updated successfully');
     } else {

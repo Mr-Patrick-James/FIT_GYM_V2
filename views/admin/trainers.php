@@ -235,7 +235,7 @@ $user = getCurrentUser();
                         </div>
                         <div class="form-group">
                             <label>Contact Number</label>
-                            <input type="text" id="trainerContact" placeholder="e.g. 0912 345 6789">
+                            <input type="tel" id="trainerContact" placeholder="e.g. 09123456789" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
                         </div>
                     </div>
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">

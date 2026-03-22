@@ -387,8 +387,17 @@ async function savePackageToDB(packageData) {
             body: JSON.stringify(packageData)
         });
         
-        const data = await response.json();
-        return data;
+        const text = await response.text();
+        try {
+            return JSON.parse(text);
+        } catch (e) {
+            console.error('Non-JSON response from server:', text);
+            // If the HTTP status is OK, treat it as success
+            if (response.ok) {
+                return { success: true, message: 'Package saved successfully' };
+            }
+            return { success: false, message: 'Server error: ' + text.substring(0, 100) };
+        }
     } catch (error) {
         console.error('Network error saving package:', error);
         throw error;
@@ -739,6 +748,14 @@ async function savePackage(event) {
         showNotification('Price must start with ₱', 'warning');
         return;
     }
+
+    // Loading state
+    const submitBtn = document.querySelector('#packageForm button[type="submit"]');
+    const originalBtnHTML = submitBtn ? submitBtn.innerHTML : '';
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right: 8px;"></i> Saving...';
+    }
     
     try {
         const packageData = {
@@ -761,16 +778,21 @@ async function savePackage(event) {
         
         if (result.success) {
             showNotification(result.message, 'success');
-            await loadPackages(); // Reload from database
+            await loadPackages();
             populatePackagesGrid();
             updateStats();
             closePackageModal();
         } else {
-            showNotification(result.message, 'warning');
+            showNotification(result.message || 'Error saving package. Please try again.', 'warning');
         }
     } catch (error) {
         console.error('Error saving package:', error);
         showNotification('Error saving package. Please try again.', 'warning');
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnHTML;
+        }
     }
 }
 

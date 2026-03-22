@@ -1,6 +1,8 @@
 <?php
 // Email Configuration and Helper Functions
-require_once 'config.php';
+if (!function_exists('getDBConnection')) {
+    require_once __DIR__ . '/config.php';
+}
 
 // Check if PHPMailer is installed and load it
 $phpmailerInstalled = false;
@@ -21,38 +23,41 @@ function getEmailConfig() {
     // Try to get from database first
     try {
         $conn = getDBConnection();
-        $stmt = $conn->prepare("SELECT * FROM email_configs WHERE is_active = TRUE AND is_default = TRUE LIMIT 1");
+        $stmt = $conn->prepare("SELECT * FROM email_configs WHERE is_active = 1 AND is_default = 1 LIMIT 1");
         $stmt->execute();
         $result = $stmt->get_result();
-        
+
         if ($result->num_rows > 0) {
             $config = $result->fetch_assoc();
             $stmt->close();
             $conn->close();
-            return [
-                'smtp_host' => $config['smtp_host'],
-                'smtp_port' => (int)$config['smtp_port'],
-                'smtp_username' => $config['smtp_username'],
-                'smtp_password' => $config['smtp_password'],
-                'from_email' => $config['from_email'],
-                'from_name' => $config['from_name']
-            ];
+            // Only use DB config if credentials are actually set
+            if (!empty($config['smtp_username']) && !empty($config['smtp_password'])) {
+                return [
+                    'smtp_host'     => $config['smtp_host'],
+                    'smtp_port'     => (int)$config['smtp_port'],
+                    'smtp_username' => $config['smtp_username'],
+                    'smtp_password' => $config['smtp_password'],
+                    'from_email'    => $config['from_email'],
+                    'from_name'     => $config['from_name']
+                ];
+            }
+        } else {
+            $stmt->close();
+            $conn->close();
         }
-        
-        $stmt->close();
-        $conn->close();
     } catch (Exception $e) {
-        // Database table might not exist, fall back to .env
+        // Fall back to .env
     }
-    
-    // Fallback to .env file
+
+    // Fallback to .env
     return [
-        'smtp_host' => $_ENV['SMTP_HOST'] ?? 'smtp.gmail.com',
-        'smtp_port' => (int)($_ENV['SMTP_PORT'] ?? 587),
-        'smtp_username' => $_ENV['SMTP_USERNAME'] ?? '',
-        'smtp_password' => $_ENV['SMTP_PASSWORD'] ?? '',
-        'from_email' => $_ENV['SMTP_FROM_EMAIL'] ?? 'noreply@martinezfitness.com',
-        'from_name' => $_ENV['SMTP_FROM_NAME'] ?? 'Martinez Fitness'
+        'smtp_host'     => $_ENV['SMTP_HOST']       ?? 'smtp.gmail.com',
+        'smtp_port'     => (int)($_ENV['SMTP_PORT'] ?? 587),
+        'smtp_username' => $_ENV['SMTP_USERNAME']   ?? '',
+        'smtp_password' => $_ENV['SMTP_PASSWORD']   ?? '',
+        'from_email'    => $_ENV['SMTP_FROM_EMAIL'] ?? 'noreply@martinezfitness.com',
+        'from_name'     => $_ENV['SMTP_FROM_NAME']  ?? 'Martinez Fitness'
     ];
 }
 
@@ -655,6 +660,249 @@ function sendBookingExpiryEmail($bookingData) {
     return mail($userEmail, $subject, $htmlMessage, $headers);
  }
  
+/**
+ * Send email to trainer when a new booking (pending) is submitted for their package
+ */
+function sendTrainerNewBookingEmail($trainerEmail, $trainerName, $clientName, $packageName, $bookingDate) {
+    global $phpmailerInstalled;
+
+    $subject = 'New Booking Pending - Martinez Fitness';
+
+    $htmlMessage = '
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+            .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
+            .booking-box { background: white; border-left: 4px solid #f59e0b; border-radius: 6px; padding: 16px 20px; margin: 20px 0; }
+            .detail-row { margin-bottom: 8px; }
+            .detail-label { font-weight: bold; color: #4b5563; }
+            .badge { display: inline-block; padding: 4px 12px; background: rgba(245,158,11,0.15); color: #b45309; border-radius: 99px; font-size: 12px; font-weight: 700; }
+            .footer { text-align: center; margin-top: 20px; color: #6b7280; font-size: 12px; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>NEW BOOKING</h1>
+                <p>Martinez Fitness Gym</p>
+            </div>
+            <div class="content">
+                <h2>Hello ' . htmlspecialchars($trainerName) . '!</h2>
+                <p>A new member has submitted a booking for one of your assigned packages. It is currently <span class="badge">Pending Verification</span> by the admin.</p>
+                <div class="booking-box">
+                    <div class="detail-row"><span class="detail-label">Client Name:</span> ' . htmlspecialchars($clientName) . '</div>
+                    <div class="detail-row"><span class="detail-label">Package:</span> ' . htmlspecialchars($packageName) . '</div>
+                    <div class="detail-row"><span class="detail-label">Booking Date:</span> ' . htmlspecialchars($bookingDate) . '</div>
+                </div>
+                <p>You will receive another notification once the admin verifies the payment and the client is officially assigned to you.</p>
+            </div>
+            <div class="footer">
+                <p>&copy; ' . date('Y') . ' Martinez Fitness Gym. All rights reserved.</p>
+                <p>This is an automated email, please do not reply.</p>
+            </div>
+        </div>
+    </body>
+    </html>';
+
+    if ($phpmailerInstalled) {
+        try {
+            $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
+            $config = getEmailConfig();
+            if (!empty($config['smtp_username']) && !empty($config['smtp_password'])) {
+                $mail->isSMTP();
+                $mail->Host       = $config['smtp_host'];
+                $mail->SMTPAuth   = true;
+                $mail->Username   = $config['smtp_username'];
+                $mail->Password   = $config['smtp_password'];
+                $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+                $mail->Port       = $config['smtp_port'];
+                $mail->CharSet    = 'UTF-8';
+                $mail->SMTPOptions = ['ssl' => ['verify_peer' => false, 'verify_peer_name' => false, 'allow_self_signed' => true]];
+                $mail->setFrom($config['from_email'], $config['from_name']);
+                $mail->addAddress($trainerEmail, $trainerName);
+                $mail->isHTML(true);
+                $mail->Subject = $subject;
+                $mail->Body    = $htmlMessage;
+                $mail->AltBody = "Hello $trainerName, a new booking from $clientName is pending for your package: $packageName.";
+                $mail->send();
+                return true;
+            }
+        } catch (Exception $e) {
+            error_log("PHPMailer failed for trainer new booking email: " . $e->getMessage());
+        }
+    }
+
+    $headers  = "MIME-Version: 1.0\r\n";
+    $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
+    $headers .= "From: Martinez Fitness <noreply@martinezfitness.com>\r\n";
+    return mail($trainerEmail, $subject, $htmlMessage, $headers);
+}
+
+/**
+ * Send email to trainer when they are assigned to a package
+ */
+function sendTrainerPackageAssignmentEmail($trainerEmail, $trainerName, $packageName, $packageDescription = '') {
+    global $phpmailerInstalled;
+
+    $subject = 'Package Assignment - Martinez Fitness';
+
+    $htmlMessage = '
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+            .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
+            .pkg-box { background: white; border-left: 4px solid #8b5cf6; border-radius: 6px; padding: 16px 20px; margin: 20px 0; }
+            .footer { text-align: center; margin-top: 20px; color: #6b7280; font-size: 12px; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>PACKAGE ASSIGNMENT</h1>
+                <p>Martinez Fitness Gym</p>
+            </div>
+            <div class="content">
+                <h2>Hello ' . htmlspecialchars($trainerName) . '!</h2>
+                <p>You have been assigned to handle a gym package. Here are the details:</p>
+                <div class="pkg-box">
+                    <strong style="font-size:1.1rem;color:#6d28d9;">' . htmlspecialchars($packageName) . '</strong>
+                    ' . ($packageDescription ? '<p style="margin:8px 0 0;color:#4b5563;">' . htmlspecialchars($packageDescription) . '</p>' : '') . '
+                </div>
+                <p>Members who avail this package will be assigned to you. Please log in to your trainer dashboard to view your assigned clients and manage their progress.</p>
+                <p>Keep up the great work!</p>
+            </div>
+            <div class="footer">
+                <p>&copy; ' . date('Y') . ' Martinez Fitness Gym. All rights reserved.</p>
+                <p>This is an automated email, please do not reply.</p>
+            </div>
+        </div>
+    </body>
+    </html>';
+
+    if ($phpmailerInstalled) {
+        try {
+            $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
+            $config = getEmailConfig();
+            if (!empty($config['smtp_username']) && !empty($config['smtp_password'])) {
+                $mail->isSMTP();
+                $mail->Host       = $config['smtp_host'];
+                $mail->SMTPAuth   = true;
+                $mail->Username   = $config['smtp_username'];
+                $mail->Password   = $config['smtp_password'];
+                $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+                $mail->Port       = $config['smtp_port'];
+                $mail->CharSet    = 'UTF-8';
+                $mail->SMTPOptions = ['ssl' => ['verify_peer' => false, 'verify_peer_name' => false, 'allow_self_signed' => true]];
+                $mail->setFrom($config['from_email'], $config['from_name']);
+                $mail->addAddress($trainerEmail, $trainerName);
+                $mail->isHTML(true);
+                $mail->Subject = $subject;
+                $mail->Body    = $htmlMessage;
+                $mail->AltBody = "Hello $trainerName, you have been assigned to the package: $packageName.";
+                $mail->send();
+                return true;
+            }
+        } catch (Exception $e) {
+            error_log("PHPMailer failed for trainer package assignment: " . $e->getMessage());
+        }
+    }
+
+    $headers  = "MIME-Version: 1.0\r\n";
+    $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
+    $headers .= "From: Martinez Fitness <noreply@martinezfitness.com>\r\n";
+    return mail($trainerEmail, $subject, $htmlMessage, $headers);
+}
+
+/**
+ * Send email to trainer when a new client is verified on their assigned package
+ */
+function sendTrainerNewClientEmail($trainerEmail, $trainerName, $clientName, $packageName, $expiryDate = null) {
+    global $phpmailerInstalled;
+
+    $subject = 'New Client Assigned - Martinez Fitness';
+
+    $htmlMessage = '
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: linear-gradient(135deg, #22c55e 0%, #15803d 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+            .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
+            .client-box { background: white; border-left: 4px solid #22c55e; border-radius: 6px; padding: 16px 20px; margin: 20px 0; }
+            .detail-row { margin-bottom: 8px; }
+            .detail-label { font-weight: bold; color: #4b5563; }
+            .footer { text-align: center; margin-top: 20px; color: #6b7280; font-size: 12px; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>NEW CLIENT</h1>
+                <p>Martinez Fitness Gym</p>
+            </div>
+            <div class="content">
+                <h2>Hello ' . htmlspecialchars($trainerName) . '!</h2>
+                <p>A new member has been verified and assigned to your package. Here are the details:</p>
+                <div class="client-box">
+                    <div class="detail-row"><span class="detail-label">Client Name:</span> ' . htmlspecialchars($clientName) . '</div>
+                    <div class="detail-row"><span class="detail-label">Package:</span> ' . htmlspecialchars($packageName) . '</div>
+                    ' . ($expiryDate ? '<div class="detail-row"><span class="detail-label">Membership Until:</span> ' . date('F j, Y', strtotime($expiryDate)) . '</div>' : '') . '
+                </div>
+                <p>Please log in to your trainer dashboard to view their profile and start tracking their progress.</p>
+                <p>Keep up the great work!</p>
+            </div>
+            <div class="footer">
+                <p>&copy; ' . date('Y') . ' Martinez Fitness Gym. All rights reserved.</p>
+                <p>This is an automated email, please do not reply.</p>
+            </div>
+        </div>
+    </body>
+    </html>';
+
+    if ($phpmailerInstalled) {
+        try {
+            $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
+            $config = getEmailConfig();
+            if (!empty($config['smtp_username']) && !empty($config['smtp_password'])) {
+                $mail->isSMTP();
+                $mail->Host       = $config['smtp_host'];
+                $mail->SMTPAuth   = true;
+                $mail->Username   = $config['smtp_username'];
+                $mail->Password   = $config['smtp_password'];
+                $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+                $mail->Port       = $config['smtp_port'];
+                $mail->CharSet    = 'UTF-8';
+                $mail->SMTPOptions = ['ssl' => ['verify_peer' => false, 'verify_peer_name' => false, 'allow_self_signed' => true]];
+                $mail->setFrom($config['from_email'], $config['from_name']);
+                $mail->addAddress($trainerEmail, $trainerName);
+                $mail->isHTML(true);
+                $mail->Subject = $subject;
+                $mail->Body    = $htmlMessage;
+                $mail->AltBody = "Hello $trainerName, a new client $clientName has been assigned to your package: $packageName.";
+                $mail->send();
+                return true;
+            }
+        } catch (Exception $e) {
+            error_log("PHPMailer failed for trainer new client email: " . $e->getMessage());
+        }
+    }
+
+    $headers  = "MIME-Version: 1.0\r\n";
+    $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
+    $headers .= "From: Martinez Fitness <noreply@martinezfitness.com>\r\n";
+    return mail($trainerEmail, $subject, $htmlMessage, $headers);
+}
+
  /**
   * Process all expiring bookings and send notifications
   * This is a central function that can be called by cron or auto-trigger

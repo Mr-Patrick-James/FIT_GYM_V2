@@ -1,5 +1,8 @@
 <?php
+ob_start();
 require_once '../config.php';
+require_once '../email.php';
+ob_end_clean();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     sendResponse(false, 'Method not allowed', null, 405);
@@ -44,8 +47,9 @@ try {
 
     if ($stmt->execute()) {
         $packageId = $conn->insert_id;
-        
-        // Save linked trainers if any
+
+        $notifyTrainers = []; // collect for post-commit notifications
+
         if (!empty($trainerIds) && $isTrainerAssisted) {
             $trainerStmt = $conn->prepare("INSERT INTO package_trainers (package_id, trainer_id) VALUES (?, ?)");
             foreach ($trainerIds as $trainerId) {
@@ -53,17 +57,27 @@ try {
                 $trainerStmt->bind_param("ii", $packageId, $tId);
                 $trainerStmt->execute();
 
-                // Notify trainer
-                $tUserQuery = $conn->query("SELECT user_id FROM trainers WHERE id = $tId");
+                $tUserQuery = $conn->query("SELECT t.user_id, t.email, t.name FROM trainers t WHERE t.id = $tId");
                 if ($tUserQuery && $tUser = $tUserQuery->fetch_assoc()) {
-                    createNotification($tUser['user_id'], 'New Package Assignment', "You have been assigned to handle the package: $name.", 'assignment');
+                    $notifyTrainers[] = $tUser;
                 }
             }
             $trainerStmt->close();
         }
-        
+
         $conn->commit();
         $stmt->close();
+
+        // Send notifications after commit
+        foreach ($notifyTrainers as $tUser) {
+            try {
+                createNotification($tUser['user_id'], 'New Package Assignment', "You have been assigned to handle the package: $name.", 'assignment');
+                sendTrainerPackageAssignmentEmail($tUser['email'], $tUser['name'], $name, $description);
+            } catch (Exception $emailEx) {
+                error_log("Trainer assignment notification failed: " . $emailEx->getMessage());
+            }
+        }
+
         $conn->close();
         sendResponse(true, 'Package created successfully', ['id' => $packageId]);
     } else {

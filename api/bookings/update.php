@@ -121,6 +121,32 @@ try {
             } catch (Exception $e) {
                 error_log("Failed to send booking verification email: " . $e->getMessage());
             }
+
+            // Notify assigned trainer about the new client
+            if (!empty($booking['trainer_id'])) {
+                try {
+                    $trainerQ = $conn->query("SELECT t.email, t.name, t.user_id FROM trainers t WHERE t.id = " . (int)$booking['trainer_id']);
+                    if ($trainerQ && $trainerRow = $trainerQ->fetch_assoc()) {
+                        require_once '../email.php';
+                        sendTrainerNewClientEmail(
+                            $trainerRow['email'],
+                            $trainerRow['name'],
+                            $booking['name'],
+                            $booking['package_name'],
+                            $expiresAt ?? null
+                        );
+                        // In-app notification too
+                        createNotification(
+                            $trainerRow['user_id'],
+                            'New Client Assigned',
+                            $booking['name'] . ' has been verified on your package: ' . $booking['package_name'],
+                            'info'
+                        );
+                    }
+                } catch (Exception $e) {
+                    error_log("Failed to send trainer new client email: " . $e->getMessage());
+                }
+            }
         }
     } elseif ($status === 'rejected') {
         // Send rejection email to user

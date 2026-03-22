@@ -97,7 +97,31 @@ try {
         ]);
     } catch (Exception $e) {
         error_log("Failed to send booking notification email: " . $e->getMessage());
-        // Don't fail the booking creation if email fails
+    }
+
+    // Notify trainers assigned to this package
+    try {
+        require_once '../email.php';
+        $trainerQ = $conn->prepare(
+            "SELECT t.email, t.name, t.user_id FROM trainers t
+             JOIN package_trainers pt ON pt.trainer_id = t.id
+             WHERE pt.package_id = ? AND t.is_active = 1"
+        );
+        $trainerQ->bind_param("i", $package['id']);
+        $trainerQ->execute();
+        $trainerResult = $trainerQ->get_result();
+        while ($trainer = $trainerResult->fetch_assoc()) {
+            sendTrainerNewBookingEmail($trainer['email'], $trainer['name'], $user['name'], $package_name, $booking_date);
+            createNotification(
+                $trainer['user_id'],
+                'New Booking Pending',
+                $user['name'] . ' submitted a booking for your package: ' . $package_name,
+                'info'
+            );
+        }
+        $trainerQ->close();
+    } catch (Exception $e) {
+        error_log("Failed to send trainer booking notification: " . $e->getMessage());
     }
     
     sendResponse(true, 'Booking created successfully', ['id' => $booking_id]);
