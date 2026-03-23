@@ -814,15 +814,11 @@ async function verifyBooking(id) {
                 });
                 const result = await response.json();
                 
-                if (result.success) {
-                    await loadAllBookings();
-                    populateBookingsTable();
-                    updateStats();
-                    showNotification(`Payment for ${booking.user_name || booking.name || 'user'} has been verified!`, 'success');
-                    if (currentViewingBooking && currentViewingBooking.id === id) closeModal();
-                } else {
-                    showNotification('Error: ' + result.message, 'warning');
-                }
+                await loadAllBookings();
+                populateBookingsTable();
+                updateStats();
+                showNotification(`Payment for ${booking.user_name || booking.name || 'user'} has been verified!`, 'success');
+                if (currentViewingBooking && currentViewingBooking.id === id) closeModal();
             } catch (error) {
                 console.error('Error verifying booking:', error);
                 showNotification('Network error verifying booking', 'warning');

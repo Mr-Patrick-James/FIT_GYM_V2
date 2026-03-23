@@ -55,7 +55,7 @@ try {
         $conn->query("UPDATE bookings SET verified_at = '$verifiedAt' WHERE id = $bookingId");
 
         // Get booking details to add to payments
-        $sql = "SELECT b.*, p.duration FROM bookings b 
+        $sql = "SELECT b.*, p.duration, p.name as package_name FROM bookings b 
                 LEFT JOIN packages p ON b.package_id = p.id 
                 WHERE b.id = ?";
         $stmt = $conn->prepare($sql);
@@ -97,17 +97,18 @@ try {
                            ON DUPLICATE KEY UPDATE 
                            amount = VALUES(amount),
                            status = VALUES(status),
-                           receipt_url = VALUES(receipt_url),
-                           updated_at = NOW()";
+                           receipt_url = VALUES(receipt_url)";
             $paymentStmt = $conn->prepare($paymentSql);
-            $paymentStmt->bind_param("iidss", 
-                $booking['user_id'],
-                $booking['id'],
-                $booking['amount'],
-                $booking['id'],
-                $booking['receipt_url']
-            );
-            $paymentStmt->execute();
+            if ($paymentStmt) {
+                $paymentStmt->bind_param("iidss", 
+                    $booking['user_id'],
+                    $booking['id'],
+                    $booking['amount'],
+                    $booking['id'],
+                    $booking['receipt_url']
+                );
+                $paymentStmt->execute();
+            }
 
             // Send verification email to user
             try {
@@ -118,7 +119,7 @@ try {
                     'package_name' => $booking['package_name'],
                     'expiry_date' => $expiresAt ?? null
                 ]);
-            } catch (Exception $e) {
+            } catch (Throwable $e) {
                 error_log("Failed to send booking verification email: " . $e->getMessage());
             }
 
@@ -127,37 +128,48 @@ try {
                 try {
                     $trainerQ = $conn->query("SELECT t.email, t.name, t.user_id FROM trainers t WHERE t.id = " . (int)$booking['trainer_id']);
                     if ($trainerQ && $trainerRow = $trainerQ->fetch_assoc()) {
-                        require_once '../email.php';
-                        sendTrainerNewClientEmail(
-                            $trainerRow['email'],
-                            $trainerRow['name'],
-                            $booking['name'],
-                            $booking['package_name'],
-                            $expiresAt ?? null
-                        );
-                        // In-app notification too
-                        createNotification(
-                            $trainerRow['user_id'],
-                            'New Client Assigned',
-                            $booking['name'] . ' has been verified on your package: ' . $booking['package_name'],
-                            'info'
-                        );
+                        // In-app notification (do this before closing conn)
+                        $notifTitle = 'New Client Assigned';
+                        $notifMsg = $booking['name'] . ' has been verified on your package: ' . $booking['package_name'];
+                        $notifStmt = $conn->prepare("INSERT INTO notifications (user_id, title, message, type) VALUES (?, ?, ?, 'info')");
+                        $notifStmt->bind_param("iss", $trainerRow['user_id'], $notifTitle, $notifMsg);
+                        $notifStmt->execute();
+
+                        // Email (after all DB work)
+                        try {
+                            require_once '../email.php';
+                            sendTrainerNewClientEmail(
+                                $trainerRow['email'],
+                                $trainerRow['name'],
+                                $booking['name'],
+                                $booking['package_name'],
+                                $expiresAt ?? null
+                            );
+                        } catch (Throwable $e) {
+                            error_log("Failed to send trainer new client email: " . $e->getMessage());
+                        }
                     }
-                } catch (Exception $e) {
-                    error_log("Failed to send trainer new client email: " . $e->getMessage());
+                } catch (Throwable $e) {
+                    error_log("Failed to notify trainer: " . $e->getMessage());
                 }
+            }
+
+            // Notify the member
+            try {
+                $memberNotifStmt = $conn->prepare("INSERT INTO notifications (user_id, title, message, type) VALUES (?, 'Booking Verified', 'Your booking has been verified! Your membership is now active.', 'success')");
+                $memberNotifStmt->bind_param("i", $booking['user_id']);
+                $memberNotifStmt->execute();
+            } catch (Throwable $e) {
+                error_log("Failed to notify member: " . $e->getMessage());
             }
         }
     } elseif ($status === 'rejected') {
-        // Send rejection email to user
         try {
-            // Get booking details for the email
-            $sql = "SELECT * FROM bookings WHERE id = ?";
+            $sql = "SELECT b.*, p.name as package_name FROM bookings b LEFT JOIN packages p ON b.package_id = p.id WHERE b.id = ?";
             $stmt = $conn->prepare($sql);
             $stmt->bind_param("i", $bookingId);
             $stmt->execute();
-            $bookingResult = $stmt->get_result();
-            $booking = $bookingResult->fetch_assoc();
+            $booking = $stmt->get_result()->fetch_assoc();
             
             if ($booking) {
                 require_once '../email.php';
@@ -165,10 +177,10 @@ try {
                     'user_email' => $booking['email'],
                     'user_name' => $booking['name'],
                     'package_name' => $booking['package_name'],
-                    'rejection_reason' => $notes // The admin's rejection reason is stored in $notes
+                    'rejection_reason' => $notes
                 ]);
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             error_log("Failed to send booking rejection email: " . $e->getMessage());
         }
     }

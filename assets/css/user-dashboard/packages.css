@@ -186,13 +186,7 @@
 }
 
 .package-price-large::before {
-    content: '';
-    width: 3px;
-    height: 3px;
-    background: var(--primary);
-    border-radius: 50%;
-    display: inline-block;
-    margin-right: 2px;
+    display: none;
 }
 
 .package-footer .btn-primary {

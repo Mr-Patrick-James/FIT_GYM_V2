@@ -165,7 +165,7 @@ async function loadPackagesData() {
                 name: pkg.name,
                 duration: pkg.duration,
                 // Ensure price is treated as a number
-                price: '₱' + parseFloat(String(pkg.price).replace(/[^\d.-]/g, '')).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+                price: '₱' + parseFloat(String(pkg.price).replace(/[^\d.-]/g, '')).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }),
                 tag: pkg.tag || 'Standard',
                 description: pkg.description || 'Full gym access with all facilities'
             }));
@@ -586,6 +586,7 @@ function showSection(section, event) {
         'packages': 'packagesSection',
         'bookings': 'bookingsSection',
         'payments': 'paymentsSection',
+        'trainer': 'trainerSection',
         'profile': 'profileSection'
     };
     
@@ -599,6 +600,7 @@ function showSection(section, event) {
             'packages': { title: 'Packages', subtitle: 'Choose a membership plan that fits your fitness goals' },
             'bookings': { title: 'My Bookings', subtitle: 'View and manage your booking requests' },
             'payments': { title: 'Payment History', subtitle: 'Track all your payment transactions' },
+            'trainer': { title: 'My Trainer', subtitle: 'View your assigned trainer and session details' },
             'profile': { title: 'Profile', subtitle: 'Manage your account information and settings' }
         };
         
@@ -622,6 +624,12 @@ function showSection(section, event) {
                     link.classList.add('active');
                 }
             });
+        }
+
+        // Load section-specific data
+        if (section === 'trainer') {
+            trainerSectionLoaded = false; // allow reload on nav
+            loadTrainerSection();
         }
     }
 }
@@ -3468,3 +3476,158 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+// ===== My Trainer Section =====
+let trainerSectionLoaded = false;
+
+async function loadTrainerSection() {
+    if (trainerSectionLoaded) return;
+    trainerSectionLoaded = true;
+
+    try {
+        const res = await fetch('../../api/trainers/get-my-trainer.php');
+        const data = await res.json();
+
+        if (!data.success || !data.data) {
+            document.getElementById('trainerNoData').style.display = 'block';
+            document.getElementById('trainerData').style.display = 'none';
+            return;
+        }
+
+        const t = data.data;
+        document.getElementById('trainerNoData').style.display = 'none';
+        document.getElementById('trainerData').style.display = 'block';
+
+        // Profile
+        const photo = document.getElementById('trainerPhoto');
+        photo.src = t.photo_url
+            ? '../../' + t.photo_url.replace(/^\/?Fit\//, '').replace(/^\//, '')
+            : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(t.trainer_name) + '&background=22c55e&color=fff&size=120';
+        document.getElementById('trainerName').textContent = t.trainer_name || 'Your Trainer';
+        document.getElementById('trainerSpec').textContent = t.specialization || '';
+        document.getElementById('trainerBio').textContent = t.bio || 'No bio available.';
+        document.getElementById('trainerContactVal').textContent = t.trainer_contact || 'N/A';
+        document.getElementById('trainerEmailVal').textContent = t.trainer_email || 'N/A';
+        document.getElementById('trainerClientsVal').textContent = t.total_clients || 0;
+        document.getElementById('trainerPackageName').textContent = t.package_name || 'N/A';
+        document.getElementById('trainerExpiry').textContent = t.expires_at
+            ? new Date(t.expires_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+            : 'No expiry';
+
+        // Availability
+        const availEl = document.getElementById('trainerAvailability');
+        if (t.availability) {
+            try {
+                const avail = JSON.parse(t.availability);
+                if (Array.isArray(avail)) {
+                    availEl.innerHTML = avail.map(a => `<div style="margin-bottom:6px;"><i class="fas fa-check-circle" style="color:var(--primary);margin-right:6px;"></i>${a}</div>`).join('');
+                } else if (avail && typeof avail === 'object') {
+                    const days = Array.isArray(avail.days) ? avail.days.join(', ') : (avail.days || '');
+                    const hours = (avail.from && avail.until) ? `${avail.from} – ${avail.until}` : '';
+                    availEl.innerHTML = `
+                        ${days ? `<div style="margin-bottom:8px;"><i class="fas fa-calendar-week" style="color:var(--primary);margin-right:6px;"></i>${days}</div>` : ''}
+                        ${hours ? `<div><i class="fas fa-clock" style="color:var(--primary);margin-right:6px;"></i>${hours}</div>` : ''}
+                    `;
+                } else {
+                    availEl.textContent = t.availability;
+                }
+            } catch {
+                availEl.textContent = t.availability;
+            }
+        } else {
+            availEl.innerHTML = '<p style="color:var(--dark-text-secondary);">Not specified</p>';
+        }
+
+        // Certifications
+        const certEl = document.getElementById('trainerCertifications');
+        if (t.certifications) {
+            try {
+                const certs = JSON.parse(t.certifications);
+                certEl.innerHTML = Array.isArray(certs)
+                    ? certs.map(c => `<div style="margin-bottom:6px;"><i class="fas fa-medal" style="color:#f59e0b;margin-right:6px;"></i>${c}</div>`).join('')
+                    : `<p>${t.certifications}</p>`;
+            } catch {
+                certEl.textContent = t.certifications;
+            }
+        } else {
+            certEl.innerHTML = '<p style="color:var(--dark-text-secondary);">No certifications listed</p>';
+        }
+
+        // Sessions
+        const sessEl = document.getElementById('trainerSessions');
+        if (t.sessions && t.sessions.length > 0) {
+            sessEl.innerHTML = t.sessions.map(s => `
+                <div class="trainer-session-item">
+                    <div class="trainer-session-date">
+                        <span class="session-day">${new Date(s.session_date).toLocaleDateString('en-US', { weekday: 'short' })}</span>
+                        <span class="session-num">${new Date(s.session_date).getDate()}</span>
+                    </div>
+                    <div class="trainer-session-details">
+                        <strong>${s.title || 'Session'}</strong>
+                        <span>${s.session_time ? s.session_time.slice(0,5) : ''} &bull; ${s.duration || ''} mins</span>
+                        ${s.notes ? `<p style="font-size:0.78rem;color:var(--dark-text-secondary);margin-top:4px;">${s.notes}</p>` : ''}
+                    </div>
+                    <span class="status-badge status-${s.status || 'scheduled'}">${s.status || 'Scheduled'}</span>
+                </div>
+            `).join('');
+        } else {
+            sessEl.innerHTML = '<p style="color:var(--dark-text-secondary);text-align:center;padding:20px 0;">No upcoming sessions scheduled.</p>';
+        }
+
+        // Tips
+        const tipsEl = document.getElementById('trainerTips');
+        if (t.tips && t.tips.length > 0) {
+            tipsEl.innerHTML = t.tips.map(tip => `
+                <div class="trainer-tip-item">
+                    <i class="fas fa-lightbulb" style="color:#f59e0b;margin-right:8px;"></i>
+                    <div>
+                        <p style="margin:0;font-size:0.88rem;">${tip.tip}</p>
+                        <small style="color:var(--dark-text-secondary);">${new Date(tip.created_at).toLocaleDateString()}</small>
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            tipsEl.innerHTML = '<p style="color:var(--dark-text-secondary);text-align:center;padding:20px 0;">No tips from your trainer yet.</p>';
+        }
+
+        // Food
+        const foodEl = document.getElementById('trainerFood');
+        if (t.food && t.food.length > 0) {
+            foodEl.innerHTML = t.food.map(f => `
+                <div class="trainer-tip-item">
+                    <i class="fas fa-utensils" style="color:var(--primary);margin-right:8px;"></i>
+                    <div>
+                        <p style="margin:0;font-size:0.88rem;">${f.recommendation}</p>
+                        <small style="color:var(--dark-text-secondary);">${new Date(f.created_at).toLocaleDateString()}</small>
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            foodEl.innerHTML = '<p style="color:var(--dark-text-secondary);text-align:center;padding:20px 0;">No meal guidance yet.</p>';
+        }
+
+        // Progress
+        const progEl = document.getElementById('trainerProgress');
+        if (t.progress && t.progress.length > 0) {
+            progEl.innerHTML = `
+                <div class="trainer-progress-list">
+                    ${t.progress.map(p => `
+                        <div class="trainer-progress-item">
+                            <div class="progress-weight">${p.weight_kg ? p.weight_kg + ' kg' : '—'}</div>
+                            <div class="progress-info">
+                                <span class="progress-date">${new Date(p.logged_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                                ${p.remarks ? `<p style="margin:4px 0 0;font-size:0.8rem;color:var(--dark-text-secondary);">${p.remarks}</p>` : ''}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>`;
+        } else {
+            progEl.innerHTML = '<p style="color:var(--dark-text-secondary);text-align:center;padding:20px 0;">No progress logs recorded yet.</p>';
+        }
+
+    } catch (err) {
+        console.error('Error loading trainer section:', err);
+        document.getElementById('trainerNoData').style.display = 'block';
+        document.getElementById('trainerData').style.display = 'none';
+    }
+}

@@ -306,32 +306,6 @@ function getSetting($key, $default = '', $settings = []) {
             
             <!-- Right Column -->
             <div class="right-column">
-                <!-- GCash Payment -->
-                <div class="content-card">
-                    <div class="card-header">
-                        <h3>GCash Payment</h3>
-                        <button class="card-btn">
-                            <i class="fas fa-sync-alt"></i>
-                            <span>Refresh</span>
-                        </button>
-                    </div>
-                    
-                    <div class="qr-section">
-                        <div class="qr-container">
-                            <div class="qr-code">
-                                <i class="fas fa-qrcode"></i>
-                            </div>
-                        </div>
-                        <div class="qr-info">
-                            <p><strong>GCash Number:</strong> 0917-123-4567</p>
-                            <p><strong>Account Name:</strong> Martinez Fitness</p>
-                            <p style="margin-top: 16px; font-size: 0.9rem;">
-                                Share this QR code with clients for payment
-                            </p>
-                        </div>
-                    </div>
-                </div>
-                
                 <!-- Gym Packages -->
                 <div class="content-card" style="margin-top: 32px;">
                     <div class="card-header">

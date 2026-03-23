@@ -1,0 +1,194 @@
+// FitPay Gym - dbdiagram.io ERD
+// Paste this at https://dbdiagram.io/d
+
+Table users {
+  id int [pk, increment]
+  name varchar(255)
+  email varchar(255) [unique]
+  password varchar(255)
+  role varchar(50) [default: 'user', note: 'user | trainer | admin']
+  contact varchar(100)
+  address text
+  email_verified boolean [default: false]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table otps {
+  id int [pk, increment]
+  email varchar(255)
+  code varchar(6)
+  expires_at datetime
+  used tinyint [default: 0]
+  created_at timestamp
+}
+
+Table trainers {
+  id int [pk, increment]
+  user_id int [ref: > users.id]
+  name varchar(255)
+  email varchar(255)
+  contact varchar(100)
+  specialization varchar(255)
+  bio text
+  photo_url varchar(500)
+  availability varchar(500)
+  certifications text
+  max_clients int [default: 10]
+  is_active boolean [default: true]
+  created_at timestamp
+}
+
+Table packages {
+  id int [pk, increment]
+  name varchar(255)
+  duration varchar(100)
+  price decimal(10,2)
+  tag varchar(50)
+  description text
+  goal varchar(100) [default: 'General Fitness']
+  is_trainer_assisted boolean [default: false]
+  is_active boolean [default: true]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table package_trainers {
+  id int [pk, increment]
+  package_id int [ref: > packages.id]
+  trainer_id int [ref: > trainers.id]
+}
+
+Table bookings {
+  id int [pk, increment]
+  user_id int [ref: > users.id, note: 'NULL for walk-ins']
+  trainer_id int [ref: > trainers.id, note: 'assigned trainer']
+  package_id int [ref: > packages.id]
+  name varchar(255)
+  email varchar(255)
+  contact varchar(100)
+  package_name varchar(255)
+  amount decimal(10,2)
+  status varchar(50) [default: 'pending', note: 'pending | verified | rejected']
+  booking_date datetime
+  expires_at datetime
+  verified_at datetime
+  notes text
+  receipt_url varchar(500)
+  created_at timestamp
+}
+
+Table payments {
+  id int [pk, increment]
+  user_id int [ref: > users.id, note: 'NULL for walk-ins']
+  booking_id int [ref: > bookings.id]
+  amount decimal(10,2)
+  status varchar(50) [note: 'pending | completed | failed']
+  payment_method varchar(100)
+  transaction_id varchar(255) [unique]
+  receipt_url varchar(500)
+  notes text
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table equipment {
+  id int [pk, increment]
+  name varchar(255)
+  category varchar(100) [default: 'General']
+  description text
+  status varchar(50) [default: 'active']
+  image_url varchar(500)
+  created_at timestamp
+}
+
+Table exercises {
+  id int [pk, increment]
+  name varchar(255)
+  category varchar(100) [default: 'Full Body']
+  equipment_id int [ref: > equipment.id]
+  description text
+  instructions text
+  image_url varchar(500)
+  created_at timestamp
+}
+
+Table package_exercises {
+  id int [pk, increment]
+  package_id int [ref: > packages.id]
+  exercise_id int [ref: > exercises.id]
+  sets int [default: 3]
+  reps varchar(50) [default: '10-12']
+  notes text
+}
+
+Table member_exercise_plans {
+  id int [pk, increment]
+  booking_id int [ref: > bookings.id]
+  exercise_id int [ref: > exercises.id]
+  sets int [default: 3]
+  reps varchar(50) [default: '10-12']
+  notes text
+}
+
+Table member_progress {
+  id int [pk, increment]
+  booking_id int [ref: > bookings.id]
+  trainer_id int [ref: > trainers.id]
+  weight decimal(5,2)
+  height decimal(5,2)
+  remarks text
+  logged_at date
+  created_at timestamp
+}
+
+Table trainer_sessions {
+  id int [pk, increment]
+  trainer_id int [ref: > trainers.id]
+  member_id int [ref: > users.id]
+  booking_id int [ref: > bookings.id]
+  session_date date
+  session_time time
+  duration int [default: 60, note: 'minutes']
+  type varchar(50) [note: 'workout | rest_day']
+  title varchar(255)
+  notes text
+  exercises text [note: 'comma-separated exercise IDs']
+  created_at timestamp
+}
+
+Table food_recommendations {
+  id int [pk, increment]
+  trainer_id int [ref: > trainers.id]
+  member_id int [ref: > users.id]
+  meal_type varchar(100)
+  food_items text
+  calories int
+  created_at timestamp
+}
+
+Table trainer_tips {
+  id int [pk, increment]
+  trainer_id int [ref: > trainers.id]
+  member_id int [ref: > users.id]
+  tip_text text
+  created_at timestamp
+}
+
+Table notifications {
+  id int [pk, increment]
+  user_id int [ref: > users.id]
+  title varchar(255)
+  message text
+  type varchar(50) [default: 'info']
+  is_read boolean [default: false]
+  created_at timestamp
+}
+
+Table gym_settings {
+  id int [pk, increment]
+  setting_key varchar(50) [unique]
+  setting_value text
+  created_at timestamp
+  updated_at timestamp
+}

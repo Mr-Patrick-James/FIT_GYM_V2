@@ -1240,26 +1240,16 @@ tr:hover td {
 
 /* Dashboard Grid Layout */
 .dashboard-grid-layout {
-    display: grid;
-    grid-template-columns: 1fr 320px;
-    gap: 32px;
+    display: block;
 }
 
 .dashboard-side-col {
-    display: flex;
-    flex-direction: column;
-    gap: 32px;
+    display: none;
 }
 
 @media (max-width: 1200px) {
     .dashboard-grid-layout {
         grid-template-columns: 1fr;
-    }
-    
-    .dashboard-side-col {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
     }
 }
 

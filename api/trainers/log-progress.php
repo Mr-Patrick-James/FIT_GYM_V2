@@ -38,8 +38,9 @@ try {
     }
 
     // Insert new progress log
-    $stmt = $conn->prepare("INSERT INTO member_progress (booking_id, trainer_id, weight, remarks, logged_at) VALUES (?, ?, ?, ?, ?)");
-    $stmt->bind_param("iidss", $booking_id, $trainerId, $weight, $remarks, $logged_at);
+    $height = isset($data['height']) ? (float)$data['height'] : null;
+    $stmt = $conn->prepare("INSERT INTO member_progress (booking_id, trainer_id, weight, height, remarks, logged_at) VALUES (?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("iiddss", $booking_id, $trainerId, $weight, $height, $remarks, $logged_at);
     
     if (!$stmt->execute()) {
         throw new Exception('Failed to log progress: ' . $stmt->error);

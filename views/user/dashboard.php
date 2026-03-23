@@ -43,6 +43,7 @@ function getSetting($key, $default = '', $settings = []) {
     <link rel="stylesheet" href="../../assets/css/user-dashboard/bookings.css?v=1.6">
     <link rel="stylesheet" href="../../assets/css/user-dashboard/payments.css?v=1.6">
     <link rel="stylesheet" href="../../assets/css/user-dashboard/profile.css?v=1.6">
+    <link rel="stylesheet" href="../../assets/css/user-dashboard/trainer.css?v=1.0">
 
     <!-- FullCalendar CDN for user calendar -->
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
@@ -1106,6 +1107,7 @@ function getSetting($key, $default = '', $settings = []) {
             <li><a href="#" onclick="showSection('packages', event)"><i class="fas fa-dumbbell"></i> <span>Packages</span></a></li>
             <li><a href="#" onclick="showSection('bookings', event)"><i class="fas fa-calendar-check"></i> <span>My Bookings</span> <span class="badge" id="bookingsBadge">0</span></a></li>
             <li><a href="#" onclick="showSection('payments', event)"><i class="fas fa-money-check"></i> <span>Payments</span></a></li>
+            <li><a href="#" onclick="showSection('trainer', event)"><i class="fas fa-user-tie"></i> <span>My Trainer</span></a></li>
             <li><a href="#" onclick="showSection('profile', event)"><i class="fas fa-user"></i> <span>Profile</span></a></li>
         </ul>
         
@@ -1261,22 +1263,7 @@ function getSetting($key, $default = '', $settings = []) {
                     </div>
                 </div>
 
-                <div class="dashboard-side-col">
-                    <!-- GCash QR Code Card -->
-                    <div class="content-card gcash-qr-card">
-                        <div class="card-header">
-                            <h3><i class="fas fa-wallet" style="color: #22c55e;"></i> GCash Payment</h3>
-                        </div>
-                        <div class="qr-container-dash">
-                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=GCash:09171234567" alt="GCash QR Code" class="qr-image-dash">
-                        </div>
-                        <div class="qr-info-dash">
-                            <p><strong>Account Name:</strong> Martinez Fitness</p>
-                            <p><strong>GCash Number:</strong> 0917-123-4567</p>
-                            <span class="qr-instruction-dash">Scan this QR code using your GCash app to pay for your membership.</span>
-                        </div>
-                    </div>
-                </div>
+
             </div>
 
             <!-- Recent Bookings -->
@@ -1421,6 +1408,82 @@ function getSetting($key, $default = '', $settings = []) {
                             <!-- Populated by JavaScript -->
                         </tbody>
                     </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- My Trainer Section -->
+        <div id="trainerSection" class="content-section">
+
+            <!-- No Trainer State -->
+            <div id="trainerNoData" class="content-card" style="display:none; text-align:center; padding: 60px 24px;">
+                <i class="fas fa-user-slash" style="font-size: 3rem; color: var(--dark-text-secondary); margin-bottom: 16px; display:block;"></i>
+                <h3 style="margin-bottom: 8px;">No Trainer Assigned Yet</h3>
+                <p style="color: var(--dark-text-secondary); font-size: 0.9rem;">Book a trainer-assisted package to get assigned a personal trainer.</p>
+                <button class="btn btn-primary" style="margin-top: 20px;" onclick="showSection('packages', event)">Browse Packages</button>
+            </div>
+
+            <!-- Trainer Profile Card -->
+            <div id="trainerData" style="display:none;">
+                <div class="trainer-profile-card content-card">
+                    <div class="trainer-profile-header">
+                        <div class="trainer-avatar-wrap">
+                            <img id="trainerPhoto" src="" alt="Trainer" class="trainer-avatar-img">
+                            <span class="trainer-active-dot"></span>
+                        </div>
+                        <div class="trainer-profile-info">
+                            <h2 id="trainerName"></h2>
+                            <p id="trainerSpec" class="trainer-spec-badge"></p>
+                            <p id="trainerBio" class="trainer-bio"></p>
+                            <div class="trainer-meta-row">
+                                <span id="trainerContact"><i class="fas fa-phone"></i> <span id="trainerContactVal"></span></span>
+                                <span id="trainerEmail"><i class="fas fa-envelope"></i> <span id="trainerEmailVal"></span></span>
+                                <span><i class="fas fa-users"></i> <span id="trainerClientsVal"></span> clients trained</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="trainer-package-row">
+                        <i class="fas fa-box"></i> Your Package: <strong id="trainerPackageName"></strong>
+                        &nbsp;&nbsp;<i class="fas fa-calendar-times" style="color:#ef4444;"></i> Expires: <strong id="trainerExpiry"></strong>
+                    </div>
+                </div>
+
+                <!-- Info Grid: Availability + Certifications -->
+                <div class="trainer-info-grid">
+                    <div class="content-card">
+                        <div class="card-header"><h3><i class="fas fa-clock"></i> Availability</h3></div>
+                        <div id="trainerAvailability" style="padding: 20px; color: var(--dark-text-secondary); font-size: 0.9rem; line-height: 1.7;"></div>
+                    </div>
+                    <div class="content-card">
+                        <div class="card-header"><h3><i class="fas fa-certificate"></i> Certifications</h3></div>
+                        <div id="trainerCertifications" style="padding: 20px; color: var(--dark-text-secondary); font-size: 0.9rem; line-height: 1.7;"></div>
+                    </div>
+                </div>
+
+                <!-- Upcoming Sessions -->
+                <div class="content-card" style="margin-top: 24px;">
+                    <div class="card-header">
+                        <h3><i class="fas fa-calendar-alt"></i> Upcoming Sessions</h3>
+                    </div>
+                    <div id="trainerSessions" style="padding: 20px;"></div>
+                </div>
+
+                <!-- Tips + Meal in a grid -->
+                <div class="trainer-info-grid" style="margin-top: 24px;">
+                    <div class="content-card">
+                        <div class="card-header"><h3><i class="fas fa-lightbulb"></i> Coach Tips</h3></div>
+                        <div id="trainerTips" style="padding: 20px;"></div>
+                    </div>
+                    <div class="content-card">
+                        <div class="card-header"><h3><i class="fas fa-utensils"></i> Meal Guidance</h3></div>
+                        <div id="trainerFood" style="padding: 20px;"></div>
+                    </div>
+                </div>
+
+                <!-- Progress History -->
+                <div class="content-card" style="margin-top: 24px;">
+                    <div class="card-header"><h3><i class="fas fa-chart-line"></i> Progress History</h3></div>
+                    <div id="trainerProgress" style="padding: 20px;"></div>
                 </div>
             </div>
         </div>

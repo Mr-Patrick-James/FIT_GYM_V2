@@ -38,7 +38,7 @@ if (!$booking) {
 
 // Get progress history
 $query = "
-    SELECT p.id, p.weight, p.remarks, p.logged_at, p.created_at, t.name as trainer_name
+    SELECT p.id, p.weight, p.height, p.remarks, p.logged_at, p.created_at, t.name as trainer_name
     FROM member_progress p
     JOIN trainers t ON p.trainer_id = t.id
     WHERE p.booking_id = ?
