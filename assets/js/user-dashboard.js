@@ -3495,6 +3495,7 @@ async function loadTrainerSection() {
         }
 
         const t = data.data;
+        window._trainerBookingId = t.booking_id;
         document.getElementById('trainerNoData').style.display = 'none';
         document.getElementById('trainerData').style.display = 'block';
 
@@ -3616,8 +3617,11 @@ async function loadTrainerSection() {
                             <div class="progress-weight">${p.weight_kg ? p.weight_kg + ' kg' : '—'}</div>
                             <div class="progress-info">
                                 <span class="progress-date">${new Date(p.logged_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                                ${p.height ? `<span style="font-size:0.78rem;color:var(--dark-text-secondary);margin-left:8px;">${p.height} cm</span>` : ''}
+                                ${p.logged_by === 'user' ? `<span style="font-size:0.72rem;background:rgba(34,197,94,0.1);color:#22c55e;padding:1px 7px;border-radius:99px;margin-left:6px;">Self-logged</span>` : ''}
                                 ${p.remarks ? `<p style="margin:4px 0 0;font-size:0.8rem;color:var(--dark-text-secondary);">${p.remarks}</p>` : ''}
                             </div>
+                            ${p.photo_url ? `<img src="../../${p.photo_url}" alt="Progress photo" style="width:56px;height:56px;object-fit:cover;border-radius:8px;border:1px solid var(--dark-border);cursor:pointer;flex-shrink:0;" onclick="openProgressPhoto('../../${p.photo_url}')">` : ''}
                         </div>
                     `).join('')}
                 </div>`;
@@ -3630,4 +3634,107 @@ async function loadTrainerSection() {
         document.getElementById('trainerNoData').style.display = 'block';
         document.getElementById('trainerData').style.display = 'none';
     }
+}
+
+// ===== User Progress Self-Log =====
+function toggleProgressForm() {
+    const form = document.getElementById('progressLogForm');
+    const btn = document.getElementById('logProgressBtn');
+    const visible = form.style.display !== 'none';
+    form.style.display = visible ? 'none' : 'block';
+    if (!visible) {
+        // Set today's date as default
+        document.getElementById('userProgressDate').value = new Date().toISOString().split('T')[0];
+    }
+}
+
+// Photo preview
+document.addEventListener('change', function(e) {
+    if (e.target.id === 'userProgressPhoto') {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                document.getElementById('progressPhotoImg').src = ev.target.result;
+                document.getElementById('progressPhotoPreview').style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+});
+
+async function submitUserProgress() {
+    const weight   = document.getElementById('userProgressWeight').value;
+    const height   = document.getElementById('userProgressHeight').value;
+    const date     = document.getElementById('userProgressDate').value;
+    const remarks  = document.getElementById('userProgressRemarks').value;
+    const photoFile = document.getElementById('userProgressPhoto').files[0];
+    const btn      = document.getElementById('submitProgressBtn');
+
+    if (!date) { alert('Please select a date.'); return; }
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+    try {
+        let photo_url = null;
+
+        // Upload photo first if provided
+        if (photoFile) {
+            const formData = new FormData();
+            formData.append('photo', photoFile);
+            const upRes = await fetch('../../api/upload/progress-photo.php', { method: 'POST', body: formData });
+            const upData = await upRes.json();
+            if (upData.success) {
+                photo_url = upData.data.url;
+            }
+        }
+
+        // Get booking_id from loaded trainer data
+        const bookingId = window._trainerBookingId;
+        if (!bookingId) { alert('No active booking found.'); return; }
+
+        const res = await fetch('../../api/trainers/log-progress-user.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                booking_id: bookingId,
+                weight: weight || null,
+                height: height || null,
+                remarks,
+                photo_url,
+                logged_at: date
+            })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+            toggleProgressForm();
+            // Reset form
+            document.getElementById('userProgressWeight').value = '';
+            document.getElementById('userProgressHeight').value = '';
+            document.getElementById('userProgressRemarks').value = '';
+            document.getElementById('userProgressPhoto').value = '';
+            document.getElementById('progressPhotoPreview').style.display = 'none';
+            // Reload trainer section
+            trainerSectionLoaded = false;
+            loadTrainerSection();
+        } else {
+            alert(data.message || 'Failed to save progress.');
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Error saving progress.');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-save"></i> Save Progress';
+    }
+}
+
+function openProgressPhoto(url) {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;display:flex;align-items:center;justify-content:center;cursor:pointer;';
+    overlay.innerHTML = `<img src="${url}" style="max-width:90vw;max-height:90vh;border-radius:12px;object-fit:contain;">`;
+    overlay.onclick = () => overlay.remove();
+    document.body.appendChild(overlay);
 }

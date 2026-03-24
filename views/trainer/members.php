@@ -1712,27 +1712,29 @@ $conn->close();
                 const data = await response.json();
                 if (data.success && data.data.length > 0) {
                     list.innerHTML = data.data.map(log => `
-                        <div style="background: var(--premium-input-bg); border: 1px solid var(--premium-border); border-radius: 24px; padding: 24px; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); cursor: default; position: relative; overflow: hidden;" onmouseover="this.style.borderColor='rgba(255,255,255,0.2)'; this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='var(--premium-border)'; this.style.transform='translateY(0)'">
-                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
-                                <div style="display: flex; align-items: center; gap: 14px;">
-                                    <div style="width: 48px; height: 48px; background: rgba(255,255,255,0.05); color: #fff; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; border: 1px solid var(--premium-border);">
-                                        <i class="fas fa-calendar-alt"></i>
+                        <div style="background: var(--premium-input-bg); border: 1px solid var(--premium-border); border-radius: 24px; padding: 24px; transition: all 0.3s ease; position: relative;" onmouseover="this.style.borderColor='rgba(255,255,255,0.2)'" onmouseout="this.style.borderColor='var(--premium-border)'">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; gap: 12px;">
+                                <div style="display: flex; align-items: center; gap: 14px; flex: 1;">
+                                    <div style="width: 48px; height: 48px; background: rgba(255,255,255,0.05); color: #fff; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; border: 1px solid var(--premium-border); flex-shrink:0;">
+                                        <i class="fas fa-${log.logged_by === 'user' ? 'user' : 'user-tie'}"></i>
                                     </div>
                                     <div>
                                         <p style="font-size: 1rem; font-weight: 800; color: #fff; letter-spacing: -0.3px;">${new Date(log.logged_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
-                                        <p style="font-size: 0.75rem; color: var(--premium-text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Session Log</p>
+                                        <div style="display:flex; align-items:center; gap:8px; margin-top:3px;">
+                                            <p style="font-size: 0.72rem; color: var(--premium-text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin:0;">${log.logged_by === 'user' ? 'Member Self-Log' : 'Trainer Log'}</p>
+                                            ${log.logged_by === 'user' ? '<span style="font-size:0.68rem;background:rgba(34,197,94,0.15);color:#22c55e;padding:2px 8px;border-radius:99px;font-weight:700;">Self-logged</span>' : ''}
+                                        </div>
                                     </div>
                                 </div>
-                                ${log.weight ? `
-                                <div style="text-align: right;">
-                                    <div style="background: #fff; color: #000; padding: 8px 16px; border-radius: 12px; font-weight: 900; font-size: 1.1rem; box-shadow: 0 8px 20px rgba(255,255,255,0.15); display: inline-flex; align-items: baseline; gap: 4px;">
-                                        ${log.weight} <span style="font-size: 0.7rem; font-weight: 700; opacity: 0.7;">KG</span>
-                                    </div>
-                                </div>` : ''}
+                                <div style="display:flex; align-items:center; gap:10px; flex-shrink:0;">
+                                    ${log.weight ? `<div style="background: #fff; color: #000; padding: 8px 16px; border-radius: 12px; font-weight: 900; font-size: 1.1rem; display: inline-flex; align-items: baseline; gap: 4px;">${log.weight} <span style="font-size: 0.7rem; font-weight: 700; opacity: 0.7;">KG</span></div>` : ''}
+                                    ${log.height ? `<div style="background: rgba(255,255,255,0.07); color: #fff; padding: 8px 12px; border-radius: 12px; font-weight: 700; font-size: 0.85rem;">${log.height} cm</div>` : ''}
+                                    ${log.photo_url ? `<img src="../../${log.photo_url}" alt="Progress" style="width:56px;height:56px;object-fit:cover;border-radius:10px;border:1px solid rgba(255,255,255,0.1);cursor:pointer;" onclick="window.open('../../${log.photo_url}','_blank')">` : ''}
+                                </div>
                             </div>
                             <div style="background: rgba(255,255,255,0.02); padding: 18px; border-radius: 18px; border: 1px solid rgba(255,255,255,0.03);">
-                                <p style="font-size: 0.95rem; color: rgba(255,255,255,0.85); line-height: 1.6; font-weight: 400;">
-                                    ${log.remarks ? log.remarks : '<span style="color: var(--premium-text-muted); font-style: italic;">No session notes provided.</span>'}
+                                <p style="font-size: 0.95rem; color: rgba(255,255,255,0.85); line-height: 1.6; font-weight: 400; margin:0;">
+                                    ${log.remarks ? log.remarks : '<span style="color: var(--premium-text-muted); font-style: italic;">No notes provided.</span>'}
                                 </p>
                             </div>
                         </div>`).join('');

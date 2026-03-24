@@ -43,7 +43,7 @@ function getSetting($key, $default = '', $settings = []) {
     <link rel="stylesheet" href="../../assets/css/user-dashboard/bookings.css?v=1.6">
     <link rel="stylesheet" href="../../assets/css/user-dashboard/payments.css?v=1.6">
     <link rel="stylesheet" href="../../assets/css/user-dashboard/profile.css?v=1.6">
-    <link rel="stylesheet" href="../../assets/css/user-dashboard/trainer.css?v=1.0">
+    <link rel="stylesheet" href="../../assets/css/user-dashboard/trainer.css?v=1.1">
 
     <!-- FullCalendar CDN for user calendar -->
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
@@ -1481,8 +1481,56 @@ function getSetting($key, $default = '', $settings = []) {
                 </div>
 
                 <!-- Progress History -->
-                <div class="content-card" style="margin-top: 24px;">
-                    <div class="card-header"><h3><i class="fas fa-chart-line"></i> Progress History</h3></div>
+                <div class="content-card" style="margin-top: 24px; overflow: visible;">
+                    <div class="card-header">
+                        <h3><i class="fas fa-chart-line"></i> Progress History</h3>
+                        <button class="btn btn-primary btn-sm" onclick="toggleProgressForm()" id="logProgressBtn">
+                            <i class="fas fa-plus"></i> Log My Progress
+                        </button>
+                    </div>
+
+                    <!-- User self-log form -->
+                    <div id="progressLogForm" style="display:none; padding: 20px; border-bottom: 1px solid var(--dark-border); background: rgba(255,255,255,0.03);">
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                            <div>
+                                <label style="font-size:0.8rem;color:var(--dark-text-secondary);display:block;margin-bottom:4px;">Weight (kg)</label>
+                                <input type="number" id="userProgressWeight" step="0.1" min="0" placeholder="e.g. 72.5"
+                                    style="width:100%;padding:8px 12px;background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#fff;font-size:0.9rem;box-sizing:border-box;">
+                            </div>
+                            <div>
+                                <label style="font-size:0.8rem;color:var(--dark-text-secondary);display:block;margin-bottom:4px;">Height (cm)</label>
+                                <input type="number" id="userProgressHeight" step="0.1" min="0" placeholder="e.g. 170"
+                                    style="width:100%;padding:8px 12px;background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#fff;font-size:0.9rem;box-sizing:border-box;">
+                            </div>
+                        </div>
+                        <div style="margin-bottom:12px;">
+                            <label style="font-size:0.8rem;color:var(--dark-text-secondary);display:block;margin-bottom:4px;">Date</label>
+                            <input type="date" id="userProgressDate"
+                                style="width:100%;padding:8px 12px;background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#fff;font-size:0.9rem;box-sizing:border-box;">
+                        </div>
+                        <div style="margin-bottom:12px;">
+                            <label style="font-size:0.8rem;color:var(--dark-text-secondary);display:block;margin-bottom:4px;">Notes / Remarks</label>
+                            <textarea id="userProgressRemarks" rows="2" placeholder="How are you feeling? Any notes..."
+                                style="width:100%;padding:8px 12px;background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#fff;font-size:0.9rem;resize:vertical;box-sizing:border-box;"></textarea>
+                        </div>
+                        <div style="margin-bottom:16px;">
+                            <label style="font-size:0.8rem;color:var(--dark-text-secondary);display:block;margin-bottom:4px;">Progress Photo (optional)</label>
+                            <input type="file" id="userProgressPhoto" accept="image/*"
+                                style="width:100%;padding:8px 12px;background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#fff;font-size:0.85rem;box-sizing:border-box;">
+                            <div id="progressPhotoPreview" style="margin-top:8px;display:none;">
+                                <img id="progressPhotoImg" src="" alt="Preview" style="max-width:120px;max-height:120px;border-radius:8px;object-fit:cover;border:1px solid #333;">
+                            </div>
+                        </div>
+                        <div style="display:flex;gap:8px;">
+                            <button class="btn btn-primary btn-sm" onclick="submitUserProgress()" id="submitProgressBtn">
+                                <i class="fas fa-save"></i> Save Progress
+                            </button>
+                            <button class="btn btn-sm" onclick="toggleProgressForm()" style="background:#1a1a1a;border:1px solid #333;color:#fff;">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+
                     <div id="trainerProgress" style="padding: 20px;"></div>
                 </div>
             </div>

@@ -213,3 +213,53 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* Progress card header with button */
+.card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* Progress item with photo */
+.trainer-progress-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--dark-border);
+}
+
+.progress-info {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Progress log form inputs */
+#progressLogForm input[type="number"],
+#progressLogForm input[type="date"],
+#progressLogForm textarea {
+    box-sizing: border-box;
+}
+
+/* Btn sm */
+.btn-sm {
+    padding: 6px 14px;
+    font-size: 0.8rem;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-primary.btn-sm {
+    background: var(--primary);
+    color: #000;
+    font-weight: 700;
+}
+
+.btn-primary.btn-sm:hover {
+    opacity: 0.85;
+}

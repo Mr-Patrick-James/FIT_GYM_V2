@@ -967,14 +967,18 @@ $memberId = $client['member_id'];
 
                 list.innerHTML = data.data.map(p => `
                     <div class="history-item" style="border-left: 4px solid #22c55e;">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                            <strong style="color: white; font-size: 1.1rem;">
-                                <i class="fas fa-weight"></i> ${p.weight} kg
-                                ${p.height ? `<span style="font-size:0.8rem;color:var(--dark-text-secondary);margin-left:10px;"><i class="fas fa-ruler-vertical"></i> ${p.height} cm</span>` : ''}
-                            </strong>
-                            <span style="font-size: 0.8rem; color: var(--dark-text-secondary); font-weight: 600;">${new Date(p.logged_at).toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric'})}</span>
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; gap: 12px;">
+                            <div style="flex:1;">
+                                <strong style="color: white; font-size: 1.1rem; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                                    <i class="fas fa-weight"></i> ${p.weight ? p.weight + ' kg' : '—'}
+                                    ${p.height ? `<span style="font-size:0.8rem;color:var(--dark-text-secondary);"><i class="fas fa-ruler-vertical"></i> ${p.height} cm</span>` : ''}
+                                    ${p.logged_by === 'user' ? `<span style="font-size:0.7rem;background:rgba(34,197,94,0.15);color:#22c55e;padding:2px 8px;border-radius:99px;font-weight:700;">Self-logged</span>` : ''}
+                                </strong>
+                                <span style="font-size: 0.8rem; color: var(--dark-text-secondary); font-weight: 600; display:block; margin-top:4px;">${new Date(p.logged_at).toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric'})}</span>
+                                ${p.remarks ? `<p style="font-size: 0.9rem; color: var(--dark-text-secondary); line-height: 1.5; margin: 8px 0 0;">${p.remarks}</p>` : ''}
+                            </div>
+                            ${p.photo_url ? `<img src="../../${p.photo_url}" alt="Progress photo" style="width:72px;height:72px;object-fit:cover;border-radius:10px;border:1px solid rgba(255,255,255,0.1);cursor:pointer;flex-shrink:0;" onclick="window.open('../../${p.photo_url}','_blank')">` : ''}
                         </div>
-                        ${p.remarks ? `<p style="font-size: 0.9rem; color: var(--dark-text-secondary); line-height: 1.5; margin: 0;">${p.remarks}</p>` : ''}
                     </div>
                 `).join('');
             } catch (err) { console.error(err); }

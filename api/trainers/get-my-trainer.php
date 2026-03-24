@@ -72,7 +72,7 @@ while ($row = $foodResult->fetch_assoc()) {
 
 // Get latest progress logs
 $progressStmt = $conn->prepare("
-    SELECT weight as weight_kg, remarks, logged_at
+    SELECT weight as weight_kg, height, remarks, photo_url, logged_by, logged_at
     FROM member_progress
     WHERE booking_id = ?
     ORDER BY logged_at DESC
