@@ -370,36 +370,40 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
                     <div class="testimonial-author">
                         <div class="author-avatar"><img src="assets/testimonies/img1.jpg" alt="Jeux Burn Martinez" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"></div>
                         <div>
-                            <strong>Jeux Burn Martinez</strong>
+                            <strong>alden andino</strong>
                             <span>Gym Member</span>
+                            <span><a href="mailto:andinoalden10@gmail.com" style="color:#aaa;font-size:0.78rem;text-decoration:none;">andinoalden10@gmail.com</a></span>
                         </div>
                     </div>
                 </div>
                 <div class="testimonial-card">
                     <div class="stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
-                    <p>"5-star rating from a Local Guide with 82 reviews and 482 photos across Google Maps."</p>
+                    <p>"What I observed in this gym is it is beginner friendly, affordable, and clean and organized, and im terms of equipment, they have the basic needs of a client, whether a beginner or a intermediate lifter, But I would like to suggest some equipments to add like, leg extensions and leg curl machine and heavier dumbells. Overall I rate this gym a solid 10/10."</p>
                     <div class="testimonial-author">
-                        <div class="author-avatar">AU</div>
+                        <div class="author-avatar"><img src="assets/testimonies/img2.jpg" alt="Jayven Aguilar Mendoza" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"></div>
                         <div>
-                            <strong>AU TU MN</strong>
-                            <span>Local Guide &bull; 82 reviews</span>
+                            <strong>Jayven Aguilar Mendoza</strong>
+                            <span>Gym Member</span>
+                            <span><a href="mailto:mendozajayvenm@gmail.com" style="color:#aaa;font-size:0.78rem;text-decoration:none;">mendozajayvenm@gmail.com</a></span>
                         </div>
                     </div>
                 </div>
                 <div class="testimonial-card">
                     <div class="stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
-                    <p>"One of the gym's loyal members who keeps coming back."</p>
+                    <p>"Sulit maganda 10/10 keep up the good work"</p>
                     <div class="testimonial-author">
-                        <div class="author-avatar">TS</div>
+                        <div class="testimonial-author">
+                        <div class="author-avatar"><img src="assets/testimonies/img3.png" alt="Jayven Aguilar Mendoza" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"></div>
                         <div>
-                            <strong>Tramz Suison</strong>
+                            <strong>jervv adalia</strong>
                             <span>Gym Member</span>
+                             <span><a href="mailto:jerrvmark15@gmail.com" style="color:#aaa;font-size:0.78rem;text-decoration:none;">jerrvmark15@gmail.com</a></span>
                         </div>
                     </div>
                 </div>
                 <!-- Hidden extra cards — shown when "See All Reviews" is clicked -->
             </div>
-            <div style="text-align:center; margin-top: 40px;">
+            <div class="reviews-btn-wrap">
                 <button class="directions-btn" id="seeAllReviewsBtn" onclick="toggleAllReviews()">
                     See All Reviews
                 </button>
