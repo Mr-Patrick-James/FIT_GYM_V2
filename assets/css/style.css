@@ -1250,6 +1250,21 @@ header {
 
 /* ── TESTIMONIALS ── */
 .testimonials-section { background: #0a0a0a; border-top: 1px solid var(--dark-border); }
+.testimonials-section .section-header { text-align: center; }
+.testimonials-section .reviews-btn-wrap {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 40px;
+    width: 100%;
+    grid-column: 1 / -1;
+}
+.testimonials-section .reviews-btn-wrap .directions-btn {
+    margin-top: 0;
+    display: inline-flex !important;
+    margin-left: auto;
+    margin-right: auto;
+}
 .testimonials-grid {
     display: grid; grid-template-columns: repeat(3, 1fr);
     gap: 2px; background: var(--dark-border);
@@ -1271,9 +1286,14 @@ header {
 .author-avatar {
     width: 44px; height: 44px; border-radius: 50%;
     background: #222; border: 1px solid #333;
+    overflow: hidden; flex-shrink: 0;
     display: grid; place-items: center;
     font-size: 0.75rem; font-weight: 800; color: var(--text-secondary);
     flex-shrink: 0;
+}
+.author-avatar img {
+    width: 44px; height: 44px; border-radius: 50%;
+    object-fit: cover; display: block;
 }
 .testimonial-author strong { display: block; font-size: 0.85rem; font-weight: 800; }
 .testimonial-author span { font-size: 0.75rem; color: var(--text-muted); }

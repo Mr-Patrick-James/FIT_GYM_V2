@@ -111,7 +111,7 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
     <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Montserrat:wght@300;400;700;900&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="assets/css/style.css?v=1.3">
+    <link rel="stylesheet" href="assets/css/style.css?v=1.4">
 </head>
 <body>
 
@@ -405,7 +405,7 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
             </div>
             <div class="reviews-btn-wrap">
                 <button class="directions-btn" id="seeAllReviewsBtn" onclick="toggleAllReviews()">
-                    See All Reviews
+                                                      See All Reviews
                 </button>
             </div>
         </div>
