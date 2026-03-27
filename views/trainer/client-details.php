@@ -39,6 +39,12 @@ if (!$client) {
 }
 
 $memberId = $client['member_id'];
+
+// Get client questionnaire data
+$q_stmt = $conn->prepare("SELECT * FROM user_questionnaire WHERE user_id = ?");
+$q_stmt->bind_param("i", $memberId);
+$q_stmt->execute();
+$questionnaire = $q_stmt->get_result()->fetch_assoc();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -458,12 +464,141 @@ $memberId = $client['member_id'];
             </div>
         </div>
 
-        <div class="tabs" style="display: flex; gap: 24px; border-bottom: 1px solid var(--dark-border); margin-top: 32px; padding-bottom: 12px;">
+        <div class="tabs" style="display: flex; gap: 24px; border-bottom: 1px solid var(--dark-border); margin-top: 32px; padding-bottom: 12px; overflow-x: auto; white-space: nowrap;">
             <button class="tab-btn active" onclick="switchMainTab('sessions')">Sessions & Calendar</button>
+            <button class="tab-btn" onclick="switchMainTab('profile')">Client Profile</button>
             <button class="tab-btn" onclick="switchMainTab('progress')">Progress Tracking</button>
             <button class="tab-btn" onclick="switchMainTab('tips')">Tips & Guidance</button>
             <button class="tab-btn" onclick="switchMainTab('food')">Food Recommendations</button>
         </div>
+
+        <!-- Profile Tab -->
+        <div id="profileTab" class="tab-content">
+            <div class="management-grid">
+                <?php if ($questionnaire): ?>
+                    <!-- A. Basic Profile -->
+                    <div class="content-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-user-circle"></i> A. Basic Profile</h3>
+                        </div>
+                        <div style="padding: 24px;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                                <div class="info-item">
+                                    <label>Age</label>
+                                    <div class="value"><?php echo htmlspecialchars($questionnaire['age']); ?> Years</div>
+                                </div>
+                                <div class="info-item">
+                                    <label>Sex</label>
+                                    <div class="value"><?php echo htmlspecialchars($questionnaire['sex']); ?></div>
+                                </div>
+                                <div class="info-item">
+                                    <label>Height</label>
+                                    <div class="value"><?php echo htmlspecialchars($questionnaire['height']); ?> cm</div>
+                                </div>
+                                <div class="info-item">
+                                    <label>Weight</label>
+                                    <div class="value"><?php echo htmlspecialchars($questionnaire['weight']); ?> kg</div>
+                                </div>
+                            </div>
+                            <label>Medical Conditions</label>
+                            <div class="value-box"><?php echo nl2br(htmlspecialchars($questionnaire['medical_conditions'] ?: 'None reported')); ?></div>
+                            <label>Exercise Experience</label>
+                            <div class="value"><?php echo htmlspecialchars($questionnaire['exercise_history']); ?></div>
+                        </div>
+                    </div>
+
+                    <!-- B. Fitness Goals -->
+                    <div class="content-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-bullseye"></i> B. Fitness Goals</h3>
+                        </div>
+                        <div style="padding: 24px;">
+                            <label>Primary Goal</label>
+                            <div class="value-highlight"><?php echo htmlspecialchars($questionnaire['primary_goal']); ?></div>
+                            <label>Desired Pace</label>
+                            <div class="value"><?php echo htmlspecialchars($questionnaire['goal_pace']); ?></div>
+                        </div>
+                    </div>
+
+                    <!-- C. Availability & Commitment -->
+                    <div class="content-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-calendar-alt"></i> C. Availability & Commitment</h3>
+                        </div>
+                        <div style="padding: 24px;">
+                            <label>Workout Days Per Week</label>
+                            <div class="value"><?php echo htmlspecialchars($questionnaire['workout_days_per_week']); ?></div>
+                            <label>Preferred Workout Time</label>
+                            <div class="value"><?php echo htmlspecialchars($questionnaire['preferred_workout_time']); ?></div>
+                        </div>
+                    </div>
+
+                    <!-- D. Physical Condition & Focus -->
+                    <div class="content-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-heartbeat"></i> D. Condition & Focus</h3>
+                        </div>
+                        <div style="padding: 24px;">
+                            <label>Injuries or Physical Limitations</label>
+                            <div class="value-box"><?php echo nl2br(htmlspecialchars($questionnaire['injuries_limitations'] ?: 'None reported')); ?></div>
+                            <label>Focus Areas</label>
+                            <div class="value-highlight"><?php echo htmlspecialchars($questionnaire['focus_areas']); ?></div>
+                        </div>
+                    </div>
+
+                    <!-- E & F. Preferences & Confidence -->
+                    <div class="content-card full-width">
+                        <div class="card-header">
+                            <h3><i class="fas fa-sliders-h"></i> E & F. Preferences & Experience</h3>
+                        </div>
+                        <div style="padding: 24px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;">
+                            <div>
+                                <label>Workout Type Preference</label>
+                                <div class="value"><?php echo htmlspecialchars($questionnaire['workout_type']); ?></div>
+                            </div>
+                            <div>
+                                <label>Guidance Preference</label>
+                                <div class="value"><?php echo htmlspecialchars($questionnaire['trainer_guidance']); ?></div>
+                            </div>
+                            <div>
+                                <label>Gym Equipment Confidence</label>
+                                <div class="value"><?php echo htmlspecialchars($questionnaire['equipment_confidence']); ?></div>
+                            </div>
+                        </div>
+                    </div>
+                <?php else: ?>
+                    <div class="content-card full-width" style="padding: 60px; text-align: center; color: var(--premium-text-muted);">
+                        <i class="fas fa-clipboard-list" style="font-size: 3rem; margin-bottom: 20px; opacity: 0.2;"></i>
+                        <p>This client has not completed their fitness questionnaire yet.</p>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <style>
+            .info-item { margin-bottom: 16px; }
+            .value { font-weight: 700; color: #fff; font-size: 0.95rem; margin-top: 4px; }
+            .value-highlight { 
+                font-weight: 900; 
+                color: var(--primary); 
+                font-size: 1.1rem; 
+                background: rgba(255, 255, 255, 0.05); 
+                padding: 12px 16px; 
+                border-radius: 12px;
+                display: inline-block;
+                margin-top: 8px;
+            }
+            .value-box {
+                background: rgba(255, 255, 255, 0.03);
+                border: 1px solid var(--premium-border);
+                border-radius: 12px;
+                padding: 16px;
+                font-size: 0.9rem;
+                color: rgba(255, 255, 255, 0.8);
+                line-height: 1.6;
+                margin-top: 8px;
+            }
+        </style>
 
         <!-- Sessions Tab -->
         <div id="sessionsTab" class="tab-content active">
@@ -755,16 +890,32 @@ $memberId = $client['member_id'];
 
         function switchMainTab(tab) {
             const event = window.event;
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => {
+                c.classList.remove('active');
+                c.style.display = 'none';
+            });
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             
-            document.getElementById(tab + 'Tab').classList.add('active');
-            if (event) {
-                event.target.classList.add('active');
+            const targetTab = document.getElementById(tab + 'Tab');
+            if (targetTab) {
+                targetTab.classList.add('active');
+                targetTab.style.display = 'block';
+            }
+            
+            if (event && event.currentTarget && event.currentTarget.classList.contains('tab-btn')) {
+                event.currentTarget.classList.add('active');
+            } else {
+                // Find by text if called programmatically
+                const btns = document.querySelectorAll('.tab-btn');
+                btns.forEach(btn => {
+                    if (btn.getAttribute('onclick').includes(`'${tab}'`)) {
+                        btn.classList.add('active');
+                    }
+                });
             }
             
             if (tab === 'sessions' && calendar) {
-                calendar.updateSize();
+                setTimeout(() => calendar.updateSize(), 100);
             }
         }
 

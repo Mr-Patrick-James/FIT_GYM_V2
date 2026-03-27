@@ -87,6 +87,24 @@ function getSetting($key, $default = '', $settings = []) {
 
         .survey-body, .recommendation-body {
             padding: 0 40px 40px;
+            max-height: 60vh;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        /* Custom scrollbar for survey body */
+        .survey-body::-webkit-scrollbar {
+            width: 6px;
+        }
+        .survey-body::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .survey-body::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+        .survey-body::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
         }
 
         .survey-step {
@@ -155,10 +173,13 @@ function getSetting($key, $default = '', $settings = []) {
         }
 
         .survey-footer {
-            margin-top: 40px;
+            margin-top: 0;
+            padding: 20px 40px 40px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border-top: 1px solid var(--dark-border);
+            background: var(--dark-card);
         }
 
         .progress-bar {
@@ -1971,7 +1992,7 @@ function getSetting($key, $default = '', $settings = []) {
 
     <!-- Survey Modal -->
     <div class="modal-overlay survey-modal" id="surveyModal">
-        <div class="modal">
+        <div class="modal" style="max-width: 700px;">
             <button class="close-modal" onclick="skipSurvey()" style="top: 20px; right: 20px;">
                 <i class="fas fa-times"></i>
             </button>
@@ -1982,101 +2003,212 @@ function getSetting($key, $default = '', $settings = []) {
             </div>
             
             <div class="survey-body">
-                <!-- Step 1: Goal -->
+                <!-- Step 1: Basic Profile -->
                 <div class="survey-step active" data-step="1">
-                    <label class="question-label">What is your primary fitness goal?</label>
+                    <label class="question-label">A. Basic Profile</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
+                        <div class="form-group">
+                            <label style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px;">Age</label>
+                            <input type="number" id="surveyAge" class="form-control" placeholder="Years" style="background: rgba(255,255,255,0.05); border: 1px solid var(--dark-border); color: #fff; padding: 12px; border-radius: 8px; width: 100%;">
+                        </div>
+                        <div class="form-group">
+                            <label style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px;">Sex</label>
+                            <select id="surveySex" class="form-control" style="background: rgba(255,255,255,0.05); border: 1px solid var(--dark-border); color: #fff; padding: 12px; border-radius: 8px; width: 100%;">
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
+                        <div class="form-group">
+                            <label style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px;">Height (cm)</label>
+                            <input type="number" id="surveyHeight" class="form-control" placeholder="CM" oninput="checkStepValid()" style="background: rgba(255,255,255,0.05); border: 1px solid var(--dark-border); color: #fff; padding: 12px; border-radius: 8px; width: 100%;">
+                        </div>
+                        <div class="form-group">
+                            <label style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px;">Weight (kg)</label>
+                            <input type="number" id="surveyWeight" class="form-control" placeholder="KG" oninput="checkStepValid()" style="background: rgba(255,255,255,0.05); border: 1px solid var(--dark-border); color: #fff; padding: 12px; border-radius: 8px; width: 100%;">
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 24px;">
+                        <label style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px;">Medical Conditions (if any)</label>
+                        <textarea id="surveyMedical" class="form-control" placeholder="Specify any conditions or type 'None'" style="background: rgba(255,255,255,0.05); border: 1px solid var(--dark-border); color: #fff; padding: 12px; border-radius: 8px; width: 100%; height: 80px;"></textarea>
+                    </div>
+                    <label style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px; text-align: center;">Exercise Experience</label>
                     <div class="options-grid">
-                        <div class="option-card" onclick="selectSurveyOption(this, 'goal', 'weight_loss')">
-                            <i class="fas fa-weight"></i>
-                            <span>Weight Loss</span>
+                        <div class="option-card" onclick="selectSurveyOption(this, 'exercise_history', 'Beginner')">
+                            <i class="fas fa-seedling"></i>
+                            <span>Beginner</span>
                         </div>
-                        <div class="option-card" onclick="selectSurveyOption(this, 'goal', 'muscle_gain')">
-                            <i class="fas fa-fist-raised"></i>
-                            <span>Muscle Gain</span>
-                        </div>
-                        <div class="option-card" onclick="selectSurveyOption(this, 'goal', 'endurance')">
+                        <div class="option-card" onclick="selectSurveyOption(this, 'exercise_history', 'Intermediate')">
                             <i class="fas fa-running"></i>
-                            <span>Endurance</span>
+                            <span>Intermediate</span>
                         </div>
-                        <div class="option-card" onclick="selectSurveyOption(this, 'goal', 'general')">
-                            <i class="fas fa-heartbeat"></i>
-                            <span>General Fitness</span>
+                        <div class="option-card" onclick="selectSurveyOption(this, 'exercise_history', 'Advanced')">
+                            <i class="fas fa-fire"></i>
+                            <span>Advanced</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Step 2: Frequency -->
+                <!-- Step 2: Fitness Goals -->
                 <div class="survey-step" data-step="2">
-                    <label class="question-label">How often do you plan to work out?</label>
+                    <label class="question-label">B. Fitness Goals</label>
+                    <label style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px; text-align: center;">Primary Goal</label>
+                    <div class="options-grid" style="margin-bottom: 24px;">
+                        <div class="option-card" onclick="selectSurveyOption(this, 'primary_goal', 'Lose weight')">
+                            <i class="fas fa-weight"></i>
+                            <span>Lose Weight</span>
+                        </div>
+                        <div class="option-card" onclick="selectSurveyOption(this, 'primary_goal', 'Gain muscle')">
+                            <i class="fas fa-dumbbell"></i>
+                            <span>Gain Muscle</span>
+                        </div>
+                        <div class="option-card" onclick="selectSurveyOption(this, 'primary_goal', 'Improve endurance')">
+                            <i class="fas fa-heartbeat"></i>
+                            <span>Improve Endurance</span>
+                        </div>
+                        <div class="option-card" onclick="selectSurveyOption(this, 'primary_goal', 'Stay fit / general health')">
+                            <i class="fas fa-user-check"></i>
+                            <span>Stay Fit</span>
+                        </div>
+                    </div>
+                    <label style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px; text-align: center;">Desired Pace</label>
                     <div class="options-grid">
-                        <div class="option-card" onclick="selectSurveyOption(this, 'frequency', 'daily')">
-                            <i class="fas fa-calendar-day"></i>
-                            <span>Almost Daily</span>
-                        </div>
-                        <div class="option-card" onclick="selectSurveyOption(this, 'frequency', 'few_times')">
-                            <i class="fas fa-calendar-week"></i>
-                            <span>3-4 Times / Week</span>
-                        </div>
-                        <div class="option-card" onclick="selectSurveyOption(this, 'frequency', 'weekends')">
-                            <i class="fas fa-calendar-plus"></i>
-                            <span>Weekends Only</span>
-                        </div>
-                        <div class="option-card" onclick="selectSurveyOption(this, 'frequency', 'occasional')">
+                        <div class="option-card" onclick="selectSurveyOption(this, 'goal_pace', 'Slowly')">
                             <i class="fas fa-clock"></i>
-                            <span>Occasional</span>
+                            <span>Slowly</span>
+                        </div>
+                        <div class="option-card" onclick="selectSurveyOption(this, 'goal_pace', 'Moderately')">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <span>Moderately</span>
+                        </div>
+                        <div class="option-card" onclick="selectSurveyOption(this, 'goal_pace', 'Intensively')">
+                            <i class="fas fa-bolt"></i>
+                            <span>Intensively</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Step 3: Measurements -->
+                <!-- Step 3: Availability & Commitment -->
                 <div class="survey-step" data-step="3">
-                    <label class="question-label">What are your current measurements?</label>
-                    <p style="color: var(--dark-text-secondary); font-size: 0.75rem; margin-bottom: 20px;">This helps your trainer track your progress over time.</p>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                        <div class="form-group">
-                            <label style="display: block; color: #fff; font-size: 0.75rem; font-weight: 700; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">Weight (kg)</label>
-                            <div style="position: relative;">
-                                <input type="number" id="surveyWeight" step="0.1" placeholder="e.g. 70.5" class="modern-input" style="width: 100%; background: rgba(255,255,255,0.03); border: 1px solid var(--dark-border); border-radius: 12px; padding: 12px 16px; color: #fff; font-size: 0.9rem;" oninput="checkMeasurementsInput()">
-                                <span style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); color: var(--dark-text-secondary); font-size: 0.7rem; font-weight: 800;">KG</span>
-                            </div>
+                    <label class="question-label">C. Availability & Commitment</label>
+                    <label style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px; text-align: center;">Workout Days Per Week</label>
+                    <div class="options-grid" style="margin-bottom: 24px;">
+                        <div class="option-card" onclick="selectSurveyOption(this, 'workout_days_per_week', '1-2 days')">
+                            <i class="fas fa-calendar-day"></i>
+                            <span>1-2 Days</span>
                         </div>
-                        <div class="form-group">
-                            <label style="display: block; color: #fff; font-size: 0.75rem; font-weight: 700; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">Height (cm)</label>
-                            <div style="position: relative;">
-                                <input type="number" id="surveyHeight" step="0.1" placeholder="e.g. 175" class="modern-input" style="width: 100%; background: rgba(255,255,255,0.03); border: 1px solid var(--dark-border); border-radius: 12px; padding: 12px 16px; color: #fff; font-size: 0.9rem;" oninput="checkMeasurementsInput()">
-                                <span style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); color: var(--dark-text-secondary); font-size: 0.7rem; font-weight: 800;">CM</span>
-                            </div>
+                        <div class="option-card" onclick="selectSurveyOption(this, 'workout_days_per_week', '3-4 days')">
+                            <i class="fas fa-calendar-week"></i>
+                            <span>3-4 Days</span>
                         </div>
-                    </div>
-                </div>
-
-                <!-- Step 4: Commitment -->
-                <div class="survey-step" data-step="4">
-                    <label class="question-label">What's your preferred commitment length?</label>
-                    <div class="options-grid">
-                        <div class="option-card" onclick="selectSurveyOption(this, 'commitment', 'long_term')">
-                            <i class="fas fa-award"></i>
-                            <span>1 Year (VIP)</span>
-                        </div>
-                        <div class="option-card" onclick="selectSurveyOption(this, 'commitment', 'medium_term')">
+                        <div class="option-card" onclick="selectSurveyOption(this, 'workout_days_per_week', '5+ days')">
                             <i class="fas fa-calendar-check"></i>
-                            <span>30-90 Days</span>
+                            <span>5+ Days</span>
                         </div>
-                        <div class="option-card" onclick="selectSurveyOption(this, 'commitment', 'short_term')">
-                            <i class="fas fa-hourglass-half"></i>
-                            <span>Weekly</span>
+                    </div>
+                    <label style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px; text-align: center;">Preferred Workout Time</label>
+                    <div class="options-grid">
+                        <div class="option-card" onclick="selectSurveyOption(this, 'preferred_workout_time', 'Morning')">
+                            <i class="fas fa-sun"></i>
+                            <span>Morning</span>
                         </div>
-                        <div class="option-card" onclick="selectSurveyOption(this, 'commitment', 'trial')">
-                            <i class="fas fa-ticket-alt"></i>
-                            <span>One-time / Trial</span>
+                        <div class="option-card" onclick="selectSurveyOption(this, 'preferred_workout_time', 'Afternoon')">
+                            <i class="fas fa-cloud-sun"></i>
+                            <span>Afternoon</span>
+                        </div>
+                        <div class="option-card" onclick="selectSurveyOption(this, 'preferred_workout_time', 'Evening')">
+                            <i class="fas fa-moon"></i>
+                            <span>Evening</span>
                         </div>
                     </div>
                 </div>
 
-                <div class="survey-footer">
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="surveyProgress"></div>
+                <!-- Step 4: Condition & Focus -->
+                <div class="survey-step" data-step="4">
+                    <label class="question-label">D. Physical Condition & Focus</label>
+                    <div class="form-group" style="margin-bottom: 24px;">
+                        <label style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px;">Injuries or Physical Limitations (if any)</label>
+                        <textarea id="surveyInjuries" class="form-control" placeholder="Describe any injuries or type 'None'" style="background: rgba(255,255,255,0.05); border: 1px solid var(--dark-border); color: #fff; padding: 12px; border-radius: 8px; width: 100%; height: 80px;"></textarea>
                     </div>
+                    <label style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px; text-align: center;">Focus Areas (Which areas do you want to focus on?)</label>
+                    <div class="options-grid">
+                        <div class="option-card" onclick="toggleSurveyOption(this, 'focus_areas', 'Arms')">
+                            <i class="fas fa-hand-fist"></i>
+                            <span>Arms</span>
+                        </div>
+                        <div class="option-card" onclick="toggleSurveyOption(this, 'focus_areas', 'Legs')">
+                            <i class="fas fa-shoe-prints"></i>
+                            <span>Legs</span>
+                        </div>
+                        <div class="option-card" onclick="toggleSurveyOption(this, 'focus_areas', 'Core')">
+                            <i class="fas fa-shield-alt"></i>
+                            <span>Core</span>
+                        </div>
+                        <div class="option-card" onclick="toggleSurveyOption(this, 'focus_areas', 'Full body')">
+                            <i class="fas fa-male"></i>
+                            <span>Full Body</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 5: Preferences & Confidence -->
+                <div class="survey-step" data-step="5">
+                    <label class="question-label">E & F. Preferences & Confidence</label>
+                    <label style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px; text-align: center;">Workout Type Preference</label>
+                    <div class="options-grid" style="margin-bottom: 24px;">
+                        <div class="option-card" onclick="selectSurveyOption(this, 'workout_type', 'Cardio')">
+                            <i class="fas fa-heartbeat"></i>
+                            <span>Cardio</span>
+                        </div>
+                        <div class="option-card" onclick="selectSurveyOption(this, 'workout_type', 'Strength training')">
+                            <i class="fas fa-dumbbell"></i>
+                            <span>Strength</span>
+                        </div>
+                        <div class="option-card" onclick="selectSurveyOption(this, 'workout_type', 'Mixed')">
+                            <i class="fas fa-sync-alt"></i>
+                            <span>Mixed</span>
+                        </div>
+                    </div>
+                    <label style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px; text-align: center;">Guidance Preference</label>
+                    <div class="options-grid" style="margin-bottom: 24px;">
+                        <div class="option-card" onclick="selectSurveyOption(this, 'trainer_guidance', 'With trainer guidance')">
+                            <i class="fas fa-user-friends"></i>
+                            <span>With Trainer</span>
+                        </div>
+                        <div class="option-card" onclick="selectSurveyOption(this, 'trainer_guidance', 'Independent workout')">
+                            <i class="fas fa-user"></i>
+                            <span>Independent</span>
+                        </div>
+                    </div>
+                    <label style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px; text-align: center;">Gym Equipment Confidence</label>
+                    <div class="options-grid">
+                        <div class="option-card" onclick="selectSurveyOption(this, 'equipment_confidence', 'Not confident')">
+                            <i class="fas fa-frown"></i>
+                            <span>Not Confident</span>
+                        </div>
+                        <div class="option-card" onclick="selectSurveyOption(this, 'equipment_confidence', 'Somewhat confident')">
+                            <i class="fas fa-meh"></i>
+                            <span>Somewhat</span>
+                        </div>
+                        <div class="option-card" onclick="selectSurveyOption(this, 'equipment_confidence', 'Very')">
+                            <i class="fas fa-smile"></i>
+                            <span>Very Confident</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="survey-footer">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="surveyProgress" style="width: 20%;"></div>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="survey-nav-btn" id="surveyBackBtn" style="display: none; background: rgba(255,255,255,0.05); color: #fff;" onclick="prevSurveyStep()">
+                        <i class="fas fa-arrow-left"></i>
+                        <span>Back</span>
+                    </button>
                     <button class="survey-nav-btn btn-next" id="surveyNextBtn" disabled onclick="nextSurveyStep()">
                         <span>Next Step</span>
                         <i class="fas fa-arrow-right"></i>

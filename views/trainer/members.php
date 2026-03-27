@@ -1556,7 +1556,15 @@ $conn->close();
             
             try {
                 const response = await fetch('../../api/trainers/get-clients.php');
-                const data = await response.json();
+                const text = await response.text();
+                
+                let data;
+                try {
+                    data = JSON.parse(text);
+                } catch (e) {
+                    console.error('JSON Parse Error. Raw response:', text);
+                    throw new Error('Invalid server response format. Check console for details.');
+                }
                 
                 if (data.success) {
                     allClients = data.data;
@@ -1565,20 +1573,23 @@ $conn->close();
                     for (let client of allClients) {
                         try {
                             const sResp = await fetch(`../../api/trainers/get-sessions.php?booking_id=${client.booking_id}&upcoming=1`);
+                            if (!sResp.ok) throw new Error('Session fetch failed');
                             const sData = await sResp.json();
                             client.upcoming_count = Array.isArray(sData) ? sData.length : 0;
                         } catch (e) {
+                            console.warn('Error loading sessions for client:', client.booking_id, e);
                             client.upcoming_count = 0;
                         }
                     }
                     
                     renderClients(allClients);
                 } else {
+                    console.error('API Error:', data.message);
                     grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px;"><p style="color: #ef4444;">${data.message}</p></div>`;
                 }
             } catch (error) {
                 console.error('Error loading clients:', error);
-                grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px;"><p style="color: #ef4444;">Failed to load clients.</p></div>`;
+                grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px;"><p style="color: #ef4444;">Failed to load clients. ${error.message}</p></div>`;
             }
         }
 
@@ -1625,8 +1636,16 @@ $conn->close();
                                 <span class="info-value">${member.package_name}</span>
                             </div>
                             <div class="info-item">
-                                <span class="info-label">Contact</span>
-                                <span class="info-value">${member.contact || 'Not set'}</span>
+                                <span class="info-label">Goal</span>
+                                <span class="info-value" style="color: var(--primary); font-weight: 800;">${member.primary_goal || 'Not set'}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Level</span>
+                                <span class="info-value">${member.exercise_history || 'Not set'}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Frequency</span>
+                                <span class="info-value">${member.workout_days_per_week || 'Not set'}</span>
                             </div>
                             <div class="info-item" style="grid-column: span 2;">
                                 <span class="info-label">Subscription Expiry</span>

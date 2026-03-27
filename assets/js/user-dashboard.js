@@ -239,75 +239,88 @@ async function initDashboard() {
 
 // Survey State
 let surveyData = {
-    goal: null,
-    frequency: null,
+    age: null,
+    sex: 'Male',
     weight: null,
     height: null,
-    commitment: null
+    medical_conditions: 'None',
+    exercise_history: 'Beginner',
+    primary_goal: 'Stay fit / general health',
+    goal_pace: 'Moderately',
+    workout_days_per_week: '1-2 days',
+    preferred_workout_time: 'Morning',
+    injuries_limitations: 'None',
+    focus_areas: [],
+    workout_type: 'Mixed',
+    trainer_guidance: 'Independent workout',
+    equipment_confidence: 'Not confident'
 };
 let currentSurveyStep = 1;
 
-function checkMeasurementsInput() {
-    const weight = document.getElementById('surveyWeight').value;
-    const height = document.getElementById('surveyHeight').value;
+function checkStepValid() {
+    const nextBtn = document.getElementById('surveyNextBtn');
+    if (!nextBtn) return;
+
+    let isValid = false;
     
-    // Enable next button if both are filled and greater than 0
-    const isValid = weight > 0 && height > 0;
-    document.getElementById('surveyNextBtn').disabled = !isValid;
-    
-    if (isValid) {
-        surveyData.weight = weight;
-        surveyData.height = height;
+    if (currentSurveyStep === 1) {
+        const age = document.getElementById('surveyAge').value;
+        const height = document.getElementById('surveyHeight').value;
+        const weight = document.getElementById('surveyWeight').value;
+        isValid = age > 0 && height > 0 && weight > 0 && surveyData.exercise_history !== null;
+    } else if (currentSurveyStep === 2) {
+        isValid = surveyData.primary_goal !== null && surveyData.goal_pace !== null;
+    } else if (currentSurveyStep === 3) {
+        isValid = surveyData.workout_days_per_week !== null && surveyData.preferred_workout_time !== null;
+    } else if (currentSurveyStep === 4) {
+        isValid = surveyData.focus_areas.length > 0;
+    } else if (currentSurveyStep === 5) {
+        isValid = surveyData.workout_type !== null && surveyData.trainer_guidance !== null && surveyData.equipment_confidence !== null;
     }
+
+    nextBtn.disabled = !isValid;
 }
 
-function checkSurveyStatus() {
-    // We check if the survey has been completed for the current user
-    let userId = 'guest';
+async function checkSurveyStatus() {
     try {
-        const userData = JSON.parse(localStorage.getItem('userData'));
-        if (userData) {
-            userId = userData.id || userData.email || 'guest';
+        const response = await fetch('../../api/users/get-questionnaire.php');
+        const data = await response.json();
+        
+        if (data.success) {
+            // Already completed
+            console.log('Survey already completed');
+            return;
         }
     } catch (e) {
-        console.error('Error getting user identifier for survey:', e);
+        console.error('Error checking survey status:', e);
     }
     
-    // NOTE: For testing purposes, we always show the survey even if completed
-    const surveyCompleted = false; // localStorage.getItem('gym_survey_completed_' + userId);
+    // Reset survey state
+    currentSurveyStep = 1;
     
-    if (!surveyCompleted) {
-        // Reset survey state just in case
-        currentSurveyStep = 1;
-        surveyData = { goal: null, frequency: null, commitment: null };
-        
-        setTimeout(() => {
-            const modal = document.getElementById('surveyModal');
-            if (modal) {
-                // Ensure first step is active and others are hidden
-                document.querySelectorAll('.survey-step').forEach(step => step.classList.remove('active'));
-                const firstStep = document.querySelector('.survey-step[data-step="1"]');
-                if (firstStep) firstStep.classList.add('active');
-                
-                // Reset progress bar
-                const progressBar = document.getElementById('surveyProgress');
-                if (progressBar) progressBar.style.width = '33%';
-                
-                // Reset next button
-                const nextBtn = document.getElementById('surveyNextBtn');
-                if (nextBtn) {
-                    nextBtn.disabled = true;
-                    nextBtn.innerHTML = '<span>Next Step</span> <i class="fas fa-arrow-right"></i>';
-                }
-                
-                // Reset all selected options
-                document.querySelectorAll('.option-card').forEach(card => card.classList.remove('selected'));
-                
-                modal.classList.add('active');
-                console.log('Showing survey for user:', userId);
+    setTimeout(() => {
+        const modal = document.getElementById('surveyModal');
+        if (modal) {
+            document.querySelectorAll('.survey-step').forEach(step => step.classList.remove('active'));
+            const firstStep = document.querySelector('.survey-step[data-step="1"]');
+            if (firstStep) firstStep.classList.add('active');
+            
+            const progressBar = document.getElementById('surveyProgress');
+            if (progressBar) progressBar.style.width = '20%';
+            
+            const nextBtn = document.getElementById('surveyNextBtn');
+            const backBtn = document.getElementById('surveyBackBtn');
+            if (nextBtn) {
+                nextBtn.disabled = true;
+                nextBtn.innerHTML = '<span>Next Step</span> <i class="fas fa-arrow-right"></i>';
             }
-        }, 1500);
-    }
+            if (backBtn) backBtn.style.display = 'none';
+            
+            document.querySelectorAll('.option-card').forEach(card => card.classList.remove('selected'));
+            
+            modal.classList.add('active');
+        }
+    }, 1500);
 }
 
 // Load dynamic payment settings from database
@@ -3040,117 +3053,145 @@ function selectSurveyOption(element, category, value) {
     surveyData[category] = value;
     
     // Enable next button
-    document.getElementById('surveyNextBtn').disabled = false;
+    checkStepValid();
+}
+
+function toggleSurveyOption(element, category, value) {
+    if (!surveyData[category]) surveyData[category] = [];
+    
+    const index = surveyData[category].indexOf(value);
+    if (index > -1) {
+        surveyData[category].splice(index, 1);
+        element.classList.remove('selected');
+    } else {
+        surveyData[category].push(value);
+        element.classList.add('selected');
+    }
+    
+    checkStepValid();
 }
 
 function nextSurveyStep() {
-    if (currentSurveyStep < 4) {
+    if (currentSurveyStep < 5) {
+        // Collect inputs if on Step 1
+        if (currentSurveyStep === 1) {
+            surveyData.age = document.getElementById('surveyAge').value;
+            surveyData.height = document.getElementById('surveyHeight').value;
+            surveyData.weight = document.getElementById('surveyWeight').value;
+            surveyData.sex = document.getElementById('surveySex').value;
+            surveyData.medical_conditions = document.getElementById('surveyMedical').value || 'None';
+        }
+        
+        // Collect inputs if on Step 4
+        if (currentSurveyStep === 4) {
+            surveyData.injuries_limitations = document.getElementById('surveyInjuries').value || 'None';
+        }
+
         // Move to next step
         document.querySelector(`.survey-step[data-step="${currentSurveyStep}"]`).classList.remove('active');
         currentSurveyStep++;
         document.querySelector(`.survey-step[data-step="${currentSurveyStep}"]`).classList.add('active');
         
         // Update progress bar
-        const progress = (currentSurveyStep / 4) * 100;
+        const progress = (currentSurveyStep / 5) * 100;
         document.getElementById('surveyProgress').style.width = `${progress}%`;
         
+        // Show/Hide back button
+        document.getElementById('surveyBackBtn').style.display = 'block';
+
         // Update button text for last step
-        if (currentSurveyStep === 4) {
+        if (currentSurveyStep === 5) {
             document.getElementById('surveyNextBtn').innerHTML = '<span>Get My Plan</span> <i class="fas fa-check"></i>';
         } else {
             document.getElementById('surveyNextBtn').innerHTML = '<span>Next Step</span> <i class="fas fa-arrow-right"></i>';
         }
         
-        // Disable next button until option is selected or inputs are filled for the new step
-        if (currentSurveyStep === 3) {
-            checkMeasurementsInput(); // Check if they already typed something
-        } else {
-            document.getElementById('surveyNextBtn').disabled = true;
-        }
+        // Check if next step is already valid (e.g., if user went back)
+        checkStepValid();
     } else {
-        // Survey complete - calculate recommendation
+        // Survey complete
         finishSurvey();
     }
 }
 
-function skipSurvey() {
-    let userId = 'guest';
-    try {
-        const userData = JSON.parse(localStorage.getItem('userData'));
-        if (userData) {
-            userId = userData.id || userData.email || 'guest';
+function prevSurveyStep() {
+    if (currentSurveyStep > 1) {
+        document.querySelector(`.survey-step[data-step="${currentSurveyStep}"]`).classList.remove('active');
+        currentSurveyStep--;
+        document.querySelector(`.survey-step[data-step="${currentSurveyStep}"]`).classList.add('active');
+        
+        const progress = (currentSurveyStep / 5) * 100;
+        document.getElementById('surveyProgress').style.width = `${progress}%`;
+        
+        if (currentSurveyStep === 1) {
+            document.getElementById('surveyBackBtn').style.display = 'none';
         }
-    } catch (e) {
-        console.error('Error getting user identifier for survey:', e);
+        
+        document.getElementById('surveyNextBtn').innerHTML = '<span>Next Step</span> <i class="fas fa-arrow-right"></i>';
+        checkStepValid();
     }
-    
-    // Set as completed even if skipped so it doesn't pop up again
-    localStorage.setItem('gym_survey_completed_' + userId, 'true');
+}
+
+function skipSurvey() {
     document.getElementById('surveyModal').classList.remove('active');
     showNotification('Survey skipped. You can always view our packages in the sidebar!', 'info');
 }
 
-function finishSurvey() {
-    let userId = 'guest';
+async function finishSurvey() {
     try {
-        const userData = JSON.parse(localStorage.getItem('userData'));
-        if (userData) {
-            userId = userData.id || userData.email || 'guest';
+        // Prepare focus areas as string
+        const focusAreasString = Array.isArray(surveyData.focus_areas) ? surveyData.focus_areas.join(', ') : surveyData.focus_areas;
+        
+        const response = await fetch('../../api/users/save-questionnaire.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                ...surveyData,
+                focus_areas: focusAreasString
+            })
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            document.getElementById('surveyModal').classList.remove('active');
+            
+            // Calculate recommendation
+            calculateRecommendation();
+        } else {
+            showNotification('Error saving profile: ' + result.message, 'warning');
         }
-    } catch (e) {
-        console.error('Error getting user identifier for survey:', e);
+    } catch (error) {
+        console.error('Error finishing survey:', error);
+        showNotification('Connection error while saving profile', 'warning');
     }
-    
-    // Save measurements if available
-    if (surveyData.weight && surveyData.height) {
-        saveInitialMeasurements(surveyData.weight, surveyData.height);
-    }
-    
-    localStorage.setItem('gym_survey_completed_' + userId, 'true');
-    document.getElementById('surveyModal').classList.remove('active');
-    
+}
+
+function calculateRecommendation() {
     // Recommendation Logic based on Active Packages
     let recommendedPackage = null;
     
-    // Helper to check if a package exists in our active packages list
     const getPackageByName = (name) => {
-        return packagesData.find(pkg => pkg.name === name);
+        return packagesData.find(pkg => pkg.name.toLowerCase().includes(name.toLowerCase()));
     };
 
     // Determine preferred package based on survey
-    let preferredName = "";
-    if (surveyData.commitment === 'long_term') {
-        preferredName = "Annual Membership";
-    } else if (surveyData.commitment === 'medium_term') {
-        if (surveyData.goal === 'muscle_gain' || surveyData.frequency === 'daily') {
-            preferredName = "3-Month Package";
+    let preferredKeyword = "";
+    
+    // Strategy:
+    // 1. If user wants a trainer and it's muscle gain/weight loss, recommend something intensive
+    // 2. Based on workout days
+    if (surveyData.primary_goal === 'Gain muscle' || surveyData.primary_goal === 'Lose weight') {
+        if (surveyData.workout_days_per_week === '5+ days') {
+            preferredKeyword = "Monthly"; // Assuming monthly is the premium/intensive one
         } else {
-            preferredName = "Monthly Membership";
+            preferredKeyword = "Weekly";
         }
-    } else if (surveyData.commitment === 'short_term') {
-        preferredName = "Weekly Pass";
     } else {
-        preferredName = "Walk-in Pass";
+        preferredKeyword = "Pass"; // General fitness
     }
 
-    // Fallback logic: if preferred isn't active, find the next best available
-    recommendedPackage = getPackageByName(preferredName);
-    
-    if (!recommendedPackage) {
-        // Fallback hierarchy if preferred is disabled
-        const fallbackOrder = [
-            "Monthly Membership", 
-            "Weekly Pass", 
-            "3-Month Package", 
-            "Walk-in Pass", 
-            "Annual Membership"
-        ];
-        
-        for (const name of fallbackOrder) {
-            recommendedPackage = getPackageByName(name);
-            if (recommendedPackage) break;
-        }
-    }
+    // Fallback logic
+    recommendedPackage = getPackageByName(preferredKeyword);
     
     if (!recommendedPackage && packagesData.length > 0) {
         recommendedPackage = packagesData[0];

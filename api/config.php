@@ -18,6 +18,13 @@ if (!$envLoaded) {
     error_log("Environment file not loaded, using server defaults");
 }
 
+// For API requests, ensure errors are logged but not displayed to prevent breaking JSON
+if (stripos($_SERVER['SCRIPT_NAME'] ?? '', '/api/') !== false) {
+    ini_set('display_errors', 0);
+    ini_set('log_errors', 1);
+    error_reporting(E_ALL);
+}
+
 // Helper to get environment variable
 function getEnvVar($key, $default = '') {
     return $_ENV[$key] ?? $default;
@@ -122,9 +129,11 @@ function createNotification($userId, $title, $message, $type = 'info') {
 
 // Enable CORS (but don't set headers if they're already sent)
 if (!headers_sent()) {
-    header("Access-Control-Allow-Origin: *");
+    $origin = $_SERVER['HTTP_ORIGIN'] ?? '*';
+    header("Access-Control-Allow-Origin: $origin");
+    header("Access-Control-Allow-Credentials: true");
     header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
-    header("Access-Control-Allow-Headers: Content-Type, Authorization");
+    header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
 }
 
 // Handle preflight requests
@@ -182,8 +191,10 @@ function getRequestData() {
  */
 if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'GET') {
     $currentScript = $_SERVER['SCRIPT_NAME'] ?? '';
+    $normalizedScript = str_replace('\\', '/', $currentScript);
+    
     // Only trigger on main pages, not on every single API call or asset load
-    if (strpos($currentScript, 'views/') !== false || strpos($currentScript, 'index.php') !== false) {
+    if (strpos($normalizedScript, '/api/') === false && (strpos($normalizedScript, '/views/') !== false || strpos($normalizedScript, '/index.php') !== false)) {
         try {
             $conn = getDBConnection();
             $today = date('Y-m-d');

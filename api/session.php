@@ -67,6 +67,11 @@ function isTrainer() {
     return isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'trainer';
 }
 
+function isApiRequest() {
+    $script = $_SERVER['SCRIPT_NAME'] ?? $_SERVER['PHP_SELF'] ?? '';
+    return stripos($script, '/api/') !== false;
+}
+
 // Require login - redirect to index if not logged in
 function requireLogin() {
     // Ensure session is started
@@ -77,25 +82,22 @@ function requireLogin() {
     // Check if logged in - check both session and cookies
     $isLoggedIn = isset($_SESSION['user_id']) && isset($_SESSION['user_email']);
     
-    // If session not found, check if session cookie exists (might be path issue)
-    if (!$isLoggedIn && isset($_COOKIE[session_name()])) {
-        error_log("Session cookie exists but session data not found - Cookie: " . $_COOKIE[session_name()] . ", Current Session ID: " . session_id());
-        // Try to get session ID from cookie
-        $cookieSessionId = $_COOKIE[session_name()];
-        if ($cookieSessionId !== session_id()) {
-            error_log("Session ID mismatch - Cookie has: $cookieSessionId, Current: " . session_id());
-        }
-    }
-    
     if (!$isLoggedIn) {
         // Log for debugging
-        error_log("requireLogin() FAILED - Script: " . $_SERVER['PHP_SELF']);
-        error_log("Session ID: " . session_id());
-        error_log("Session name: " . session_name());
-        error_log("Session data exists: " . (empty($_SESSION) ? 'NO' : 'YES'));
-        error_log("Cookies: " . (empty($_COOKIE) ? 'NONE' : print_r(array_keys($_COOKIE), true)));
-        if (!empty($_SESSION)) {
-            error_log("Session keys: " . print_r(array_keys($_SESSION), true));
+        error_log("requireLogin() FAILED - Script: " . ($_SERVER['SCRIPT_NAME'] ?? $_SERVER['PHP_SELF']));
+        
+        // Handle API requests separately
+        if (isApiRequest()) {
+            if (!headers_sent()) {
+                header("Content-Type: application/json");
+            }
+            http_response_code(401);
+            echo json_encode([
+                'success' => false,
+                'message' => 'Unauthorized access. Please log in.',
+                'error_code' => 'UNAUTHORIZED'
+            ]);
+            exit();
         }
         
         // Determine the correct relative path based on current location
@@ -126,6 +128,20 @@ function requireLogin() {
 function requireAdmin() {
     requireLogin();
     if (!isAdmin()) {
+        // Handle API requests separately
+        if (isApiRequest()) {
+            if (!headers_sent()) {
+                header("Content-Type: application/json");
+            }
+            http_response_code(403);
+            echo json_encode([
+                'success' => false,
+                'message' => 'Admin privileges required.',
+                'error_code' => 'FORBIDDEN'
+            ]);
+            exit();
+        }
+
         // Determine the correct relative path based on current location
         $currentPath = $_SERVER['PHP_SELF'];
         
@@ -144,6 +160,20 @@ function requireAdmin() {
 function requireTrainer() {
     requireLogin();
     if (!isTrainer() && !isAdmin()) {
+        // Handle API requests separately
+        if (isApiRequest()) {
+            if (!headers_sent()) {
+                header("Content-Type: application/json");
+            }
+            http_response_code(403);
+            echo json_encode([
+                'success' => false,
+                'message' => 'Trainer privileges required.',
+                'error_code' => 'FORBIDDEN'
+            ]);
+            exit();
+        }
+
         // Determine the correct relative path based on current location
         $currentPath = $_SERVER['PHP_SELF'];
         
