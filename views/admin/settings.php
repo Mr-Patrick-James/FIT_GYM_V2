@@ -210,10 +210,6 @@ $user = getCurrentUser();
                         <i class="fas fa-paint-brush"></i>
                         <span>Appearance</span>
                     </button>
-                    <button class="settings-nav-item" onclick="showSettingsTab('landing')" id="nav-landing">
-                        <i class="fas fa-home"></i>
-                        <span>Landing Page</span>
-                    </button>
                     <button class="settings-nav-item" onclick="showSettingsTab('account')" id="nav-account">
                         <i class="fas fa-user"></i>
                         <span>Account</span>
@@ -297,6 +293,92 @@ $user = getCurrentUser();
                                 <option value="UTC">UTC</option>
                                 <option value="America/New_York">America/New_York (EST)</option>
                             </select>
+                        </div>
+
+                        <!-- Landing Page Content Merged into General -->
+                        <div class="settings-subsection" style="margin-top: 32px; padding-top: 32px; border-top: 1px solid var(--premium-border);">
+                            <h3>Landing Page Content</h3>
+                            <p class="settings-hint" style="margin-bottom: 24px;">Customize the content of your public landing page</p>
+                            
+                            <div class="settings-item">
+                                <div class="settings-item-label">
+                                    <label>About Us Text</label>
+                                    <span class="settings-hint">The main description in the About section</span>
+                                </div>
+                                <textarea id="aboutText" class="settings-input" rows="4" placeholder="Enter gym description..."></textarea>
+                            </div>
+
+                            <div class="settings-item">
+                                <div class="settings-item-label">
+                                    <label>Our Mission</label>
+                                    <span class="settings-hint">Your gym's mission statement</span>
+                                </div>
+                                <textarea id="missionText" class="settings-input" rows="3" placeholder="Enter mission statement..."></textarea>
+                            </div>
+
+                            <div class="settings-item">
+                                <div class="settings-item-label">
+                                    <label>Years of Experience</label>
+                                    <span class="settings-hint">Displayed in the stats section (e.g., 10+)</span>
+                                </div>
+                                <input type="text" id="yearsExperience" class="settings-input" placeholder="10+">
+                            </div>
+
+                            <div class="settings-item">
+                                <div class="settings-item-label">
+                                    <label>Hero Background Slider</label>
+                                    <span class="settings-hint">Multiple images for the home page hero section slider.</span>
+                                </div>
+                                <div class="modern-upload-area" id="hero-upload-area">
+                                    <div class="upload-dropzone" onclick="document.getElementById('heroImageInput').click()">
+                                        <i class="fas fa-cloud-upload-alt"></i>
+                                        <div class="upload-text">
+                                            <strong>Click to upload</strong> or drag and drop
+                                            <span>PNG, JPG, WEBP up to 5MB</span>
+                                        </div>
+                                    </div>
+                                    <div class="gallery-grid" id="hero-gallery-grid">
+                                        <!-- Gallery items will be injected here by JS -->
+                                        <div class="gallery-add-btn" onclick="document.getElementById('heroImageInput').click()" style="display: none;">
+                                            <i class="fas fa-plus"></i>
+                                            <span>Add Image</span>
+                                        </div>
+                                    </div>
+                                    <input type="file" id="heroImageInput" accept="image/*" multiple style="display: none;" onchange="handleHeroUpload(this)">
+                                </div>
+                            </div>
+
+                            <div class="settings-item">
+                                <div class="settings-item-label">
+                                    <label>Gym Interior Gallery</label>
+                                    <span class="settings-hint">Multiple images for the About section slider.</span>
+                                </div>
+                                <div class="modern-upload-area" id="about-upload-area">
+                                    <div class="upload-dropzone" onclick="document.getElementById('aboutImageInput').click()">
+                                        <i class="fas fa-images"></i>
+                                        <div class="upload-text">
+                                            <strong>Click to upload</strong> or drag and drop
+                                            <span>PNG, JPG, WEBP up to 5MB</span>
+                                        </div>
+                                    </div>
+                                    <div class="gallery-grid" id="about-gallery-grid">
+                                        <!-- Gallery items will be injected here by JS -->
+                                        <div class="gallery-add-btn" onclick="document.getElementById('aboutImageInput').click()" style="display: none;">
+                                            <i class="fas fa-plus"></i>
+                                            <span>Add Image</span>
+                                        </div>
+                                    </div>
+                                    <input type="file" id="aboutImageInput" accept="image/*" multiple style="display: none;" onchange="handleGalleryUpload(this)">
+                                </div>
+                            </div>
+
+                            <div class="settings-item">
+                                <div class="settings-item-label">
+                                    <label>Footer Tagline</label>
+                                    <span class="settings-hint">Brief description shown in the footer</span>
+                                </div>
+                                <input type="text" id="footerTagline" class="settings-input" placeholder="Pushing your limits since 2014...">
+                            </div>
                         </div>
 
                         <div class="settings-actions">
@@ -505,105 +587,6 @@ $user = getCurrentUser();
 
                         <div class="settings-actions">
                             <button class="btn btn-primary" onclick="saveAppearanceSettings()">
-                                <i class="fas fa-save"></i>
-                                Save Changes
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Landing Page Settings -->
-                <div id="settings-landing" class="settings-section" style="display: none;">
-                    <div class="settings-section-header">
-                        <div>
-                            <h2>Landing Page</h2>
-                            <p>Customize the content of your public landing page</p>
-                        </div>
-                    </div>
-
-                    <div class="settings-group">
-                        <div class="settings-item">
-                            <div class="settings-item-label">
-                                <label>About Us Text</label>
-                                <span class="settings-hint">The main description in the About section</span>
-                            </div>
-                            <textarea id="aboutText" class="settings-input" rows="4" placeholder="Enter gym description..."></textarea>
-                        </div>
-
-                        <div class="settings-item">
-                            <div class="settings-item-label">
-                                <label>Our Mission</label>
-                                <span class="settings-hint">Your gym's mission statement</span>
-                            </div>
-                            <textarea id="missionText" class="settings-input" rows="3" placeholder="Enter mission statement..."></textarea>
-                        </div>
-
-                        <div class="settings-item">
-                            <div class="settings-item-label">
-                                <label>Years of Experience</label>
-                                <span class="settings-hint">Displayed in the stats section (e.g., 10+)</span>
-                            </div>
-                            <input type="text" id="yearsExperience" class="settings-input" placeholder="10+">
-                        </div>
-
-                        <div class="settings-item">
-                            <div class="settings-item-label">
-                                <label>Hero Background Slider</label>
-                                <span class="settings-hint">Multiple images for the home page hero section slider.</span>
-                            </div>
-                            <div class="modern-upload-area" id="hero-upload-area">
-                                <div class="upload-dropzone" onclick="document.getElementById('heroImageInput').click()">
-                                    <i class="fas fa-cloud-upload-alt"></i>
-                                    <div class="upload-text">
-                                        <strong>Click to upload</strong> or drag and drop
-                                        <span>PNG, JPG, WEBP up to 5MB</span>
-                                    </div>
-                                </div>
-                                <div class="gallery-grid" id="hero-gallery-grid">
-                                    <!-- Gallery items will be injected here by JS -->
-                                    <div class="gallery-add-btn" onclick="document.getElementById('heroImageInput').click()" style="display: none;">
-                                        <i class="fas fa-plus"></i>
-                                        <span>Add Image</span>
-                                    </div>
-                                </div>
-                                <input type="file" id="heroImageInput" accept="image/*" multiple style="display: none;" onchange="handleHeroUpload(this)">
-                            </div>
-                        </div>
-
-                        <div class="settings-item">
-                            <div class="settings-item-label">
-                                <label>Gym Interior Gallery</label>
-                                <span class="settings-hint">Multiple images for the About section slider.</span>
-                            </div>
-                            <div class="modern-upload-area" id="about-upload-area">
-                                <div class="upload-dropzone" onclick="document.getElementById('aboutImageInput').click()">
-                                    <i class="fas fa-images"></i>
-                                    <div class="upload-text">
-                                        <strong>Click to upload</strong> or drag and drop
-                                        <span>PNG, JPG, WEBP up to 5MB</span>
-                                    </div>
-                                </div>
-                                <div class="gallery-grid" id="about-gallery-grid">
-                                    <!-- Gallery items will be injected here by JS -->
-                                    <div class="gallery-add-btn" onclick="document.getElementById('aboutImageInput').click()" style="display: none;">
-                                        <i class="fas fa-plus"></i>
-                                        <span>Add Image</span>
-                                    </div>
-                                </div>
-                                <input type="file" id="aboutImageInput" accept="image/*" multiple style="display: none;" onchange="handleGalleryUpload(this)">
-                            </div>
-                        </div>
-
-                        <div class="settings-item">
-                            <div class="settings-item-label">
-                                <label>Footer Tagline</label>
-                                <span class="settings-hint">Brief description shown in the footer</span>
-                            </div>
-                            <input type="text" id="footerTagline" class="settings-input" placeholder="Pushing your limits since 2014...">
-                        </div>
-
-                        <div class="settings-actions">
-                            <button class="btn btn-primary" onclick="saveLandingSettings()">
                                 <i class="fas fa-save"></i>
                                 Save Changes
                             </button>

@@ -381,9 +381,11 @@ async function saveToDB(formData) {
     }
 }
 
-// Save general settings
+// Save general settings (includes Landing Page content)
 function saveGeneralSettings() {
     const formData = new FormData();
+    
+    // Gym Info
     formData.append('gym_name', document.getElementById('gymName').value.trim());
     formData.append('gym_address', document.getElementById('gymAddress').value.trim());
     formData.append('gym_contact', document.getElementById('gymContact').value.trim());
@@ -392,27 +394,7 @@ function saveGeneralSettings() {
     formData.append('closing_time', document.getElementById('closingTime').value);
     formData.append('timezone', document.getElementById('timezone').value);
     
-    saveToDB(formData);
-}
-
-// Save payment settings
-function savePaymentSettings() {
-    const formData = new FormData();
-    formData.append('gcash_number', document.getElementById('gcashNumber').value.trim());
-    formData.append('gcash_name', document.getElementById('gcashName').value.trim());
-    formData.append('payment_instructions', document.getElementById('paymentInstructions').value.trim());
-    
-    const qrFile = document.getElementById('gcashQR').files[0];
-    if (qrFile) {
-        formData.append('qr_image', qrFile);
-    }
-    
-    saveToDB(formData);
-}
-
-// Save landing page settings
-function saveLandingSettings() {
-    const formData = new FormData();
+    // Landing Page Info
     formData.append('about_text', document.getElementById('aboutText').value.trim());
     formData.append('mission_text', document.getElementById('missionText').value.trim());
     formData.append('years_experience', document.getElementById('yearsExperience').value.trim());
@@ -433,6 +415,21 @@ function saveLandingSettings() {
     pendingHeroFiles.forEach((file, index) => {
         formData.append(`hero_file_${index}`, file);
     });
+    
+    saveToDB(formData);
+}
+
+// Save payment settings
+function savePaymentSettings() {
+    const formData = new FormData();
+    formData.append('gcash_number', document.getElementById('gcashNumber').value.trim());
+    formData.append('gcash_name', document.getElementById('gcashName').value.trim());
+    formData.append('payment_instructions', document.getElementById('paymentInstructions').value.trim());
+    
+    const qrFile = document.getElementById('gcashQR').files[0];
+    if (qrFile) {
+        formData.append('qr_image', qrFile);
+    }
     
     saveToDB(formData);
 }
