@@ -13,7 +13,34 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 try {
     $conn = getDBConnection();
     
-    // Check if new columns exist, fallback if not
+    // Robustly handle packages table
+    $conn->query("CREATE TABLE IF NOT EXISTS `packages` (
+        `id` int NOT NULL AUTO_INCREMENT,
+        `name` varchar(255) NOT NULL,
+        `duration` varchar(50) NOT NULL,
+        `price` decimal(10,2) NOT NULL,
+        PRIMARY KEY (`id`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+    // Ensure all columns exist (for older versions of the table)
+    $columns = [
+        'tag' => "varchar(50) DEFAULT 'Standard'",
+        'description' => "text",
+        'is_trainer_assisted' => "tinyint(1) DEFAULT '0'",
+        'goal' => "varchar(255) DEFAULT 'General Fitness'",
+        'diet_info' => "text",
+        'guidance_info' => "text",
+        'is_active' => "tinyint(1) DEFAULT '1'"
+    ];
+
+    foreach ($columns as $col => $def) {
+        $check = $conn->query("SHOW COLUMNS FROM `packages` LIKE '$col'");
+        if ($check && $check->num_rows == 0) {
+            $conn->query("ALTER TABLE `packages` ADD `$col` $def");
+        }
+    }
+
+    // Check if new columns exist for query logic (legacy fallback)
     $checkGoal = $conn->query("SHOW COLUMNS FROM packages LIKE 'goal'");
     $hasGoal = ($checkGoal && $checkGoal->num_rows > 0);
     
@@ -80,4 +107,3 @@ try {
 } catch (Exception $e) {
     sendResponse(false, 'Database error: ' . $e->getMessage(), null, 500);
 }
-?>

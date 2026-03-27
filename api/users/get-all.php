@@ -56,4 +56,3 @@ try {
     error_log("Error getting users: " . $e->getMessage());
     sendResponse(false, 'Error retrieving users: ' . $e->getMessage(), null, 500);
 }
-?>

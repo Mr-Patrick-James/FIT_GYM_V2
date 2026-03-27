@@ -34,12 +34,20 @@ async function loadTrainers() {
 }
 
 function updateStats(trainers) {
-    document.getElementById('totalTrainers').textContent = trainers.length;
-    document.getElementById('activeTrainers').textContent = trainers.filter(t => t.is_active).length;
-    const specs = new Set(trainers.map(t => t.specialization.trim().toLowerCase()));
-    document.getElementById('specializationsCount').textContent = specs.size;
-    document.getElementById('totalAssignedPackages').textContent = trainers.reduce((s, t) => s + (t.package_count || 0), 0);
-    document.getElementById('totalActiveClients').textContent = trainers.reduce((s, t) => s + (t.active_client_count || 0), 0);
+    const totalTrainersEl = document.getElementById('totalTrainers');
+    const activeTrainersEl = document.getElementById('activeTrainers');
+    const specializationsCountEl = document.getElementById('specializationsCount');
+    const totalAssignedPackagesEl = document.getElementById('totalAssignedPackages');
+    const totalActiveClientsEl = document.getElementById('totalActiveClients');
+
+    if (totalTrainersEl) totalTrainersEl.textContent = trainers.length;
+    if (activeTrainersEl) activeTrainersEl.textContent = trainers.filter(t => t.is_active).length;
+    
+    const specs = new Set(trainers.map(t => t.specialization ? t.specialization.trim().toLowerCase() : ''));
+    if (specializationsCountEl) specializationsCountEl.textContent = specs.size;
+    
+    if (totalAssignedPackagesEl) totalAssignedPackagesEl.textContent = trainers.reduce((s, t) => s + (t.package_count || 0), 0);
+    if (totalActiveClientsEl) totalActiveClientsEl.textContent = trainers.reduce((s, t) => s + (t.active_client_count || 0), 0);
 }
 
 function populateSpecFilter(trainers) {

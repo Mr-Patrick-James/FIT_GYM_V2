@@ -87,8 +87,8 @@ $user = getCurrentUser();
         <!-- Top Bar -->
         <div class="top-bar">
             <div class="page-title">
-                <h1>Payments Management</h1>
-                <p>View and manage all verified payments and revenue</p>
+                <h1>Payment Management</h1>
+                <p>Track revenue and manage financial transactions</p>
             </div>
             
             <div class="header-actions">
@@ -105,65 +105,6 @@ $user = getCurrentUser();
                 <button class="action-btn" title="Logout" onclick="handleLogout()">
                     <i class="fas fa-sign-out-alt"></i>
                 </button>
-            </div>
-        </div>
-
-        <!-- Stats Cards -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-header">
-                    <div class="stat-icon">
-                        <i class="fas fa-wallet"></i>
-                    </div>
-                    <div class="trend">
-                        <i class="fas fa-arrow-up"></i>
-                        <span id="totalRevenueTrend">0%</span>
-                    </div>
-                </div>
-                <div class="stat-value" id="totalRevenue">₱0</div>
-                <div class="stat-label">Total Revenue</div>
-            </div>
-            
-            <div class="stat-card">
-                <div class="stat-header">
-                    <div class="stat-icon">
-                        <i class="fas fa-calendar-alt"></i>
-                    </div>
-                    <div class="trend">
-                        <i class="fas fa-arrow-up"></i>
-                        <span id="monthlyRevenueTrend">0%</span>
-                    </div>
-                </div>
-                <div class="stat-value" id="monthlyRevenue">₱0</div>
-                <div class="stat-label">Monthly Revenue</div>
-            </div>
-            
-            <div class="stat-card">
-                <div class="stat-header">
-                    <div class="stat-icon">
-                        <i class="fas fa-check-circle"></i>
-                    </div>
-                    <div class="trend">
-                        <i class="fas fa-arrow-up"></i>
-                        <span id="totalPaymentsTrend">0%</span>
-                    </div>
-                </div>
-                <div class="stat-value" id="totalPayments">0</div>
-                <div class="stat-label">Total Payments</div>
-            </div>
-            
-            <div class="stat-card">
-                <div class="stat-header">
-                    <div class="stat-icon">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
-                    <div class="trend">
-                        <i class="fas fa-arrow-up"></i>
-                        <span id="averagePaymentTrend">0%</span>
-                    </div>
-                </div>
-                <div class="stat-value" id="averagePayment">₱0</div>
-                <div class="stat-label">Average Payment</div>
             </div>
         </div>
 

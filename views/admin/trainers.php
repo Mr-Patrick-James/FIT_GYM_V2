@@ -129,52 +129,6 @@ $user = getCurrentUser();
             </div>
         </div>
 
-        <!-- Stats Cards -->
-        <div class="stats-grid" style="grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));">
-            <div class="stat-card">
-                <div class="stat-header">
-                    <div class="stat-icon" style="background:rgba(59,130,246,0.1);color:#3b82f6;"><i class="fas fa-user-tie"></i></div>
-                </div>
-                <div class="stat-value" id="totalTrainers">0</div>
-                <div class="stat-label">Total Trainers</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-header">
-                    <div class="stat-icon" style="background:rgba(16,185,129,0.1);color:#10b981;"><i class="fas fa-user-check"></i></div>
-                </div>
-                <div class="stat-value" id="activeTrainers">0</div>
-                <div class="stat-label">Active Trainers</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-header">
-                    <div class="stat-icon" style="background:rgba(245,158,11,0.1);color:#f59e0b;"><i class="fas fa-star"></i></div>
-                </div>
-                <div class="stat-value" id="specializationsCount">0</div>
-                <div class="stat-label">Specializations</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-header">
-                    <div class="stat-icon" style="background:rgba(139,92,246,0.1);color:#8b5cf6;"><i class="fas fa-dumbbell"></i></div>
-                </div>
-                <div class="stat-value" id="totalAssignedPackages">0</div>
-                <div class="stat-label">Assigned Packages</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-header">
-                    <div class="stat-icon" style="background:rgba(34,197,94,0.1);color:#22c55e;"><i class="fas fa-users"></i></div>
-                </div>
-                <div class="stat-value" id="totalActiveClients">0</div>
-                <div class="stat-label">Total Active Clients</div>
-            </div>
-            <div class="stat-card" style="cursor:pointer;" onclick="openAddTrainerModal()">
-                <div class="stat-header">
-                    <div class="stat-icon" style="background:var(--glass);color:var(--primary);"><i class="fas fa-plus"></i></div>
-                </div>
-                <div class="stat-value">Add New</div>
-                <div class="stat-label">Click to add trainer</div>
-            </div>
-        </div>
-
         <!-- Trainers Content -->
         <div class="content-card" style="margin-top:32px;">
             <div class="card-header">

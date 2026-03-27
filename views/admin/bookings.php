@@ -218,30 +218,23 @@ $user = getCurrentUser();
         <!-- Top Bar -->
         <div class="top-bar">
             <div class="page-title">
-                <h1>Bookings Management</h1>
-                <p>View, filter, and manage all booking requests from members</p>
+                <h1>Booking Management</h1>
+                <p>Verify payments and manage client membership requests</p>
             </div>
             
             <div class="header-actions">
-                <div class="view-toggle">
-                    <button class="view-btn active" id="tableViewBtn" title="Table View">
-                        <i class="fas fa-table"></i>
-                        <span>Table</span>
-                    </button>
-                    <button class="view-btn" id="calendarViewBtn" title="Calendar View">
-                        <i class="fas fa-calendar-alt"></i>
-                        <span>Calendar</span>
-                    </button>
-                </div>
-                
-                <button class="action-btn primary" onclick="openWalkinModal()">
-                    <i class="fas fa-walking"></i>
-                    <span>Walk-in Booking</span>
-                </button>
-                
                 <div class="search-box">
                     <i class="fas fa-search"></i>
-                    <input type="text" id="searchInput" placeholder="Search bookings, members...">
+                    <input type="text" id="searchInput" placeholder="Search bookings...">
+                </div>
+
+                <div class="view-toggle">
+                    <button class="view-btn active" data-view="calendar" title="Calendar View">
+                        <i class="fas fa-calendar-alt"></i>
+                    </button>
+                    <button class="view-btn" data-view="table" title="Table View">
+                        <i class="fas fa-table"></i>
+                    </button>
                 </div>
                 
                 <button class="action-btn notification-btn">
@@ -253,53 +246,6 @@ $user = getCurrentUser();
                     <i class="fas fa-sign-out-alt"></i>
                 </button>
             </div>
-        </div>
-
-        <!-- Stats Cards -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-header">
-                    <div class="stat-icon">
-                        <i class="fas fa-calendar-check"></i>
-                    </div>
-                    <div class="trend">
-                        <i class="fas fa-arrow-up"></i>
-                        <span id="totalTrend">0%</span>
-                    </div>
-                </div>
-                <div class="stat-value" id="totalBookings">0</div>
-                <div class="stat-label">Total Bookings</div>
-            </div>
-            
-            <div class="stat-card">
-                <div class="stat-header">
-                    <div class="stat-icon">
-                        <i class="fas fa-clock"></i>
-                    </div>
-                    <div class="trend down">
-                        <i class="fas fa-arrow-down"></i>
-                        <span id="pendingTrend">0%</span>
-                    </div>
-                </div>
-                <div class="stat-value" id="pendingBookings">0</div>
-                <div class="stat-label">Pending Verification</div>
-            </div>
-            
-            <div class="stat-card">
-                <div class="stat-header">
-                    <div class="stat-icon">
-                        <i class="fas fa-check-circle"></i>
-                    </div>
-                    <div class="trend">
-                        <i class="fas fa-arrow-up"></i>
-                        <span id="verifiedTrend">0%</span>
-                    </div>
-                </div>
-                <div class="stat-value" id="verifiedBookings">0</div>
-                <div class="stat-label">Verified Bookings</div>
-            </div>
-            
-
         </div>
 
         <!-- Calendar View -->

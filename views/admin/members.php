@@ -84,8 +84,8 @@ $user = getCurrentUser();
         <!-- Top Bar -->
         <div class="top-bar">
             <div class="page-title">
-                <h1>Members Management</h1>
-                <p>View and manage all gym members and their information</p>
+                <h1>Member Management</h1>
+                <p>Manage gym memberships and client information</p>
             </div>
             
             <div class="header-actions">
@@ -103,51 +103,6 @@ $user = getCurrentUser();
                     <i class="fas fa-sign-out-alt"></i>
                 </button>
             </div>
-        </div>
-
-        <!-- Stats Cards -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-header">
-                    <div class="stat-icon">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <div class="trend">
-                        <i class="fas fa-arrow-up"></i>
-                        <span id="totalMembersTrend">0%</span>
-                    </div>
-                </div>
-                <div class="stat-value" id="totalMembers">0</div>
-                <div class="stat-label">Total Members</div>
-            </div>
-            
-            <div class="stat-card">
-                <div class="stat-header">
-                    <div class="stat-icon">
-                        <i class="fas fa-user-check"></i>
-                    </div>
-                    <div class="trend">
-                        <i class="fas fa-arrow-up"></i>
-                        <span id="activeMembersTrend">0%</span>
-                    </div>
-                </div>
-                <div class="stat-value" id="activeMembers">0</div>
-                <div class="stat-label">Active Members</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-header">
-                    <div class="stat-icon">
-                        <i class="fas fa-user-slash"></i>
-                    </div>
-                    <div class="trend">
-                        <i class="fas fa-arrow-down"></i>
-                        <span id="inactiveMembersTrend">0%</span>
-                    </div>
-                </div>
-                <div class="stat-value" id="inactiveMembers">0</div>
-                <div class="stat-label">Inactive Members</div>
-            </div>
-            
         </div>
 
         <!-- Filters and Actions -->

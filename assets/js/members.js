@@ -281,9 +281,13 @@ async function updateStats() {
     const inactiveMembers = totalMembers - activeMembers;
 
     // Update stat cards
-    document.getElementById('totalMembers').textContent = totalMembers;
-    document.getElementById('activeMembers').textContent = activeMembers;
-    document.getElementById('inactiveMembers').textContent = inactiveMembers;
+    const totalMembersEl = document.getElementById('totalMembers');
+    const activeMembersEl = document.getElementById('activeMembers');
+    const inactiveMembersEl = document.getElementById('inactiveMembers');
+
+    if (totalMembersEl) totalMembersEl.textContent = totalMembers;
+    if (activeMembersEl) activeMembersEl.textContent = activeMembers;
+    if (inactiveMembersEl) inactiveMembersEl.textContent = inactiveMembers;
     
     // Update pending bookings badge from API
     try {

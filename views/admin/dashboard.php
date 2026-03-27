@@ -108,7 +108,7 @@ function getSetting($key, $default = '', $settings = []) {
         <div class="top-bar">
             <div class="page-title">
                 <h1>Dashboard Overview</h1>
-                <p>Monitor bookings, payments, and gym performance in real-time</p>
+                <p>Monitor gym performance and manage operations in real-time</p>
             </div>
             
             <div class="header-actions">
@@ -128,49 +128,33 @@ function getSetting($key, $default = '', $settings = []) {
             </div>
         </div>
 
+        <!-- Universal Control Bar -->
+        <div class="control-bar-container">
+            <div class="control-bar">
+                <button class="control-tab active" data-tab="overview" onclick="switchControlTab('overview')">
+                    <i class="fas fa-grid-2"></i> Overview
+                </button>
+                <button class="control-tab" data-tab="bookings" onclick="switchControlTab('bookings')">
+                    <i class="fas fa-calendar-check"></i> Bookings
+                </button>
+                <button class="control-tab" data-tab="payments" onclick="switchControlTab('payments')">
+                    <i class="fas fa-money-bill-wave"></i> Payments
+                </button>
+                <button class="control-tab" data-tab="members" onclick="switchControlTab('members')">
+                    <i class="fas fa-users"></i> Members
+                </button>
+                <button class="control-tab" data-tab="trainers" onclick="switchControlTab('trainers')">
+                    <i class="fas fa-user-tie"></i> Trainers
+                </button>
+                <button class="control-tab" data-tab="inventory" onclick="switchControlTab('inventory')">
+                    <i class="fas fa-box"></i> Inventory
+                </button>
+            </div>
+        </div>
+
         <!-- Stats Grid -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-header">
-                    <div class="stat-icon">
-                        <i class="fas fa-calendar-check"></i>
-                    </div>
-                    <div class="trend">
-                        <i class="fas fa-arrow-up"></i>
-                        <span>12%</span>
-                    </div>
-                </div>
-                <div class="stat-value" id="totalBookingsStat">24</div>
-                <div class="stat-label">Total Bookings This Month</div>
-            </div>
-            
-            <div class="stat-card">
-                <div class="stat-header">
-                    <div class="stat-icon">
-                        <i class="fas fa-clock"></i>
-                    </div>
-                    <div class="trend down">
-                        <i class="fas fa-arrow-down"></i>
-                        <span>8%</span>
-                    </div>
-                </div>
-                <div class="stat-value" id="pendingVerificationsStat">8</div>
-                <div class="stat-label">Pending Verifications</div>
-            </div>
-            
-            <div class="stat-card">
-                <div class="stat-header">
-                    <div class="stat-icon">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <div class="trend">
-                        <i class="fas fa-arrow-up"></i>
-                        <span>5%</span>
-                    </div>
-                </div>
-                <div class="stat-value" id="activeMembersStat">156</div>
-                <div class="stat-label">Active Members</div>
-            </div>
+        <div class="stats-grid" id="dashboardStatsGrid">
+            <!-- Dynamically populated based on active tab -->
         </div>
 
         <!-- Quick Actions -->

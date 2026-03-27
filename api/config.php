@@ -105,9 +105,23 @@ function getDBConnection() {
     $conn = @new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
     
     if ($conn->connect_error) {
-        error_log("Database connection failed: " . $conn->connect_error);
-        // On InfinityFree, we want to see the error during setup
-        die("Connection failed: " . $conn->connect_error . " (Check your credentials in config.php)");
+        $errorMsg = "Database connection failed: " . $conn->connect_error;
+        error_log($errorMsg);
+        
+        // If it's an API request, return JSON instead of dying with HTML
+        if (stripos($_SERVER['SCRIPT_NAME'] ?? '', '/api/') !== false) {
+            if (ob_get_length()) ob_clean();
+            header("Content-Type: application/json");
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
+                'message' => 'Database connection error. Please contact administrator.',
+                'debug' => $errorMsg // Only for debugging
+            ]);
+            exit();
+        }
+        
+        die($errorMsg . " (Check your credentials in config.php)");
     }
     
     $conn->set_charset("utf8mb4");
@@ -226,5 +240,3 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'GET') {
         }
     }
 }
-
-?>

@@ -154,8 +154,8 @@ $user = getCurrentUser();
         <!-- Top Bar -->
         <div class="top-bar">
             <div class="page-title">
-                <h1>Packages Management</h1>
-                <p>Create, edit, and manage gym membership packages</p>
+                <h1>Package Management</h1>
+                <p>Create, edit, and manage gym membership plans</p>
             </div>
             
             <div class="header-actions">
@@ -172,65 +172,6 @@ $user = getCurrentUser();
                 <button class="action-btn" title="Logout" onclick="handleLogout()">
                     <i class="fas fa-sign-out-alt"></i>
                 </button>
-            </div>
-        </div>
-
-        <!-- Stats Cards -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-header">
-                    <div class="stat-icon">
-                        <i class="fas fa-dumbbell"></i>
-                    </div>
-                    <div class="trend">
-                        <i class="fas fa-arrow-up"></i>
-                        <span id="totalPackagesTrend">0%</span>
-                    </div>
-                </div>
-                <div class="stat-value" id="totalPackages">0</div>
-                <div class="stat-label">Total Packages</div>
-            </div>
-            
-            <div class="stat-card">
-                <div class="stat-header">
-                    <div class="stat-icon">
-                        <i class="fas fa-calendar-check"></i>
-                    </div>
-                    <div class="trend">
-                        <i class="fas fa-arrow-up"></i>
-                        <span id="totalBookingsTrend">0%</span>
-                    </div>
-                </div>
-                <div class="stat-value" id="totalBookings">0</div>
-                <div class="stat-label">Total Bookings</div>
-            </div>
-            
-            <div class="stat-card">
-                <div class="stat-header">
-                    <div class="stat-icon">
-                        <i class="fas fa-wallet"></i>
-                    </div>
-                    <div class="trend">
-                        <i class="fas fa-arrow-up"></i>
-                        <span id="totalRevenueTrend">0%</span>
-                    </div>
-                </div>
-                <div class="stat-value" id="totalRevenue">₱0</div>
-                <div class="stat-label">Total Revenue</div>
-            </div>
-            
-            <div class="stat-card">
-                <div class="stat-header">
-                    <div class="stat-icon">
-                        <i class="fas fa-star"></i>
-                    </div>
-                    <div class="trend">
-                        <i class="fas fa-arrow-up"></i>
-                        <span id="popularPackageTrend">0%</span>
-                    </div>
-                </div>
-                <div class="stat-value" id="popularPackage">-</div>
-                <div class="stat-label">Most Popular</div>
             </div>
         </div>
 

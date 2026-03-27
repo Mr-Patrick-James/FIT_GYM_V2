@@ -19,6 +19,25 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
 
 try {
     $conn = getDBConnection();
+    
+    // Robustly handle tables
+    $conn->query("CREATE TABLE IF NOT EXISTS `packages` (
+        `id` int NOT NULL AUTO_INCREMENT,
+        `name` varchar(255) NOT NULL,
+        `duration` varchar(50) NOT NULL,
+        `price` decimal(10,2) NOT NULL,
+        `is_active` tinyint(1) DEFAULT '1',
+        PRIMARY KEY (`id`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+    $conn->query("CREATE TABLE IF NOT EXISTS `bookings` (
+        `id` int NOT NULL AUTO_INCREMENT,
+        `package_id` int DEFAULT NULL,
+        `status` enum('pending','verified','rejected','expired') DEFAULT 'pending',
+        `amount` decimal(10,2) DEFAULT '0.00',
+        PRIMARY KEY (`id`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
     // Get package statistics from the database
     // Total packages
     $totalPackagesStmt = $conn->prepare("SELECT COUNT(*) as count FROM packages WHERE is_active = 1");

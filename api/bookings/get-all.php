@@ -34,10 +34,35 @@ try {
             LEFT JOIN trainers t ON b.trainer_id = t.id
             WHERE 1=1";
     
+    // Check if table exists (for self-healing)
+    $conn->query("CREATE TABLE IF NOT EXISTS `bookings` (
+        `id` int NOT NULL AUTO_INCREMENT,
+        `user_id` int DEFAULT NULL,
+        `trainer_id` int DEFAULT NULL,
+        `package_id` int DEFAULT NULL,
+        `name` varchar(255) DEFAULT NULL,
+        `email` varchar(255) DEFAULT NULL,
+        `contact` varchar(255) DEFAULT NULL,
+        `amount` decimal(10,2) DEFAULT '0.00',
+        `payment_method` varchar(50) DEFAULT 'GCash',
+        `receipt_url` varchar(255) DEFAULT NULL,
+        `status` enum('pending','verified','rejected','expired') DEFAULT 'pending',
+        `notes` text,
+        `verified_at` datetime DEFAULT NULL,
+        `expires_at` datetime DEFAULT NULL,
+        `booking_date` datetime DEFAULT CURRENT_TIMESTAMP,
+        `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+        `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (`id`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
     // If not admin, only show user's own bookings
     if (!$isAdmin) {
         $sql .= " AND b.user_id = ?";
     }
+    
+    // Log final SQL for debugging
+    error_log("DEBUG Bookings SQL: " . $sql);
     
     $params = [];
     $types = "";
@@ -95,7 +120,9 @@ try {
     
     // Format the bookings data
     foreach ($bookings as &$booking) {
-        $booking['amount_formatted'] = '₱' . number_format($booking['amount'], 2);
+        // Ensure numeric amount
+        $amt = (float)($booking['amount'] ?? 0);
+        $booking['amount_formatted'] = '₱' . number_format($amt, 2);
         $booking['date_formatted'] = date('M j, Y', strtotime($booking['booking_date'] ?? $booking['created_at']));
         
         // Identify walk-in bookings (user_id is NULL)
@@ -132,4 +159,3 @@ try {
     error_log("Error getting bookings: " . $e->getMessage());
     sendResponse(false, 'Error retrieving bookings: ' . $e->getMessage(), null, 500);
 }
-?>

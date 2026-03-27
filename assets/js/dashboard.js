@@ -872,123 +872,226 @@ async function rejectPayment() {
     }
 }
 
+let currentControlTab = 'overview';
+let dashboardStats = {
+    overview: [],
+    bookings: [],
+    payments: [],
+    members: [],
+    trainers: [],
+    inventory: []
+};
+
+// Switch Control Tab
+function switchControlTab(tab) {
+    currentControlTab = tab;
+    
+    // Update active tab UI
+    document.querySelectorAll('.control-tab').forEach(t => {
+        t.classList.remove('active');
+        if (t.dataset.tab === tab) t.classList.add('active');
+    });
+    
+    // Re-render stats grid
+    renderStatsGrid();
+}
+
+// Render Stats Grid based on active tab
+function renderStatsGrid() {
+    const grid = document.getElementById('dashboardStatsGrid');
+    if (!grid) return;
+    
+    grid.innerHTML = '';
+    const stats = dashboardStats[currentControlTab] || [];
+    
+    stats.forEach(stat => {
+        const card = document.createElement('div');
+        card.className = `stat-card ${stat.trendDir === 'down' ? 'warning' : stat.trendDir === 'up' ? 'success' : ''}`;
+        
+        let trendHtml = '';
+        if (stat.trend) {
+            trendHtml = `
+                <div class="trend ${stat.trendDir || ''}">
+                    <i class="fas fa-arrow-${stat.trendDir === 'down' ? 'down' : 'up'}"></i>
+                    <span>${stat.trend}</span>
+                </div>
+            `;
+        }
+
+        card.innerHTML = `
+            <div class="stat-header">
+                <div class="stat-icon" style="${stat.iconStyle || ''}">
+                    <i class="fas fa-${stat.icon}"></i>
+                </div>
+                ${trendHtml}
+            </div>
+            <div class="stat-value" id="${stat.id}">${stat.value}</div>
+            <div class="stat-label">${stat.label}</div>
+        `;
+        grid.appendChild(card);
+    });
+}
+
 // Update stats
 async function updateStats() {
-    const totalBookings = allBookings.length;
-    const pendingBookings = allBookings.filter(b => b.status === 'pending').length;
-    const verifiedBookings = allBookings.filter(b => b.status === 'verified').length;
-    
-    // Calculate monthly revenue (verified bookings only)
-    let monthlyRevenue = 0;
-    const currentMonth = new Date().getMonth();
-    const currentYear = new Date().getFullYear();
-    
-    allBookings
-        .filter(b => b.status === 'verified')
-        .forEach(b => {
-            const bookingDate = new Date(b.booking_date || b.created_at);
-            if (bookingDate.getMonth() === currentMonth && bookingDate.getFullYear() === currentYear) {
-                const amount = parseFloat(b.amount) || 0;
-                monthlyRevenue += amount;
-            }
-        });
-    
-    // Update active members count from API
-    let activeMembersCount = 0;
+    // 1. Fetch all required data
     try {
-        const [usersRes, bookingsRes] = await Promise.all([
+        const [usersRes, bookingsRes, trainersRes, equipRes, exercisesRes] = await Promise.all([
             fetch('../../api/users/get-all.php?role=user'),
-            fetch('../../api/bookings/get-all.php')
+            fetch('../../api/bookings/get-all.php'),
+            fetch('../../api/trainers/get-all.php'),
+            fetch('../../api/equipment/get-all.php'),
+            fetch('../../api/exercises/get-all.php')
         ]);
 
         const usersData = await usersRes.json();
         const bookingsData = await bookingsRes.json();
+        const trainersData = await trainersRes.json();
+        const equipData = await equipRes.json();
+        const exercisesData = await exercisesRes.json();
 
-        if (usersData.success && bookingsData.success) {
-            const allUsers = usersData.data;
-            const allBookingsData = bookingsData.data;
-            const now = new Date();
+        if (!bookingsData.success) return;
+        const allBookingsData = bookingsData.data;
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
 
-            // Function to parse duration to days (matching members.js)
-            const parseDurationToDays = (durationStr) => {
-                if (!durationStr) return 0;
-                const parts = durationStr.toLowerCase().split(' ');
-                const value = parseInt(parts[0]);
-                const unit = parts[1];
-                if (isNaN(value)) return 0;
-                if (unit.includes('day')) return value;
-                if (unit.includes('week')) return value * 7;
-                if (unit.includes('month')) return value * 30;
-                if (unit.includes('year')) return value * 365;
-                return value;
-            };
+        // --- CALCULATION HELPERS ---
+        const isVerified = (b) => b.status === 'verified';
+        const isPending = (b) => b.status === 'pending';
+        const isToday = (dateStr) => {
+            const d = new Date(dateStr);
+            return d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+        };
+        const isThisMonth = (dateStr) => {
+            const d = new Date(dateStr);
+            return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+        };
 
-            // Count unique members (registered + walk-ins) who have at least one active verified booking
-            const activeMemberIdentifiers = new Set();
-            
-            allBookingsData.forEach(booking => {
-                if (!booking || !booking.status) return;
+        // --- CATEGORY: OVERVIEW ---
+        let totalRevenue = 0;
+        const activeMemberIdentifiers = new Set();
+        
+        allBookingsData.forEach(booking => {
+            if (isVerified(booking)) {
+                totalRevenue += parseFloat(booking.amount) || 0;
                 
-                const status = String(booking.status).toLowerCase();
-                if (status !== 'verified') return;
-                
-                const now = new Date();
                 let isActive = false;
-                
-                // If backend provided expires_at use it
                 if (booking.expires_at) {
                     const exp = new Date(booking.expires_at);
-                    if (!isNaN(exp.getTime())) {
-                        isActive = now <= exp;
-                    }
+                    if (!isNaN(exp.getTime())) isActive = now <= exp;
                 }
-                
-                if (!isActive) {
-                    const bookingDate = new Date(booking.booking_date || booking.created_at);
-                    const days = parseDurationToDays(booking.duration);
-                    if (days > 0 && !isNaN(bookingDate.getTime())) {
-                        const expiryDate = new Date(bookingDate);
-                        expiryDate.setDate(expiryDate.getDate() + days);
-                        // Be generous with end-of-day
-                        const endOfExpiryDay = new Date(expiryDate);
-                        endOfExpiryDay.setHours(23, 59, 59, 999);
-                        isActive = now <= endOfExpiryDay;
-                    }
-                }
-                
-                if (isActive) {
-                    // Use user_id if available, otherwise email or name for walk-ins
-                    activeMemberIdentifiers.add(booking.user_id || booking.email || booking.name);
-                }
-            });
-            
-            activeMembersCount = activeMemberIdentifiers.size;
+                if (isActive) activeMemberIdentifiers.add(booking.user_id || booking.email || booking.name);
+            }
+        });
+
+        dashboardStats.overview = [
+            { id: 'totalRevenueStat', label: 'Total Revenue', value: `₱${totalRevenue.toLocaleString()}`, icon: 'money-bill-wave', trend: '15%', trendDir: 'up' },
+            { id: 'activeMembersStat', label: 'Active Members', value: activeMemberIdentifiers.size, icon: 'users', trend: '5%', trendDir: 'up' },
+            { id: 'totalTrainersStat', label: 'Active Trainers', value: trainersData.success ? trainersData.data.length : 0, icon: 'user-tie', trend: '2%', trendDir: 'up' },
+            { id: 'gymCapacityStat', label: 'Gym Capacity', value: `${Math.min(100, Math.round(activeMemberIdentifiers.size / 2))}%`, icon: 'bolt', trend: 'Steady', trendDir: '' }
+        ];
+
+        // --- CATEGORY: BOOKINGS ---
+        const totalBookings = allBookingsData.length;
+        const pendingCount = allBookingsData.filter(isPending).length;
+        const verifiedToday = allBookingsData.filter(b => isVerified(b) && isToday(b.verified_at || b.updated_at)).length;
+        const rejectedCount = allBookingsData.filter(b => b.status === 'rejected').length;
+        const rejectionRate = totalBookings > 0 ? Math.round((rejectedCount / totalBookings) * 100) : 0;
+
+        dashboardStats.bookings = [
+            { id: 'totalBookingsStat', label: 'Total Bookings', value: totalBookings, icon: 'calendar-check' },
+            { id: 'pendingBookingsStat', label: 'Pending Verification', value: pendingCount, icon: 'clock', trendDir: pendingCount > 5 ? 'down' : 'up' },
+            { id: 'verifiedTodayStat', label: 'Verified Today', value: verifiedToday, icon: 'check-circle', trend: 'Daily', trendDir: 'up' },
+            { id: 'rejectionRateStat', label: 'Rejection Rate', value: `${rejectionRate}%`, icon: 'times-circle', trendDir: rejectionRate > 10 ? 'down' : 'up' }
+        ];
+
+        // --- CATEGORY: PAYMENTS ---
+        let monthlyRev = 0;
+        let todayRev = 0;
+        let pendingRev = 0;
+        allBookingsData.forEach(b => {
+            const amt = parseFloat(b.amount) || 0;
+            if (isVerified(b)) {
+                if (isThisMonth(b.verified_at || b.updated_at)) monthlyRev += amt;
+                if (isToday(b.verified_at || b.updated_at)) todayRev += amt;
+            } else if (isPending(b)) {
+                pendingRev += amt;
+            }
+        });
+        const verifiedCount = allBookingsData.filter(isVerified).length;
+        const avgPayment = verifiedCount > 0 ? totalRevenue / verifiedCount : 0;
+
+        dashboardStats.payments = [
+            { id: 'monthlyRevenueStat', label: 'Monthly Revenue', value: `₱${monthlyRev.toLocaleString()}`, icon: 'calendar-day', trend: 'Target: 80%', trendDir: 'up' },
+            { id: 'todayRevenueStat', label: 'Today\'s Revenue', value: `₱${todayRev.toLocaleString()}`, icon: 'coins' },
+            { id: 'avgPaymentStat', label: 'Average Payment', value: `₱${Math.round(avgPayment).toLocaleString()}`, icon: 'chart-line' },
+            { id: 'outstandingStat', label: 'Outstanding (Pending)', value: `₱${pendingRev.toLocaleString()}`, icon: 'hand-holding-dollar', trendDir: 'down' }
+        ];
+
+        // --- CATEGORY: MEMBERS ---
+        const registeredCount = usersData.success ? usersData.data.length : 0;
+        const newThisMonth = usersData.success ? usersData.data.filter(u => isThisMonth(u.created_at)).length : 0;
+        const inactiveCount = Math.max(0, registeredCount - activeMemberIdentifiers.size);
+
+        dashboardStats.members = [
+            { id: 'registeredMembersStat', label: 'Registered Members', value: registeredCount, icon: 'id-card' },
+            { id: 'newMembersStat', label: 'New This Month', value: newThisMonth, icon: 'user-plus', trend: '+12', trendDir: 'up' },
+            { id: 'activeMembersStat', label: 'Active Members', value: activeMemberIdentifiers.size, icon: 'user-check' },
+            { id: 'inactiveMembersStat', label: 'Inactive Members', value: inactiveCount, icon: 'user-slash', trendDir: 'down' }
+        ];
+
+        // --- CATEGORY: TRAINERS ---
+        const trainersList = trainersData.success ? trainersData.data : [];
+        const activeTrainers = trainersList.filter(t => t.is_active).length;
+        const avgLoad = activeTrainers > 0 ? (activeMemberIdentifiers.size / activeTrainers).toFixed(1) : 0;
+        
+        // Find most popular trainer
+        const trainerCounts = {};
+        allBookingsData.filter(isVerified).forEach(b => {
+            if (b.trainer_id) trainerCounts[b.trainer_id] = (trainerCounts[b.trainer_id] || 0) + 1;
+        });
+        let topTrainerId = Object.keys(trainerCounts).reduce((a, b) => trainerCounts[a] > trainerCounts[b] ? a : b, null);
+        let topTrainerName = 'None';
+        if (topTrainerId) {
+            const tt = trainersList.find(t => String(t.id) === String(topTrainerId));
+            if (tt) topTrainerName = tt.name.split(' ')[0];
         }
+
+        dashboardStats.trainers = [
+            { id: 'totalTrainersStat', label: 'Total Trainers', value: trainersList.length, icon: 'user-tie' },
+            { id: 'activeTrainersStat', label: 'Active Status', value: activeTrainers, icon: 'check-double' },
+            { id: 'avgLoadStat', label: 'Avg. Client Load', value: avgLoad, icon: 'users-gear' },
+            { id: 'topTrainerStat', label: 'Top Performer', value: topTrainerName, icon: 'award' }
+        ];
+
+        // --- CATEGORY: INVENTORY ---
+        const equipmentList = equipData.success ? equipData.data : [];
+        const exercisesList = exercisesData.success ? exercisesData.data : [];
+        const maintenanceCount = equipmentList.filter(e => e.status === 'maintenance').length;
+
+        dashboardStats.inventory = [
+            { id: 'totalEquipmentStat', label: 'Gym Equipment', value: equipmentList.length, icon: 'dumbbell' },
+            { id: 'maintenanceStat', label: 'Under Maintenance', value: maintenanceCount, icon: 'wrench', trendDir: maintenanceCount > 0 ? 'down' : 'up' },
+            { id: 'totalExercisesStat', label: 'Exercise Library', value: exercisesList.length, icon: 'running' },
+            { id: 'inventoryValueStat', label: 'Inventory Status', value: 'Healthy', icon: 'check-circle' }
+        ];
+
+        // 2. Initial Render or update if same tab
+        renderStatsGrid();
+
+        // 3. Update Other UI elements (Badges, etc.)
+        const notificationBadge = document.querySelector('.notification-badge');
+        if (notificationBadge) notificationBadge.textContent = pendingCount || '0';
+        
+        const bookingsBadge = document.getElementById('bookingsBadge');
+        if (bookingsBadge) bookingsBadge.textContent = pendingCount || '';
+
+        const pendingText = document.getElementById('pendingVerificationsText');
+        if (pendingText) pendingText.textContent = `${pendingCount} pending verification${pendingCount !== 1 ? 's' : ''}`;
+
     } catch (e) {
-        console.error('Error updating active members stat:', e);
-    }
-    
-    // Update stat cards
-    const totalBookingsEl = document.getElementById('totalBookingsStat');
-    const pendingVerificationsEl = document.getElementById('pendingVerificationsStat');
-    const monthlyRevenueEl = document.getElementById('monthlyRevenueStat');
-    const activeMembersEl = document.getElementById('activeMembersStat');
-
-    if (totalBookingsEl) totalBookingsEl.textContent = totalBookings;
-    if (pendingVerificationsEl) pendingVerificationsEl.textContent = pendingBookings;
-    if (monthlyRevenueEl) monthlyRevenueEl.textContent = `₱${monthlyRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    if (activeMembersEl) activeMembersEl.textContent = activeMembersCount;
-    
-    // Update notification badge
-    const notificationBadge = document.querySelector('.notification-badge');
-    if (notificationBadge) {
-        notificationBadge.textContent = pendingBookings || '0';
-    }
-
-    // Update Quick Actions pending text
-    const pendingText = document.getElementById('pendingVerificationsText');
-    if (pendingText) {
-        pendingText.textContent = `${pendingBookings} pending verification${pendingBookings !== 1 ? 's' : ''}`;
+        console.error('Error updating dashboard stats:', e);
     }
 }
 

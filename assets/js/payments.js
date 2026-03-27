@@ -242,10 +242,15 @@ function updateStats() {
     const averagePayment = allPayments.length > 0 ? totalRevenue / allPayments.length : 0;
     
     // Update stat cards
-    document.getElementById('totalRevenue').textContent = `₱${totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    document.getElementById('monthlyRevenue').textContent = `₱${monthlyRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    document.getElementById('totalPayments').textContent = allPayments.length;
-    document.getElementById('averagePayment').textContent = `₱${Math.round(averagePayment).toLocaleString()}`;
+    const totalRevenueEl = document.getElementById('totalRevenue');
+    const monthlyRevenueEl = document.getElementById('monthlyRevenue');
+    const totalPaymentsEl = document.getElementById('totalPayments');
+    const averagePaymentEl = document.getElementById('averagePayment');
+
+    if (totalRevenueEl) totalRevenueEl.textContent = `₱${totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    if (monthlyRevenueEl) monthlyRevenueEl.textContent = `₱${monthlyRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    if (totalPaymentsEl) totalPaymentsEl.textContent = allPayments.length;
+    if (averagePaymentEl) averagePaymentEl.textContent = `₱${Math.round(averagePayment).toLocaleString()}`;
     
     // Update pending bookings badge from API
     updatePendingBadge();

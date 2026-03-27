@@ -650,32 +650,51 @@ async function populatePackagesGrid(forcedStats = null) {
 
 // Update stats
 async function updateStats(forcedStats = null) {
-    const statsResult = forcedStats || await getPackageStats();
-    const stats = statsResult.data;
-    
-    document.getElementById('totalPackages').textContent = allPackages.length;
-    document.getElementById('totalBookings').textContent = stats.totalBookings;
-    document.getElementById('totalRevenue').textContent = `₱${Math.round(stats.totalRevenue).toLocaleString()}`;
-    document.getElementById('popularPackage').textContent = stats.popularPackage;
+    try {
+        const statsResult = forcedStats || await getPackageStats();
+        
+        if (!statsResult || !statsResult.success) {
+            console.warn('Could not load package stats:', statsResult ? statsResult.message : 'No response');
+            // Fallback to basic stats if available
+            const totalPackagesEl = document.getElementById('totalPackages');
+            if (totalPackagesEl) totalPackagesEl.textContent = allPackages.length;
+            return;
+        }
 
-    // Update trends (simplified for UI)
-    const trends = ['totalPackagesTrend', 'totalBookingsTrend', 'totalRevenueTrend', 'popularPackageTrend'];
-    trends.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = '+12%';
-    });
-    
-    // Update pending bookings badge
-    const pendingCount = stats.pendingBookings || 0;
-    
-    const bookingsBadge = document.getElementById('bookingsBadge');
-    if (bookingsBadge) {
-        bookingsBadge.textContent = pendingCount || '';
-    }
-    
-    const notificationBadge = document.getElementById('notificationBadge');
-    if (notificationBadge) {
-        notificationBadge.textContent = pendingCount || '';
+        const stats = statsResult.data;
+        if (!stats) return;
+        
+        const totalPackagesEl = document.getElementById('totalPackages');
+        const totalBookingsEl = document.getElementById('totalBookings');
+        const totalRevenueEl = document.getElementById('totalRevenue');
+        const popularPackageEl = document.getElementById('popularPackage');
+
+        if (totalPackagesEl) totalPackagesEl.textContent = allPackages.length;
+        if (totalBookingsEl) totalBookingsEl.textContent = stats.totalBookings || 0;
+        if (totalRevenueEl) totalRevenueEl.textContent = `₱${Math.round(stats.totalRevenue || 0).toLocaleString()}`;
+        if (popularPackageEl) popularPackageEl.textContent = stats.popularPackage || '-';
+
+        // Update trends (simplified for UI)
+        const trends = ['totalPackagesTrend', 'totalBookingsTrend', 'totalRevenueTrend', 'popularPackageTrend'];
+        trends.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = '+12%';
+        });
+        
+        // Update pending bookings badge
+        const pendingCount = stats.pendingBookings || 0;
+        
+        const bookingsBadge = document.getElementById('bookingsBadge');
+        if (bookingsBadge) {
+            bookingsBadge.textContent = pendingCount || '';
+        }
+        
+        const notificationBadge = document.getElementById('notificationBadge');
+        if (notificationBadge) {
+            notificationBadge.textContent = pendingCount || '';
+        }
+    } catch (error) {
+        console.error('Error in updateStats:', error);
     }
 }
 

@@ -69,7 +69,8 @@ function isTrainer() {
 
 function isApiRequest() {
     $script = $_SERVER['SCRIPT_NAME'] ?? $_SERVER['PHP_SELF'] ?? '';
-    return stripos($script, '/api/') !== false;
+    $normalized = str_replace('\\', '/', $script);
+    return stripos($normalized, '/api/') !== false;
 }
 
 // Require login - redirect to index if not logged in
@@ -254,5 +255,3 @@ function clearUserSession() {
     session_unset();
     session_destroy();
 }
-
-?>

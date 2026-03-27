@@ -75,9 +75,18 @@ async function loadAllBookings() {
         });
         
         const response = await fetch(`../../api/bookings/get-all.php?${params}`);
-        const data = await response.json();
+        const text = await response.text();
+        
+        let data;
+        try {
+            data = JSON.parse(text);
+        } catch (e) {
+            console.error('JSON Parse Error. Raw response:', text);
+            throw new Error('Invalid server response format');
+        }
         
         if (data.success) {
+            console.log('Bookings loaded:', data.data);
             allBookings = data.data.map(booking => ({
                 ...booking,
                 id: booking.id,
@@ -139,13 +148,27 @@ function getDateForFilter(dateString) {
 
 // Apply filters
 async function applyFilters() {
-    const bookingTypeFilter = document.getElementById('bookingTypeFilter').value;
-    const statusFilter = document.getElementById('statusFilter').value;
-    const sortBy = document.getElementById('sortBy').value;
-    const dateRange = document.getElementById('dateRange').value;
-    const searchTerm = document.getElementById('searchInput').value;
-    const customStartDate = document.getElementById('customStartDate') ? document.getElementById('customStartDate').value : '';
-    const customEndDate = document.getElementById('customEndDate') ? document.getElementById('customEndDate').value : '';
+    const bookingTypeEl = document.getElementById('bookingTypeFilter');
+    const statusEl = document.getElementById('statusFilter');
+    const sortEl = document.getElementById('sortBy');
+    const dateRangeEl = document.getElementById('dateRange');
+    const searchEl = document.getElementById('searchInput');
+    
+    if (!bookingTypeEl || !statusEl || !sortEl || !dateRangeEl || !searchEl) {
+        console.warn('Some filter elements are missing from the DOM');
+        return;
+    }
+
+    const bookingTypeFilter = bookingTypeEl.value;
+    const statusFilter = statusEl.value;
+    const sortBy = sortEl.value;
+    const dateRange = dateRangeEl.value;
+    const searchTerm = searchEl.value;
+    
+    const customStartEl = document.getElementById('customStartDate');
+    const customEndEl = document.getElementById('customEndDate');
+    const customStartDate = customStartEl ? customStartEl.value : '';
+    const customEndDate = customEndEl ? customEndEl.value : '';
     
     // Update current filters
     currentFilters = {
@@ -156,10 +179,10 @@ async function applyFilters() {
     };
     
     // Reload bookings with new filters
-    await loadAllBookings();
+    const bookings = await loadAllBookings();
     
-    // Apply booking type and date range filters on client-side
-    filteredBookings = allBookings.filter(booking => {
+    // Use the returned bookings for filtering
+    filteredBookings = bookings.filter(booking => {
         // Booking type filter
         if (bookingTypeFilter !== 'all') {
             if (bookingTypeFilter === 'walkin' && !booking.is_walkin) return false;
@@ -353,11 +376,16 @@ function updateStats() {
             totalRevenue += amount;
         });
     
-    // Update stat cards
-    document.getElementById('totalBookings').textContent = totalBookings;
-    document.getElementById('pendingBookings').textContent = pendingBookings;
-    document.getElementById('verifiedBookings').textContent = verifiedBookings;
-    document.getElementById('totalRevenue').textContent = `₱${totalRevenue.toLocaleString()}`;
+    // Update stat cards (if elements exist)
+    const totalBookingsEl = document.getElementById('totalBookings');
+    const pendingBookingsEl = document.getElementById('pendingBookings');
+    const verifiedBookingsEl = document.getElementById('verifiedBookings');
+    const totalRevenueEl = document.getElementById('totalRevenue');
+
+    if (totalBookingsEl) totalBookingsEl.textContent = totalBookings;
+    if (pendingBookingsEl) pendingBookingsEl.textContent = pendingBookings;
+    if (verifiedBookingsEl) verifiedBookingsEl.textContent = verifiedBookings;
+    if (totalRevenueEl) totalRevenueEl.textContent = `₱${totalRevenue.toLocaleString()}`;
     
     // Update booking type breakdown (if elements exist)
     const walkinStatElement = document.getElementById('walkinBookings');
@@ -946,35 +974,55 @@ async function handleLogout() {
 
 // Initialize page
 async function initPage() {
-    await loadAllBookings();
+    // Initial load and filter
     await applyFilters();
     
     // Setup event listeners
-    document.getElementById('bookingTypeFilter').addEventListener('change', async () => {
-        await applyFilters();
-    });
-    document.getElementById('statusFilter').addEventListener('change', async () => {
-        await applyFilters();
-    });
-    document.getElementById('sortBy').addEventListener('change', async () => {
-        await applyFilters();
-    });
-    document.getElementById('dateRange').addEventListener('change', async (e) => {
-        const customContainer = document.getElementById('customDateContainer');
-        if (customContainer) {
-            customContainer.style.display = e.target.value === 'custom' ? 'flex' : 'none';
-        }
-        await applyFilters();
-    });
+    const bookingTypeEl = document.getElementById('bookingTypeFilter');
+    const statusEl = document.getElementById('statusFilter');
+    const sortEl = document.getElementById('sortBy');
+    const dateRangeEl = document.getElementById('dateRange');
+    const searchEl = document.getElementById('searchInput');
+
+    if (bookingTypeEl) {
+        bookingTypeEl.addEventListener('change', async () => {
+            await applyFilters();
+        });
+    }
+    
+    if (statusEl) {
+        statusEl.addEventListener('change', async () => {
+            await applyFilters();
+        });
+    }
+    
+    if (sortEl) {
+        sortEl.addEventListener('change', async () => {
+            await applyFilters();
+        });
+    }
+    
+    if (dateRangeEl) {
+        dateRangeEl.addEventListener('change', async (e) => {
+            const customContainer = document.getElementById('customDateContainer');
+            if (customContainer) {
+                customContainer.style.display = e.target.value === 'custom' ? 'flex' : 'none';
+            }
+            await applyFilters();
+        });
+    }
     
     // Custom date listeners
     const customStartEl = document.getElementById('customStartDate');
     const customEndEl = document.getElementById('customEndDate');
     if (customStartEl) customStartEl.addEventListener('change', applyFilters);
     if (customEndEl) customEndEl.addEventListener('change', applyFilters);
-    document.getElementById('searchInput').addEventListener('input', async () => {
-        await applyFilters();
-    });
+    
+    if (searchEl) {
+        searchEl.addEventListener('input', async () => {
+            await applyFilters();
+        });
+    }
     
     // Close modal on outside click
     document.getElementById('bookingModal').addEventListener('click', function(e) {
