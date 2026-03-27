@@ -1,7 +1,12 @@
 <?php
+// Ensure no output before headers
+ob_start();
 require_once '../config.php';
 require_once '../session.php';
 requireLogin();
+
+// Clean any accidental output from config/session
+if (ob_get_length()) ob_clean();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     sendResponse(false, 'Method not allowed', null, 405);

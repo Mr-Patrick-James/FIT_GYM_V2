@@ -1,5 +1,10 @@
 <?php
+// Ensure no output before headers
+ob_start();
 require_once '../config.php';
+
+// Clean any accidental output from config
+if (ob_get_length()) ob_clean();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     sendResponse(false, 'Method not allowed', null, 405);
