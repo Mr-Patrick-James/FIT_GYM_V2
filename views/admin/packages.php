@@ -59,6 +59,34 @@ $user = getCurrentUser();
             color: #fff;
             font-family: inherit;
         }
+
+        /* Modal Tab Styling */
+        .modal-tabs {
+            display: flex;
+            gap: 12px;
+            padding: 0 24px 16px;
+            border-bottom: 1px solid var(--dark-border);
+        }
+        .modal-tab-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--dark-border);
+            color: var(--dark-text-secondary);
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .modal-tab-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+        }
+        .modal-tab-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #000;
+        }
     </style>
     
     <!-- Apply theme immediately before page renders to prevent flash -->
@@ -282,7 +310,7 @@ $user = getCurrentUser();
                         <textarea id="packageDescription" rows="4" placeholder="Enter features line by line (e.g.,&#10;Full Equipment Access&#10;Locker Room Access&#10;Expert Guidance)"></textarea>
                         <p style="font-size: 0.75rem; color: var(--dark-text-secondary); margin-top: 4px;">Each line will appear as a bullet point with a checkmark on the landing page.</p>
                     </div>
-                    
+
                     <div class="form-group">
                         <label>Target Goal <span style="color: var(--warning);">*</span></label>
                         <select id="packageGoal" required class="form-control">
@@ -337,7 +365,7 @@ $user = getCurrentUser();
         <div class="modal" style="max-width: 900px;">
             <div class="modal-header">
                 <div>
-                    <h3 id="exerciseModalTitle">Manage Package Exercises</h3>
+                    <h3 id="exerciseModalTitle">Manage Package Details</h3>
                     <p id="exerciseModalSubtitle" style="font-size: 0.85rem; color: var(--dark-text-secondary);"></p>
                 </div>
                 <button class="close-modal" onclick="closeExerciseModal()">
@@ -345,7 +373,13 @@ $user = getCurrentUser();
                 </button>
             </div>
             
-            <div class="modal-body" style="padding: 24px;">
+            <div class="modal-tabs">
+                <button class="modal-tab-btn active" onclick="switchExerciseTab('exercises')" id="pkgTabExercises">Exercises</button>
+                <button class="modal-tab-btn" onclick="switchExerciseTab('diet')" id="pkgTabDiet">Nutrition & Diet</button>
+                <button class="modal-tab-btn" onclick="switchExerciseTab('guidance')" id="pkgTabGuidance">Tips & Guidance</button>
+            </div>
+            
+            <div class="modal-body" id="exercisesTabContent" style="padding: 24px;">
                 <div style="display: grid; grid-template-columns: 1fr 350px; gap: 32px;">
                     <!-- Current Exercises List -->
                     <div>
@@ -389,6 +423,45 @@ $user = getCurrentUser();
                     </div>
                 </div>
             </div>
+
+            <!-- Diet Tab Content -->
+            <div class="modal-body" id="dietTabContent" style="display: none; padding: 24px;">
+                <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--dark-border); border-radius: 12px; padding: 24px;">
+                    <h4 style="margin-bottom: 12px; color: #fff;">Package Nutrition & Diet</h4>
+                    <p style="font-size: 0.85rem; color: var(--dark-text-secondary); margin-bottom: 20px;">
+                        <i class="fas fa-utensils"></i> Define the default nutrition plan for this package.
+                    </p>
+                    <div class="form-group">
+                        <label>Nutrition Details</label>
+                        <textarea id="packageModalDietInfo" rows="12" placeholder="Enter meal plan, nutrition tips, etc..." class="form-control" style="width: 100%; background: var(--dark-bg); border: 1px solid var(--dark-border); color: #fff; padding: 15px; border-radius: 8px; resize: vertical; min-height: 250px;"></textarea>
+                    </div>
+                    <div style="margin-top: 20px; display: flex; justify-content: flex-end;">
+                        <button onclick="savePackageDetailsFromModal()" class="btn btn-primary" style="padding: 12px 32px;">
+                            <i class="fas fa-save"></i> Save Nutrition Info
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Guidance Tab Content -->
+            <div class="modal-body" id="guidanceTabContent" style="display: none; padding: 24px;">
+                <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--dark-border); border-radius: 12px; padding: 24px;">
+                    <h4 style="margin-bottom: 12px; color: #fff;">Package Tips & Guidance</h4>
+                    <p style="font-size: 0.85rem; color: var(--dark-text-secondary); margin-bottom: 20px;">
+                        <i class="fas fa-lightbulb"></i> Define the default tips and professional guidance for this package.
+                    </p>
+                    <div class="form-group">
+                        <label>Guidance & Tips</label>
+                        <textarea id="packageModalGuidanceInfo" rows="12" placeholder="Enter professional tips, recovery guidance, etc..." class="form-control" style="width: 100%; background: var(--dark-bg); border: 1px solid var(--dark-border); color: #fff; padding: 15px; border-radius: 8px; resize: vertical; min-height: 250px;"></textarea>
+                    </div>
+                    <div style="margin-top: 20px; display: flex; justify-content: flex-end;">
+                        <button onclick="savePackageDetailsFromModal()" class="btn btn-primary" style="padding: 12px 32px;">
+                            <i class="fas fa-save"></i> Save Guidance Info
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <div class="modal-footer" style="padding: 16px 24px; border-top: 1px solid var(--dark-border); text-align: right;">
                 <button class="btn btn-secondary" onclick="closeExerciseModal()">Close</button>
             </div>
@@ -446,7 +519,6 @@ $user = getCurrentUser();
             <div class="modal-tabs" style="display: flex; gap: 24px; border-bottom: 1px solid var(--dark-border); margin: 0 24px 20px; padding-bottom: 12px;">
                 <button class="modal-tab-btn active" onclick="switchModalTab('info')" style="background: transparent; border: none; color: var(--dark-text-secondary); font-weight: 600; font-size: 0.9rem; padding: 8px 4px; cursor: pointer; transition: all 0.3s; position: relative;">Overview</button>
                 <button class="modal-tab-btn" onclick="switchModalTab('plan')" style="background: transparent; border: none; color: var(--dark-text-secondary); font-weight: 600; font-size: 0.9rem; padding: 8px 4px; cursor: pointer; transition: all 0.3s; position: relative;">Exercise Plan</button>
-                <button class="modal-tab-btn" onclick="switchModalTab('calendar')" style="background: transparent; border: none; color: var(--dark-text-secondary); font-weight: 600; font-size: 0.9rem; padding: 8px 4px; cursor: pointer; transition: all 0.3s; position: relative;">Training Calendar</button>
                 <button class="modal-tab-btn" onclick="switchModalTab('diet')" style="background: transparent; border: none; color: var(--dark-text-secondary); font-weight: 600; font-size: 0.9rem; padding: 8px 4px; cursor: pointer; transition: all 0.3s; position: relative;">Nutrition & Diet</button>
                 <button class="modal-tab-btn" onclick="switchModalTab('tips')" style="background: transparent; border: none; color: var(--dark-text-secondary); font-weight: 600; font-size: 0.9rem; padding: 8px 4px; cursor: pointer; transition: all 0.3s; position: relative;">Tips & Guidance</button>
             </div>
@@ -497,13 +569,6 @@ $user = getCurrentUser();
                     </div>
                 </div>
 
-                <!-- Calendar Tab -->
-                <div id="modalTabCalendar" class="modal-tab-content" style="display: none;">
-                    <div style="padding-top: 20px;">
-                        <div id="modalCalendar" style="min-height: 400px; background: var(--dark-card); border-radius: 12px; padding: 10px; border: 1px solid var(--dark-border);"></div>
-                    </div>
-                </div>
-
                 <!-- Diet Tab -->
                 <div id="modalTabDiet" class="modal-tab-content" style="display: none;">
                     <div id="modalDietContent" style="padding-top: 20px;">
@@ -530,8 +595,6 @@ $user = getCurrentUser();
 
     <!-- Theme Script -->
     <script src="../../assets/js/theme.js"></script>
-    <!-- FullCalendar CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
     <!-- Packages Scripts -->
     <script src="../../assets/js/packages.js"></script>
 </body>

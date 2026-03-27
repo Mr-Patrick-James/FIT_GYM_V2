@@ -364,7 +364,7 @@ $user = getCurrentUser();
                     </div>
 
                     <div class="form-group">
-                        <label>Equipment (Optional)</label>
+                        <label>Equipment</label>
                         <select id="equipmentSelect">
                             <option value="">No specific equipment</option>
                             <!-- Populated by JS -->
@@ -386,16 +386,6 @@ $user = getCurrentUser();
                             </button>
                         </div>
                         <input type="hidden" id="exerciseImageUrl">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Description</label>
-                        <textarea id="exerciseDescription" rows="3" placeholder="Briefly describe the exercise..."></textarea>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Instructions</label>
-                        <textarea id="exerciseInstructions" rows="4" placeholder="Step-by-step instructions..."></textarea>
                     </div>
                     
                     <div class="modal-actions">

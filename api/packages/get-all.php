@@ -8,12 +8,20 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 try {
     $conn = getDBConnection();
     
-    // Check if goal column exists, fallback if not
+    // Check if new columns exist, fallback if not
     $checkGoal = $conn->query("SHOW COLUMNS FROM packages LIKE 'goal'");
     $hasGoal = ($checkGoal && $checkGoal->num_rows > 0);
     
+    $checkDiet = $conn->query("SHOW COLUMNS FROM packages LIKE 'diet_info'");
+    $hasDiet = ($checkDiet && $checkDiet->num_rows > 0);
+
+    $checkGuidance = $conn->query("SHOW COLUMNS FROM packages LIKE 'guidance_info'");
+    $hasGuidance = ($checkGuidance && $checkGuidance->num_rows > 0);
+    
     $query = "SELECT id, name, duration, price, tag, description, is_trainer_assisted, " . 
              ($hasGoal ? "goal, " : "'General Fitness' as goal, ") . 
+             ($hasDiet ? "diet_info, " : "'' as diet_info, ") . 
+             ($hasGuidance ? "guidance_info, " : "'' as guidance_info, ") . 
              "is_active, created_at, updated_at FROM packages WHERE is_active = TRUE ORDER BY name ASC";
              
     $stmt = $conn->prepare($query);
@@ -50,6 +58,8 @@ try {
             'description' => $row['description'],
             'is_trainer_assisted' => (bool)$row['is_trainer_assisted'],
             'goal' => $row['goal'] ?? 'General Fitness',
+            'diet_info' => $row['diet_info'] ?? '',
+            'guidance_info' => $row['guidance_info'] ?? '',
             'trainer_ids' => $trainerIds,
             'is_active' => (bool)$row['is_active'],
             'created_at' => $row['created_at'],

@@ -439,7 +439,7 @@ $user = getCurrentUser();
         <div class="modal" style="max-width: 960px !important;">
             <div class="modal-header" style="padding: 32px 32px 16px; border: none; background: transparent;">
                 <div>
-                    <h3 id="exerciseModalTitle" style="font-size: 1.25rem; font-weight: 800; color: #fff; letter-spacing: -0.5px;">Manage Package Exercises</h3>
+                    <h3 id="exerciseModalTitle" style="font-size: 1.25rem; font-weight: 800; color: #fff; letter-spacing: -0.5px;">Manage Package</h3>
                     <p id="exerciseModalSubtitle" style="font-size: 0.75rem; font-weight: 500; color: var(--premium-text-muted); margin-top: 4px;"></p>
                 </div>
                 <button class="close-modal" onclick="closeExerciseModal()">
@@ -447,7 +447,13 @@ $user = getCurrentUser();
                 </button>
             </div>
             
-            <div class="modal-body" style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 32px; padding: 0 32px 32px;">
+            <div class="notif-tabs" style="padding: 0 32px 24px;">
+                <button class="notif-tab-btn active" onclick="switchPackageTab('exercises')" id="pkgTabExercises">Exercises</button>
+                <button class="notif-tab-btn" onclick="switchPackageTab('diet')" id="pkgTabDiet">Nutrition & Diet</button>
+                <button class="notif-tab-btn" onclick="switchPackageTab('guidance')" id="pkgTabGuidance">Tips & Guidance</button>
+            </div>
+            
+            <div class="modal-body" id="exercisesTabContent" style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 32px; padding: 0 32px 32px;">
                 <!-- Current Plan List (Left) -->
                 <div>
                     <h4 style="font-size: 0.95rem; font-weight: 800; color: #fff; margin-bottom: 8px;">Current Package Plan</h4>
@@ -487,6 +493,42 @@ $user = getCurrentUser();
                             <i class="fas fa-plus"></i> Add to Plan
                         </button>
                     </form>
+                </div>
+            </div>
+
+            <div class="modal-body" id="dietTabContent" style="display: none; padding: 0 32px 32px;">
+                <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--premium-border); border-radius: 20px; padding: 24px;">
+                    <h4 style="font-size: 0.95rem; font-weight: 800; color: #fff; margin-bottom: 8px;">Package Nutrition & Diet</h4>
+                    <p style="font-size: 0.7rem; color: var(--premium-text-muted); margin-bottom: 20px;">
+                        <i class="fas fa-utensils"></i> Define the default nutrition plan for this package.
+                    </p>
+                    <div class="form-group">
+                        <label>Nutrition Details</label>
+                        <textarea id="packageDietInfo" rows="12" placeholder="Enter meal plan, nutrition tips, etc. for this package..." class="modern-input" style="resize: vertical; min-height: 200px;"></textarea>
+                    </div>
+                    <div style="margin-top: 20px; display: flex; justify-content: flex-end;">
+                        <button onclick="savePackageDetails()" class="action-btn-modern primary" style="padding: 12px 32px;">
+                            <i class="fas fa-save"></i> Save Nutrition Info
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-body" id="guidanceTabContent" style="display: none; padding: 0 32px 32px;">
+                <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--premium-border); border-radius: 20px; padding: 24px;">
+                    <h4 style="font-size: 0.95rem; font-weight: 800; color: #fff; margin-bottom: 8px;">Package Tips & Guidance</h4>
+                    <p style="font-size: 0.7rem; color: var(--premium-text-muted); margin-bottom: 20px;">
+                        <i class="fas fa-lightbulb"></i> Define the default tips and professional guidance for this package.
+                    </p>
+                    <div class="form-group">
+                        <label>Guidance & Tips</label>
+                        <textarea id="packageGuidanceInfo" rows="12" placeholder="Enter professional tips, recovery guidance, etc. for this package..." class="modern-input" style="resize: vertical; min-height: 200px;"></textarea>
+                    </div>
+                    <div style="margin-top: 20px; display: flex; justify-content: flex-end;">
+                        <button onclick="savePackageDetails()" class="action-btn-modern primary" style="padding: 12px 32px;">
+                            <i class="fas fa-save"></i> Save Guidance Info
+                        </button>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer" style="padding: 20px 32px; border-top: 1px solid var(--premium-border); text-align: right; background: rgba(0,0,0,0.1);">
@@ -694,10 +736,81 @@ $user = getCurrentUser();
 
         async function managePackageExercises(id, name) {
             currentPackageId = id;
-            document.getElementById('exerciseModalTitle').textContent = `Manage Exercises: ${name}`;
-            document.getElementById('exerciseModalSubtitle').textContent = `Editing the default routine for this package.`;
+            const pkg = allPackages.find(p => p.id === id);
+            
+            document.getElementById('exerciseModalTitle').textContent = `Manage Package: ${name}`;
+            document.getElementById('exerciseModalSubtitle').textContent = `Editing the default templates for this package.`;
+            
+            // Populate diet and guidance
+            document.getElementById('packageDietInfo').value = pkg.diet_info || '';
+            document.getElementById('packageGuidanceInfo').value = pkg.guidance_info || '';
+            
+            // Reset to exercises tab
+            switchPackageTab('exercises');
+            
             document.getElementById('exerciseModal').classList.add('active');
             loadPackageExercises();
+        }
+
+        function switchPackageTab(tab) {
+            // Update buttons
+            document.getElementById('pkgTabExercises').classList.toggle('active', tab === 'exercises');
+            document.getElementById('pkgTabDiet').classList.toggle('active', tab === 'diet');
+            document.getElementById('pkgTabGuidance').classList.toggle('active', tab === 'guidance');
+            
+            // Update content
+            document.getElementById('exercisesTabContent').style.display = tab === 'exercises' ? 'grid' : 'none';
+            document.getElementById('dietTabContent').style.display = tab === 'diet' ? 'block' : 'none';
+            document.getElementById('guidanceTabContent').style.display = tab === 'guidance' ? 'block' : 'none';
+        }
+
+        async function savePackageDetails() {
+            const pkg = allPackages.find(p => p.id === currentPackageId);
+            if (!pkg) return;
+            
+            const dietInfo = document.getElementById('packageDietInfo').value;
+            const guidanceInfo = document.getElementById('packageGuidanceInfo').value;
+            
+            const saveBtn = event.target.closest('button');
+            const originalHTML = saveBtn.innerHTML;
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+            
+            try {
+                const response = await fetch('../../api/packages/update.php', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        id: currentPackageId,
+                        name: pkg.name,
+                        duration: pkg.duration,
+                        price: pkg.price,
+                        tag: pkg.tag,
+                        description: pkg.description,
+                        goal: pkg.goal,
+                        is_trainer_assisted: pkg.is_trainer_assisted,
+                        trainer_ids: pkg.trainer_ids,
+                        diet_info: dietInfo,
+                        guidance_info: guidanceInfo
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    showNotification('Package details updated successfully', 'success');
+                    // Update local data
+                    pkg.diet_info = dietInfo;
+                    pkg.guidance_info = guidanceInfo;
+                } else {
+                    showNotification(data.message, 'warning');
+                }
+            } catch (err) {
+                console.error(err);
+                showNotification('Error saving package details', 'warning');
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = originalHTML;
+            }
         }
 
         async function loadPackageExercises() {

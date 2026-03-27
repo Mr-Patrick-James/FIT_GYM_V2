@@ -16,6 +16,8 @@ $price = trim($data['price'] ?? '');
 $tag = trim($data['tag'] ?? '');
 $description = trim($data['description'] ?? '');
 $goal = trim($data['goal'] ?? 'General Fitness');
+$dietInfo = trim($data['diet_info'] ?? '');
+$guidanceInfo = trim($data['guidance_info'] ?? '');
 $isTrainerAssisted = isset($data['is_trainer_assisted']) ? (bool)$data['is_trainer_assisted'] : false;
 $trainerIds = $data['trainer_ids'] ?? [];
 
@@ -41,9 +43,30 @@ $conn->begin_transaction();
 
 try {
     // Insert new package
-    $stmt = $conn->prepare("INSERT INTO packages (name, duration, price, tag, description, is_trainer_assisted, goal) VALUES (?, ?, ?, ?, ?, ?, ?)");
+    $checkDiet = $conn->query("SHOW COLUMNS FROM packages LIKE 'diet_info'");
+    $hasDiet = ($checkDiet && $checkDiet->num_rows > 0);
+    $checkGuidance = $conn->query("SHOW COLUMNS FROM packages LIKE 'guidance_info'");
+    $hasGuidance = ($checkGuidance && $checkGuidance->num_rows > 0);
+
+    $fields = ["name", "duration", "price", "tag", "description", "is_trainer_assisted", "goal"];
+    if ($hasDiet) $fields[] = "diet_info";
+    if ($hasGuidance) $fields[] = "guidance_info";
+    
+    $placeholders = array_fill(0, count($fields), "?");
+    $sql = "INSERT INTO packages (" . implode(", ", $fields) . ") VALUES (" . implode(", ", $placeholders) . ")";
+
+    $stmt = $conn->prepare($sql);
     $isTrainerAssistedInt = $isTrainerAssisted ? 1 : 0;
-    $stmt->bind_param("ssdssis", $name, $duration, $priceValue, $tag, $description, $isTrainerAssistedInt, $goal);
+    
+    if ($hasDiet && $hasGuidance) {
+        $stmt->bind_param("ssdssisss", $name, $duration, $priceValue, $tag, $description, $isTrainerAssistedInt, $goal, $dietInfo, $guidanceInfo);
+    } elseif ($hasDiet) {
+        $stmt->bind_param("ssdssiss", $name, $duration, $priceValue, $tag, $description, $isTrainerAssistedInt, $goal, $dietInfo);
+    } elseif ($hasGuidance) {
+        $stmt->bind_param("ssdssiss", $name, $duration, $priceValue, $tag, $description, $isTrainerAssistedInt, $goal, $guidanceInfo);
+    } else {
+        $stmt->bind_param("ssdssis", $name, $duration, $priceValue, $tag, $description, $isTrainerAssistedInt, $goal);
+    }
 
     if ($stmt->execute()) {
         $packageId = $conn->insert_id;

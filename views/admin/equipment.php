@@ -145,7 +145,7 @@ $user = getCurrentUser();
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Image (Optional)</label>
+                        <label>Image</label>
                         <input type="file" id="equipmentImage" accept="image/*" class="form-control">
                     </div>
                     <div class="form-group">

@@ -17,6 +17,8 @@ $price = trim($data['price'] ?? '');
 $tag = trim($data['tag'] ?? '');
 $description = trim($data['description'] ?? '');
 $goal = trim($data['goal'] ?? 'General Fitness');
+$dietInfo = trim($data['diet_info'] ?? '');
+$guidanceInfo = trim($data['guidance_info'] ?? '');
 $isTrainerAssisted = isset($data['is_trainer_assisted']) ? (bool)$data['is_trainer_assisted'] : false;
 $trainerIds = $data['trainer_ids'] ?? [];
 
@@ -57,12 +59,32 @@ try {
     $checkStmt->close();
 
     // Update package
-    $stmt = $conn->prepare("UPDATE packages SET name = ?, duration = ?, price = ?, tag = ?, description = ?, is_trainer_assisted = ?, goal = ?, updated_at = NOW() WHERE id = ?");
+    $checkDiet = $conn->query("SHOW COLUMNS FROM packages LIKE 'diet_info'");
+    $hasDiet = ($checkDiet && $checkDiet->num_rows > 0);
+    $checkGuidance = $conn->query("SHOW COLUMNS FROM packages LIKE 'guidance_info'");
+    $hasGuidance = ($checkGuidance && $checkGuidance->num_rows > 0);
+
+    $sql = "UPDATE packages SET name = ?, duration = ?, price = ?, tag = ?, description = ?, is_trainer_assisted = ?, goal = ?";
+    if ($hasDiet) $sql .= ", diet_info = ?";
+    if ($hasGuidance) $sql .= ", guidance_info = ?";
+    $sql .= ", updated_at = NOW() WHERE id = ?";
+
+    $stmt = $conn->prepare($sql);
     if (!$stmt) {
         throw new Exception('Prepare failed: ' . $conn->error);
     }
+
     $isTrainerAssistedInt = $isTrainerAssisted ? 1 : 0;
-    $stmt->bind_param("ssdssisi", $name, $duration, $priceValue, $tag, $description, $isTrainerAssistedInt, $goal, $id);
+    
+    if ($hasDiet && $hasGuidance) {
+        $stmt->bind_param("ssdssisssi", $name, $duration, $priceValue, $tag, $description, $isTrainerAssistedInt, $goal, $dietInfo, $guidanceInfo, $id);
+    } elseif ($hasDiet) {
+        $stmt->bind_param("ssdssissi", $name, $duration, $priceValue, $tag, $description, $isTrainerAssistedInt, $goal, $dietInfo, $id);
+    } elseif ($hasGuidance) {
+        $stmt->bind_param("ssdssissi", $name, $duration, $priceValue, $tag, $description, $isTrainerAssistedInt, $goal, $guidanceInfo, $id);
+    } else {
+        $stmt->bind_param("ssdssisi", $name, $duration, $priceValue, $tag, $description, $isTrainerAssistedInt, $goal, $id);
+    }
 
     if ($stmt->execute()) {
         // Sync trainers

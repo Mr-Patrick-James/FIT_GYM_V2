@@ -1,6 +1,4 @@
 // Package Hub Preview Logic
-let modalCalendar = null;
-
 async function previewPackageHub(packageId) {
     const pkg = allPackages.find(p => p.id === packageId);
     if (!pkg) return;
@@ -49,28 +47,12 @@ async function previewPackageHub(packageId) {
         planContent.innerHTML = '<div style="text-align: center; padding: 40px; color: #ef4444;">Failed to load plan.</div>';
     }
 
-    // 2. Calendar Preview (Sample)
-    const calendarEl = document.getElementById('modalCalendar');
-    if (modalCalendar) modalCalendar.destroy();
-    
-    modalCalendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
-        headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth' },
-        themeSystem: 'standard',
-        events: [
-            { title: 'Workout A', start: new Date().toISOString().split('T')[0], color: '#3b82f6' },
-            { title: 'Workout B', start: new Date(Date.now() + 86400000).toISOString().split('T')[0], color: '#3b82f6' },
-            { title: 'Rest Day', start: new Date(Date.now() + 172800000).toISOString().split('T')[0], color: '#ef4444' }
-        ]
-    });
-    modalCalendar.render();
-
     // 3. Diet & Tips (Sample for Preview)
     document.getElementById('modalDietContent').innerHTML = `
         <div style="text-align: center; padding: 40px; color: var(--dark-text-secondary);">
             <i class="fas fa-utensils" style="font-size: 2.5rem; opacity: 0.1; margin-bottom: 15px; display: block;"></i>
             <h4 style="color: white; margin-bottom: 8px;">Personalized Nutrition</h4>
-            <p style="font-size: 0.9rem; line-height: 1.6;">Once booked, the coach will provide a daily meal plan tailored to the goal of <strong>${pkg.goal || 'General Fitness'}</strong>.</p>
+            <p style="font-size: 0.9rem; line-height: 1.6;">${pkg.diet_info ? pkg.diet_info.replace(/\n/g, '<br>') : `Once booked, the coach will provide a daily meal plan tailored to the goal of <strong>${pkg.goal || 'General Fitness'}</strong>.`}</p>
         </div>
     `;
     
@@ -78,7 +60,7 @@ async function previewPackageHub(packageId) {
         <div style="text-align: center; padding: 40px; color: var(--dark-text-secondary);">
             <i class="fas fa-lightbulb" style="font-size: 2.5rem; opacity: 0.1; margin-bottom: 15px; display: block;"></i>
             <h4 style="color: white; margin-bottom: 8px;">Professional Guidance</h4>
-            <p style="font-size: 0.9rem; line-height: 1.6;">Assigned trainers share daily tips on form, hydration, and recovery through the user portal.</p>
+            <p style="font-size: 0.9rem; line-height: 1.6;">${pkg.guidance_info ? pkg.guidance_info.replace(/\n/g, '<br>') : 'Assigned trainers share daily tips on form, hydration, and recovery through the user portal.'}</p>
         </div>
     `;
 
@@ -99,11 +81,6 @@ function switchModalTab(tab) {
     // Update button
     const btn = Array.from(document.querySelectorAll('.modal-tab-btn')).find(b => b.textContent.toLowerCase().includes(tab));
     if (btn) btn.classList.add('active');
-
-    // Re-render calendar if tab is calendar
-    if (tab === 'calendar' && modalCalendar) {
-        setTimeout(() => modalCalendar.render(), 100);
-    }
 }
 
 function closeBookingDetailsModal() {
@@ -176,11 +153,86 @@ let currentPackageId = null;
 
 async function openExerciseModal(packageId, packageName) {
     currentPackageId = packageId;
+    const pkg = allPackages.find(p => p.id === packageId);
+    
     document.getElementById('exerciseModalSubtitle').textContent = `Package: ${packageName}`;
     document.getElementById('exerciseModal').classList.add('active');
     
+    // Populate Diet and Guidance for the modal tabs
+    const dietTextarea = document.getElementById('packageModalDietInfo');
+    if (dietTextarea) dietTextarea.value = pkg.diet_info || '';
+    const guidanceTextarea = document.getElementById('packageModalGuidanceInfo');
+    if (guidanceTextarea) guidanceTextarea.value = pkg.guidance_info || '';
+    
+    // Reset to Exercises tab
+    switchExerciseTab('exercises');
+    
     await loadAllExercises();
     await loadPackageExercises(packageId);
+}
+
+function switchExerciseTab(tab) {
+    // Update tab buttons
+    document.getElementById('pkgTabExercises').classList.toggle('active', tab === 'exercises');
+    document.getElementById('pkgTabDiet').classList.toggle('active', tab === 'diet');
+    document.getElementById('pkgTabGuidance').classList.toggle('active', tab === 'guidance');
+    
+    // Update content visibility
+    document.getElementById('exercisesTabContent').style.display = tab === 'exercises' ? 'block' : 'none';
+    document.getElementById('dietTabContent').style.display = tab === 'diet' ? 'block' : 'none';
+    document.getElementById('guidanceTabContent').style.display = tab === 'guidance' ? 'block' : 'none';
+}
+
+async function savePackageDetailsFromModal() {
+    const pkg = allPackages.find(p => p.id === currentPackageId);
+    if (!pkg) return;
+    
+    const dietInfo = document.getElementById('packageModalDietInfo').value;
+    const guidanceInfo = document.getElementById('packageModalGuidanceInfo').value;
+    
+    const saveBtn = event.target.closest('button');
+    const originalHTML = saveBtn.innerHTML;
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    
+    try {
+        const response = await fetch('../../api/packages/update.php', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                id: currentPackageId,
+                name: pkg.name,
+                duration: pkg.duration,
+                price: pkg.price,
+                tag: pkg.tag,
+                description: pkg.description,
+                goal: pkg.goal,
+                is_trainer_assisted: pkg.is_trainer_assisted,
+                trainer_ids: pkg.trainer_ids,
+                diet_info: dietInfo,
+                guidance_info: guidanceInfo
+            })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            showNotification('Package details updated successfully', 'success');
+            // Update local data
+            pkg.diet_info = dietInfo;
+            pkg.guidance_info = guidanceInfo;
+            // Also update the main edit modal fields if open
+            if (document.getElementById('packageDietInfo')) document.getElementById('packageDietInfo').value = dietInfo;
+            if (document.getElementById('packageGuidanceInfo')) document.getElementById('packageGuidanceInfo').value = guidanceInfo;
+        } else {
+            showNotification(data.message, 'warning');
+        }
+    } catch (err) {
+        console.error(err);
+        showNotification('Error saving package details', 'warning');
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = originalHTML;
+    }
 }
 
 function closeExerciseModal() {
@@ -656,6 +708,7 @@ function openAddPackageModal() {
         
         const isTrainerAssisted = document.getElementById('isTrainerAssisted');
         const group = document.getElementById('trainerSelectionGroup');
+
         if (isTrainerAssisted) {
             isTrainerAssisted.checked = false;
         }

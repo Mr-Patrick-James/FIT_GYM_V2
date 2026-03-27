@@ -150,7 +150,7 @@ $user = getCurrentUser();
                     </div>
 
                     <div class="form-group">
-                        <label>Equipment (Optional)</label>
+                        <label>Equipment</label>
                         <select id="equipmentSelect">
                             <option value="">No specific equipment</option>
                             <!-- Populated by JS -->

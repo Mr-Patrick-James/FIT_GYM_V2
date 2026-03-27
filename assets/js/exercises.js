@@ -145,8 +145,6 @@ async function editExercise(id) {
     document.getElementById('exerciseCategory').value = ex.category;
     document.getElementById('equipmentSelect').value = ex.equipment_id || '';
     document.getElementById('exerciseImageUrl').value = ex.image_url || '';
-    document.getElementById('exerciseDescription').value = ex.description || '';
-    document.getElementById('exerciseInstructions').value = ex.instructions || '';
     
     if (ex.image_url) {
         document.getElementById('imagePreview').src = ex.image_url;
@@ -168,8 +166,8 @@ async function saveExercise(event) {
     formData.append('name', document.getElementById('exerciseName').value);
     formData.append('category', document.getElementById('exerciseCategory').value);
     formData.append('equipment_id', document.getElementById('equipmentSelect').value);
-    formData.append('description', document.getElementById('exerciseDescription').value);
-    formData.append('instructions', document.getElementById('exerciseInstructions').value);
+    formData.append('description', '');
+    formData.append('instructions', '');
     
     // Handle image - either file upload or existing URL
     const imageFile = document.getElementById('exerciseImageFile').files[0];
