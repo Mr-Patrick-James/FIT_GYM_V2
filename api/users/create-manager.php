@@ -3,12 +3,12 @@
 require_once 'config.php';
 require_once 'session.php';
 
-// Check if user is admin
-if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'admin') {
+// Check if user is admin or manager
+if (!isset($_SESSION['user_role']) || !in_array($_SESSION['user_role'], ['admin', 'manager'])) {
     header('Content-Type: application/json');
     echo json_encode([
         'success' => false,
-        'message' => 'Access denied. Admin privileges required.'
+        'message' => 'Access denied. Admin or Manager privileges required.'
     ]);
     exit;
 }

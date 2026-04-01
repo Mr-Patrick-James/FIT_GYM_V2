@@ -7,8 +7,8 @@ require_once '../session.php';
 // Clean any accidental output from config/session
 if (ob_get_length()) ob_clean();
 
-// Allow Admin or Trainer
-if (!isAdmin() && !isTrainer()) {
+// Allow Admin, Manager, or Trainer
+if (!isAdmin() && !isManager() && !isTrainer()) {
     sendResponse(false, 'Unauthorized access', null, 401);
 }
 

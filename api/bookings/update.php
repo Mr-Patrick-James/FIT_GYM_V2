@@ -7,8 +7,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST' && $_SERVER['REQUEST_METHOD'] !== 'PUT
     sendResponse(false, 'Method not allowed', null, 405);
 }
 
-// Check if user is logged in and is admin
-if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
+// Check if user is logged in and is admin or manager
+if (!isset($_SESSION['user_id']) || !in_array($_SESSION['user_role'], ['admin', 'manager'])) {
     sendResponse(false, 'Unauthorized access', null, 401);
 }
 

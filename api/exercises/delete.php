@@ -2,8 +2,8 @@
 require_once '../config.php';
 require_once '../session.php';
 
-// Allow Admin or Trainer
-if (!isAdmin() && !isTrainer()) {
+// Allow Admin, Manager or Trainer
+if (!isAdmin() && !isManager() && !isTrainer()) {
     sendResponse(false, 'Unauthorized access', null, 401);
 }
 

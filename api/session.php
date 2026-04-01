@@ -213,10 +213,11 @@ function requireLogin() {
     }
 }
 
-// Require admin - redirect to appropriate dashboard if not admin
+// Require admin or manager - redirect to appropriate dashboard if not admin or manager
+// Managers have full access to all admin functions (bookings, payments, members)
 function requireAdmin() {
     requireLogin();
-    if (!isAdmin()) {
+    if (!isAdmin() && !isManager()) {
         // Handle API requests separately
         if (isApiRequest()) {
             if (!headers_sent()) {
@@ -225,7 +226,7 @@ function requireAdmin() {
             http_response_code(403);
             echo json_encode([
                 'success' => false,
-                'message' => 'Admin privileges required.',
+                'message' => 'Admin or Manager privileges required.',
                 'error_code' => 'FORBIDDEN'
             ]);
             exit();
@@ -245,10 +246,10 @@ function requireAdmin() {
     }
 }
 
-// Require trainer - redirect to user dashboard if not trainer or admin
+// Require trainer - redirect to user dashboard if not trainer, manager, or admin
 function requireTrainer() {
     requireLogin();
-    if (!isTrainer() && !isAdmin()) {
+    if (!isTrainer() && !isAdmin() && !isManager()) {
         // Handle API requests separately
         if (isApiRequest()) {
             if (!headers_sent()) {

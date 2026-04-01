@@ -77,7 +77,7 @@ $user = getCurrentUser();
             ?></div>
             <div class="admin-info">
                 <h4><?php echo htmlspecialchars($adminName); ?></h4>
-                <p>Gym Owner / Manager</p>
+                <p><?php echo ($user['role'] === 'manager') ? 'Gym Manager' : 'Administrator'; ?></p>
             </div>
         </div>
     </aside>

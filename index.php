@@ -95,7 +95,7 @@ function getSetting($key, $default = '', $settings = []) {
 // If user is already logged in, redirect to appropriate dashboard
 // But only if we're not in the middle of a login/signup process
 if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
-    $redirect = isAdmin() ? 'views/admin/dashboard.php' : 'views/user/dashboard.php';
+    $redirect = (isAdmin() || isManager()) ? 'views/admin/dashboard.php' : 'views/user/dashboard.php';
     header("Location: $redirect");
     exit();
 }
