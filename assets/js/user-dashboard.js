@@ -1178,15 +1178,20 @@ function showNotification(message, type = 'info') {
     notification.style.cssText = `
         background: ${type === 'success' ? 'rgba(34, 197, 94, 0.9)' : type === 'error' ? 'rgba(239, 68, 68, 0.9)' : 'rgba(59, 130, 246, 0.9)'};
         color: white;
-        padding: 16px 24px;
-        border-radius: 8px;
+        padding: 12px 18px;
+        border-radius: 12px;
         margin-bottom: 10px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 10px;
         animation: slideInRight 0.3s ease;
-        min-width: 300px;
+        width: auto;
+        max-width: 320px;
+        white-space: normal;
+        word-break: break-word;
+        font-size: 0.85rem;
+        font-weight: 600;
     `;
     
     const icon = type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle';
@@ -3955,16 +3960,20 @@ function showNotification(message, type = 'info') {
         right: 32px;
         background: ${type === 'success' ? '#22c55e' : type === 'warning' ? '#f59e0b' : '#3b82f6'};
         color: white;
-        padding: 16px 24px;
+        padding: 12px 18px;
         border-radius: 12px;
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 10px;
         box-shadow: 0 10px 25px rgba(0,0,0,0.2);
         z-index: 10000;
         animation: slideIn 0.3s ease-out;
         font-weight: 600;
-        max-width: 400px;
+        font-size: 0.85rem;
+        width: auto;
+        max-width: 320px;
+        white-space: normal;
+        word-break: break-word;
     `;
     
     document.body.appendChild(notification);

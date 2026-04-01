@@ -362,16 +362,20 @@ $questionnaire = $q_stmt->get_result()->fetch_assoc();
             background: var(--premium-card);
             color: var(--premium-text);
             border: 1px solid var(--premium-border);
-            padding: 16px 24px;
-            border-radius: 16px;
+            padding: 12px 18px;
+            border-radius: 14px;
             display: flex;
             align-items: center;
-            gap: 12px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-            z-index: 10001;
+            gap: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            z-index: 100001;
             animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            font-weight: 800;
-            font-size: 0.8rem;
+            font-weight: 700;
+            font-size: 0.82rem;
+            width: auto;
+            max-width: 320px;
+            white-space: normal;
+            word-break: break-word;
         }
         .fc-event:hover {
             transform: scale(1.02);
@@ -1367,7 +1371,7 @@ $questionnaire = $q_stmt->get_result()->fetch_assoc();
                 <i class="fas fa-${icon}"></i>
                 <span>${message}</span>
             `;
-            notification.style.cssText = `position: fixed; top: 100px; right: 32px; background: ${bg}; color: white; padding: 16px 24px; border-radius: 12px; display: flex; align-items: center; gap: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 10000; animation: slideIn 0.3s ease-out; font-weight: 600;`;
+            notification.style.cssText = `position: fixed; bottom: 32px; right: 32px; background: ${bg}; color: white; padding: 12px 18px; border-radius: 12px; display: flex; align-items: center; gap: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.25); z-index: 100000; animation: slideUp 0.3s cubic-bezier(0.16,1,0.3,1); font-weight: 600; font-size: 0.85rem; width: auto; max-width: 320px; white-space: normal; word-break: break-word;`;
             document.body.appendChild(notification);
             setTimeout(() => {
                 notification.style.animation = 'slideIn 0.3s ease reverse forwards';
