@@ -81,14 +81,32 @@ $questionnaire = $q_stmt->get_result()->fetch_assoc();
             --premium-card: #0f0f0f;
             --premium-border: rgba(255, 255, 255, 0.06);
             --premium-accent: #ffffff;
+            --premium-accent-reverse: #000000;
             --premium-text-muted: rgba(255, 255, 255, 0.4);
             --premium-input-bg: rgba(255, 255, 255, 0.02);
             --premium-input-hover: rgba(255, 255, 255, 0.04);
+            --premium-text: #ffffff;
+            --premium-sidebar-bg: #000000;
+            --premium-header-bg: rgba(0, 0, 0, 0.6);
+        }
+
+        .light-mode {
+            --premium-bg: #f8fafc;
+            --premium-card: #ffffff;
+            --premium-border: rgba(0, 0, 0, 0.1);
+            --premium-accent: #0f172a;
+            --premium-accent-reverse: #ffffff;
+            --premium-text-muted: #64748b;
+            --premium-input-bg: rgba(0, 0, 0, 0.03);
+            --premium-input-hover: rgba(0, 0, 0, 0.06);
+            --premium-text: #0f172a;
+            --premium-sidebar-bg: #ffffff;
+            --premium-header-bg: rgba(255, 255, 255, 0.8);
         }
 
         body {
             background-color: var(--premium-bg) !important;
-            color: #fff !important;
+            color: var(--premium-text) !important;
             font-family: 'Inter', sans-serif !important;
         }
 
@@ -98,12 +116,12 @@ $questionnaire = $q_stmt->get_result()->fetch_assoc();
         }
 
         .sidebar {
-            background: #000 !important;
+            background: var(--premium-sidebar-bg) !important;
             border-right: 1px solid var(--premium-border) !important;
         }
 
         .top-bar {
-            background: rgba(0, 0, 0, 0.6) !important;
+            background: var(--premium-header-bg) !important;
             backdrop-filter: blur(20px);
             border-bottom: 1px solid var(--premium-border) !important;
             padding: 24px 40px !important;
@@ -113,7 +131,7 @@ $questionnaire = $q_stmt->get_result()->fetch_assoc();
             font-size: 1.5rem !important;
             font-weight: 900 !important;
             letter-spacing: -1px !important;
-            color: #fff !important;
+            color: var(--premium-text) !important;
         }
 
         .page-title p {
@@ -153,14 +171,14 @@ $questionnaire = $q_stmt->get_result()->fetch_assoc();
         }
 
         .tab-btn:hover {
-            color: #fff;
+            color: var(--premium-text);
             background: var(--premium-input-bg);
         }
 
         .tab-btn.active {
-            color: #000;
-            background: #fff;
-            box-shadow: 0 8px 20px rgba(255, 255, 255, 0.1);
+            color: var(--premium-accent-reverse);
+            background: var(--premium-accent);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
         }
         
         .content-card {
@@ -168,7 +186,7 @@ $questionnaire = $q_stmt->get_result()->fetch_assoc();
             border: 1px solid var(--premium-border) !important;
             border-radius: 20px !important;
             overflow: hidden;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3) !important;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1) !important;
         }
 
         .card-header {
@@ -181,7 +199,7 @@ $questionnaire = $q_stmt->get_result()->fetch_assoc();
             font-size: 1rem !important;
             font-weight: 800 !important;
             letter-spacing: -0.5px !important;
-            color: #fff !important;
+            color: var(--premium-text) !important;
         }
 
         .form-control, .modern-input {
@@ -190,7 +208,7 @@ $questionnaire = $q_stmt->get_result()->fetch_assoc();
             border: 1px solid var(--premium-border) !important;
             border-radius: 12px !important;
             padding: 12px 16px !important;
-            color: #fff !important;
+            color: var(--premium-text) !important;
             font-size: 0.85rem !important;
             font-weight: 500 !important;
             transition: all 0.3s ease !important;
@@ -199,8 +217,8 @@ $questionnaire = $q_stmt->get_result()->fetch_assoc();
 
         .form-control:focus, .modern-input:focus {
             background: var(--premium-input-hover) !important;
-            border-color: rgba(255, 255, 255, 0.2) !important;
-            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1) !important;
+            border-color: rgba(125, 125, 125, 0.2) !important;
+            box-shadow: 0 0 0 1px rgba(125, 125, 125, 0.1) !important;
         }
 
         label {
@@ -215,8 +233,8 @@ $questionnaire = $q_stmt->get_result()->fetch_assoc();
         }
 
         .btn-primary {
-            background: #fff !important;
-            color: #000 !important;
+            background: var(--premium-accent) !important;
+            color: var(--premium-accent-reverse) !important;
             border: none !important;
             border-radius: 14px !important;
             padding: 12px 20px !important;
@@ -232,12 +250,12 @@ $questionnaire = $q_stmt->get_result()->fetch_assoc();
 
         .btn-primary:hover {
             transform: scale(1.02);
-            box-shadow: 0 10px 25px rgba(255, 255, 255, 0.15);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
         }
 
         .btn-secondary {
             background: var(--premium-input-bg) !important;
-            color: #fff !important;
+            color: var(--premium-text) !important;
             border: 1px solid var(--premium-border) !important;
             border-radius: 12px !important;
             padding: 8px 16px !important;
@@ -248,16 +266,16 @@ $questionnaire = $q_stmt->get_result()->fetch_assoc();
 
         .btn-secondary:hover {
             background: var(--premium-input-hover) !important;
-            border-color: rgba(255, 255, 255, 0.2) !important;
+            border-color: rgba(125, 125, 125, 0.2) !important;
         }
 
         /* FullCalendar Customization */
         .fc {
-            --fc-border-color: rgba(255, 255, 255, 0.1);
+            --fc-border-color: var(--premium-border);
             --fc-page-bg-color: transparent;
             --fc-neutral-bg-color: transparent;
             --fc-list-event-hover-bg-color: var(--premium-input-hover);
-            --fc-today-bg-color: rgba(255, 255, 255, 0.05);
+            --fc-today-bg-color: var(--premium-input-bg);
             font-family: 'Inter', sans-serif;
         }
 
@@ -265,7 +283,7 @@ $questionnaire = $q_stmt->get_result()->fetch_assoc();
             font-size: 1.1rem !important;
             font-weight: 800 !important;
             letter-spacing: -0.5px;
-            color: #fff;
+            color: var(--premium-text);
         }
 
         .fc .fc-button-primary {
@@ -280,7 +298,7 @@ $questionnaire = $q_stmt->get_result()->fetch_assoc();
 
         .fc .fc-button-primary:hover {
             background: var(--premium-input-hover) !important;
-            border-color: rgba(255, 255, 255, 0.2) !important;
+            border-color: rgba(125, 125, 125, 0.2) !important;
         }
 
         .fc .fc-col-header-cell {
@@ -293,7 +311,7 @@ $questionnaire = $q_stmt->get_result()->fetch_assoc();
         }
 
         .fc-theme-standard td, .fc-theme-standard th {
-            border-color: rgba(255, 255, 255, 0.08) !important;
+            border-color: var(--premium-border) !important;
         }
 
         .fc-daygrid-day-number {
@@ -304,13 +322,13 @@ $questionnaire = $q_stmt->get_result()->fetch_assoc();
         }
 
         .fc-day-today .fc-daygrid-day-number {
-            color: #fff !important;
+            color: var(--premium-accent) !important;
         }
         
         .history-item {
             padding: 16px;
             border-bottom: 1px solid var(--premium-border);
-            background: rgba(255, 255, 255, 0.01);
+            background: var(--premium-input-bg);
             border-radius: 16px;
             margin-bottom: 12px;
             transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
@@ -318,7 +336,7 @@ $questionnaire = $q_stmt->get_result()->fetch_assoc();
         }
         .history-item:hover {
             transform: translateY(-2px);
-            background: rgba(255, 255, 255, 0.03);
+            background: var(--premium-input-hover);
             border-color: var(--premium-border);
         }
 
@@ -341,14 +359,15 @@ $questionnaire = $q_stmt->get_result()->fetch_assoc();
             position: fixed;
             bottom: 32px;
             right: 32px;
-            background: #fff;
-            color: #000;
+            background: var(--premium-card);
+            color: var(--premium-text);
+            border: 1px solid var(--premium-border);
             padding: 16px 24px;
             border-radius: 16px;
             display: flex;
             align-items: center;
             gap: 12px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
             z-index: 10001;
             animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             font-weight: 800;
@@ -357,7 +376,7 @@ $questionnaire = $q_stmt->get_result()->fetch_assoc();
         .fc-event:hover {
             transform: scale(1.02);
             z-index: 10;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
             cursor: pointer;
         }
         .fc-event {
@@ -413,15 +432,15 @@ $questionnaire = $q_stmt->get_result()->fetch_assoc();
             <div class="modal-header" style="padding: 32px 32px 16px; border: none; background: transparent; display: flex; justify-content: space-between; align-items: flex-start;">
                 <div>
                     <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
-                        <div id="eventIconBox" style="width: 28px; height: 28px; background: #fff; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #000;">
+                        <div id="eventIconBox" style="width: 28px; height: 28px; background: var(--premium-accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--premium-accent-reverse);">
                             <i class="fas fa-calendar-check" style="font-size: 0.8rem;"></i>
                         </div>
                         <h4 id="eventCategoryLabel" style="font-size: 0.75rem; font-weight: 800; color: var(--premium-text-muted); text-transform: uppercase; letter-spacing: 1px;">Event Details</h4>
                     </div>
-                    <h3 id="eventTitleDisplay" style="font-size: 1.5rem; font-weight: 800; color: #fff; letter-spacing: -0.5px;">Session Title</h3>
+                    <h3 id="eventTitleDisplay" style="font-size: 1.5rem; font-weight: 800; color: var(--premium-text); letter-spacing: -0.5px;">Session Title</h3>
                 </div>
                 <button class="close-modal" onclick="closeEventDetailsModal()">
-                    <i class="fas fa-times" style="color: #fff;"></i>
+                    <i class="fas fa-times" style="color: var(--premium-text);"></i>
                 </button>
             </div>
             
@@ -429,11 +448,11 @@ $questionnaire = $q_stmt->get_result()->fetch_assoc();
                 <div id="eventMainDetails" style="background: var(--premium-input-bg); border: 1px solid var(--premium-border); border-radius: 20px; padding: 20px; margin-bottom: 24px; display: flex; flex-direction: column; gap: 16px;">
                     <div style="display: flex; align-items: center; gap: 12px;">
                         <i class="far fa-clock" style="color: var(--premium-text-muted);"></i>
-                        <span id="eventTimeDisplay" style="font-size: 0.95rem; font-weight: 600; color: #fff;">08:00 AM</span>
+                        <span id="eventTimeDisplay" style="font-size: 0.95rem; font-weight: 600; color: var(--premium-text);">08:00 AM</span>
                     </div>
                     <div id="eventNotesBox">
                         <p style="font-size: 0.75rem; font-weight: 700; color: var(--premium-text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Notes & Insights</p>
-                        <p id="eventNotesDisplay" style="font-size: 0.9rem; color: rgba(255,255,255,0.8); line-height: 1.6;">No notes provided for this session.</p>
+                        <p id="eventNotesDisplay" style="font-size: 0.9rem; color: var(--premium-text); line-height: 1.6;">No notes provided for this session.</p>
                     </div>
                 </div>
 
@@ -458,6 +477,9 @@ $questionnaire = $q_stmt->get_result()->fetch_assoc();
                 <button class="btn btn-secondary" onclick="window.location.href='members.php'">
                     <i class="fas fa-arrow-left"></i> Back
                 </button>
+                <button class="action-btn theme-toggle-btn" onclick="toggleTheme()" title="Toggle Theme">
+                    <i class="fas fa-moon"></i>
+                </button>
                 <button class="action-btn" title="Logout" onclick="handleLogout()">
                     <i class="fas fa-sign-out-alt"></i>
                 </button>
@@ -467,7 +489,6 @@ $questionnaire = $q_stmt->get_result()->fetch_assoc();
         <div class="tabs" style="display: flex; gap: 24px; border-bottom: 1px solid var(--dark-border); margin-top: 32px; padding-bottom: 12px; overflow-x: auto; white-space: nowrap;">
             <button class="tab-btn active" onclick="switchMainTab('sessions')">Sessions & Calendar</button>
             <button class="tab-btn" onclick="switchMainTab('profile')">Client Profile</button>
-            <button class="tab-btn" onclick="switchMainTab('progress')">Progress Tracking</button>
             <button class="tab-btn" onclick="switchMainTab('tips')">Tips & Guidance</button>
             <button class="tab-btn" onclick="switchMainTab('food')">Food Recommendations</button>
         </div>
@@ -1364,5 +1385,6 @@ $questionnaire = $q_stmt->get_result()->fetch_assoc();
             document.querySelector('.sidebar').classList.toggle('active');
         });
     </script>
+    <script src="../../assets/js/theme.js"></script>
 </body>
 </html>

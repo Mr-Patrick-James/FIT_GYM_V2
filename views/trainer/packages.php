@@ -24,8 +24,10 @@ $user = getCurrentUser();
             const savedTheme = localStorage.getItem('theme') || 'dark';
             if (savedTheme === 'light') {
                 document.documentElement.classList.add('light-mode');
+                if (document.body) document.body.classList.add('light-mode');
             } else {
                 document.documentElement.classList.remove('light-mode');
+                if (document.body) document.body.classList.remove('light-mode');
             }
         })();
     </script>
@@ -46,7 +48,7 @@ $user = getCurrentUser();
             transition: background 0.2s;
         }
         .exercise-list-item:hover {
-            background: rgba(255,255,255,0.02);
+            background: var(--glass);
         }
         .exercise-badge {
             font-size: 0.65rem;
@@ -61,11 +63,11 @@ $user = getCurrentUser();
 
         /* Modern Input Styles */
         .modern-input {
-            background: var(--premium-input-bg) !important;
-            border: 1px solid var(--premium-border) !important;
+            background: var(--dark-card) !important;
+            border: 1px solid var(--dark-border) !important;
             border-radius: 14px !important;
             padding: 12px 16px !important;
-            color: #fff !important;
+            color: var(--dark-text) !important;
             font-size: 0.8rem !important;
             font-weight: 500 !important;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
@@ -74,21 +76,21 @@ $user = getCurrentUser();
         }
 
         .modern-input:focus {
-            border-color: rgba(255, 255, 255, 0.3) !important;
-            background: var(--premium-input-hover) !important;
-            box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.05) !important;
+            border-color: var(--dark-border) !important;
+            background: var(--glass) !important;
+            box-shadow: 0 0 0 4px var(--glass) !important;
         }
 
         .modern-input::placeholder {
-            color: var(--premium-text-muted);
-            opacity: 0.6;
+            color: var(--dark-text-secondary);
+            opacity: 0.7;
         }
 
         .form-group label {
             display: block;
             font-size: 0.7rem;
             font-weight: 800;
-            color: var(--premium-text-muted);
+            color: var(--dark-text-secondary);
             text-transform: uppercase;
             letter-spacing: 1px;
             margin-bottom: 8px;
@@ -109,14 +111,14 @@ $user = getCurrentUser();
         }
 
         .action-btn-modern.primary {
-            background: #fff;
-            color: #000;
+            background: var(--dark-text);
+            color: var(--dark-bg);
         }
 
         .action-btn-modern.primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(255, 255, 255, 0.1);
-            filter: brightness(0.9);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+            opacity: 0.85;
         }
 
         .action-btn-modern.danger {
@@ -131,8 +133,8 @@ $user = getCurrentUser();
         }
 
         .template-card {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid var(--premium-border);
+            background: var(--glass);
+            border: 1px solid var(--dark-border);
             border-radius: 20px;
             padding: 16px;
             display: flex;
@@ -142,18 +144,19 @@ $user = getCurrentUser();
         }
 
         .template-card:hover {
-            background: rgba(255, 255, 255, 0.04);
-            border-color: rgba(255, 255, 255, 0.1);
+            background: var(--glass);
+            border-color: var(--dark-border);
             transform: translateX(4px);
         }
 
         /* Modern Notification Modal Styling */
         #notificationsModal .modal {
-            background: #000 !important;
-            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            background: var(--dark-card) !important;
+            border: 1px solid var(--dark-border) !important;
             border-radius: 32px !important;
             overflow: hidden;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+            box-shadow: var(--shadow-xl) !important;
+            color: var(--dark-text);
         }
 
         #notificationsModal .modal-header {
@@ -168,13 +171,14 @@ $user = getCurrentUser();
             display: flex;
             align-items: center;
             gap: 12px;
+            color: var(--primary);
         }
 
         #notificationsModal .notif-tabs {
             display: flex;
             gap: 8px;
             padding: 0 32px 24px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid var(--dark-border);
         }
 
         .notif-tab-btn {
@@ -182,7 +186,7 @@ $user = getCurrentUser();
             border-radius: 12px;
             font-size: 0.75rem;
             font-weight: 700;
-            color: var(--premium-text-muted);
+            color: var(--dark-text-secondary);
             background: transparent;
             border: 1px solid transparent;
             cursor: pointer;
@@ -190,27 +194,28 @@ $user = getCurrentUser();
         }
 
         .notif-tab-btn:hover {
-            color: #fff;
-            background: rgba(255, 255, 255, 0.05);
+            color: var(--primary);
+            background: var(--glass);
         }
 
         .notif-tab-btn.active {
-            color: #fff;
-            background: rgba(255, 255, 255, 0.08);
-            border-color: rgba(255, 255, 255, 0.1);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            color: var(--primary);
+            background: var(--glass);
+            border-color: var(--dark-border);
+            box-shadow: var(--shadow-sm);
         }
 
         .notif-item {
             padding: 20px 32px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            border-bottom: 1px solid var(--dark-border);
             transition: all 0.2s ease;
             cursor: pointer;
             position: relative;
+            background: var(--dark-card);
         }
 
         .notif-item:hover {
-            background: rgba(255, 255, 255, 0.02);
+            background: var(--glass);
         }
 
         .notif-item.unread::before {
@@ -248,14 +253,14 @@ $user = getCurrentUser();
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--dark-border);
+            background: var(--glass);
         }
 
         .date-tile.today {
-            background: #fff;
-            color: #000;
-            border-color: #fff;
+            background: var(--dark-text);
+            color: var(--dark-bg);
+            border-color: var(--dark-text);
         }
 
         /* Floating Notification Icon */
@@ -265,15 +270,15 @@ $user = getCurrentUser();
             right: 32px;
             width: 48px;
             height: 48px;
-            background: #fff;
-            color: #000;
+            background: var(--dark-text);
+            color: var(--dark-bg);
             border-radius: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 1.2rem;
             cursor: pointer;
-            box-shadow: 0 10px 30px rgba(255, 255, 255, 0.2);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
             z-index: 999;
             transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             border: none;
@@ -281,7 +286,7 @@ $user = getCurrentUser();
 
         .trainer-notif-float:hover {
             transform: scale(1.1) translateY(-5px);
-            box-shadow: 0 15px 40px rgba(255, 255, 255, 0.3);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
         }
 
         .trainer-notif-float i {
@@ -362,6 +367,9 @@ $user = getCurrentUser();
             </div>
             
             <div class="header-actions">
+                <button class="action-btn theme-toggle-btn" onclick="toggleTheme()" title="Toggle Theme">
+                    <i class="fas fa-moon"></i>
+                </button>
                 <button class="action-btn" title="Logout" onclick="handleLogout()">
                     <i class="fas fa-sign-out-alt"></i>
                 </button>
@@ -507,7 +515,7 @@ $user = getCurrentUser();
                         <textarea id="packageDietInfo" rows="12" placeholder="Enter meal plan, nutrition tips, etc. for this package..." class="modern-input" style="resize: vertical; min-height: 200px;"></textarea>
                     </div>
                     <div style="margin-top: 20px; display: flex; justify-content: flex-end;">
-                        <button onclick="savePackageDetails()" class="action-btn-modern primary" style="padding: 12px 32px;">
+                        <button onclick="savePackageDetails(event)" class="action-btn-modern primary" style="padding: 12px 32px;">
                             <i class="fas fa-save"></i> Save Nutrition Info
                         </button>
                     </div>
@@ -525,7 +533,7 @@ $user = getCurrentUser();
                         <textarea id="packageGuidanceInfo" rows="12" placeholder="Enter professional tips, recovery guidance, etc. for this package..." class="modern-input" style="resize: vertical; min-height: 200px;"></textarea>
                     </div>
                     <div style="margin-top: 20px; display: flex; justify-content: flex-end;">
-                        <button onclick="savePackageDetails()" class="action-btn-modern primary" style="padding: 12px 32px;">
+                        <button onclick="savePackageDetails(event)" class="action-btn-modern primary" style="padding: 12px 32px;">
                             <i class="fas fa-save"></i> Save Guidance Info
                         </button>
                     </div>
@@ -542,6 +550,9 @@ $user = getCurrentUser();
         let allExercises = [];
         document.addEventListener('DOMContentLoaded', () => {
             loadTrainerNotifications();
+            loadPackages();
+            loadAllExercises();
+            document.getElementById('addExerciseForm').addEventListener('submit', handleAddExercise);
         });
 
         async function loadTrainerNotifications() {
@@ -657,11 +668,7 @@ $user = getCurrentUser();
 
         let currentPackageId = null;
 
-        document.addEventListener('DOMContentLoaded', () => {
-            loadPackages();
-            loadAllExercises();
-            document.getElementById('addExerciseForm').addEventListener('submit', handleAddExercise);
-        });
+
 
         async function loadPackages() {
             const grid = document.getElementById('packagesGrid');
@@ -764,17 +771,54 @@ $user = getCurrentUser();
             document.getElementById('guidanceTabContent').style.display = tab === 'guidance' ? 'block' : 'none';
         }
 
-        async function savePackageDetails() {
+        function showNotification(message, type = 'success') {
+            const colorMap = {
+                success: { bg: 'rgba(34, 197, 94, 0.15)', border: 'rgba(34, 197, 94, 0.35)', text: '#22c55e', icon: 'fas fa-check-circle' },
+                warning: { bg: 'rgba(245, 158, 11, 0.15)', border: 'rgba(245, 158, 11, 0.35)', text: '#f59e0b', icon: 'fas fa-triangle-exclamation' },
+                danger: { bg: 'rgba(239, 68, 68, 0.15)', border: 'rgba(239, 68, 68, 0.35)', text: '#ef4444', icon: 'fas fa-circle-xmark' }
+            };
+
+            const cfg = colorMap[type] || colorMap.success;
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                left: 50%;
+                top: 24px;
+                transform: translateX(-50%);
+                z-index: 9999;
+                background: ${cfg.bg};
+                border: 1px solid ${cfg.border};
+                color: ${cfg.text};
+                padding: 14px 18px;
+                border-radius: 16px;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                font-weight: 800;
+                letter-spacing: -0.2px;
+                max-width: 720px;
+                width: calc(100% - 32px);
+            `;
+            notification.innerHTML = `<i class="${cfg.icon}"></i><span style="font-size: 0.9rem; font-weight: 800;">${message}</span>`;
+
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 5000);
+        }
+
+        async function savePackageDetails(e) {
             const pkg = allPackages.find(p => p.id === currentPackageId);
             if (!pkg) return;
             
             const dietInfo = document.getElementById('packageDietInfo').value;
             const guidanceInfo = document.getElementById('packageGuidanceInfo').value;
             
-            const saveBtn = event.target.closest('button');
-            const originalHTML = saveBtn.innerHTML;
-            saveBtn.disabled = true;
-            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+            const saveBtn = e?.target?.closest('button') || null;
+            const originalHTML = saveBtn ? saveBtn.innerHTML : null;
+            if (saveBtn) {
+                saveBtn.disabled = true;
+                saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+            }
             
             try {
                 const response = await fetch('../../api/packages/update.php', {
@@ -808,8 +852,10 @@ $user = getCurrentUser();
                 console.error(err);
                 showNotification('Error saving package details', 'warning');
             } finally {
-                saveBtn.disabled = false;
-                saveBtn.innerHTML = originalHTML;
+                if (saveBtn) {
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = originalHTML;
+                }
             }
         }
 
@@ -894,18 +940,6 @@ $user = getCurrentUser();
             currentPackageId = null;
         }
 
-        function showNotification(message, type = 'info') {
-            const notification = document.createElement('div');
-            notification.className = `notification ${type}`;
-            notification.innerHTML = `
-                <i class="fas fa-${type === 'success' ? 'check-circle' : 'info-circle'}"></i>
-                <span>${message}</span>
-            `;
-            notification.style.cssText = `position: fixed; top: 100px; right: 32px; background: ${type === 'success' ? '#22c55e' : '#3b82f6'}; color: white; padding: 16px 24px; border-radius: 12px; display: flex; align-items: center; gap: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 10000; animation: slideIn 0.3s ease-out; font-weight: 600;`;
-            document.body.appendChild(notification);
-            setTimeout(() => notification.remove(), 5000);
-        }
-
         async function handleLogout() {
             if (!confirm('Logout?')) return;
             await fetch('../../api/auth/logout.php', { method: 'POST' });
@@ -916,5 +950,6 @@ $user = getCurrentUser();
             document.querySelector('.sidebar').classList.toggle('active');
         });
     </script>
+    <script src="../../assets/js/theme.js"></script>
 </body>
 </html>

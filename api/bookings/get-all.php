@@ -13,63 +13,42 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 }
 
 // Check if user is logged in
-if (!isset($_SESSION['user_id'])) {
-    sendResponse(false, 'Unauthorized access', null, 401);
-}
+requireLogin();
 
 try {
     $conn = getDBConnection();
+
     // Get filter parameters
     $status = $_GET['status'] ?? 'all';
     $search = $_GET['search'] ?? '';
     $sort = $_GET['sort'] ?? 'date-desc';
     
-    $isAdmin = isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin';
+    // Determine access level
+    $isAdmin = isAdmin();
+    $isManager = isManager();
     $userId = $_SESSION['user_id'];
-    
-    $sql = "SELECT b.*, u.name as user_name, p.name as package_name, p.duration, p.is_trainer_assisted, b.expires_at, t.name as trainer_name 
-            FROM bookings b 
-            LEFT JOIN users u ON b.user_id = u.id 
-            LEFT JOIN packages p ON b.package_id = p.id 
-            LEFT JOIN trainers t ON b.trainer_id = t.id
-            WHERE 1=1";
-    
-    // Check if table exists (for self-healing)
-    $conn->query("CREATE TABLE IF NOT EXISTS `bookings` (
-        `id` int NOT NULL AUTO_INCREMENT,
-        `user_id` int DEFAULT NULL,
-        `trainer_id` int DEFAULT NULL,
-        `package_id` int DEFAULT NULL,
-        `name` varchar(255) DEFAULT NULL,
-        `email` varchar(255) DEFAULT NULL,
-        `contact` varchar(255) DEFAULT NULL,
-        `amount` decimal(10,2) DEFAULT '0.00',
-        `payment_method` varchar(50) DEFAULT 'GCash',
-        `receipt_url` varchar(255) DEFAULT NULL,
-        `status` enum('pending','verified','rejected','expired') DEFAULT 'pending',
-        `notes` text,
-        `verified_at` datetime DEFAULT NULL,
-        `expires_at` datetime DEFAULT NULL,
-        `booking_date` datetime DEFAULT CURRENT_TIMESTAMP,
-        `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-        `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        PRIMARY KEY (`id`)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
 
-    // If not admin, only show user's own bookings
-    if (!$isAdmin) {
-        $sql .= " AND b.user_id = ?";
-    }
-    
-    // Log final SQL for debugging
-    error_log("DEBUG Bookings SQL: " . $sql);
-    
-    $params = [];
-    $types = "";
-    
-    if (!$isAdmin) {
-        $params[] = $userId;
-        $types .= "i";
+    // Build SQL based on user role
+    if ($isAdmin || $isManager) {
+        // Admin or Manager - can see all bookings
+        $sql = "SELECT b.*, b.package_name as booking_package_name, u.name as user_name, p.name as pkg_name, p.duration, p.is_trainer_assisted, b.expires_at, t.name as trainer_name 
+                FROM bookings b 
+                LEFT JOIN users u ON b.user_id = u.id 
+                LEFT JOIN packages p ON b.package_id = p.id 
+                LEFT JOIN trainers t ON b.trainer_id = t.id
+                WHERE 1=1";
+        $params = [];
+        $types = "";
+    } else {
+        // Regular user - only show their own bookings
+        $sql = "SELECT b.*, b.package_name as booking_package_name, u.name as user_name, p.name as pkg_name, p.duration, p.is_trainer_assisted, b.expires_at, t.name as trainer_name 
+                FROM bookings b 
+                LEFT JOIN users u ON b.user_id = u.id 
+                LEFT JOIN packages p ON b.package_id = p.id 
+                LEFT JOIN trainers t ON b.trainer_id = t.id
+                WHERE b.user_id = ?";
+        $params = [$userId];
+        $types = "i";
     }
     
     // Add status filter
@@ -110,6 +89,9 @@ try {
             break;
     }
     
+    // Auto-expire: update any verified bookings that have passed their expiry date
+    $conn->query("UPDATE bookings SET status = 'expired' WHERE status = 'verified' AND expires_at IS NOT NULL AND expires_at < NOW()");
+
     $stmt = $conn->prepare($sql);
     if (!empty($params)) {
         $stmt->bind_param($types, ...$params);
@@ -141,8 +123,9 @@ try {
             $tStmt->close();
         }
 
-        // Use the package name from the booking record if available, otherwise from the packages table
-        $booking['package_name'] = $booking['package_name'] ?: $booking['package_name'];
+        // Use the package name from the packages table join,
+        // fall back to the denormalized name stored in the booking row
+        $booking['package_name'] = $booking['pkg_name'] ?: ($booking['booking_package_name'] ?? 'Unknown Package');
         
         // Add full URL for receipt
         if (!empty($booking['receipt_url'])) {

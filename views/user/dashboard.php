@@ -19,23 +19,26 @@ try {
 }
 
 // Helper to get setting with fallback
-function getSetting($key, $default = '', $settings = []) {
+function getSetting($key, $default = '', $settings = [])
+{
     return $settings[$key] ?? $default;
 }
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Dashboard | <?php echo htmlspecialchars(getSetting('gym_name', 'Martinez Fitness', $settings)); ?></title>
-    
+
     <!-- Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+
     <!-- Dashboard Styles -->
     <link rel="stylesheet" href="../../assets/css/user-dashboard/base.css?v=1.6">
     <link rel="stylesheet" href="../../assets/css/user-dashboard/dashboard.css?v=1.6">
@@ -50,7 +53,8 @@ function getSetting($key, $default = '', $settings = []) {
 
     <style>
         /* Survey & Recommendation Modal Styles */
-        .survey-modal .modal, .recommendation-modal .modal {
+        .survey-modal .modal,
+        .recommendation-modal .modal {
             max-width: 600px;
             background: var(--dark-card);
             border: 1px solid var(--dark-border);
@@ -59,19 +63,22 @@ function getSetting($key, $default = '', $settings = []) {
             animation: modalFadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .survey-header, .recommendation-header {
+        .survey-header,
+        .recommendation-header {
             padding: 40px 40px 20px;
             text-align: center;
         }
 
-        .survey-header i, .recommendation-header i {
+        .survey-header i,
+        .recommendation-header i {
             font-size: 3rem;
             color: var(--primary);
             margin-bottom: 20px;
             filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.3));
         }
 
-        .survey-header h2, .recommendation-header h2 {
+        .survey-header h2,
+        .recommendation-header h2 {
             font-size: 1.2rem;
             font-weight: 800;
             margin-bottom: 8px;
@@ -80,12 +87,14 @@ function getSetting($key, $default = '', $settings = []) {
             -webkit-text-fill-color: transparent;
         }
 
-        .survey-header p, .recommendation-header p {
+        .survey-header p,
+        .recommendation-header p {
             color: var(--dark-text-secondary);
             font-size: 0.75rem;
         }
 
-        .survey-body, .recommendation-body {
+        .survey-body,
+        .recommendation-body {
             padding: 0 40px 40px;
             max-height: 60vh;
             overflow-y: auto;
@@ -96,13 +105,16 @@ function getSetting($key, $default = '', $settings = []) {
         .survey-body::-webkit-scrollbar {
             width: 6px;
         }
+
         .survey-body::-webkit-scrollbar-track {
             background: transparent;
         }
+
         .survey-body::-webkit-scrollbar-thumb {
             background: rgba(255, 255, 255, 0.1);
             border-radius: 10px;
         }
+
         .survey-body::-webkit-scrollbar-thumb:hover {
             background: rgba(255, 255, 255, 0.2);
         }
@@ -266,13 +278,25 @@ function getSetting($key, $default = '', $settings = []) {
         }
 
         @keyframes modalFadeIn {
-            from { opacity: 0; transform: scale(0.95) translateY(20px); }
-            to { opacity: 1; transform: scale(1) translateY(0); }
+            from {
+                opacity: 0;
+                transform: scale(0.95) translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
         }
 
         /* User Calendar View */
@@ -285,6 +309,7 @@ function getSetting($key, $default = '', $settings = []) {
             margin-left: auto;
             gap: 6px;
         }
+
         .user-view-btn {
             padding: 8px 14px;
             border-radius: var(--radius-sm);
@@ -299,10 +324,12 @@ function getSetting($key, $default = '', $settings = []) {
             gap: 8px;
             transition: all 0.2s;
         }
+
         .user-view-btn.active {
             background: var(--primary);
             color: var(--dark-bg);
         }
+
         #userCalendarView {
             display: none;
             margin: 16px 24px 24px;
@@ -311,6 +338,7 @@ function getSetting($key, $default = '', $settings = []) {
             padding: 12px;
             border: 1px solid var(--dark-border);
         }
+
         /* FullCalendar Dark Theme Tweaks */
         .fc {
             --fc-border-color: rgba(255, 255, 255, 0.05);
@@ -321,20 +349,24 @@ function getSetting($key, $default = '', $settings = []) {
             font-family: 'Inter', sans-serif;
             border: none;
         }
+
         .fc .fc-view-harness {
             background: var(--dark-card);
             border-radius: var(--radius-lg);
             border: 1px solid var(--dark-border);
             overflow: hidden;
         }
+
         .fc .fc-scrollgrid {
             border: none !important;
         }
+
         .fc .fc-col-header-cell {
             padding: 12px 0;
             background: rgba(255, 255, 255, 0.02);
             border-bottom: 1px solid var(--dark-border) !important;
         }
+
         .fc .fc-col-header-cell-cushion {
             font-size: 0.7rem;
             text-transform: uppercase;
@@ -342,21 +374,25 @@ function getSetting($key, $default = '', $settings = []) {
             color: var(--dark-text-secondary);
             font-weight: 700;
         }
+
         .fc .fc-daygrid-day-number {
             font-size: 0.75rem;
             font-weight: 600;
             padding: 8px 12px;
             color: var(--dark-text-secondary);
         }
+
         .fc .fc-day-today .fc-daygrid-day-number {
             color: var(--primary);
             font-weight: 800;
         }
+
         .fc .fc-toolbar-title {
             font-size: 1rem;
             font-weight: 700;
             color: var(--dark-text);
         }
+
         .fc .fc-button-primary {
             background-color: var(--dark-card);
             border: 1px solid var(--dark-border);
@@ -366,20 +402,24 @@ function getSetting($key, $default = '', $settings = []) {
             border-radius: var(--radius-md);
             transition: all 0.2s;
         }
+
         .fc .fc-button-primary:hover {
             background-color: var(--dark-border);
             border-color: var(--dark-text-secondary);
         }
+
         .fc .fc-button-primary:not(:disabled).fc-button-active,
         .fc .fc-button-primary:not(:disabled):active {
             background-color: var(--primary);
             border-color: var(--primary);
             color: var(--dark-bg);
         }
-        .fc-theme-standard td, .fc-theme-standard th {
+
+        .fc-theme-standard td,
+        .fc-theme-standard th {
             border: 1px solid rgba(255, 255, 255, 0.05) !important;
         }
-        
+
         /* Event Styles */
         .fc-event {
             border: none !important;
@@ -387,7 +427,7 @@ function getSetting($key, $default = '', $settings = []) {
             padding: 2px 6px !important;
             font-size: 0.7rem !important;
             font-weight: 700 !important;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             margin: 1px 2px !important;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
             overflow: hidden !important;
@@ -414,8 +454,10 @@ function getSetting($key, $default = '', $settings = []) {
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
+
         .event-milestone-paid::before {
-            content: '\f09d'; /* Credit Card icon */
+            content: '\f09d';
+            /* Credit Card icon */
             font-family: 'Font Awesome 6 Free';
             margin-right: 4px;
         }
@@ -427,46 +469,54 @@ function getSetting($key, $default = '', $settings = []) {
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
+
         .event-milestone-expiry::before {
-            content: '\f273'; /* Calendar Times icon */
+            content: '\f273';
+            /* Calendar Times icon */
             font-family: 'Font Awesome 6 Free';
             margin-right: 4px;
         }
 
         .fc-event:hover {
             transform: translateY(-2px) scale(1.02);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
             filter: brightness(1.2);
             z-index: 5;
         }
-        .event-status-pending { 
-            background: rgba(245, 158, 11, 0.1) !important; 
+
+        .event-status-pending {
+            background: rgba(245, 158, 11, 0.1) !important;
             border-left: 3px solid var(--warning) !important;
-            color: var(--warning) !important; 
+            color: var(--warning) !important;
         }
-        .event-status-verified { 
-            background: rgba(34, 197, 94, 0.1) !important; 
+
+        .event-status-verified {
+            background: rgba(34, 197, 94, 0.1) !important;
             border-left: 3px solid var(--success) !important;
-            color: var(--success) !important; 
+            color: var(--success) !important;
         }
-        .event-status-rejected { 
-            background: rgba(239, 68, 68, 0.1) !important; 
+
+        .event-status-rejected {
+            background: rgba(239, 68, 68, 0.1) !important;
             border-left: 3px solid #ef4444 !important;
-            color: #ef4444 !important; 
+            color: #ef4444 !important;
         }
+
         .event-routine {
             background: rgba(255, 255, 255, 0.05) !important;
             border-left: 3px solid var(--primary) !important;
             color: var(--primary) !important;
             backdrop-filter: blur(4px);
         }
+
         .event-rest-day {
             background: rgba(239, 68, 68, 0.1) !important;
             border-left: 3px solid #ef4444 !important;
             color: #ef4444 !important;
             backdrop-filter: blur(4px);
         }
-/* Floating Coach Corner Icon */
+
+        /* Floating Coach Corner Icon */
         .coach-corner-float {
             position: fixed;
             bottom: 32px;
@@ -476,7 +526,8 @@ function getSetting($key, $default = '', $settings = []) {
             background: #fff;
             color: #000;
             border-radius: 20px;
-            display: none; /* Hidden by default, shown by JS if trainer assigned */
+            display: none;
+            /* Hidden by default, shown by JS if trainer assigned */
             align-items: center;
             justify-content: center;
             font-size: 1.5rem;
@@ -511,19 +562,34 @@ function getSetting($key, $default = '', $settings = []) {
             align-items: center;
             justify-content: center;
             border: 2px solid #fff;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
             animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
         @keyframes bounceIn {
-            from { opacity: 0; transform: scale(0.3); }
-            to { opacity: 1; transform: scale(1); }
+            from {
+                opacity: 0;
+                transform: scale(0.3);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
         }
 
         @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+
+            100% {
+                transform: scale(1);
+            }
         }
 
         /* Coach Hub Modal Premium */
@@ -617,8 +683,16 @@ function getSetting($key, $default = '', $settings = []) {
         }
 
         @media (max-width: 768px) {
-            .hub-grid { grid-template-columns: 1fr; }
-            .coach-corner-float { bottom: 20px; right: 20px; width: 56px; height: 56px; }
+            .hub-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .coach-corner-float {
+                bottom: 20px;
+                right: 20px;
+                width: 56px;
+                height: 56px;
+            }
         }
     </style>
     <style>
@@ -629,12 +703,14 @@ function getSetting($key, $default = '', $settings = []) {
             border: 1px solid var(--dark-border);
             border-radius: var(--radius-xl);
         }
+
         .booking-details-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 20px;
             margin-bottom: 24px;
         }
+
         .booking-detail-item {
             background: rgba(255, 255, 255, 0.02);
             padding: 16px;
@@ -642,10 +718,12 @@ function getSetting($key, $default = '', $settings = []) {
             border: 1px solid rgba(255, 255, 255, 0.05);
             transition: var(--transition);
         }
+
         .booking-detail-item:hover {
             background: rgba(255, 255, 255, 0.04);
             border-color: var(--primary);
         }
+
         .detail-label {
             display: block;
             font-size: 0.75rem;
@@ -655,6 +733,7 @@ function getSetting($key, $default = '', $settings = []) {
             letter-spacing: 1px;
             margin-bottom: 8px;
         }
+
         .detail-value {
             display: flex;
             align-items: center;
@@ -663,22 +742,26 @@ function getSetting($key, $default = '', $settings = []) {
             font-weight: 600;
             color: var(--dark-text);
         }
+
         .detail-value i {
             color: var(--primary);
             width: 16px;
             text-align: center;
         }
+
         .receipt-preview-container {
             margin-top: 24px;
             border-top: 1px solid var(--dark-border);
             padding-top: 24px;
         }
+
         .receipt-preview-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 16px;
         }
+
         .receipt-preview-header h4 {
             font-size: 0.8rem;
             font-weight: 700;
@@ -686,9 +769,11 @@ function getSetting($key, $default = '', $settings = []) {
             align-items: center;
             gap: 10px;
         }
+
         .receipt-preview-header h4 i {
             color: var(--success);
         }
+
         .receipt-img-wrapper {
             position: relative;
             width: 100%;
@@ -697,17 +782,20 @@ function getSetting($key, $default = '', $settings = []) {
             overflow: hidden;
             border: 1px solid var(--dark-border);
             cursor: zoom-in;
-            background: rgba(0,0,0,0.2);
+            background: rgba(0, 0, 0, 0.2);
         }
+
         .receipt-img-wrapper img {
             width: 100%;
             height: 100%;
             object-fit: contain;
             transition: transform 0.3s;
         }
+
         .receipt-img-wrapper:hover img {
             transform: scale(1.05);
         }
+
         .receipt-img-wrapper::after {
             content: '\f00e';
             font-family: 'Font Awesome 5 Free';
@@ -721,11 +809,13 @@ function getSetting($key, $default = '', $settings = []) {
             opacity: 0;
             transition: var(--transition);
             pointer-events: none;
-            text-shadow: 0 0 20px rgba(0,0,0,0.5);
+            text-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
         }
+
         .receipt-img-wrapper:hover::after {
             opacity: 1;
         }
+
         .notes-section {
             margin-top: 20px;
             padding: 16px;
@@ -733,6 +823,7 @@ function getSetting($key, $default = '', $settings = []) {
             border-left: 4px solid var(--warning);
             border-radius: var(--radius-md);
         }
+
         .notes-label {
             display: block;
             font-size: 0.75rem;
@@ -741,6 +832,7 @@ function getSetting($key, $default = '', $settings = []) {
             margin-bottom: 6px;
             text-transform: uppercase;
         }
+
         .notes-text {
             font-size: 0.75rem;
             color: var(--dark-text);
@@ -774,14 +866,14 @@ function getSetting($key, $default = '', $settings = []) {
             transform: translateY(-5px);
             border-color: var(--primary);
             background: rgba(255, 255, 255, 0.05);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
         }
 
         .package-card-large.active-plan {
             border-color: #22c55e;
             background: rgba(34, 197, 94, 0.03);
         }
-        
+
         .package-card-large.active-plan:hover {
             border-color: #22c55e;
             box-shadow: 0 10px 30px rgba(34, 197, 94, 0.1);
@@ -802,7 +894,7 @@ function getSetting($key, $default = '', $settings = []) {
         }
 
         .package-tag {
-            background: rgba(255,255,255,0.05);
+            background: rgba(255, 255, 255, 0.05);
             color: var(--primary);
             padding: 4px 10px;
             border-radius: 8px;
@@ -810,7 +902,7 @@ function getSetting($key, $default = '', $settings = []) {
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            border: 1px solid rgba(255,255,255,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .package-description {
@@ -834,9 +926,9 @@ function getSetting($key, $default = '', $settings = []) {
             color: var(--dark-text-secondary);
             font-size: 0.75rem;
             padding: 8px 12px;
-            background: rgba(255,255,255,0.02);
+            background: rgba(255, 255, 255, 0.02);
             border-radius: 10px;
-            border: 1px solid rgba(255,255,255,0.03);
+            border: 1px solid rgba(255, 255, 255, 0.03);
         }
 
         .package-detail-item i {
@@ -874,7 +966,7 @@ function getSetting($key, $default = '', $settings = []) {
         }
 
         .btn-exercise {
-            background: rgba(255,255,255,0.05);
+            background: rgba(255, 255, 255, 0.05);
             border: 1px solid var(--dark-border);
             color: var(--dark-text);
             width: 40px;
@@ -897,7 +989,7 @@ function getSetting($key, $default = '', $settings = []) {
 
         /* Exercise Plan Styles */
         .exercise-item {
-            background: rgba(255,255,255,0.03);
+            background: rgba(255, 255, 255, 0.03);
             border: 1px solid var(--dark-border);
             border-radius: 12px;
             padding: 20px;
@@ -907,12 +999,12 @@ function getSetting($key, $default = '', $settings = []) {
             gap: 20px;
             transition: transform 0.2s;
         }
-        
+
         .exercise-item:hover {
             transform: translateY(-2px);
-            background: rgba(255,255,255,0.05);
+            background: rgba(255, 255, 255, 0.05);
         }
-        
+
         .exercise-icon {
             width: 50px;
             height: 50px;
@@ -924,13 +1016,13 @@ function getSetting($key, $default = '', $settings = []) {
             justify-content: center;
             font-size: 1.5rem;
         }
-        
+
         .exercise-info h4 {
             color: var(--primary);
             margin-bottom: 5px;
             font-size: 0.9rem;
         }
-        
+
         .exercise-category {
             font-size: 0.7rem;
             text-transform: uppercase;
@@ -938,7 +1030,7 @@ function getSetting($key, $default = '', $settings = []) {
             color: var(--dark-text-secondary);
             font-weight: 700;
         }
-        
+
         .exercise-details {
             display: flex;
             gap: 20px;
@@ -946,7 +1038,7 @@ function getSetting($key, $default = '', $settings = []) {
             padding-top: 15px;
             border-top: 1px dashed var(--dark-border);
         }
-        
+
         .exercise-detail {
             display: flex;
             align-items: center;
@@ -954,17 +1046,17 @@ function getSetting($key, $default = '', $settings = []) {
             font-size: 0.75rem;
             color: var(--dark-text);
         }
-        
+
         .exercise-detail i {
             color: var(--primary);
         }
-        
+
         .no-exercises {
             text-align: center;
             padding: 40px 20px;
             color: var(--dark-text-secondary);
         }
-        
+
         .no-exercises i {
             font-size: 3rem;
             margin-bottom: 15px;
@@ -979,11 +1071,11 @@ function getSetting($key, $default = '', $settings = []) {
             margin-bottom: 12px;
             border: 1px solid var(--dark-border);
         }
-        
+
         .exercise-image-fallback {
             width: 100%;
             height: 180px;
-            background: rgba(255,255,255,0.05);
+            background: rgba(255, 255, 255, 0.05);
             border-radius: 8px;
             margin-bottom: 12px;
             border: 1px dashed var(--dark-border);
@@ -991,6 +1083,7 @@ function getSetting($key, $default = '', $settings = []) {
             line-height: 180px;
             color: var(--dark-text-secondary);
         }
+
         /* Modal Tabs */
         .modal-tabs {
             display: flex;
@@ -999,6 +1092,7 @@ function getSetting($key, $default = '', $settings = []) {
             margin: 0 24px 20px;
             padding-bottom: 12px;
         }
+
         .modal-tab-btn {
             background: transparent;
             border: none;
@@ -1010,9 +1104,11 @@ function getSetting($key, $default = '', $settings = []) {
             transition: all 0.3s;
             position: relative;
         }
+
         .modal-tab-btn.active {
             color: var(--primary);
         }
+
         .modal-tab-btn.active::after {
             content: '';
             position: absolute;
@@ -1023,14 +1119,17 @@ function getSetting($key, $default = '', $settings = []) {
             background: var(--primary);
             border-radius: 3px 3px 0 0;
         }
+
         .modal-tab-content {
             display: none;
         }
+
         .modal-tab-content.active {
             display: block;
         }
     </style>
 </head>
+
 <body class="dark-mode">
     <!-- Coach Hub Floating Action Button -->
     <button class="coach-corner-float" id="coachHubFloat" onclick="openCoachHub()" title="Coach's Corner">
@@ -1043,27 +1142,41 @@ function getSetting($key, $default = '', $settings = []) {
         <div class="modal">
             <div class="coach-hub-header">
                 <div style="flex: 1;">
-                    <h2 style="font-size: 1.75rem; font-weight: 900; color: #fff; letter-spacing: -0.8px; margin-bottom: 4px;">Coach's Corner</h2>
+                    <h2
+                        style="font-size: 1.75rem; font-weight: 900; color: #fff; letter-spacing: -0.8px; margin-bottom: 4px;">
+                        Coach's Corner</h2>
                     <div style="display: flex; align-items: center; gap: 16px;">
-                        <p style="color: rgba(255,255,255,0.5); font-size: 0.9rem; font-weight: 500;">Your personalized training & guidance hub</p>
-                        <div id="hubSubscriptionDates" style="display: none; align-items: center; gap: 12px; background: rgba(255,255,255,0.05); padding: 4px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
-                            <span style="font-size: 0.75rem; color: rgba(255,255,255,0.4); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Plan Period:</span>
-                            <span id="hubStartDate" style="font-size: 0.85rem; color: var(--primary); font-weight: 700;">--</span>
-                            <i class="fas fa-long-arrow-alt-right" style="color: rgba(255,255,255,0.2); font-size: 0.8rem;"></i>
-                            <span id="hubExpiryDate" style="font-size: 0.85rem; color: #ef4444; font-weight: 700;">--</span>
+                        <p style="color: rgba(255,255,255,0.5); font-size: 0.9rem; font-weight: 500;">Your personalized
+                            training & guidance hub</p>
+                        <div id="hubSubscriptionDates"
+                            style="display: none; align-items: center; gap: 12px; background: rgba(255,255,255,0.05); padding: 4px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
+                            <span
+                                style="font-size: 0.75rem; color: rgba(255,255,255,0.4); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Plan
+                                Period:</span>
+                            <span id="hubStartDate"
+                                style="font-size: 0.85rem; color: var(--primary); font-weight: 700;">--</span>
+                            <i class="fas fa-long-arrow-alt-right"
+                                style="color: rgba(255,255,255,0.2); font-size: 0.8rem;"></i>
+                            <span id="hubExpiryDate"
+                                style="font-size: 0.85rem; color: #ef4444; font-weight: 700;">--</span>
                         </div>
                     </div>
                 </div>
-                <button class="close-modal" onclick="closeCoachHub()" style="background: rgba(255,255,255,0.05); border: none; width: 40px; height: 40px; border-radius: 12px; color: #fff; cursor: pointer;">
+                <button class="close-modal" onclick="closeCoachHub()"
+                    style="background: rgba(255,255,255,0.05); border: none; width: 40px; height: 40px; border-radius: 12px; color: #fff; cursor: pointer;">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
 
             <div class="coach-hub-nav">
-                <button class="hub-tab-btn active" onclick="switchHubTab('calendar')"><i class="fas fa-calendar-alt"></i> Calendar</button>
-                <button class="hub-tab-btn" onclick="switchHubTab('progress')"><i class="fas fa-chart-line"></i> Progress</button>
-                <button class="hub-tab-btn" onclick="switchHubTab('plans')"><i class="fas fa-clipboard-list"></i> Workout Plans</button>
-                <button class="hub-tab-btn" onclick="switchHubTab('guidance')"><i class="fas fa-lightbulb"></i> Guidance & Tips</button>
+                <button class="hub-tab-btn active" onclick="switchHubTab('calendar')"><i
+                        class="fas fa-calendar-alt"></i> Calendar</button>
+                <button class="hub-tab-btn" onclick="switchHubTab('progress')"><i class="fas fa-chart-line"></i>
+                    Progress</button>
+                <button class="hub-tab-btn" onclick="switchHubTab('plans')"><i class="fas fa-clipboard-list"></i>
+                    Workout Plans</button>
+                <button class="hub-tab-btn" onclick="switchHubTab('guidance')"><i class="fas fa-lightbulb"></i> Guidance
+                    & Tips</button>
             </div>
 
             <div class="hub-content">
@@ -1090,13 +1203,15 @@ function getSetting($key, $default = '', $settings = []) {
                 <div id="hubGuidance" class="hub-tab-content">
                     <div class="hub-grid">
                         <div class="coach-card">
-                            <h4 style="color: #fff; margin-bottom: 16px; display: flex; align-items: center; gap: 10px;">
+                            <h4
+                                style="color: #fff; margin-bottom: 16px; display: flex; align-items: center; gap: 10px;">
                                 <i class="fas fa-lightbulb" style="color: var(--primary);"></i> Daily Tips
                             </h4>
                             <div id="hubTipsList"></div>
                         </div>
                         <div class="coach-card">
-                            <h4 style="color: #fff; margin-bottom: 16px; display: flex; align-items: center; gap: 10px;">
+                            <h4
+                                style="color: #fff; margin-bottom: 16px; display: flex; align-items: center; gap: 10px;">
                                 <i class="fas fa-utensils" style="color: var(--primary);"></i> Nutrition
                             </h4>
                             <div id="hubFoodList"></div>
@@ -1111,27 +1226,33 @@ function getSetting($key, $default = '', $settings = []) {
     <button class="mobile-menu-btn" id="mobileMenuToggle">
         <i class="fas fa-bars"></i>
     </button>
-    
+
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
         <div class="logo">
-            <?php 
-                $gymName = getSetting('gym_name', 'MARTINEZ FITNESS GYM', $settings);
-                $nameParts = explode(' ', $gymName);
+            <?php
+            $gymName = getSetting('gym_name', 'MARTINEZ FITNESS GYM', $settings);
+            $nameParts = explode(' ', $gymName);
             ?>
             <h1><?php echo htmlspecialchars($nameParts[0]); ?></h1>
             <p><?php echo htmlspecialchars(implode(' ', array_slice($nameParts, 1)) ?: 'FITNESS GYM'); ?></p>
         </div>
-        
+
         <ul class="nav-links">
-            <li><a href="#" class="active" onclick="showSection('dashboard', event)"><i class="fas fa-home"></i> <span>Dashboard</span></a></li>
-            <li><a href="#" onclick="showSection('packages', event)"><i class="fas fa-dumbbell"></i> <span>Packages</span></a></li>
-            <li><a href="#" onclick="showSection('bookings', event)"><i class="fas fa-calendar-check"></i> <span>My Bookings</span> <span class="badge" id="bookingsBadge">0</span></a></li>
-            <li><a href="#" onclick="showSection('payments', event)"><i class="fas fa-money-check"></i> <span>Payments</span></a></li>
-            <li><a href="#" onclick="showSection('trainer', event)"><i class="fas fa-user-tie"></i> <span>My Trainer</span></a></li>
-            <li><a href="#" onclick="showSection('profile', event)"><i class="fas fa-user"></i> <span>Profile</span></a></li>
+            <li><a href="#" class="active" onclick="showSection('dashboard', event)"><i class="fas fa-home"></i>
+                    <span>Dashboard</span></a></li>
+            <li><a href="#" onclick="showSection('packages', event)"><i class="fas fa-dumbbell"></i>
+                    <span>Packages</span></a></li>
+            <li><a href="#" onclick="showSection('bookings', event)"><i class="fas fa-calendar-check"></i> <span>Booking
+                        History</span> <span class="badge" id="bookingsBadge">0</span></a></li>
+            <li><a href="#" onclick="showSection('payments', event)"><i class="fas fa-money-check"></i>
+                    <span>Payments</span></a></li>
+            <li><a href="#" onclick="showSection('trainer', event)"><i class="fas fa-user-tie"></i> <span>My
+                        Trainer</span></a></li>
+            <li><a href="#" onclick="showSection('profile', event)"><i class="fas fa-user"></i> <span>Profile</span></a>
+            </li>
         </ul>
-        
+
         <div class="user-profile">
             <div class="user-avatar" id="userAvatar">JD</div>
             <div class="user-info">
@@ -1154,13 +1275,16 @@ function getSetting($key, $default = '', $settings = []) {
                 <h1 id="pageTitle">Dashboard</h1>
                 <p id="pageSubtitle">Welcome back! Manage your gym membership and bookings</p>
             </div>
-            
+
             <div class="header-actions">
+                <button class="action-btn theme-toggle-btn" onclick="toggleTheme()" title="Toggle Theme">
+                    <i class="fas fa-moon"></i>
+                </button>
                 <button class="action-btn notification-btn" onclick="toggleNotifications()">
                     <i class="fas fa-bell"></i>
                     <span class="notification-badge" id="notifBadge">0</span>
                 </button>
-                
+
                 <button class="action-btn" onclick="logout()" title="Logout">
                     <i class="fas fa-sign-out-alt"></i>
                 </button>
@@ -1180,9 +1304,9 @@ function getSetting($key, $default = '', $settings = []) {
                                 </div>
                             </div>
                             <div class="stat-value" id="activeBookingsCount">0</div>
-                            <div class="stat-label">Active Bookings</div>
+                            <div class="stat-label">Total Bookings</div>
                         </div>
-                        
+
                         <div class="stat-card">
                             <div class="stat-header">
                                 <div class="stat-icon">
@@ -1192,7 +1316,7 @@ function getSetting($key, $default = '', $settings = []) {
                             <div class="stat-value" id="statTrainer">None</div>
                             <div class="stat-label">Assigned Trainer</div>
                         </div>
-                        
+
                         <div class="stat-card">
                             <div class="stat-header">
                                 <div class="stat-icon">
@@ -1200,9 +1324,9 @@ function getSetting($key, $default = '', $settings = []) {
                                 </div>
                             </div>
                             <div class="stat-value" id="verifiedBookingsCount">0</div>
-                            <div class="stat-label">Verified Bookings</div>
+                            <div class="stat-label">Booking History</div>
                         </div>
-                        
+
                         <div class="stat-card">
                             <div class="stat-header">
                                 <div class="stat-icon">
@@ -1211,22 +1335,28 @@ function getSetting($key, $default = '', $settings = []) {
                             </div>
                             <div class="stat-value" id="membershipStatus">None</div>
                             <div class="stat-label">Membership Status</div>
-                            <div id="membershipExpiry" style="font-size: 0.75rem; color: var(--dark-text-secondary); margin-top: 8px; display: none; flex-direction: column; align-items: center; gap: 4px;">
+                            <div id="membershipExpiry"
+                                style="font-size: 0.75rem; color: var(--dark-text-secondary); margin-top: 8px; display: none; flex-direction: column; align-items: center; gap: 4px;">
                                 <div>
-                                    <i class="far fa-calendar-check" style="color: var(--primary);"></i> 
-                                    <span>Starts: <strong id="membershipStartDate" style="color: #fff;">--</strong></span>
+                                    <i class="far fa-calendar-check" style="color: var(--primary);"></i>
+                                    <span>Starts: <strong id="membershipStartDate"
+                                            style="color: #fff;">--</strong></span>
                                 </div>
                                 <div>
-                                    <i class="far fa-calendar-times" style="color: #ef4444;"></i> 
-                                    <span>Expires: <strong id="membershipExpiryDate" style="color: #fff;">--</strong></span>
+                                    <i class="far fa-calendar-times" style="color: #ef4444;"></i>
+                                    <span>Expires: <strong id="membershipExpiryDate"
+                                            style="color: #fff;">--</strong></span>
                                 </div>
-                                
+
                                 <!-- Membership Quick Actions (Renew/Upgrade) -->
-                                <div id="membershipQuickActions" style="margin-top: 12px; display: flex; gap: 8px; width: 100%;">
-                                    <button id="dashRenewBtn" class="btn btn-sm" style="flex: 1; padding: 6px; font-size: 0.65rem; background: rgba(34, 197, 94, 0.1); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.2); border-radius: 6px; cursor: pointer; transition: all 0.2s;">
+                                <div id="membershipQuickActions"
+                                    style="margin-top: 12px; display: flex; gap: 8px; width: 100%;">
+                                    <button id="dashRenewBtn" class="btn btn-sm"
+                                        style="flex: 1; padding: 6px; font-size: 0.65rem; background: rgba(34, 197, 94, 0.1); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.2); border-radius: 6px; cursor: pointer; transition: all 0.2s;">
                                         <i class="fas fa-redo"></i> Renew
                                     </button>
-                                    <button id="dashUpgradeBtn" class="btn btn-sm" style="flex: 1; padding: 6px; font-size: 0.65rem; background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 6px; cursor: pointer; transition: all 0.2s; display: none;">
+                                    <button id="dashUpgradeBtn" class="btn btn-sm"
+                                        style="flex: 1; padding: 6px; font-size: 0.65rem; background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 6px; cursor: pointer; transition: all 0.2s; display: none;">
                                         <i class="fas fa-arrow-up"></i> Upgrade
                                     </button>
                                 </div>
@@ -1235,13 +1365,15 @@ function getSetting($key, $default = '', $settings = []) {
                     </div>
 
                     <!-- Coach Recommendations Section (Dynamic) -->
-                    <div id="coachSection" style="display: none; margin-bottom: 32px; grid-template-columns: 1fr 1fr; gap: 24px;">
+                    <div id="coachSection"
+                        style="display: none; margin-bottom: 32px; grid-template-columns: 1fr 1fr; gap: 24px;">
                         <div class="content-card" style="margin-top: 0;">
                             <div class="card-header">
                                 <h3><i class="fas fa-lightbulb" style="color: var(--primary);"></i> Coach's Tips</h3>
                             </div>
                             <div id="myTipsList" style="padding: 20px; max-height: 250px; overflow-y: auto;">
-                                <p style="text-align: center; color: var(--dark-text-secondary); font-size: 0.9rem;">No tips from your coach yet.</p>
+                                <p style="text-align: center; color: var(--dark-text-secondary); font-size: 0.9rem;">No
+                                    tips from your coach yet.</p>
                             </div>
                         </div>
                         <div class="content-card" style="margin-top: 0;">
@@ -1249,7 +1381,8 @@ function getSetting($key, $default = '', $settings = []) {
                                 <h3><i class="fas fa-utensils" style="color: var(--primary);"></i> Meal Guidance</h3>
                             </div>
                             <div id="myFoodList" style="padding: 20px; max-height: 250px; overflow-y: auto;">
-                                <p style="text-align: center; color: var(--dark-text-secondary); font-size: 0.9rem;">No food recommendations yet.</p>
+                                <p style="text-align: center; color: var(--dark-text-secondary); font-size: 0.9rem;">No
+                                    food recommendations yet.</p>
                             </div>
                         </div>
                     </div>
@@ -1265,15 +1398,10 @@ function getSetting($key, $default = '', $settings = []) {
                                 <h4>Browse Packages</h4>
                                 <p>View available membership plans</p>
                             </button>
-                            <button class="quick-action-card" onclick="openBookingModal()">
-                                <i class="fas fa-plus-circle"></i>
-                                <h4>New Booking</h4>
-                                <p>Create a new booking request</p>
-                            </button>
                             <button class="quick-action-card" onclick="showSection('bookings', event)">
                                 <i class="fas fa-list"></i>
-                                <h4>View Bookings</h4>
-                                <p>Check your booking status</p>
+                                <h4>Booking History</h4>
+                                <p>View your complete booking history</p>
                             </button>
                             <button class="quick-action-card" onclick="showSection('payments', event)">
                                 <i class="fas fa-receipt"></i>
@@ -1287,10 +1415,10 @@ function getSetting($key, $default = '', $settings = []) {
 
             </div>
 
-            <!-- Recent Bookings -->
+            <!-- Booking History -->
             <div class="content-card" style="margin-top: 32px;">
                 <div class="card-header">
-                    <h3>Recent Bookings</h3>
+                    <h3>Booking History</h3>
                     <button class="card-btn" onclick="showSection('bookings', event)">
                         <span>View All</span>
                         <i class="fas fa-arrow-right"></i>
@@ -1309,8 +1437,12 @@ function getSetting($key, $default = '', $settings = []) {
                         </thead>
                         <tbody id="recentBookingsTable">
                             <tr>
-                                <td colspan="5" style="text-align: center; padding: 40px; color: var(--dark-text-secondary);" data-label="Info">
-                                    No bookings yet. <a href="#" onclick="showSection('packages')" style="color: var(--primary); text-decoration: underline;">Browse packages</a> to get started!
+                                <td colspan="5"
+                                    style="text-align: center; padding: 40px; color: var(--dark-text-secondary);"
+                                    data-label="Info">
+                                    No bookings yet. <a href="#" onclick="showSection('packages')"
+                                        style="color: var(--primary); text-decoration: underline;">Browse packages</a>
+                                    to get started!
                                 </td>
                             </tr>
                         </tbody>
@@ -1325,7 +1457,9 @@ function getSetting($key, $default = '', $settings = []) {
             <div id="activePackagesSection" style="display: none; margin-bottom: 32px;">
                 <div class="content-card">
                     <div class="card-header">
-                        <h3><i class="fas fa-check-circle" style="color: #22c55e; margin-right: 12px;"></i>Your Active Packages</h3>
+
+                        <h3><i class="fas fa-check-circle" style="color: #22c55e; margin-right: 12px;"></i>Your Active
+                            Packages</h3>
                         <p style="color: var(--dark-text-secondary);">Manage your currently active gym memberships</p>
                     </div>
                     <div class="packages-grid" id="activePackagesGrid">
@@ -1338,7 +1472,8 @@ function getSetting($key, $default = '', $settings = []) {
             <div class="content-card">
                 <div class="card-header">
                     <h3>Available Packages</h3>
-                    <p style="color: var(--dark-text-secondary);">Choose a membership plan that fits your fitness goals</p>
+                    <p style="color: var(--dark-text-secondary);">Choose a membership plan that fits your fitness goals
+                    </p>
                 </div>
                 <div class="packages-grid" id="packagesGrid">
                     <!-- Populated by JavaScript -->
@@ -1347,27 +1482,27 @@ function getSetting($key, $default = '', $settings = []) {
         </div>
 
         <!-- Training Calendar Section -->
-                    <div id="trainingCalendarSection" style="display: none; margin-bottom: 32px;">
-                        <div class="content-card" style="margin-top: 0;">
-                            <div class="card-header">
-                                <h3><i class="fas fa-calendar-alt" style="color: var(--primary);"></i> My Training Schedule</h3>
-                                <div class="card-actions">
-                                    <span style="font-size: 0.75rem; color: var(--dark-text-secondary);">
-                                        <i class="fas fa-info-circle"></i> Scheduled by your trainer
-                                    </span>
-                                </div>
-                            </div>
-                            <div style="padding: 24px;">
-                                <div id="trainingCalendar" style="min-height: 500px;"></div>
-                            </div>
-                        </div>
+        <div id="trainingCalendarSection" style="display: none; margin-bottom: 32px;">
+            <div class="content-card" style="margin-top: 0;">
+                <div class="card-header">
+                    <h3><i class="fas fa-calendar-alt" style="color: var(--primary);"></i> My Training Schedule</h3>
+                    <div class="card-actions">
+                        <span style="font-size: 0.75rem; color: var(--dark-text-secondary);">
+                            <i class="fas fa-info-circle"></i> Scheduled by your trainer
+                        </span>
                     </div>
+                </div>
+                <div style="padding: 24px;">
+                    <div id="trainingCalendar" style="min-height: 500px;"></div>
+                </div>
+            </div>
+        </div>
 
-                    <!-- Bookings Section -->
+        <!-- Bookings Section -->
         <div id="bookingsSection" class="content-section">
             <div class="content-card">
                 <div class="card-header">
-                    <h3>My Bookings</h3>
+                    <h3>Booking History</h3>
                     <div style="display: flex; align-items: center; gap: 12px;">
                         <div class="user-view-toggle">
                             <button class="user-view-btn active" id="userTableViewBtn" title="Table View">
@@ -1379,10 +1514,6 @@ function getSetting($key, $default = '', $settings = []) {
                                 <span>Calendar</span>
                             </button>
                         </div>
-                        <button class="card-btn primary" onclick="openBookingModal()">
-                            <i class="fas fa-plus"></i>
-                            <span>New Booking</span>
-                        </button>
                     </div>
                 </div>
                 <div id="userCalendarView">
@@ -1394,7 +1525,7 @@ function getSetting($key, $default = '', $settings = []) {
                             <tr>
                                 <th>Package</th>
                                 <th>Booking Date</th>
-                                 <th>Expiry Date</th>
+                                <th>Expiry Date</th>
                                 <th>Amount</th>
                                 <th>Status</th>
                                 <th>Actions</th>
@@ -1438,10 +1569,13 @@ function getSetting($key, $default = '', $settings = []) {
 
             <!-- No Trainer State -->
             <div id="trainerNoData" class="content-card" style="display:none; text-align:center; padding: 60px 24px;">
-                <i class="fas fa-user-slash" style="font-size: 3rem; color: var(--dark-text-secondary); margin-bottom: 16px; display:block;"></i>
+                <i class="fas fa-user-slash"
+                    style="font-size: 3rem; color: var(--dark-text-secondary); margin-bottom: 16px; display:block;"></i>
                 <h3 style="margin-bottom: 8px;">No Trainer Assigned Yet</h3>
-                <p style="color: var(--dark-text-secondary); font-size: 0.9rem;">Book a trainer-assisted package to get assigned a personal trainer.</p>
-                <button class="btn btn-primary" style="margin-top: 20px;" onclick="showSection('packages', event)">Browse Packages</button>
+                <p style="color: var(--dark-text-secondary); font-size: 0.9rem;">Book a trainer-assisted package to get
+                    assigned a personal trainer.</p>
+                <button class="btn btn-primary" style="margin-top: 20px;"
+                    onclick="showSection('packages', event)">Browse Packages</button>
             </div>
 
             <!-- Trainer Profile Card -->
@@ -1457,27 +1591,39 @@ function getSetting($key, $default = '', $settings = []) {
                             <p id="trainerSpec" class="trainer-spec-badge"></p>
                             <p id="trainerBio" class="trainer-bio"></p>
                             <div class="trainer-meta-row">
-                                <span id="trainerContact"><i class="fas fa-phone"></i> <span id="trainerContactVal"></span></span>
-                                <span id="trainerEmail"><i class="fas fa-envelope"></i> <span id="trainerEmailVal"></span></span>
-                                <span><i class="fas fa-users"></i> <span id="trainerClientsVal"></span> clients trained</span>
+                                <span id="trainerContact"><i class="fas fa-phone"></i> <span
+                                        id="trainerContactVal"></span></span>
+                                <span id="trainerEmail"><i class="fas fa-envelope"></i> <span
+                                        id="trainerEmailVal"></span></span>
+                                <span><i class="fas fa-users"></i> <span id="trainerClientsVal"></span> clients
+                                    trained</span>
                             </div>
                         </div>
                     </div>
                     <div class="trainer-package-row">
                         <i class="fas fa-box"></i> Your Package: <strong id="trainerPackageName"></strong>
-                        &nbsp;&nbsp;<i class="fas fa-calendar-times" style="color:#ef4444;"></i> Expires: <strong id="trainerExpiry"></strong>
+                        &nbsp;&nbsp;<i class="fas fa-calendar-times" style="color:#ef4444;"></i> Expires: <strong
+                            id="trainerExpiry"></strong>
                     </div>
                 </div>
 
                 <!-- Info Grid: Availability + Certifications -->
                 <div class="trainer-info-grid">
                     <div class="content-card">
-                        <div class="card-header"><h3><i class="fas fa-clock"></i> Availability</h3></div>
-                        <div id="trainerAvailability" style="padding: 20px; color: var(--dark-text-secondary); font-size: 0.9rem; line-height: 1.7;"></div>
+                        <div class="card-header">
+                            <h3><i class="fas fa-clock"></i> Availability</h3>
+                        </div>
+                        <div id="trainerAvailability"
+                            style="padding: 20px; color: var(--dark-text-secondary); font-size: 0.9rem; line-height: 1.7;">
+                        </div>
                     </div>
                     <div class="content-card">
-                        <div class="card-header"><h3><i class="fas fa-certificate"></i> Certifications</h3></div>
-                        <div id="trainerCertifications" style="padding: 20px; color: var(--dark-text-secondary); font-size: 0.9rem; line-height: 1.7;"></div>
+                        <div class="card-header">
+                            <h3><i class="fas fa-certificate"></i> Certifications</h3>
+                        </div>
+                        <div id="trainerCertifications"
+                            style="padding: 20px; color: var(--dark-text-secondary); font-size: 0.9rem; line-height: 1.7;">
+                        </div>
                     </div>
                 </div>
 
@@ -1492,11 +1638,15 @@ function getSetting($key, $default = '', $settings = []) {
                 <!-- Tips + Meal in a grid -->
                 <div class="trainer-info-grid" style="margin-top: 24px;">
                     <div class="content-card">
-                        <div class="card-header"><h3><i class="fas fa-lightbulb"></i> Coach Tips</h3></div>
+                        <div class="card-header">
+                            <h3><i class="fas fa-lightbulb"></i> Coach Tips</h3>
+                        </div>
                         <div id="trainerTips" style="padding: 20px;"></div>
                     </div>
                     <div class="content-card">
-                        <div class="card-header"><h3><i class="fas fa-utensils"></i> Meal Guidance</h3></div>
+                        <div class="card-header">
+                            <h3><i class="fas fa-utensils"></i> Meal Guidance</h3>
+                        </div>
                         <div id="trainerFood" style="padding: 20px;"></div>
                     </div>
                 </div>
@@ -1511,42 +1661,55 @@ function getSetting($key, $default = '', $settings = []) {
                     </div>
 
                     <!-- User self-log form -->
-                    <div id="progressLogForm" style="display:none; padding: 20px; border-bottom: 1px solid var(--dark-border); background: rgba(255,255,255,0.03);">
+                    <div id="progressLogForm"
+                        style="display:none; padding: 20px; border-bottom: 1px solid var(--dark-border); background: rgba(255,255,255,0.03);">
                         <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
                             <div>
-                                <label style="font-size:0.8rem;color:var(--dark-text-secondary);display:block;margin-bottom:4px;">Weight (kg)</label>
+                                <label
+                                    style="font-size:0.8rem;color:var(--dark-text-secondary);display:block;margin-bottom:4px;">Weight
+                                    (kg)</label>
                                 <input type="number" id="userProgressWeight" step="0.1" min="0" placeholder="e.g. 72.5"
                                     style="width:100%;padding:8px 12px;background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#fff;font-size:0.9rem;box-sizing:border-box;">
                             </div>
                             <div>
-                                <label style="font-size:0.8rem;color:var(--dark-text-secondary);display:block;margin-bottom:4px;">Height (cm)</label>
+                                <label
+                                    style="font-size:0.8rem;color:var(--dark-text-secondary);display:block;margin-bottom:4px;">Height
+                                    (cm)</label>
                                 <input type="number" id="userProgressHeight" step="0.1" min="0" placeholder="e.g. 170"
                                     style="width:100%;padding:8px 12px;background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#fff;font-size:0.9rem;box-sizing:border-box;">
                             </div>
                         </div>
                         <div style="margin-bottom:12px;">
-                            <label style="font-size:0.8rem;color:var(--dark-text-secondary);display:block;margin-bottom:4px;">Date</label>
+                            <label
+                                style="font-size:0.8rem;color:var(--dark-text-secondary);display:block;margin-bottom:4px;">Date</label>
                             <input type="date" id="userProgressDate"
                                 style="width:100%;padding:8px 12px;background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#fff;font-size:0.9rem;box-sizing:border-box;">
                         </div>
                         <div style="margin-bottom:12px;">
-                            <label style="font-size:0.8rem;color:var(--dark-text-secondary);display:block;margin-bottom:4px;">Notes / Remarks</label>
+                            <label
+                                style="font-size:0.8rem;color:var(--dark-text-secondary);display:block;margin-bottom:4px;">Notes
+                                / Remarks</label>
                             <textarea id="userProgressRemarks" rows="2" placeholder="How are you feeling? Any notes..."
                                 style="width:100%;padding:8px 12px;background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#fff;font-size:0.9rem;resize:vertical;box-sizing:border-box;"></textarea>
                         </div>
                         <div style="margin-bottom:16px;">
-                            <label style="font-size:0.8rem;color:var(--dark-text-secondary);display:block;margin-bottom:4px;">Progress Photo (optional)</label>
+                            <label
+                                style="font-size:0.8rem;color:var(--dark-text-secondary);display:block;margin-bottom:4px;">Progress
+                                Photo (optional)</label>
                             <input type="file" id="userProgressPhoto" accept="image/*"
                                 style="width:100%;padding:8px 12px;background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#fff;font-size:0.85rem;box-sizing:border-box;">
                             <div id="progressPhotoPreview" style="margin-top:8px;display:none;">
-                                <img id="progressPhotoImg" src="" alt="Preview" style="max-width:120px;max-height:120px;border-radius:8px;object-fit:cover;border:1px solid #333;">
+                                <img id="progressPhotoImg" src="" alt="Preview"
+                                    style="max-width:120px;max-height:120px;border-radius:8px;object-fit:cover;border:1px solid #333;">
                             </div>
                         </div>
                         <div style="display:flex;gap:8px;">
-                            <button class="btn btn-primary btn-sm" onclick="submitUserProgress()" id="submitProgressBtn">
+                            <button class="btn btn-primary btn-sm" onclick="submitUserProgress()"
+                                id="submitProgressBtn">
                                 <i class="fas fa-save"></i> Save Progress
                             </button>
-                            <button class="btn btn-sm" onclick="toggleProgressForm()" style="background:#1a1a1a;border:1px solid #333;color:#fff;">
+                            <button class="btn btn-sm" onclick="toggleProgressForm()"
+                                style="background:#1a1a1a;border:1px solid #333;color:#fff;">
                                 Cancel
                             </button>
                         </div>
@@ -1564,7 +1727,8 @@ function getSetting($key, $default = '', $settings = []) {
                 <div class="profile-main-col">
                     <div class="content-card">
                         <div class="card-header">
-                            <h3><i class="fas fa-user-circle" style="margin-right: 12px; color: var(--primary);"></i>Profile Information</h3>
+                            <h3><i class="fas fa-user-circle"
+                                    style="margin-right: 12px; color: var(--primary);"></i>Profile Information</h3>
                         </div>
                         <div class="profile-form">
                             <!-- Membership Status Badge -->
@@ -1577,17 +1741,23 @@ function getSetting($key, $default = '', $settings = []) {
                                         <span class="membership-label">MEMBERSHIP STATUS</span>
                                         <div class="membership-value-row">
                                             <h4 id="profileMembershipValue">Active Member</h4>
-                                            <span class="status-badge status-verified" id="profileMembershipStatus">Active</span>
+                                            <span class="status-badge status-verified"
+                                                id="profileMembershipStatus">Active</span>
                                         </div>
                                         <p id="profileMembershipPlan">Monthly Membership Plan</p>
-                                        <div id="profileMembershipExpiryRow" style="margin-top: 8px; font-size: 0.85rem; color: var(--dark-text-secondary); display: flex; flex-direction: column; gap: 4px;">
+                                        <div id="profileMembershipExpiryRow"
+                                            style="margin-top: 8px; font-size: 0.85rem; color: var(--dark-text-secondary); display: flex; flex-direction: column; gap: 4px;">
                                             <div style="display: flex; align-items: center;">
-                                                <i class="far fa-calendar-check" style="margin-right: 8px; color: var(--primary); width: 14px;"></i>
-                                                <span>Started on: <strong id="profileMembershipStartDate" style="color: #fff;">--</strong></span>
+                                                <i class="far fa-calendar-check"
+                                                    style="margin-right: 8px; color: var(--primary); width: 14px;"></i>
+                                                <span>Started on: <strong id="profileMembershipStartDate"
+                                                        style="color: #fff;">--</strong></span>
                                             </div>
                                             <div style="display: flex; align-items: center;">
-                                                <i class="far fa-calendar-times" style="margin-right: 8px; color: #ef4444; width: 14px;"></i>
-                                                <span>Expires on: <strong id="profileMembershipExpiryDate" style="color: #fff;">--</strong></span>
+                                                <i class="far fa-calendar-times"
+                                                    style="margin-right: 8px; color: #ef4444; width: 14px;"></i>
+                                                <span>Expires on: <strong id="profileMembershipExpiryDate"
+                                                        style="color: #fff;">--</strong></span>
                                             </div>
                                         </div>
                                     </div>
@@ -1597,26 +1767,30 @@ function getSetting($key, $default = '', $settings = []) {
                             <div class="form-row">
                                 <div class="form-group">
                                     <label>Full Name</label>
-                                    <input type="text" id="profileName" value="Juan Dela Cruz" placeholder="Enter your full name">
+                                    <input type="text" id="profileName" value="Juan Dela Cruz"
+                                        placeholder="Enter your full name">
                                 </div>
                                 <div class="form-group">
                                     <label>Email Address</label>
-                                    <input type="email" id="profileEmail" value="juan.delacruz@email.com" placeholder="Enter your email">
+                                    <input type="email" id="profileEmail" value="juan.delacruz@email.com"
+                                        placeholder="Enter your email">
                                 </div>
                             </div>
-                            
+
                             <div class="form-row">
                                 <div class="form-group">
                                     <label>Contact Number</label>
-                                    <input type="tel" id="profileContact" value="0917-123-4567" placeholder="09XX-XXX-XXXX">
+                                    <input type="tel" id="profileContact" value="0917-123-4567"
+                                        placeholder="09XX-XXX-XXXX">
                                 </div>
                             </div>
-                            
+
                             <div class="form-group">
                                 <label>Address</label>
-                                <textarea id="profileAddress" rows="3" placeholder="Enter your complete address">Manila, Philippines</textarea>
+                                <textarea id="profileAddress" rows="3"
+                                    placeholder="Enter your complete address">Manila, Philippines</textarea>
                             </div>
-                            
+
                             <div class="form-actions">
                                 <button class="btn btn-primary" id="updateProfileBtn" onclick="updateProfile()">
                                     <i class="fas fa-save"></i>
@@ -1626,37 +1800,43 @@ function getSetting($key, $default = '', $settings = []) {
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Right Column: Security & Payment Info -->
                 <div class="profile-side-col">
                     <div class="content-card">
                         <div class="card-header">
-                            <h3><i class="fas fa-shield-alt" style="margin-right: 12px; color: var(--primary);"></i>Security</h3>
+                            <h3><i class="fas fa-shield-alt"
+                                    style="margin-right: 12px; color: var(--primary);"></i>Security</h3>
                         </div>
                         <div class="security-form" style="padding: 28px;">
-                            <p style="color: var(--dark-text-secondary); margin-bottom: 24px; font-size: 0.9rem; line-height: 1.5;">
+                            <p
+                                style="color: var(--dark-text-secondary); margin-bottom: 24px; font-size: 0.9rem; line-height: 1.5;">
                                 Ensure your account is secure by using a strong password.
                             </p>
                             <form id="changePasswordForm" onsubmit="changePassword(event)">
                                 <div class="form-group">
                                     <label>Current Password</label>
                                     <div class="password-input-wrapper">
-                                        <input type="password" id="currentPassword" required placeholder="••••••••">
+                                        <input type="password" id="currentPassword" required
+                                            placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢">
                                     </div>
                                 </div>
                                 <div class="form-group">
                                     <label>New Password</label>
                                     <div class="password-input-wrapper">
-                                        <input type="password" id="newPassword" required minlength="6" placeholder="At least 6 characters">
+                                        <input type="password" id="newPassword" required minlength="6"
+                                            placeholder="At least 6 characters">
                                     </div>
                                 </div>
                                 <div class="form-group">
                                     <label>Confirm New Password</label>
                                     <div class="password-input-wrapper">
-                                        <input type="password" id="confirmNewPassword" required minlength="6" placeholder="Repeat new password">
+                                        <input type="password" id="confirmNewPassword" required minlength="6"
+                                            placeholder="Repeat new password">
                                     </div>
                                 </div>
-                                <button type="submit" class="btn btn-secondary" id="changePasswordBtn" style="width: 100%; justify-content: center;">
+                                <button type="submit" class="btn btn-secondary" id="changePasswordBtn"
+                                    style="width: 100%; justify-content: center;">
                                     <i class="fas fa-key"></i>
                                     <span>Update Password</span>
                                 </button>
@@ -1666,11 +1846,13 @@ function getSetting($key, $default = '', $settings = []) {
 
                     <div class="content-card">
                         <div class="card-header">
-                            <h3><i class="fas fa-qrcode" style="margin-right: 12px; color: var(--primary);"></i>GCash Payment</h3>
+                            <h3><i class="fas fa-qrcode" style="margin-right: 12px; color: var(--primary);"></i>GCash
+                                Payment</h3>
                         </div>
                         <div class="gcash-info">
                             <div class="qr-container">
-                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=GCash:09171234567" alt="GCash QR Code" style="width: 100%; height: 100%; object-fit: contain;">
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=GCash:09171234567"
+                                    alt="GCash QR Code" style="width: 100%; height: 100%; object-fit: contain;">
                             </div>
                             <div class="qr-info">
                                 <div class="payment-detail-item">
@@ -1681,7 +1863,8 @@ function getSetting($key, $default = '', $settings = []) {
                                     <span class="detail-label">GCASH NUMBER</span>
                                     <span class="detail-value">0917-123-4567</span>
                                 </div>
-                                <p style="margin-top: 20px; font-size: 0.85rem; color: var(--dark-text-secondary); line-height: 1.4;">
+                                <p
+                                    style="margin-top: 20px; font-size: 0.85rem; color: var(--dark-text-secondary); line-height: 1.4;">
                                     Scan to pay for bookings. Don't forget to save your receipt for verification!
                                 </p>
                             </div>
@@ -1701,7 +1884,7 @@ function getSetting($key, $default = '', $settings = []) {
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            
+
             <div class="modal-body">
                 <div class="modal-layout">
                     <div class="modal-form-col">
@@ -1712,25 +1895,29 @@ function getSetting($key, $default = '', $settings = []) {
                                     <option value="">Choose a package...</option>
                                 </select>
                             </div>
-                            
+
                             <div class="form-group">
                                 <label>Booking Date <span style="color: var(--warning);">*</span></label>
                                 <input type="date" id="bookingDate" required>
                             </div>
-                            
+
                             <div class="form-group">
                                 <label>Contact Number <span style="color: var(--warning);">*</span></label>
-                                <input type="tel" id="bookingContact" placeholder="09171234567" maxlength="11" pattern="[0-9]{11}" title="Please enter exactly 11 digits" required>
-                                <small style="color: var(--dark-text-secondary); font-size: 0.75rem; margin-top: 4px; display: block;">Enter 11 digits only (e.g., 09171234567)</small>
+                                <input type="tel" id="bookingContact" placeholder="09171234567" maxlength="11"
+                                    pattern="[0-9]{11}" title="Please enter exactly 11 digits" required>
+                                <small
+                                    style="color: var(--dark-text-secondary); font-size: 0.75rem; margin-top: 4px; display: block;">Enter
+                                    11 digits only (e.g., 09171234567)</small>
                             </div>
-                            
+
                             <div class="form-group">
                                 <label>Payment Receipt (GCash) <span style="color: var(--warning);">*</span></label>
                                 <div class="file-upload-area" id="fileUploadArea">
                                     <i class="fas fa-cloud-upload-alt"></i>
                                     <p>Click to upload or drag and drop</p>
                                     <span>PNG, JPG, PDF up to 5MB</span>
-                                    <input type="file" id="receiptFile" accept="image/*,.pdf" required style="display: none;" onchange="handleFileSelect(event)">
+                                    <input type="file" id="receiptFile" accept="image/*,.pdf" required
+                                        style="display: none;" onchange="handleFileSelect(event)">
                                 </div>
                                 <div id="filePreview" style="display: none; margin-top: 16px;">
                                     <div class="file-preview-item">
@@ -1742,12 +1929,13 @@ function getSetting($key, $default = '', $settings = []) {
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div class="form-group">
                                 <label>Additional Notes (Optional)</label>
-                                <textarea id="bookingNotes" rows="3" placeholder="Any special requests or notes..."></textarea>
+                                <textarea id="bookingNotes" rows="3"
+                                    placeholder="Any special requests or notes..."></textarea>
                             </div>
-                            
+
                             <div class="modal-actions">
                                 <button type="button" class="btn btn-secondary" onclick="closeBookingModal()">
                                     <i class="fas fa-times"></i>
@@ -1768,13 +1956,131 @@ function getSetting($key, $default = '', $settings = []) {
                             <p>2. Enter the amount for your package.</p>
                             <p>3. Take a screenshot of the receipt.</p>
                             <p>4. Upload the receipt below.</p>
-                            
-                            <div class="qr-container-dash" style="margin: 20px auto; width: 180px; height: 180px; border-radius: 15px;">
-                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=GCash:09171234567" alt="GCash QR Code" class="qr-image-dash">
+
+                            <div class="qr-container-dash"
+                                style="margin: 20px auto; width: 180px; height: 180px; border-radius: 15px;">
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=GCash:09171234567"
+                                    alt="GCash QR Code" class="qr-image-dash">
                             </div>
-                            
-                            <div class="payment-details" style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 12px; margin-top: 10px;">
-                                <p style="font-size: 0.85rem; margin-bottom: 5px;"><strong>GCash:</strong> 0917-123-4567</p>
+
+                            <div class="payment-details"
+                                style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 12px; margin-top: 10px;">
+                                <p style="font-size: 0.85rem; margin-bottom: 5px;"><strong>GCash:</strong> 0917-123-4567
+                                </p>
+                                <p style="font-size: 0.85rem;"><strong>Name:</strong> Martinez Fitness</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Booking Modal -->
+    <div class="modal-overlay" id="editBookingModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-edit" style="margin-right:8px;"></i>Edit Pending Booking</h3>
+                <button class="close-modal" onclick="closeEditBookingModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <div class="modal-layout">
+                    <div class="modal-form-col">
+                        <div
+                            style="background: rgba(245,158,11,0.07); border:1px solid rgba(245,158,11,0.25); border-radius: 12px; padding: 12px 16px; margin-bottom: 20px; display:flex; gap:10px; align-items:flex-start;">
+                            <i class="fas fa-info-circle" style="color:var(--warning); margin-top:2px;"></i>
+                            <p style="color:var(--warning); font-size:0.75rem; line-height:1.4; margin:0;">
+                                Your booking is still pending. You can update your selected package, date, or contact.
+                                If you change packages, please upload a new valid receipt.
+                            </p>
+                        </div>
+
+                        <form id="editBookingForm" onsubmit="submitEditBooking(event)">
+                            <div class="form-group">
+                                <label>Select Package <span style="color: var(--warning);">*</span></label>
+                                <select id="editBookingPackage" required>
+                                    <option value="">Choose a package...</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Booking Date <span style="color: var(--warning);">*</span></label>
+                                <input type="date" id="editBookingDate" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Contact Number <span style="color: var(--warning);">*</span></label>
+                                <input type="tel" id="editBookingContact" placeholder="09171234567" maxlength="11"
+                                    pattern="[0-9]{11}" title="Please enter exactly 11 digits" required>
+                                <small
+                                    style="color: var(--dark-text-secondary); font-size: 0.7rem; margin-top: 4px; display: block;">Enter
+                                    11 digits only (e.g., 09171234567)</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Payment Receipt (GCash)</label>
+                                <div class="file-upload-area" id="editFileUploadArea">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                    <p>Click to upload a new receipt</p>
+                                    <span>(Leave blank to keep your current receipt)</span>
+                                    <input type="file" id="editReceiptFile" accept="image/*,.pdf" style="display: none;"
+                                        onchange="handleEditFileSelect(event)">
+                                </div>
+                                <div id="editFilePreview" style="display: none; margin-top: 16px;">
+                                    <div class="file-preview-item">
+                                        <i class="fas fa-file-image"></i>
+                                        <span id="editFileName"></span>
+                                        <button type="button" onclick="removeEditFile()" class="remove-file-btn">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div id="editCurrentReceiptAlert"
+                                    style="margin-top: 12px; font-size: 0.75rem; color: #22c55e;">
+                                    <i class="fas fa-check-circle"></i> A receipt was already uploaded previously.
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Additional Notes (Optional)</label>
+                                <textarea id="editBookingNotes" rows="3"
+                                    placeholder="Any special requests or notes..."></textarea>
+                            </div>
+
+                            <div class="modal-actions">
+                                <button type="button" class="btn btn-secondary" onclick="closeEditBookingModal()">
+                                    <i class="fas fa-times"></i>
+                                    <span>Cancel</span>
+                                </button>
+                                <button type="submit" id="editBookingSubmitBtn" class="btn btn-primary">
+                                    <i class="fas fa-save"></i>
+                                    <span>Save Changes</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="modal-side-col">
+                        <div class="payment-instruction-card">
+                            <h4><i class="fas fa-info-circle"></i> Payment Instructions</h4>
+                            <p>1. Scan the QR code below using your GCash app if you need to pay again.</p>
+                            <p>2. Enter the amount for your chosen package.</p>
+                            <p>3. Take a screenshot of the new receipt.</p>
+                            <p>4. Upload the receipt using the form.</p>
+
+                            <div class="qr-container-dash"
+                                style="margin: 20px auto; width: 180px; height: 180px; border-radius: 15px;">
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=GCash:09171234567"
+                                    alt="GCash QR Code" class="qr-image-dash">
+                            </div>
+
+                            <div class="payment-details"
+                                style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 12px; margin-top: 10px;">
+                                <p style="font-size: 0.85rem; margin-bottom: 5px;"><strong>GCash:</strong> 0917-123-4567
+                                </p>
                                 <p style="font-size: 0.85rem;"><strong>Name:</strong> Martinez Fitness</p>
                             </div>
                         </div>
@@ -1793,18 +2099,20 @@ function getSetting($key, $default = '', $settings = []) {
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            
+
             <div class="modal-body" style="padding: 24px;">
                 <p style="color: var(--dark-text-secondary); margin-bottom: 24px; text-align: center;">
                     Choose a higher-tier package to unlock more benefits and features
                 </p>
-                
-                <div id="upgradePlansContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; max-height: 500px; overflow-y: auto; padding: 10px;">
+
+                <div id="upgradePlansContainer"
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; max-height: 500px; overflow-y: auto; padding: 10px;">
                     <!-- Populated by JavaScript -->
                 </div>
             </div>
-            
-            <div class="modal-footer" style="padding: 16px 24px; border-top: 1px solid var(--dark-border); text-align: right;">
+
+            <div class="modal-footer"
+                style="padding: 16px 24px; border-top: 1px solid var(--dark-border); text-align: right;">
                 <button class="btn btn-secondary" onclick="closeUpgradeModal()">
                     <i class="fas fa-times"></i> Cancel
                 </button>
@@ -1817,19 +2125,22 @@ function getSetting($key, $default = '', $settings = []) {
         <div class="modal" style="max-width: 800px;">
             <div class="modal-header" style="padding: 24px 32px; border-bottom: 1px solid var(--dark-border);">
                 <div style="display: flex; align-items: center; gap: 12px;">
-                    <div style="width: 40px; height: 40px; background: var(--glass); border-radius: 10px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--glass-border);">
+                    <div
+                        style="width: 40px; height: 40px; background: var(--glass); border-radius: 10px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--glass-border);">
                         <i class="fas fa-file-invoice" style="color: var(--primary);"></i>
                     </div>
                     <div>
                         <h3 style="margin: 0;">Package Hub</h3>
-                        <span id="detailRef" style="font-size: 0.75rem; color: var(--dark-text-secondary); font-weight: 700;">REF: #000000</span>
+                        <span id="detailRef"
+                            style="font-size: 0.75rem; color: var(--dark-text-secondary); font-weight: 700;">REF:
+                            #000000</span>
                     </div>
                 </div>
                 <button class="close-modal" onclick="closeBookingDetailsModal()">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            
+
             <div class="modal-tabs">
                 <button class="modal-tab-btn active" onclick="switchModalTab('info')">Overview</button>
                 <button class="modal-tab-btn" onclick="switchModalTab('plan')">Exercise Plan</button>
@@ -1837,7 +2148,7 @@ function getSetting($key, $default = '', $settings = []) {
                 <button class="modal-tab-btn" onclick="switchModalTab('diet')">Nutrition & Diet</button>
                 <button class="modal-tab-btn" onclick="switchModalTab('tips')">Tips & Guidance</button>
             </div>
-            
+
             <div class="modal-body" style="padding: 0 32px 32px; max-height: 60vh; overflow-y: auto;">
                 <!-- Info Tab -->
                 <div id="modalTabInfo" class="modal-tab-content active">
@@ -1871,9 +2182,10 @@ function getSetting($key, $default = '', $settings = []) {
                         </div>
                         <div class="booking-detail-item">
                             <span class="detail-label">Amount Paid</span>
-                            <div class="detail-value" id="detailAmount" style="color: var(--primary); font-size: 1.25rem; font-weight: 800;">
+                            <div class="detail-value" id="detailAmount"
+                                style="color: var(--primary); font-size: 1.25rem; font-weight: 800;">
                                 <i class="fas fa-tag"></i>
-                                <span>₱0.00</span>
+                                <span>â‚±0.00</span>
                             </div>
                         </div>
                         <div class="booking-detail-item">
@@ -1885,7 +2197,8 @@ function getSetting($key, $default = '', $settings = []) {
                         </div>
                         <div class="booking-detail-item" id="detailTrainerContainer" style="display: none;">
                             <span class="detail-label">Assigned Trainer</span>
-                            <div class="detail-value" id="detailTrainer" style="color: var(--primary); font-weight: 700;">
+                            <div class="detail-value" id="detailTrainer"
+                                style="color: var(--primary); font-weight: 700;">
                                 <i class="fas fa-user-tie"></i>
                                 <span>-</span>
                             </div>
@@ -1898,21 +2211,25 @@ function getSetting($key, $default = '', $settings = []) {
                     </div>
 
                     <!-- Booking Hub Quick Actions -->
-                    <div id="detailActions" style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--dark-border); display: flex; gap: 12px;">
-                        <button id="detailRenewBtn" class="btn btn-renew" style="flex: 1; background: rgba(34, 197, 94, 0.1); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.3); justify-content: center;">
+                    <div id="detailActions"
+                        style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--dark-border); display: flex; gap: 12px;">
+                        <button id="detailRenewBtn" class="btn btn-renew"
+                            style="flex: 1; background: rgba(34, 197, 94, 0.1); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.3); justify-content: center;">
                             <i class="fas fa-redo"></i>
                             <span>Renew Plan</span>
                         </button>
-                        <button id="detailUpgradeBtn" class="btn btn-upgrade" style="flex: 1; background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3); justify-content: center; display: none;">
+                        <button id="detailUpgradeBtn" class="btn btn-upgrade"
+                            style="flex: 1; background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3); justify-content: center; display: none;">
                             <i class="fas fa-arrow-up"></i>
                             <span>Upgrade Tier</span>
                         </button>
                     </div>
-                    
+
                     <div class="receipt-preview-container" id="receiptSection" style="display: none; margin-top: 24px;">
                         <div class="receipt-preview-header">
                             <h4><i class="fas fa-receipt"></i> Payment Receipt</h4>
-                            <span style="font-size: 0.75rem; color: var(--dark-text-secondary);"><i class="fas fa-info-circle"></i> Click to enlarge</span>
+                            <span style="font-size: 0.75rem; color: var(--dark-text-secondary);"><i
+                                    class="fas fa-info-circle"></i> Click to enlarge</span>
                         </div>
                         <div class="receipt-img-wrapper" id="receiptImgWrapper">
                             <img id="detailReceipt" src="" alt="Payment Receipt">
@@ -1933,7 +2250,9 @@ function getSetting($key, $default = '', $settings = []) {
                 <!-- Calendar Tab -->
                 <div id="modalTabCalendar" class="modal-tab-content">
                     <div style="padding-top: 20px;">
-                        <div id="modalCalendar" style="min-height: 400px; background: var(--dark-card); border-radius: 12px; padding: 10px; border: 1px solid var(--dark-border);"></div>
+                        <div id="modalCalendar"
+                            style="min-height: 400px; background: var(--dark-card); border-radius: 12px; padding: 10px; border: 1px solid var(--dark-border);">
+                        </div>
                     </div>
                 </div>
 
@@ -1941,7 +2260,8 @@ function getSetting($key, $default = '', $settings = []) {
                 <div id="modalTabDiet" class="modal-tab-content">
                     <div id="modalDietContent" style="padding-top: 20px;">
                         <div style="text-align: center; padding: 40px; color: var(--dark-text-secondary);">
-                            <i class="fas fa-utensils" style="font-size: 2rem; opacity: 0.2; margin-bottom: 12px; display: block;"></i>
+                            <i class="fas fa-utensils"
+                                style="font-size: 2rem; opacity: 0.2; margin-bottom: 12px; display: block;"></i>
                             <p>No nutrition plan assigned yet.</p>
                         </div>
                     </div>
@@ -1951,14 +2271,16 @@ function getSetting($key, $default = '', $settings = []) {
                 <div id="modalTabTips" class="modal-tab-content">
                     <div id="modalTipsContent" style="padding-top: 20px;">
                         <div style="text-align: center; padding: 40px; color: var(--dark-text-secondary);">
-                            <i class="fas fa-lightbulb" style="font-size: 2rem; opacity: 0.2; margin-bottom: 12px; display: block;"></i>
+                            <i class="fas fa-lightbulb"
+                                style="font-size: 2rem; opacity: 0.2; margin-bottom: 12px; display: block;"></i>
                             <p>No tips shared by your coach yet.</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="modal-footer" style="padding: 24px 32px; border-top: 1px solid var(--dark-border); display: flex; justify-content: flex-end;">
+            <div class="modal-footer"
+                style="padding: 24px 32px; border-top: 1px solid var(--dark-border); display: flex; justify-content: flex-end;">
                 <button class="btn btn-secondary" onclick="closeBookingDetailsModal()" style="padding: 10px 24px;">
                     <i class="fas fa-times" style="margin-right: 8px;"></i>
                     <span>Close Hub</span>
@@ -1973,18 +2295,20 @@ function getSetting($key, $default = '', $settings = []) {
             <div class="modal-header">
                 <div>
                     <h3 id="exercisePlanTitle">Exercise Plan</h3>
-                    <p id="exercisePlanSubtitle" style="font-size: 0.9rem; color: var(--dark-text-secondary); margin-top: 4px;"></p>
+                    <p id="exercisePlanSubtitle"
+                        style="font-size: 0.9rem; color: var(--dark-text-secondary); margin-top: 4px;"></p>
                 </div>
                 <button class="close-modal" onclick="closeExercisePlanModal()">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            
+
             <div class="modal-body" id="exercisePlanContent">
                 <!-- Content populated by JS -->
             </div>
-            
-            <div class="modal-footer" style="padding: 16px 24px; border-top: 1px solid var(--dark-border); text-align: right;">
+
+            <div class="modal-footer"
+                style="padding: 16px 24px; border-top: 1px solid var(--dark-border); text-align: right;">
                 <button class="btn btn-secondary" onclick="closeExercisePlanModal()">Close</button>
             </div>
         </div>
@@ -2001,19 +2325,23 @@ function getSetting($key, $default = '', $settings = []) {
                 <h2>Personalize Your Journey</h2>
                 <p>Help us find the perfect package for your fitness goals!</p>
             </div>
-            
+
             <div class="survey-body">
                 <!-- Step 1: Basic Profile -->
                 <div class="survey-step active" data-step="1">
                     <label class="question-label">A. Basic Profile</label>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
                         <div class="form-group">
-                            <label style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px;">Age</label>
-                            <input type="number" id="surveyAge" class="form-control" placeholder="Years" style="background: rgba(255,255,255,0.05); border: 1px solid var(--dark-border); color: #fff; padding: 12px; border-radius: 8px; width: 100%;">
+                            <label
+                                style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px;">Age</label>
+                            <input type="number" id="surveyAge" class="form-control" placeholder="Years"
+                                style="background: rgba(255,255,255,0.05); border: 1px solid var(--dark-border); color: #fff; padding: 12px; border-radius: 8px; width: 100%;">
                         </div>
                         <div class="form-group">
-                            <label style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px;">Sex</label>
-                            <select id="surveySex" class="form-control" style="background: rgba(255,255,255,0.05); border: 1px solid var(--dark-border); color: #fff; padding: 12px; border-radius: 8px; width: 100%;">
+                            <label
+                                style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px;">Sex</label>
+                            <select id="surveySex" class="form-control"
+                                style="background: rgba(255,255,255,0.05); border: 1px solid var(--dark-border); color: #fff; padding: 12px; border-radius: 8px; width: 100%;">
                                 <option value="Male">Male</option>
                                 <option value="Female">Female</option>
                                 <option value="Other">Other</option>
@@ -2022,19 +2350,33 @@ function getSetting($key, $default = '', $settings = []) {
                     </div>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
                         <div class="form-group">
-                            <label style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px;">Height (cm)</label>
-                            <input type="number" id="surveyHeight" class="form-control" placeholder="CM" oninput="checkStepValid()" style="background: rgba(255,255,255,0.05); border: 1px solid var(--dark-border); color: #fff; padding: 12px; border-radius: 8px; width: 100%;">
+                            <label
+                                style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px;">Height
+                                (cm)</label>
+                            <input type="number" id="surveyHeight" class="form-control" placeholder="CM"
+                                oninput="checkStepValid()"
+                                style="background: rgba(255,255,255,0.05); border: 1px solid var(--dark-border); color: #fff; padding: 12px; border-radius: 8px; width: 100%;">
                         </div>
                         <div class="form-group">
-                            <label style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px;">Weight (kg)</label>
-                            <input type="number" id="surveyWeight" class="form-control" placeholder="KG" oninput="checkStepValid()" style="background: rgba(255,255,255,0.05); border: 1px solid var(--dark-border); color: #fff; padding: 12px; border-radius: 8px; width: 100%;">
+                            <label
+                                style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px;">Weight
+                                (kg)</label>
+                            <input type="number" id="surveyWeight" class="form-control" placeholder="KG"
+                                oninput="checkStepValid()"
+                                style="background: rgba(255,255,255,0.05); border: 1px solid var(--dark-border); color: #fff; padding: 12px; border-radius: 8px; width: 100%;">
                         </div>
                     </div>
                     <div class="form-group" style="margin-bottom: 24px;">
-                        <label style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px;">Medical Conditions (if any)</label>
-                        <textarea id="surveyMedical" class="form-control" placeholder="Specify any conditions or type 'None'" style="background: rgba(255,255,255,0.05); border: 1px solid var(--dark-border); color: #fff; padding: 12px; border-radius: 8px; width: 100%; height: 80px;"></textarea>
+                        <label
+                            style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px;">Medical
+                            Conditions (if any)</label>
+                        <textarea id="surveyMedical" class="form-control"
+                            placeholder="Specify any conditions or type 'None'"
+                            style="background: rgba(255,255,255,0.05); border: 1px solid var(--dark-border); color: #fff; padding: 12px; border-radius: 8px; width: 100%; height: 80px;"></textarea>
                     </div>
-                    <label style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px; text-align: center;">Exercise Experience</label>
+                    <label
+                        style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px; text-align: center;">Exercise
+                        Experience</label>
                     <div class="options-grid">
                         <div class="option-card" onclick="selectSurveyOption(this, 'exercise_history', 'Beginner')">
                             <i class="fas fa-seedling"></i>
@@ -2054,7 +2396,9 @@ function getSetting($key, $default = '', $settings = []) {
                 <!-- Step 2: Fitness Goals -->
                 <div class="survey-step" data-step="2">
                     <label class="question-label">B. Fitness Goals</label>
-                    <label style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px; text-align: center;">Primary Goal</label>
+                    <label
+                        style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px; text-align: center;">Primary
+                        Goal</label>
                     <div class="options-grid" style="margin-bottom: 24px;">
                         <div class="option-card" onclick="selectSurveyOption(this, 'primary_goal', 'Lose weight')">
                             <i class="fas fa-weight"></i>
@@ -2064,16 +2408,20 @@ function getSetting($key, $default = '', $settings = []) {
                             <i class="fas fa-dumbbell"></i>
                             <span>Gain Muscle</span>
                         </div>
-                        <div class="option-card" onclick="selectSurveyOption(this, 'primary_goal', 'Improve endurance')">
+                        <div class="option-card"
+                            onclick="selectSurveyOption(this, 'primary_goal', 'Improve endurance')">
                             <i class="fas fa-heartbeat"></i>
                             <span>Improve Endurance</span>
                         </div>
-                        <div class="option-card" onclick="selectSurveyOption(this, 'primary_goal', 'Stay fit / general health')">
+                        <div class="option-card"
+                            onclick="selectSurveyOption(this, 'primary_goal', 'Stay fit / general health')">
                             <i class="fas fa-user-check"></i>
                             <span>Stay Fit</span>
                         </div>
                     </div>
-                    <label style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px; text-align: center;">Desired Pace</label>
+                    <label
+                        style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px; text-align: center;">Desired
+                        Pace</label>
                     <div class="options-grid">
                         <div class="option-card" onclick="selectSurveyOption(this, 'goal_pace', 'Slowly')">
                             <i class="fas fa-clock"></i>
@@ -2093,13 +2441,17 @@ function getSetting($key, $default = '', $settings = []) {
                 <!-- Step 3: Availability & Commitment -->
                 <div class="survey-step" data-step="3">
                     <label class="question-label">C. Availability & Commitment</label>
-                    <label style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px; text-align: center;">Workout Days Per Week</label>
+                    <label
+                        style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px; text-align: center;">Workout
+                        Days Per Week</label>
                     <div class="options-grid" style="margin-bottom: 24px;">
-                        <div class="option-card" onclick="selectSurveyOption(this, 'workout_days_per_week', '1-2 days')">
+                        <div class="option-card"
+                            onclick="selectSurveyOption(this, 'workout_days_per_week', '1-2 days')">
                             <i class="fas fa-calendar-day"></i>
                             <span>1-2 Days</span>
                         </div>
-                        <div class="option-card" onclick="selectSurveyOption(this, 'workout_days_per_week', '3-4 days')">
+                        <div class="option-card"
+                            onclick="selectSurveyOption(this, 'workout_days_per_week', '3-4 days')">
                             <i class="fas fa-calendar-week"></i>
                             <span>3-4 Days</span>
                         </div>
@@ -2108,17 +2460,22 @@ function getSetting($key, $default = '', $settings = []) {
                             <span>5+ Days</span>
                         </div>
                     </div>
-                    <label style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px; text-align: center;">Preferred Workout Time</label>
+                    <label
+                        style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px; text-align: center;">Preferred
+                        Workout Time</label>
                     <div class="options-grid">
-                        <div class="option-card" onclick="selectSurveyOption(this, 'preferred_workout_time', 'Morning')">
+                        <div class="option-card"
+                            onclick="selectSurveyOption(this, 'preferred_workout_time', 'Morning')">
                             <i class="fas fa-sun"></i>
                             <span>Morning</span>
                         </div>
-                        <div class="option-card" onclick="selectSurveyOption(this, 'preferred_workout_time', 'Afternoon')">
+                        <div class="option-card"
+                            onclick="selectSurveyOption(this, 'preferred_workout_time', 'Afternoon')">
                             <i class="fas fa-cloud-sun"></i>
                             <span>Afternoon</span>
                         </div>
-                        <div class="option-card" onclick="selectSurveyOption(this, 'preferred_workout_time', 'Evening')">
+                        <div class="option-card"
+                            onclick="selectSurveyOption(this, 'preferred_workout_time', 'Evening')">
                             <i class="fas fa-moon"></i>
                             <span>Evening</span>
                         </div>
@@ -2129,10 +2486,16 @@ function getSetting($key, $default = '', $settings = []) {
                 <div class="survey-step" data-step="4">
                     <label class="question-label">D. Physical Condition & Focus</label>
                     <div class="form-group" style="margin-bottom: 24px;">
-                        <label style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px;">Injuries or Physical Limitations (if any)</label>
-                        <textarea id="surveyInjuries" class="form-control" placeholder="Describe any injuries or type 'None'" style="background: rgba(255,255,255,0.05); border: 1px solid var(--dark-border); color: #fff; padding: 12px; border-radius: 8px; width: 100%; height: 80px;"></textarea>
+                        <label
+                            style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px;">Injuries
+                            or Physical Limitations (if any)</label>
+                        <textarea id="surveyInjuries" class="form-control"
+                            placeholder="Describe any injuries or type 'None'"
+                            style="background: rgba(255,255,255,0.05); border: 1px solid var(--dark-border); color: #fff; padding: 12px; border-radius: 8px; width: 100%; height: 80px;"></textarea>
                     </div>
-                    <label style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px; text-align: center;">Focus Areas (Which areas do you want to focus on?)</label>
+                    <label
+                        style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px; text-align: center;">Focus
+                        Areas (Which areas do you want to focus on?)</label>
                     <div class="options-grid">
                         <div class="option-card" onclick="toggleSurveyOption(this, 'focus_areas', 'Arms')">
                             <i class="fas fa-hand-fist"></i>
@@ -2156,13 +2519,16 @@ function getSetting($key, $default = '', $settings = []) {
                 <!-- Step 5: Preferences & Confidence -->
                 <div class="survey-step" data-step="5">
                     <label class="question-label">E & F. Preferences & Confidence</label>
-                    <label style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px; text-align: center;">Workout Type Preference</label>
+                    <label
+                        style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px; text-align: center;">Workout
+                        Type Preference</label>
                     <div class="options-grid" style="margin-bottom: 24px;">
                         <div class="option-card" onclick="selectSurveyOption(this, 'workout_type', 'Cardio')">
                             <i class="fas fa-heartbeat"></i>
                             <span>Cardio</span>
                         </div>
-                        <div class="option-card" onclick="selectSurveyOption(this, 'workout_type', 'Strength training')">
+                        <div class="option-card"
+                            onclick="selectSurveyOption(this, 'workout_type', 'Strength training')">
                             <i class="fas fa-dumbbell"></i>
                             <span>Strength</span>
                         </div>
@@ -2171,24 +2537,32 @@ function getSetting($key, $default = '', $settings = []) {
                             <span>Mixed</span>
                         </div>
                     </div>
-                    <label style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px; text-align: center;">Guidance Preference</label>
+                    <label
+                        style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px; text-align: center;">Guidance
+                        Preference</label>
                     <div class="options-grid" style="margin-bottom: 24px;">
-                        <div class="option-card" onclick="selectSurveyOption(this, 'trainer_guidance', 'With trainer guidance')">
+                        <div class="option-card"
+                            onclick="selectSurveyOption(this, 'trainer_guidance', 'With trainer guidance')">
                             <i class="fas fa-user-friends"></i>
                             <span>With Trainer</span>
                         </div>
-                        <div class="option-card" onclick="selectSurveyOption(this, 'trainer_guidance', 'Independent workout')">
+                        <div class="option-card"
+                            onclick="selectSurveyOption(this, 'trainer_guidance', 'Independent workout')">
                             <i class="fas fa-user"></i>
                             <span>Independent</span>
                         </div>
                     </div>
-                    <label style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px; text-align: center;">Gym Equipment Confidence</label>
+                    <label
+                        style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px; text-align: center;">Gym
+                        Equipment Confidence</label>
                     <div class="options-grid">
-                        <div class="option-card" onclick="selectSurveyOption(this, 'equipment_confidence', 'Not confident')">
+                        <div class="option-card"
+                            onclick="selectSurveyOption(this, 'equipment_confidence', 'Not confident')">
                             <i class="fas fa-frown"></i>
                             <span>Not Confident</span>
                         </div>
-                        <div class="option-card" onclick="selectSurveyOption(this, 'equipment_confidence', 'Somewhat confident')">
+                        <div class="option-card"
+                            onclick="selectSurveyOption(this, 'equipment_confidence', 'Somewhat confident')">
                             <i class="fas fa-meh"></i>
                             <span>Somewhat</span>
                         </div>
@@ -2205,7 +2579,9 @@ function getSetting($key, $default = '', $settings = []) {
                     <div class="progress-fill" id="surveyProgress" style="width: 20%;"></div>
                 </div>
                 <div style="display: flex; gap: 10px;">
-                    <button class="survey-nav-btn" id="surveyBackBtn" style="display: none; background: rgba(255,255,255,0.05); color: #fff;" onclick="prevSurveyStep()">
+                    <button class="survey-nav-btn" id="surveyBackBtn"
+                        style="display: none; background: rgba(255,255,255,0.05); color: #fff;"
+                        onclick="prevSurveyStep()">
                         <i class="fas fa-arrow-left"></i>
                         <span>Back</span>
                     </button>
@@ -2226,7 +2602,7 @@ function getSetting($key, $default = '', $settings = []) {
                 <h2>Your Perfect Match!</h2>
                 <p>Based on your survey, we recommend this package for you:</p>
             </div>
-            
+
             <div class="recommendation-body">
                 <div class="recommended-package-preview" id="recommendedPackagePreview">
                     <h3 id="recPackageName">-</h3>
@@ -2238,11 +2614,7 @@ function getSetting($key, $default = '', $settings = []) {
                 <div class="recommended-actions">
                     <button class="btn btn-secondary" onclick="closeRecommendationModal()">
                         <i class="fas fa-times"></i>
-                        <span>Maybe Later</span>
-                    </button>
-                    <button class="btn btn-primary" id="bookRecommendedBtn">
-                        <i class="fas fa-calendar-plus"></i>
-                        <span>Book This Now</span>
+                        <span>Close</span>
                     </button>
                 </div>
             </div>
@@ -2263,7 +2635,8 @@ function getSetting($key, $default = '', $settings = []) {
                     <!-- Populated by JS -->
                 </div>
             </div>
-            <div class="modal-footer" style="padding: 16px 24px; border-top: 1px solid var(--dark-border); text-align: right;">
+            <div class="modal-footer"
+                style="padding: 16px 24px; border-top: 1px solid var(--dark-border); text-align: right;">
                 <button class="btn btn-secondary" onclick="closeMyProgressModal()">Close</button>
             </div>
         </div>
@@ -2283,13 +2656,16 @@ function getSetting($key, $default = '', $settings = []) {
                     <!-- Populated by JS -->
                 </div>
             </div>
-            <div class="modal-footer" style="padding: 16px 24px; border-top: 1px solid var(--dark-border); text-align: right;">
+            <div class="modal-footer"
+                style="padding: 16px 24px; border-top: 1px solid var(--dark-border); text-align: right;">
                 <button class="btn btn-secondary btn-sm" onclick="markAllAsRead()">Mark all as read</button>
             </div>
         </div>
     </div>
 
-    <!-- Dashboard Scripts -->
-    <script src="../../assets/js/user-dashboard.js"></script>
+    <!-- Core App Logic -->
+    <script src="../../assets/js/user-dashboard.js?v=<?= time() ?>"></script>
+    <script src="../../assets/js/theme.js"></script>
 </body>
+
 </html>

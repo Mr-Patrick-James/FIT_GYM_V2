@@ -164,6 +164,10 @@ $user = getCurrentUser();
                     <span>Add New Package</span>
                 </button>
                 
+                <button class="action-btn theme-toggle-btn" onclick="toggleTheme()" title="Toggle Theme">
+                    <i class="fas fa-moon"></i>
+                </button>
+                
                 <button class="action-btn notification-btn">
                     <i class="fas fa-bell"></i>
                     <span class="notification-badge" id="notificationBadge">0</span>

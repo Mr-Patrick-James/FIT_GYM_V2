@@ -1,10 +1,29 @@
 :root {
+    /* Dark Mode (Default) */
     --primary: #ffffff;
     --accent: #e50914;
     --dark-bg: #0a0a0a;
     --glass: rgba(255, 255, 255, 0.05);
     --glass-border: rgba(255, 255, 255, 0.1);
     --overlay: rgba(0, 0, 0, 0.75);
+    --card-bg: #111;
+    --card-border: #222;
+    --card-border-hover: #444;
+    --text-secondary: #888;
+}
+
+/* Light Mode */
+[data-theme="light"] {
+    --primary: #1a1a1a;
+    --accent: #e50914;
+    --dark-bg: #ffffff;
+    --glass: rgba(0, 0, 0, 0.05);
+    --glass-border: rgba(0, 0, 0, 0.1);
+    --overlay: rgba(0, 0, 0, 0.5);
+    --card-bg: #f5f5f5;
+    --card-border: #e0e0e0;
+    --card-border-hover: #cccccc;
+    --text-secondary: #666;
 }
 
 * {
@@ -50,7 +69,7 @@ section {
 
 .section-subtitle {
     font-size: 0.9rem;
-    color: #888;
+    color: var(--text-secondary);
     max-width: 600px;
     margin: 0 auto;
 }
@@ -67,15 +86,15 @@ section {
 }
 
 .service-card {
-    background: #111;
+    background: var(--card-bg);
     padding: 40px;
     border-radius: 20px;
-    border: 1px solid #222;
+    border: 1px solid var(--card-border);
     transition: 0.3s;
 }
 
 .service-card:hover {
-    border-color: #444;
+    border-color: var(--card-border-hover);
     transform: translateY(-5px);
 }
 
@@ -93,7 +112,7 @@ section {
 }
 
 .service-card p {
-    color: #888;
+    color: var(--text-secondary);
     line-height: 1.6;
     margin-bottom: 20px;
 }
@@ -104,7 +123,7 @@ section {
     gap: 10px;
     margin-top: 20px;
     padding-top: 20px;
-    border-top: 1px solid #222;
+    border-top: 1px solid var(--card-border);
 }
 
 .preview-item {
@@ -112,7 +131,7 @@ section {
     align-items: center;
     gap: 10px;
     font-size: 0.9rem;
-    color: #aaa;
+    color: var(--text-secondary);
 }
 
 .preview-item i {
@@ -122,8 +141,8 @@ section {
 
 /* Featured Plans Section */
 .featured-plans-section {
-    background: #0a0a0a;
-    border-top: 1px solid #111;
+    background: var(--dark-bg);
+    border-top: 1px solid var(--card-border);
 }
 
 .plans-showcase-grid {
@@ -133,25 +152,25 @@ section {
 }
 
 .plan-card {
-    background: #111;
+    background: var(--card-bg);
     border-radius: 20px;
-    border: 1px solid #222;
+    border: 1px solid var(--card-border);
     overflow: hidden;
     transition: 0.3s;
 }
 
 .plan-card:hover {
-    border-color: #444;
+    border-color: var(--card-border-hover);
     transform: translateY(-5px);
 }
 
 .plan-header {
     padding: 25px;
-    background: #1a1a1a;
+    background: var(--card-bg);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid #222;
+    border-bottom: 1px solid var(--card-border);
 }
 
 .plan-title {
@@ -162,12 +181,12 @@ section {
 }
 
 .exercise-count {
-    background: rgba(255,255,255,0.05);
+    background: var(--glass);
     padding: 4px 12px;
     border-radius: 10px;
     font-size: 0.75rem;
     font-weight: 700;
-    color: #888;
+    color: var(--text-secondary);
 }
 
 .plan-exercises-preview {
@@ -185,12 +204,12 @@ section {
     width: 50px;
     height: 50px;
     border-radius: 10px;
-    background: #1a1a1a;
+    background: var(--card-bg);
     overflow: hidden;
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid #222;
+    border: 1px solid var(--card-border);
 }
 
 .ex-thumb img {
@@ -212,20 +231,20 @@ section {
 
 .ex-info p {
     font-size: 0.8rem;
-    color: #666;
+    color: var(--text-secondary);
 }
 
 .more-exercises {
     text-align: center;
     font-size: 0.85rem;
-    color: #444;
+    color: var(--text-secondary);
     font-weight: 600;
     padding-top: 10px;
 }
 
 .plan-footer {
     padding: 20px 25px;
-    background: #111;
+    background: var(--card-bg);
 }
 
 .view-full-plan-btn {
@@ -545,7 +564,7 @@ header {
 }
 
 .nav-links a {
-    color: #888;
+    color: var(--text-secondary);
     font-weight: 700;
     text-transform: uppercase;
     font-size: 0.9rem;
@@ -556,7 +575,7 @@ header {
 
 .nav-links a:hover,
 .nav-links a.active {
-    color: white;
+    color: var(--primary);
 }
 
 .nav-links a::after {
@@ -566,7 +585,7 @@ header {
     left: 0;
     width: 0;
     height: 2px;
-    background: white;
+    background: var(--primary);
     transition: 0.3s;
 }
 
@@ -576,9 +595,9 @@ header {
 }
 
 .login-btn-nav {
-    border: 1px solid white;
+    border: 1px solid var(--primary);
     background: transparent;
-    color: white;
+    color: var(--primary);
     padding: 8px 25px;
     border-radius: 30px;
     font-weight: 700;
@@ -588,8 +607,31 @@ header {
 }
 
 .login-btn-nav:hover {
-    background: white;
-    color: black;
+    background: var(--primary);
+    color: var(--dark-bg);
+}
+
+/* Theme Toggle Button */
+.theme-toggle-btn {
+    background: transparent;
+    border: 1px solid var(--primary);
+    color: var(--primary);
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    transition: 0.3s;
+    margin-left: 15px;
+}
+
+.theme-toggle-btn:hover {
+    background: var(--primary);
+    color: var(--dark-bg);
+    transform: rotate(20deg);
 }
 
 .logo-circle {

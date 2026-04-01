@@ -178,6 +178,9 @@ $user = getCurrentUser();
             </div>
             
             <div class="header-actions">
+                <button class="action-btn theme-toggle-btn" onclick="toggleTheme()" title="Toggle Theme">
+                    <i class="fas fa-moon"></i>
+                </button>
                 <button class="action-btn notification-btn">
                     <i class="fas fa-bell"></i>
                     <span class="notification-badge" id="notificationBadge">0</span>
@@ -206,10 +209,7 @@ $user = getCurrentUser();
                         <i class="fas fa-bell"></i>
                         <span>Notifications</span>
                     </button>
-                    <button class="settings-nav-item" onclick="showSettingsTab('appearance')" id="nav-appearance">
-                        <i class="fas fa-paint-brush"></i>
-                        <span>Appearance</span>
-                    </button>
+
                     <button class="settings-nav-item" onclick="showSettingsTab('account')" id="nav-account">
                         <i class="fas fa-user"></i>
                         <span>Account</span>
@@ -558,41 +558,7 @@ $user = getCurrentUser();
                     </div>
                 </div>
 
-                <!-- Appearance Settings -->
-                <div id="settings-appearance" class="settings-section" style="display: none;">
-                    <div class="settings-section-header">
-                        <div>
-                            <h2>Appearance</h2>
-                            <p>Customize the look and feel of your dashboard</p>
-                        </div>
-                    </div>
 
-                    <div class="settings-group">
-                        <div class="settings-item">
-                            <div class="settings-item-label">
-                                <label>Theme</label>
-                                <span class="settings-hint">Choose between light and dark mode</span>
-                            </div>
-                            <div class="settings-theme-selector">
-                                <button class="theme-option" data-theme="dark" onclick="setTheme('dark')">
-                                    <i class="fas fa-moon"></i>
-                                    <span>Dark</span>
-                                </button>
-                                <button class="theme-option" data-theme="light" onclick="setTheme('light')">
-                                    <i class="fas fa-sun"></i>
-                                    <span>Light</span>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="settings-actions">
-                            <button class="btn btn-primary" onclick="saveAppearanceSettings()">
-                                <i class="fas fa-save"></i>
-                                Save Changes
-                            </button>
-                        </div>
-                    </div>
-                </div>
 
                 <!-- Account Settings -->
                 <div id="settings-account" class="settings-section" style="display: none;">

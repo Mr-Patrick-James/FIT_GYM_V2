@@ -136,6 +136,30 @@ setUserSession([
     'address' => $address,
 ]);
 
+// 5.5) Notify all admins that a new member joined
+try {
+    $adminConn = getDBConnection();
+    $adminStmt = $adminConn->prepare("SELECT id FROM users WHERE role = 'admin'");
+    if ($adminStmt) {
+        $adminStmt->execute();
+        $adminResult = $adminStmt->get_result();
+        while ($adminRow = $adminResult->fetch_assoc()) {
+            $adminId = (int)$adminRow['id'];
+            createNotification(
+                $adminId,
+                'New Member Joined',
+                $name . ' (' . $email . ') has joined the gym.',
+                'success'
+            );
+        }
+        $adminStmt->close();
+    }
+    $adminConn->close();
+} catch (Throwable $e) {
+    // Notifications should never break signup flow
+    error_log("Failed to notify admins about new member: " . $e->getMessage());
+}
+
 // 6) Return clean JSON
 sendResponse(true, 'Email verified and account created successfully', [
     'user_id' => $userId,

@@ -82,6 +82,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     await initializePackageStatsChart();
     updateStats();
     setupEventListeners();
+    await loadAdminNotifications(); // Preload so notification badge is accurate
     
     // Set default dates for statistics filter
     const now = new Date();
@@ -1081,9 +1082,6 @@ async function updateStats() {
         renderStatsGrid();
 
         // 3. Update Other UI elements (Badges, etc.)
-        const notificationBadge = document.querySelector('.notification-badge');
-        if (notificationBadge) notificationBadge.textContent = pendingCount || '0';
-        
         const bookingsBadge = document.getElementById('bookingsBadge');
         if (bookingsBadge) bookingsBadge.textContent = pendingCount || '';
 
@@ -1151,6 +1149,132 @@ function showNotification(message, type = 'info') {
     }, 5000);
 }
 
+// ============================
+// Admin Notifications Modal
+// ============================
+function escapeHtml(str) {
+    return String(str ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+}
+
+function openNotificationsModal() {
+    const modal = document.getElementById('notificationsModal');
+    if (!modal) return;
+    modal.classList.add('active');
+    loadAdminNotifications();
+}
+
+function closeNotificationsModal() {
+    const modal = document.getElementById('notificationsModal');
+    if (!modal) return;
+    modal.classList.remove('active');
+}
+
+async function adminMarkNotificationAsRead(id) {
+    try {
+        await fetch('../../api/notifications/mark-as-read.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id })
+        });
+    } catch (e) {
+        console.error('Error marking notification as read:', e);
+    } finally {
+        loadAdminNotifications();
+    }
+}
+
+async function adminMarkAllNotificationsAsRead() {
+    try {
+        await fetch('../../api/notifications/mark-as-read.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({}) // server treats empty id as "mark all"
+        });
+    } catch (e) {
+        console.error('Error marking all notifications as read:', e);
+    } finally {
+        loadAdminNotifications();
+    }
+}
+
+async function loadAdminNotifications() {
+    const list = document.getElementById('notificationsList');
+    const modal = document.getElementById('notificationsModal');
+    if (!list || !modal) return;
+
+    list.innerHTML = `
+        <div style="text-align: center; padding: 26px 16px; color: var(--dark-text-secondary);">
+            <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--primary);"></i>
+            <p style="margin-top: 10px;">Loading notifications...</p>
+        </div>
+    `;
+
+    try {
+        const response = await fetch('../../api/notifications/get-all.php');
+        if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+        const data = await response.json();
+
+        if (!data.success) {
+            list.innerHTML = `<p style="text-align:center; padding: 26px; color: var(--dark-text-secondary);">${escapeHtml(data.message || 'Failed to load notifications')}</p>`;
+            return;
+        }
+
+        const notifications = data.data || [];
+        const unreadCount = notifications.filter(n => !n.is_read).length;
+
+        const badge = document.querySelector('.notification-badge');
+        if (badge) badge.textContent = unreadCount || '0';
+
+        if (notifications.length === 0) {
+            list.innerHTML = `
+                <p style="text-align: center; padding: 26px; color: var(--dark-text-secondary);">
+                    No notifications yet.
+                </p>
+            `;
+            return;
+        }
+
+        list.innerHTML = notifications.map(n => {
+            const isRead = !!n.is_read;
+            const type = n.type || 'info';
+            const title = escapeHtml(n.title || 'Notification');
+            const message = escapeHtml(n.message || '');
+            const createdAt = n.created_at ? new Date(n.created_at) : null;
+            const dateText = createdAt && !Number.isNaN(createdAt.getTime())
+                ? createdAt.toLocaleDateString()
+                : '';
+
+            const color = type === 'assignment' ? '#3b82f6' : '#ffffff';
+
+            return `
+                <div style="padding: 14px 14px; border-bottom: 1px solid rgba(255,255,255,0.06); position: relative; cursor: pointer; background: ${isRead ? 'transparent' : 'rgba(59, 130, 246, 0.06)'};"
+                     onclick="adminMarkNotificationAsRead(${(n.id ?? 0)})">
+                    ${!isRead ? '<div style="position:absolute; left:0; top:0; bottom:0; width:4px; background:#3b82f6;"></div>' : ''}
+                    <div style="display:flex; justify-content: space-between; gap: 12px; align-items:flex-start; margin-left:${isRead ? 0 : 10}px;">
+                        <strong style="font-size: 0.9rem; color: ${color};">${title}</strong>
+                        <span style="font-size: 0.7rem; color: var(--dark-text-secondary); white-space: nowrap;">${escapeHtml(dateText)}</span>
+                    </div>
+                    <p style="margin: 6px 0 0 ${isRead ? 0 : 10}px; font-size: 0.8rem; color: var(--dark-text-secondary); line-height: 1.4;">
+                        ${message}
+                    </p>
+                </div>
+            `;
+        }).join('');
+    } catch (e) {
+        console.error('Error loading admin notifications:', e);
+        list.innerHTML = `
+            <p style="text-align:center; padding: 26px; color: var(--dark-text-secondary);">
+                Error loading notifications.
+            </p>
+        `;
+    }
+}
+
 // Setup event listeners
 function setupEventListeners() {
     // Logout button
@@ -1185,8 +1309,21 @@ function setupEventListeners() {
     
     // Notification button
     document.querySelector('.notification-btn').addEventListener('click', function() {
-        showNotification('You have 3 new notifications: 2 pending payments, 1 new booking', 'info');
+        openNotificationsModal();
     });
+
+    // Notifications modal controls
+    const modal = document.getElementById('notificationsModal');
+    const closeBtn = document.getElementById('closeNotificationsModalBtn');
+    const markAllBtn = document.getElementById('markAllNotificationsBtn');
+
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) closeNotificationsModal();
+        });
+    }
+    if (closeBtn) closeBtn.addEventListener('click', closeNotificationsModal);
+    if (markAllBtn) markAllBtn.addEventListener('click', adminMarkAllNotificationsAsRead);
     
     // Search functionality
     const searchInput = document.querySelector('.search-box input');

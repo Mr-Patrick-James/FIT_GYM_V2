@@ -36,7 +36,7 @@ async function loadTrainers(allowedIds = null) {
                 filteredTrainers.forEach(trainer => {
                     const option = document.createElement('option');
                     option.value = trainer.id;
-                    option.textContent = `${trainer.name} (${trainer.specialization})`;
+                    option.textContent = trainer.name;
                     select.appendChild(option);
                 });
 

@@ -85,6 +85,8 @@ error_log("Session user_id: " . ($_SESSION['user_id'] ?? 'NOT SET'));
 // Determine redirect URL (relative to project root)
 if ($user['role'] === 'admin') {
     $redirect = 'views/admin/dashboard.php';
+} elseif ($user['role'] === 'manager') {
+    $redirect = 'views/admin/dashboard.php'; // Managers use admin dashboard with limited access
 } elseif ($user['role'] === 'trainer') {
     $redirect = 'views/trainer/dashboard.php';
 } else {

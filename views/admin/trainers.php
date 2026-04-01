@@ -119,6 +119,9 @@ $user = getCurrentUser();
                     <i class="fas fa-search"></i>
                     <input type="text" id="trainerSearch" placeholder="Search trainers..." oninput="filterTrainers()">
                 </div>
+                <button class="action-btn theme-toggle-btn" onclick="toggleTheme()" title="Toggle Theme">
+                    <i class="fas fa-moon"></i>
+                </button>
                 <button class="action-btn notification-btn">
                     <i class="fas fa-bell"></i>
                     <span class="notification-badge" id="notificationBadge">0</span>
@@ -349,6 +352,7 @@ $user = getCurrentUser();
     </div>
 
     <script src="../../assets/js/main.js"></script>
+    <script src="../../assets/js/theme.js"></script>
     <script src="../../assets/js/trainers.js?v=2.0"></script>
 </body>
 </html>

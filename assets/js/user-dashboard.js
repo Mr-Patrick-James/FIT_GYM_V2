@@ -21,11 +21,11 @@ function fixReceiptUrl(url) {
 // Load user bookings from database
 async function loadUserBookings() {
     try {
-        const response = await fetch('../../api/bookings/get-all.php');
+        const response = await fetch('../../api/bookings/get-all.php?status=all');
         const data = await response.json();
         
         if (data.success) {
-            // Data is already filtered by backend for the logged-in user
+            // Backend now auto-expires bookings in DB before returning them
             userBookings = data.data;
         } else {
             console.error('Error loading bookings:', data.message);
@@ -442,61 +442,10 @@ function formatDateISO(date) {
 async function getUserCalendarEvents() {
     const events = [];
     
-    // 1. Add Bookings and Subscription Periods
-    userBookings.forEach(b => {
-        const startStr = b.booking_date || b.date || b.created_at;
-        if (!startStr) return;
+    // 1. Add Trainer Workout Plans/Sessions for each booking
+    for (const b of userBookings) {
+        if (b.status !== 'verified') continue;
         
-        const pkgName = b.package_name || b.package || 'Gym Session';
-        const isActive = isBookingActive(b);
-        
-        // Date Paid / Booked event
-        events.push({
-            id: `booking-${b.id}`,
-            title: `Paid`,
-            start: startStr,
-            allDay: true,
-            classNames: [`event-milestone-paid`],
-            extendedProps: { ...b, type: 'booking' },
-            color: b.status === 'verified' ? '#22c55e' : (b.status === 'pending' ? '#f59e0b' : '#ef4444')
-        });
-        
-        // Plan Expiry event for multi-day packages
-        if ((b.status === 'verified' || b.status === 'pending') && b.duration) {
-            const days = parseDurationToDays(b.duration);
-            if (days > 1) {
-                const parts = startStr.split('-');
-                const startDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-                const endDate = new Date(startDate);
-                endDate.setDate(endDate.getDate() + days);
-                
-                // Add expiry marker (exactly on the expiry date)
-                events.push({
-                    id: `expiry-${b.id}`,
-                    title: `Expiry`,
-                    start: formatDateISO(endDate),
-                    allDay: true,
-                    classNames: [`event-milestone-expiry`],
-                    color: '#ef4444',
-                    extendedProps: { ...b, type: 'expiry' }
-                });
-
-                // Background highlight for the duration
-                events.push({
-                    id: `period-${b.id}`,
-                    start: startStr,
-                    end: formatDateISO(new Date(endDate.getTime() + 86400000)), // Extend background highlight slightly
-                    display: 'background',
-                    color: b.status === 'verified' ? 'rgba(34, 197, 94, 0.08)' : 'rgba(245, 158, 11, 0.08)',
-                    allDay: true
-                });
-            }
-        }
-    });
-
-    // 2. Fetch and add actual trainer-scheduled sessions for all verified bookings
-    const verifiedBookings = userBookings.filter(b => b.status === 'verified');
-    for (const b of verifiedBookings) {
         try {
             const resp = await fetch(`../../api/trainers/get-sessions.php?booking_id=${b.id}`);
             const sessions = await resp.json();
@@ -611,7 +560,7 @@ function showSection(section, event) {
         const titles = {
             'dashboard': { title: 'Dashboard', subtitle: 'Welcome back! Manage your gym membership and bookings' },
             'packages': { title: 'Packages', subtitle: 'Choose a membership plan that fits your fitness goals' },
-            'bookings': { title: 'My Bookings', subtitle: 'View and manage your booking requests' },
+            'bookings': { title: 'Booking History', subtitle: 'View your complete booking history including expired packages' },
             'payments': { title: 'Payment History', subtitle: 'Track all your payment transactions' },
             'trainer': { title: 'My Trainer', subtitle: 'View your assigned trainer and session details' },
             'profile': { title: 'Profile', subtitle: 'Manage your account information and settings' }
@@ -662,12 +611,10 @@ function populatePackages() {
     // Define package hierarchy (lower index = lower tier) - case-insensitive
     const packageHierarchy = ['basic', 'popular', 'best value', 'premium', 'vip'];
     
-    // Check if user has any active subscription and get their highest current tier
+    // Check if user has any truly active subscription and get their highest current tier
+    // Backend now marks expired bookings with status='expired', so only status='verified' are genuinely active
     let currentUserTier = -1;
-    const activeVerifiedBookings = userBookings.filter(b => 
-        b.status === 'verified' && 
-        (!b.expires_at || new Date(b.expires_at) > new Date())
-    );
+    const activeVerifiedBookings = userBookings.filter(b => b.status === 'verified');
     
     if (activeVerifiedBookings.length > 0) {
         activeVerifiedBookings.forEach(b => {
@@ -682,15 +629,18 @@ function populatePackages() {
     }
     
     const hasActiveSubscription = currentUserTier >= 0;
+    const hasPendingBooking = userBookings.some(b => b.status === 'pending');
+    const pendingBooking = userBookings.find(b => b.status === 'pending');
     
     packagesData.forEach(pkg => {
         // Check if this package is currently active for the user
+        // Backend sets status='expired' for expired bookings, so only status='verified' are active
         const activeBooking = userBookings.find(b => 
             String(b.package_id) === String(pkg.id) && 
-            b.status === 'verified' && 
-            (!b.expires_at || new Date(b.expires_at) > new Date())
+            b.status === 'verified'
         );
         const isActive = !!activeBooking;
+        const isPendingPackage = pendingBooking && String(pendingBooking.package_id) === String(pkg.id);
         
         // Get package tier level (case-insensitive)
         const packageTier = packageHierarchy.indexOf((pkg.tag || 'Basic').toLowerCase());
@@ -741,6 +691,10 @@ function populatePackages() {
                         <span style="font-size: 0.65rem; padding: 2px 8px; background: rgba(34, 197, 94, 0.1); color: #22c55e; border-radius: 4px; border: 1px solid rgba(34, 197, 94, 0.2); font-weight: 800; text-transform: uppercase;">
                             <i class="fas fa-check-circle"></i> Currently Active
                         </span>
+                        ` : isPendingPackage ? `
+                        <span style="font-size: 0.65rem; padding: 2px 8px; background: rgba(245, 158, 11, 0.1); color: var(--warning); border-radius: 4px; border: 1px solid rgba(245, 158, 11, 0.2); font-weight: 800; text-transform: uppercase;">
+                            <i class="fas fa-clock"></i> Pending
+                        </span>
                         ` : ''}
                         ${isAlreadyUpgraded ? `
                         <span style="font-size: 0.65rem; padding: 2px 8px; background: rgba(34, 197, 94, 0.05); color: #22c55e; border-radius: 4px; border: 1px solid rgba(34, 197, 94, 0.1); font-weight: 800; text-transform: uppercase;">
@@ -774,6 +728,7 @@ function populatePackages() {
                     <button class="btn btn-exercise" onclick="${isActive ? `viewBookingDetails(${activeBooking.id})` : `previewPackageHub(${pkg.id})`}" title="${isActive ? 'View My Hub' : 'View Package Details'}">
                         <i class="fas ${isActive ? 'fa-th-large' : 'fa-list-ul'}"></i>
                     </button>
+
                     ${canRenew ? `
                     <button class="btn btn-renew" onclick="renewBooking(${activeBooking.id})" style="background: rgba(34, 197, 94, 0.1); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.3); flex: 1;">
                         <i class="fas fa-redo"></i>
@@ -785,20 +740,25 @@ function populatePackages() {
                         <i class="fas fa-check"></i>
                         <span>Upgraded</span>
                     </button>
+                    ` : hasPendingBooking ? `
+                    <button class="btn btn-book" style="background: rgba(255, 255, 255, 0.05); color: var(--dark-text-secondary); border: 1px solid var(--dark-border); flex: 1; cursor: not-allowed;" title="You have a pending booking" disabled>
+                        <i class="fas ${isPendingPackage ? 'fa-clock' : 'fa-lock'}"></i>
+                        <span style="white-space: nowrap;">${isPendingPackage ? 'Pending' : 'Locked'}</span>
+                    </button>
                     ` : canUpgrade ? `
                     <button class="btn btn-upgrade" onclick="openUpgradeModal(${pkg.id})" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3); flex: 1;">
                         <i class="fas fa-arrow-up"></i>
                         <span>Upgrade</span>
                     </button>
                     ` : !isActive && hasActiveSubscription ? `
-                    <button class="btn btn-book" onclick="selectPackageForBooking('${pkg.name}')" style="opacity: 0.5; cursor: not-allowed;" disabled>
+                    <button class="btn btn-book" style="background: rgba(255, 255, 255, 0.05); color: var(--dark-text-secondary); border: 1px solid var(--dark-border); flex: 1; cursor: not-allowed;" disabled>
                         <i class="fas fa-lock"></i>
                         <span style="white-space: nowrap;">Lower Tier</span>
                     </button>
                     ` : !isActive ? `
-                    <button class="btn btn-book" onclick="selectPackageForBooking('${pkg.name}')">
-                        <i class="fas fa-calendar-plus"></i>
-                        <span style="white-space: nowrap;">Book Now</span>
+                    <button class="btn btn-book" onclick="selectPackageForBooking('${pkg.name}')" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3); flex: 1;">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span>Buy Now</span>
                     </button>
                     ` : ''}
                 </div>
@@ -841,6 +801,220 @@ async function renewBooking(bookingId) {
     openBookingModal();
     
     showNotification(`Renewing ${booking.package_name || booking.package}`, 'success');
+}
+
+// ===== Edit Booking (for pending bookings) =====
+let editBookingId = null;
+let selectedEditFile = null;
+
+function openChangePlanModal(bookingId) {
+    // Keep this wrapper so old button references still work if cached, 
+    // but the button in the HTML was also updated to openEditBookingModal? 
+    // Wait, in HTML I kept onclick="openChangePlanModal(${booking.id})" but I'll change it here.
+    openEditBookingModal(bookingId);
+}
+
+function openEditBookingModal(bookingId) {
+    const booking = userBookings.find(b => b.id === bookingId || b.id === String(bookingId));
+    if (!booking || booking.status !== 'pending') {
+        showNotification('Only pending bookings can be edited', 'warning');
+        return;
+    }
+    editBookingId = booking.id;
+
+    // Populate packages
+    const packageSelect = document.getElementById('editBookingPackage');
+    if (packageSelect) {
+        packageSelect.innerHTML = '<option value="">Choose a package...</option>';
+        packagesData.forEach(pkg => {
+            const opt = document.createElement('option');
+            opt.value = pkg.name;
+            opt.textContent = `${pkg.name} - ₱${pkg.price} (${pkg.duration})`;
+            if (pkg.name === (booking.package_name || booking.package)) {
+                opt.selected = true;
+            }
+            packageSelect.appendChild(opt);
+        });
+    }
+
+    // Populate Date
+    const dateInput = document.getElementById('editBookingDate');
+    if (dateInput) {
+        dateInput.value = booking.booking_date || booking.created_at ? 
+            (booking.booking_date || booking.created_at).split(' ')[0] : '';
+    }
+
+    // Populate Contact
+    const contactInput = document.getElementById('editBookingContact');
+    if (contactInput) {
+        contactInput.value = booking.contact || '';
+    }
+
+    // Populate Notes
+    const notesInput = document.getElementById('editBookingNotes');
+    if (notesInput) {
+        notesInput.value = booking.notes || '';
+    }
+
+    // Reset Receipt
+    removeEditFile();
+    
+    // Show modal
+    const modal = document.getElementById('editBookingModal');
+    if (modal) modal.classList.add('active');
+}
+
+function closeEditBookingModal() {
+    const modal = document.getElementById('editBookingModal');
+    if (modal) modal.classList.remove('active');
+    editBookingId = null;
+    removeEditFile();
+}
+
+// Handle file select for Edit Modal
+function handleEditFileSelect(event) {
+    const file = event.target.files[0];
+    if (file) {
+        // Validate file size (max 5MB)
+        const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+        if (file.size > maxSize) {
+            showNotification('Image size is too huge! Maximum allowed size is 5MB.', 'warning');
+            event.target.value = ''; // Clear the input
+            return;
+        }
+
+        selectedEditFile = file;
+        const preview = document.getElementById('editFilePreview');
+        const fileName = document.getElementById('editFileName');
+        const uploadArea = document.getElementById('editFileUploadArea');
+        const alert = document.getElementById('editCurrentReceiptAlert');
+        
+        fileName.textContent = file.name;
+        if (preview) preview.style.display = 'block';
+        if (uploadArea) {
+            uploadArea.style.borderColor = 'var(--primary)';
+            uploadArea.style.background = 'var(--glass)';
+            uploadArea.style.display = 'none';
+        }
+        if (alert) alert.style.display = 'none';
+    }
+}
+
+// Remove file for Edit Modal
+function removeEditFile() {
+    selectedEditFile = null;
+    const preview = document.getElementById('editFilePreview');
+    const input = document.getElementById('editReceiptFile');
+    const uploadArea = document.getElementById('editFileUploadArea');
+    const alert = document.getElementById('editCurrentReceiptAlert');
+    
+    if (preview) preview.style.display = 'none';
+    if (input) input.value = '';
+    if (uploadArea) {
+        uploadArea.style.borderColor = '';
+        uploadArea.style.background = '';
+        uploadArea.style.display = 'block';
+    }
+    if (alert) alert.style.display = 'block';
+}
+
+async function submitEditBooking(event) {
+    event.preventDefault();
+    
+    if (!editBookingId) {
+        showNotification('No booking selected', 'error');
+        return;
+    }
+
+    // Double check file size before uploading
+    if (selectedEditFile) {
+        const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+        if (selectedEditFile.size > maxSize) {
+            showNotification('Image size is too huge! Maximum allowed size is 5MB.', 'warning');
+            return;
+        }
+    }
+    
+    const packageName = document.getElementById('editBookingPackage').value;
+    const date = document.getElementById('editBookingDate').value;
+    const contact = document.getElementById('editBookingContact').value;
+    const notes = document.getElementById('editBookingNotes').value;
+    
+    // Validate contact number
+    if (!validateContactNumber(contact)) {
+        showNotification('Contact number must be exactly 11 digits (numbers only)', 'error');
+        return;
+    }
+    
+    // Validate required fields
+    if (!packageName || !date || !contact) {
+        showNotification('Please fill in all required fields', 'warning');
+        return;
+    }
+    
+    let originalText = '';
+    const submitButton = document.getElementById('editBookingSubmitBtn');
+    
+    try {
+        // Show loading indicator
+        originalText = submitButton.innerHTML;
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+        submitButton.disabled = true;
+        
+        // Upload receipt file IF a new one is selected
+        let receiptUrl = '';
+        if (selectedEditFile) {
+            receiptUrl = await uploadReceipt(selectedEditFile);
+        }
+        
+        // Create booking data
+        const bookingData = {
+            booking_id: editBookingId,
+            package: packageName,
+            date: date,
+            contact: contact,
+            notes: notes,
+            receipt: receiptUrl
+        };
+        
+        // Submit edited booking to database (reusing the change-plan endpoint which handles edits now)
+        const response = await fetch('../../api/bookings/change-plan.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(bookingData)
+        });
+        
+        const result = await response.json();
+        
+        // Restore button
+        submitButton.innerHTML = originalText;
+        submitButton.disabled = false;
+        
+        if (result.success) {
+            closeEditBookingModal();
+            showNotification('Booking updated successfully!', 'success');
+            
+            // Reload bookings and refresh UI
+            await loadUserBookings();
+            populateBookings();
+            populatePackages();
+            updateStats();
+        } else {
+            showNotification(result.message || 'Failed to update booking', 'error');
+        }
+    } catch (error) {
+        console.error('Error updating booking:', error);
+        
+        // Restore button
+        if (submitButton && originalText) {
+            submitButton.innerHTML = originalText;
+            submitButton.disabled = false;
+        }
+        
+        showNotification('Error updating: ' + error.message, 'error');
+    }
 }
 
 // Open upgrade modal
@@ -1310,14 +1484,14 @@ function populateBookings() {
         tbody.innerHTML = `
             <tr>
                 <td colspan="6" style="text-align: center; padding: 40px; color: var(--dark-text-secondary);">
-                    No bookings yet. <a href="#" onclick="showSection('packages')" style="color: var(--primary); text-decoration: underline;">Browse packages</a> to get started!
+                    No booking history yet. <a href="#" onclick="showSection('packages')" style="color: var(--primary); text-decoration: underline;">Browse packages</a> to get started!
                 </td>
             </tr>
         `;
         recentTbody.innerHTML = `
             <tr>
                 <td colspan="5" style="text-align: center; padding: 40px; color: var(--dark-text-secondary);">
-                    No bookings yet. <a href="#" onclick="showSection('packages')" style="color: var(--primary); text-decoration: underline;">Browse packages</a> to get started!
+                    No booking history yet. <a href="#" onclick="showSection('packages')" style="color: var(--primary); text-decoration: underline;">Browse packages</a> to get started!
                 </td>
             </tr>
         `;
@@ -1377,9 +1551,12 @@ function createBookingRow(booking, includeExpiry = false) {
     // Calculate expiry date for display
     let expiryDateDisplay = '-';
     let remainingDaysDisplay = '';
-    if (booking.status === 'verified' || booking.status === 'pending') {
-        const dateObj = booking.expires_at ? new Date(booking.expires_at) : new Date(new Date(booking.booking_date || booking.created_at || booking.date).getTime() + parseDurationToDays(booking.duration) * 86400000);
-        expiryDateDisplay = formatDate(dateObj);
+    if (booking.status === 'verified' || booking.status === 'pending' || booking.status === 'expired') {
+        const rawDate = booking.booking_date || booking.created_at || booking.date;
+        const dateObj = booking.expires_at ? new Date(booking.expires_at) : new Date(new Date(rawDate).getTime() + parseDurationToDays(booking.duration) * 86400000);
+        if (!isNaN(dateObj.getTime())) {
+            expiryDateDisplay = formatDate(dateObj);
+        }
         
         if (isActive) {
             const diffTime = dateObj.getTime() - new Date().getTime();
@@ -1392,8 +1569,11 @@ function createBookingRow(booking, includeExpiry = false) {
         }
     }
 
-    // Add rejection reason if status is rejected
-    let statusDisplay = `<span class="status-badge status-${booking.status}">${booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}</span>`;
+    // Build status badge — map 'expired' to a proper red badge
+    let statusLabel = booking.status.charAt(0).toUpperCase() + booking.status.slice(1);
+    let statusClass = booking.status;
+    // 'expired' has its own CSS class; make sure it looks red
+    let statusDisplay = `<span class="status-badge status-${statusClass}" style="${booking.status === 'expired' ? 'background:rgba(239,68,68,0.12);color:#ef4444;border:1px solid rgba(239,68,68,0.3);' : ''}">${statusLabel}</span>`;
     if (booking.status === 'rejected' && booking.notes) {
         statusDisplay += `
             <div class="rejection-hint" title="Reason: ${booking.notes}" style="margin-top: 4px; font-size: 0.7rem; color: #ef4444; cursor: help;">
@@ -1404,21 +1584,12 @@ function createBookingRow(booking, includeExpiry = false) {
 
     const commonActions = `
         <div class="table-actions">
-            <button class="icon-btn" onclick="viewBookingDetails(${booking.id})" title="View Hub">
-                <i class="fas fa-eye"></i>
+            <button class="icon-btn" onclick="showBookingSummary(${booking.id})" title="View Summary & Receipt">
+                <i class="fas fa-file-invoice"></i>
             </button>
-            ${canRenew ? `
-            <button class="icon-btn" onclick="renewBooking(${booking.id})" title="Renew Package" style="color: #22c55e; background: rgba(34, 197, 94, 0.1); border-color: rgba(34, 197, 94, 0.2);">
-                <i class="fas fa-redo"></i>
-            </button>
-            ` : ''}
-            ${isAlreadyUpgraded ? `
-            <button class="icon-btn" title="Already Upgraded" style="color: #22c55e; background: rgba(34, 197, 94, 0.05); border-color: rgba(34, 197, 94, 0.1); cursor: default;" disabled>
-                <i class="fas fa-check"></i>
-            </button>
-            ` : isUpgradable ? `
-            <button class="icon-btn" onclick="openUpgradeModal(${booking.package_id})" title="Upgrade Package" style="color: #3b82f6; background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.2);">
-                <i class="fas fa-arrow-up"></i>
+            ${booking.status === 'pending' ? `
+            <button class="icon-btn" onclick="openEditBookingModal(${booking.id})" title="Edit Booking" style="color:#3b82f6; border-color:rgba(59,130,246,0.3);">
+                <i class="fas fa-edit"></i>
             </button>
             ` : ''}
         </div>
@@ -1428,13 +1599,7 @@ function createBookingRow(booking, includeExpiry = false) {
         row.innerHTML = `
             <td data-label="Package">
                 <div style="font-weight: 700;">${booking.package_name || booking.package}</div>
-                ${(booking.status === 'verified' || booking.status === 'pending') ? `
-                    <div style="font-size: 0.75rem; margin-top: 4px;">
-                        <span class="status-badge status-${isActive ? 'verified' : 'pending'}" style="padding: 2px 8px; font-size: 0.7rem;">
-                            ${isActive ? 'Active' : 'Expired'}
-                        </span>
-                    </div>
-                ` : ''}
+              
             </td>
             <td data-label="Date">${formatDate(booking.booking_date || booking.date || booking.createdAt)}</td>
             <td data-label="Expiry Date">
@@ -1451,9 +1616,9 @@ function createBookingRow(booking, includeExpiry = false) {
         row.innerHTML = `
             <td data-label="Package">
                 <div style="font-weight: 700;">${booking.package_name || booking.package}</div>
-                ${(booking.status === 'verified' || booking.status === 'pending') ? `
+                ${(booking.status === 'verified' || booking.status === 'pending' || booking.status === 'expired') ? `
                     <div style="font-size: 0.75rem; margin-top: 4px;">
-                        <span class="status-badge status-${isActive ? 'verified' : 'pending'}" style="padding: 2px 8px; font-size: 0.7rem;">
+                        <span class="status-badge" style="padding: 2px 8px; font-size: 0.7rem; ${isActive ? 'background:rgba(34,197,94,0.1);color:#22c55e;border:1px solid rgba(34,197,94,0.2);' : 'background:rgba(239,68,68,0.12);color:#ef4444;border:1px solid rgba(239,68,68,0.3);'}">
                             ${isActive ? 'Active' : 'Expired'}
                         </span>
                     </div>
@@ -1503,23 +1668,30 @@ function populatePayments() {
 // Parse duration string (e.g., "30 Days", "1 Year") to number of days
 function parseDurationToDays(durationStr) {
     if (!durationStr) return 0;
-    
-    const parts = durationStr.toLowerCase().split(' ');
-    const value = parseInt(parts[0]);
-    const unit = parts[1];
-    
+
+    // Examples in this project: "30 Day", "30 Days", "7 Days", "6 months", "1  month", "1 Year"
+    const str = String(durationStr).toLowerCase().trim();
+    const match = str.match(/(\d+)\s*([a-z]+)/i);
+    if (!match) return 0;
+
+    const value = parseInt(match[1], 10);
+    const unit = match[2] ? String(match[2]).toLowerCase() : '';
+
     if (isNaN(value)) return 0;
-    
-    if (unit.includes('day')) return value;
-    if (unit.includes('week')) return value * 7;
-    if (unit.includes('month')) return value * 30;
-    if (unit.includes('year')) return value * 365;
-    
+
+    if (unit.startsWith('day')) return value;
+    if (unit.startsWith('week')) return value * 7;
+    if (unit.startsWith('month')) return value * 30;
+    if (unit.startsWith('year')) return value * 365;
+
+    // Fallback (best-effort): treat unknown unit as "days"
     return value;
 }
 
 // Check if a specific booking is currently active (not expired)
 function isBookingActive(booking) {
+    // 'expired' is now set explicitly by the backend
+    if (booking.status === 'expired') return false;
     if (booking.status !== 'verified') return false;
     
     const now = new Date();
@@ -1582,17 +1754,18 @@ function checkIsAlreadyUpgraded(booking) {
     return highestTier > packageTier;
 }
 
-// Check if a booking can be renewed (either expired or close to expiry, e.g. 7 days or less)
+// Check if a booking can be renewed (only when close to expiry, 7 days or less, but NOT yet expired)
 function canRenewBooking(booking) {
+    // Only verified (active) bookings can be renewed — expired ones must buy new
     if (booking.status !== 'verified') return false;
     
     const now = new Date();
     const expiryDate = booking.expires_at ? new Date(booking.expires_at) : new Date(new Date(booking.booking_date || booking.created_at).getTime() + parseDurationToDays(booking.duration) * 86400000);
     
-    // If it's already expired, they can definitely renew
-    if (now > expiryDate) return true;
+    // Already expired — must buy a new package
+    if (now > expiryDate) return false;
     
-    // If it's close to expiry (e.g. 7 days or less), they can renew
+    // Only allow renew if 7 days or less remain
     const diffTime = expiryDate.getTime() - now.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
@@ -1600,9 +1773,15 @@ function canRenewBooking(booking) {
 }
 
 function updateStats() {
-    // Active membership = any verified booking that is NOT expired
-    const activeVerifiedBookings = userBookings.filter(b => isBookingActive(b));
+    // Total bookings = all bookings regardless of status
+    const totalBookings = userBookings.length;
+    // Verified = currently active (status='verified', not yet expired)
     const totalVerified = userBookings.filter(b => b.status === 'verified').length;
+    // Expired = bookings where status was set to 'expired' by backend
+    const hasExpired = userBookings.some(b => b.status === 'expired');
+    
+    // Active membership = any verified booking that is NOT expired (for other logic)
+    const activeVerifiedBookings = userBookings.filter(b => isBookingActive(b));
     
     // Calculate current highest tier for upgrade logic
     const packageHierarchy = ['basic', 'popular', 'best value', 'premium', 'vip'];
@@ -1617,7 +1796,7 @@ function updateStats() {
         });
     }
 
-    document.getElementById('activeBookingsCount').textContent = activeVerifiedBookings.length;
+    document.getElementById('activeBookingsCount').textContent = totalBookings;
     document.getElementById('verifiedBookingsCount').textContent = totalVerified;
     
     // Update membership status display
@@ -1756,10 +1935,10 @@ function updateStats() {
             }
         }
     } else {
-        const hasVerified = totalVerified > 0;
+        // No active subscriptions — check if they had any expired ones
         if (membershipStatus) {
-            membershipStatus.textContent = hasVerified ? 'Expired' : 'None';
-            membershipStatus.className = 'stat-value ' + (hasVerified ? 'status-rejected' : '');
+            membershipStatus.textContent = hasExpired ? 'Expired' : 'None';
+            membershipStatus.className = 'stat-value ' + (hasExpired ? 'status-rejected' : '');
             membershipStatus.style.color = '';
         }
         
@@ -1783,7 +1962,7 @@ function updateStats() {
 
         // Update Profile Membership Badge for expired/none
         if (profileMembershipBadge) {
-            if (hasVerified) {
+            if (hasExpired) {
                 profileMembershipBadge.style.display = 'block';
                 profileMembershipValue.textContent = 'Expired Member';
                 profileMembershipStatus.textContent = 'Expired';
@@ -1794,12 +1973,14 @@ function updateStats() {
                     profileMembershipExpiryRow.style.display = 'none';
                 }
                 
-                // Get the last verified booking to show what plan they had
-                const lastVerified = [...userBookings]
-                    .filter(b => b.status === 'verified')
+                // Get the last expired booking to show what plan they had
+                const lastExpired = [...userBookings]
+                    .filter(b => b.status === 'expired' || b.status === 'verified')
                     .sort((a, b) => new Date(b.booking_date || b.created_at) - new Date(a.booking_date || a.created_at))[0];
                 
-                profileMembershipPlan.textContent = `Previous Plan: ${lastVerified.package_name || lastVerified.package}`;
+                if (lastExpired) {
+                    profileMembershipPlan.textContent = `Previous Plan: ${lastExpired.package_name || lastExpired.package}`;
+                }
             } else {
                 profileMembershipBadge.style.display = 'none';
             }
@@ -2039,16 +2220,58 @@ async function initTrainingCalendar(bookingId) {
             right: 'dayGridMonth,timeGridWeek'
         },
         themeSystem: 'standard',
+        selectable: false, // Users can't select, only view
         dayMaxEvents: 2,
-        events: '../../api/trainers/get-sessions.php?booking_id=' + bookingId,
         eventDidMount: function(info) {
+            info.el.style.borderRadius = '8px';
+            info.el.style.border = 'none';
+            info.el.style.padding = '2px 6px';
+            info.el.style.fontWeight = '700';
+            info.el.style.fontSize = '0.8rem';
+            
+            if (info.event.backgroundColor === '#3b82f6') {
+                info.el.style.backgroundColor = 'rgba(59, 130, 246, 0.2)';
+                info.el.style.color = '#3b82f6';
+                info.el.style.borderLeft = '3px solid #3b82f6';
+            } else if (info.event.backgroundColor === '#22c55e') {
+                info.el.style.backgroundColor = 'rgba(34, 197, 94, 0.2)';
+                info.el.style.color = '#22c55e';
+                info.el.style.borderLeft = '3px solid #22c55e';
+            } else if (info.event.backgroundColor === '#f59e0b') {
+                info.el.style.backgroundColor = 'rgba(245, 158, 11, 0.2)';
+                info.el.style.color = '#f59e0b';
+                info.el.style.borderLeft = '3px solid #f59e0b';
+            }
+            
             if (info.event.extendedProps.type === 'rest_day') {
                 info.el.classList.add('event-rest-day');
             }
         },
         eventClick: function(info) {
             showSessionDetails(info.event);
-        }
+        },
+        eventSources: [
+            {
+                url: '../../api/trainers/get-sessions.php?booking_id=' + bookingId,
+                color: '#3b82f6'
+            },
+            {
+                url: '../../api/trainers/get-progress-history.php?booking_id=' + bookingId + '&calendar=1',
+                color: '#22c55e'
+            },
+            {
+                events: [
+                    {
+                        title: '⭐ Subscription Started',
+                        start: (userBookings.find(b => b.id == bookingId)?.booking_date || userBookings.find(b => b.id == bookingId)?.date || userBookings.find(b => b.id == bookingId)?.created_at || '').split(' ')[0],
+                        allDay: true,
+                        color: '#f59e0b',
+                        display: 'block',
+                        extendedProps: { type: 'milestone' }
+                    }
+                ]
+            }
+        ]
     });
     
     trainingCalendar.render();
@@ -2164,7 +2387,7 @@ async function initModalCalendar(bookingId) {
                 url: '../../api/trainers/get-sessions.php?booking_id=' + bookingId,
                 method: 'GET'
             },
-            // Source 2: The static subscription milestone events (Paid/Expiry)
+            // Source 2: The static subscription milestone events (Expiry only)
             async function(fetchInfo, successCallback, failureCallback) {
                 const b = userBookings.find(b => b.id == bookingId);
                 if (!b) return successCallback([]);
@@ -2172,16 +2395,6 @@ async function initModalCalendar(bookingId) {
                 const milestones = [];
                 const startStr = b.booking_date || b.date || b.created_at;
                 
-                // Paid Milestone
-                milestones.push({
-                    title: `Paid`,
-                    start: startStr,
-                    allDay: true,
-                    color: '#22c55e',
-                    classNames: ['event-milestone-paid'],
-                    extendedProps: { type: 'booking', ...b }
-                });
-
                 // Expiry Milestone
                 if (b.duration) {
                     const days = parseDurationToDays(b.duration);
@@ -2499,16 +2712,6 @@ async function initCoachCalendar(bookingId) {
                 const startStr = b.booking_date || b.date || b.created_at;
                 const pkgName = b.package_name || b.package || 'Plan';
                 
-                // Paid Milestone
-                 milestones.push({
-                     title: `Paid`,
-                     start: startStr,
-                     allDay: true,
-                     color: '#22c55e',
-                     classNames: ['event-milestone-paid'],
-                     extendedProps: { type: 'booking', ...b }
-                 });
-
                  // Expiry Milestone
                  if (b.duration) {
                      const days = parseDurationToDays(b.duration);
@@ -2668,7 +2871,467 @@ async function loadHubGuidance(memberId) {
     }
 }
 
-// View booking details
+// Show comprehensive booking summary with receipt, sessions, and progress
+async function showBookingSummary(bookingId) {
+    const booking = userBookings.find(b => String(b.id) === String(bookingId));
+    if (!booking) return;
+    
+    // Show loading state
+    showNotification('Loading booking summary...', 'info');
+    
+    try {
+        // Fetch sessions for this booking
+        let sessions = [];
+        if (booking.status === 'verified') {
+            try {
+                const resp = await fetch(`../../api/trainers/get-sessions.php?booking_id=${booking.id}`);
+                sessions = await resp.json();
+                if (!Array.isArray(sessions)) sessions = [];
+            } catch (e) {
+                console.error('Error fetching sessions:', e);
+                sessions = [];
+            }
+        }
+        
+        // Calculate statistics
+        const totalSessions = sessions.filter(s => s.type !== 'rest_day').length;
+        const restDays = sessions.filter(s => s.type === 'rest_day').length;
+        const completedSessions = sessions.filter(s => s.type !== 'rest_day' && new Date(s.date) <= new Date()).length;
+        
+        // Create summary HTML
+        const summaryContent = `
+            <div style="padding: 32px; background: var(--dark-card);">
+                <!-- Header -->
+                <div style="text-align: center; margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid var(--dark-border);">
+                    <h2 style="color: #fff; margin-bottom: 8px; font-size: 1.5rem;">Booking Summary & Receipt</h2>
+                    <p style="color: var(--dark-text-secondary);">REF: #${String(booking.id).padStart(6, '0')}</p>
+                </div>
+                
+                <!-- Booking Information -->
+                <div style="margin-bottom: 32px;">
+                    <h3 style="color: #fff; margin-bottom: 16px; font-size: 1.1rem;">
+                        <i class="fas fa-receipt" style="margin-right: 8px; color: var(--primary);"></i>
+                        Booking Information
+                    </h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div style="padding: 16px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                            <div style="font-size: 0.8rem; color: var(--dark-text-secondary); margin-bottom: 4px;">Package</div>
+                            <div style="color: #fff; font-weight: 700;">${booking.package_name || booking.package}</div>
+                        </div>
+                        <div style="padding: 16px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                            <div style="font-size: 0.8rem; color: var(--dark-text-secondary); margin-bottom: 4px;">Amount Paid</div>
+                            <div style="color: var(--primary); font-weight: 700;">₱${parseFloat(booking.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                        </div>
+                        <div style="padding: 16px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                            <div style="font-size: 0.8rem; color: var(--dark-text-secondary); margin-bottom: 4px;">Booking Date</div>
+                            <div style="color: #fff; font-weight: 700;">${formatDate(booking.booking_date || booking.date || booking.createdAt)}</div>
+                        </div>
+                        <div style="padding: 16px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                            <div style="font-size: 0.8rem; color: var(--dark-text-secondary); margin-bottom: 4px;">Status</div>
+                            <div style="font-weight: 700;">${booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Session Statistics -->
+                ${sessions.length > 0 ? `
+                <div style="margin-bottom: 32px;">
+                    <h3 style="color: #fff; margin-bottom: 16px; font-size: 1.1rem;">
+                        <i class="fas fa-chart-bar" style="margin-right: 8px; color: var(--primary);"></i>
+                        Training Progress
+                    </h3>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+                        <div style="padding: 20px; background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(34, 197, 94, 0.05)); border-radius: 12px; border: 1px solid rgba(34, 197, 94, 0.2); text-align: center;">
+                            <div style="font-size: 2rem; font-weight: 800; color: #22c55e; margin-bottom: 4px;">${totalSessions}</div>
+                            <div style="font-size: 0.8rem; color: var(--dark-text-secondary);">Total Sessions</div>
+                        </div>
+                        <div style="padding: 20px; background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(59, 130, 246, 0.05)); border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.2); text-align: center;">
+                            <div style="font-size: 2rem; font-weight: 800; color: #3b82f6; margin-bottom: 4px;">${completedSessions}</div>
+                            <div style="font-size: 0.8rem; color: var(--dark-text-secondary);">Completed</div>
+                        </div>
+                        <div style="padding: 20px; background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.05)); border-radius: 12px; border: 1px solid rgba(245, 158, 11, 0.2); text-align: center;">
+                            <div style="font-size: 2rem; font-weight: 800; color: #f59e0b; margin-bottom: 4px;">${restDays}</div>
+                            <div style="font-size: 0.8rem; color: var(--dark-text-secondary);">Rest Days</div>
+                        </div>
+                    </div>
+                </div>
+                ` : ''}
+                
+                <!-- Recent Sessions -->
+                ${sessions.length > 0 ? `
+                <div style="margin-bottom: 32px;">
+                    <h3 style="color: #fff; margin-bottom: 16px; font-size: 1.1rem;">
+                        <i class="fas fa-calendar-check" style="margin-right: 8px; color: var(--primary);"></i>
+                        Recent Sessions
+                    </h3>
+                    <div style="max-height: 300px; overflow-y: auto;">
+                        ${sessions.slice(0, 10).map(session => `
+                            <div style="padding: 12px; margin-bottom: 8px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <div style="color: #fff; font-weight: 600; margin-bottom: 4px;">${session.title}</div>
+                                    <div style="font-size: 0.8rem; color: var(--dark-text-secondary);">${formatDate(session.date)}</div>
+                                </div>
+                                <div style="padding: 4px 12px; background: ${session.type === 'rest_day' ? 'rgba(245, 158, 11, 0.1)' : 'rgba(34, 197, 94, 0.1)'}; color: ${session.type === 'rest_day' ? '#f59e0b' : '#22c55e'}; border-radius: 12px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase;">
+                                    ${session.type === 'rest_day' ? 'Rest Day' : 'Training'}
+                                </div>
+                            </div>
+                        `).join('')}
+                        ${sessions.length > 10 ? `
+                            <div style="text-align: center; padding: 12px; color: var(--dark-text-secondary); font-size: 0.8rem;">
+                                ... and ${sessions.length - 10} more sessions
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+                ` : ''}
+                
+                <!-- Notes -->
+                ${booking.notes ? `
+                <div style="margin-bottom: 32px;">
+                    <h3 style="color: #fff; margin-bottom: 16px; font-size: 1.1rem;">
+                        <i class="fas fa-sticky-note" style="margin-right: 8px; color: var(--primary);"></i>
+                        Notes
+                    </h3>
+                    <div style="padding: 16px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                        <div style="color: var(--dark-text-secondary);">${booking.notes}</div>
+                    </div>
+                </div>
+                ` : ''}
+                
+                <!-- Footer -->
+                <div style="text-align: center; padding-top: 24px; border-top: 1px solid var(--dark-border);">
+                    <div style="font-size: 0.8rem; color: var(--dark-text-secondary); margin-bottom: 16px;">
+                        Generated on ${formatDate(new Date())}
+                    </div>
+                    <button class="btn btn-primary" onclick="printBookingSummary(${booking.id})" style="background: var(--primary); color: var(--dark-bg); border: none; padding: 12px 24px; border-radius: 8px; font-weight: 700;">
+                        <i class="fas fa-print" style="margin-right: 8px;"></i>
+                        Print Summary
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        // Show in modal
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay active';
+        modal.innerHTML = `
+            <div class="modal" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
+                <div class="modal-header" style="padding: 24px 24px 16px; border: none; background: transparent; display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div></div>
+                    <button class="close-modal" onclick="this.closest('.modal-overlay').remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body" style="padding: 0;">
+                    ${summaryContent}
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        document.body.style.overflow = 'hidden';
+        
+    } catch (error) {
+        console.error('Error loading booking summary:', error);
+        showNotification('Error loading booking summary', 'error');
+    }
+}
+
+// Print booking summary
+function printBookingSummary(bookingId) {
+    const booking = userBookings.find(b => String(b.id) === String(bookingId));
+    if (!booking) return;
+    
+    // Create a new window for printing
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+        showNotification('Please allow pop-ups to print the receipt', 'error');
+        return;
+    }
+    
+    // Fetch sessions data for the receipt
+    fetch(`../../api/trainers/get-sessions.php?booking_id=${booking.id}`)
+        .then(response => response.json())
+        .then(sessions => {
+            if (!Array.isArray(sessions)) sessions = [];
+            
+            // Calculate statistics
+            const totalSessions = sessions.filter(s => s.type !== 'rest_day').length;
+            const restDays = sessions.filter(s => s.type === 'rest_day').length;
+            const completedSessions = sessions.filter(s => s.type !== 'rest_day' && new Date(s.date) <= new Date()).length;
+            
+            // Create printable HTML document
+            const printContent = `
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Booking Receipt #${String(booking.id).padStart(6, '0')}</title>
+    <style>
+        @page {
+            margin: 20mm;
+            size: A4;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            font-size: 12px;
+            line-height: 1.4;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #333;
+        }
+        
+        .header h1 {
+            margin: 0 0 5px 0;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .header p {
+            margin: 0;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .info-box {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        .info-label {
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 3px;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+        
+        .info-value {
+            font-size: 14px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .stats-section {
+            margin-bottom: 25px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-box {
+            text-align: center;
+            padding: 15px;
+            border: 2px solid #333;
+            border-radius: 8px;
+        }
+        
+        .stat-number {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #666;
+        }
+        
+        .section-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .session-list {
+            margin-bottom: 20px;
+        }
+        
+        .session-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: #f9f9f9;
+        }
+        
+        .session-info {
+            flex: 1;
+        }
+        
+        .session-title {
+            font-weight: bold;
+            margin-bottom: 2px;
+        }
+        
+        .session-date {
+            font-size: 11px;
+            color: #666;
+        }
+        
+        .session-type {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .type-training {
+            background: #e8f5e8;
+            color: #2e7d2e;
+        }
+        
+        .type-rest {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .notes-section {
+            margin-top: 25px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 5px;
+            border-left: 4px solid #333;
+        }
+        
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            text-align: center;
+            color: #666;
+            font-size: 11px;
+        }
+        
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>BOOKING RECEIPT & SUMMARY</h1>
+        <p>Reference #: ${String(booking.id).padStart(6, '0')}</p>
+        <p>Generated on ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+    </div>
+    
+    <div class="info-grid">
+        <div class="info-box">
+            <div class="info-label">Package</div>
+            <div class="info-value">${booking.package_name || booking.package}</div>
+        </div>
+        <div class="info-box">
+            <div class="info-label">Amount Paid</div>
+            <div class="info-value">₱${parseFloat(booking.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+        </div>
+        <div class="info-box">
+            <div class="info-label">Booking Date</div>
+            <div class="info-value">${formatDate(booking.booking_date || booking.date || booking.createdAt)}</div>
+        </div>
+        <div class="info-box">
+            <div class="info-label">Status</div>
+            <div class="info-value">${booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}</div>
+        </div>
+    </div>
+    
+    <div class="stats-section">
+        <div class="section-title">TRAINING PROGRESS STATISTICS</div>
+        <div class="stats-grid">
+            <div class="stat-box">
+                <div class="stat-number">${totalSessions}</div>
+                <div class="stat-label">Total Sessions</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">${completedSessions}</div>
+                <div class="stat-label">Completed</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">${restDays}</div>
+                <div class="stat-label">Rest Days</div>
+            </div>
+        </div>
+    </div>
+    
+    ${sessions.length > 0 ? `
+    <div class="session-section">
+        <div class="section-title">SESSION ACTIVITIES</div>
+        <div class="session-list">
+            ${sessions.map(session => `
+                <div class="session-item">
+                    <div class="session-info">
+                        <div class="session-title">${session.title}</div>
+                        <div class="session-date">${formatDate(session.date)}</div>
+                    </div>
+                    <div class="session-type ${session.type === 'rest_day' ? 'type-rest' : 'type-training'}">
+                        ${session.type === 'rest_day' ? 'Rest Day' : 'Training'}
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    </div>
+    ` : ''}
+    
+    ${booking.notes ? `
+    <div class="notes-section">
+        <div class="section-title">NOTES</div>
+        <div>${booking.notes}</div>
+    </div>
+    ` : ''}
+    
+    <div class="footer">
+        <p>This is an official receipt of your booking and training activities.</p>
+        <p>Thank you for choosing our gym! Keep up the great work! 💪</p>
+    </div>
+</body>
+</html>`;
+            
+            // Write content to the new window
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+            
+            // Wait for content to load, then print
+            printWindow.onload = function() {
+                setTimeout(() => {
+                    printWindow.print();
+                    printWindow.close();
+                }, 500);
+            };
+        })
+        .catch(error => {
+            console.error('Error fetching sessions for receipt:', error);
+            showNotification('Error generating receipt', 'error');
+        });
+}
+
+// View booking details (keeping original function for other uses)
 function viewBookingDetails(bookingId) {
     const booking = userBookings.find(b => String(b.id) === String(bookingId));
     if (!booking) return;
@@ -3360,6 +4023,14 @@ function setupEventListeners() {
         document.getElementById('receiptFile').click();
     });
     
+    const editUploadArea = document.getElementById('editFileUploadArea');
+    if (editUploadArea) {
+        editUploadArea.addEventListener('click', () => {
+            const actInput = document.getElementById('editReceiptFile');
+            if (actInput) actInput.click();
+        });
+    }
+    
     // Drag and drop
     const uploadArea = document.getElementById('fileUploadArea');
     uploadArea.addEventListener('dragover', (e) => {
@@ -3383,6 +4054,31 @@ function setupEventListeners() {
             handleFileSelect({ target: { files: [file] } });
         }
     });
+
+    // Drag and drop for Edit Modal
+    if (editUploadArea) {
+        editUploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            editUploadArea.style.borderColor = 'var(--primary)';
+            editUploadArea.style.background = 'var(--glass)';
+        });
+        
+        editUploadArea.addEventListener('dragleave', () => {
+            if (!selectedEditFile) {
+                editUploadArea.style.borderColor = '';
+                editUploadArea.style.background = '';
+            }
+        });
+        
+        editUploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const file = e.dataTransfer.files[0];
+            if (file && (file.type.startsWith('image/') || file.type === 'application/pdf')) {
+                document.getElementById('editReceiptFile').files = e.dataTransfer.files;
+                handleEditFileSelect({ target: { files: [file] } });
+            }
+        });
+    }
     
     // Close modals on outside click
     document.getElementById('bookingModal').addEventListener('click', function(e) {
@@ -3546,7 +4242,7 @@ async function loadTrainerSection() {
             ? '../../' + t.photo_url.replace(/^\/?Fit\//, '').replace(/^\//, '')
             : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(t.trainer_name) + '&background=22c55e&color=fff&size=120';
         document.getElementById('trainerName').textContent = t.trainer_name || 'Your Trainer';
-        document.getElementById('trainerSpec').textContent = t.specialization || '';
+        document.getElementById('trainerSpec').textContent = '';
         document.getElementById('trainerBio').textContent = t.bio || 'No bio available.';
         document.getElementById('trainerContactVal').textContent = t.trainer_contact || 'N/A';
         document.getElementById('trainerEmailVal').textContent = t.trainer_email || 'N/A';
@@ -3558,41 +4254,45 @@ async function loadTrainerSection() {
 
         // Availability
         const availEl = document.getElementById('trainerAvailability');
-        if (t.availability) {
-            try {
-                const avail = JSON.parse(t.availability);
-                if (Array.isArray(avail)) {
-                    availEl.innerHTML = avail.map(a => `<div style="margin-bottom:6px;"><i class="fas fa-check-circle" style="color:var(--primary);margin-right:6px;"></i>${a}</div>`).join('');
-                } else if (avail && typeof avail === 'object') {
-                    const days = Array.isArray(avail.days) ? avail.days.join(', ') : (avail.days || '');
-                    const hours = (avail.from && avail.until) ? `${avail.from} – ${avail.until}` : '';
-                    availEl.innerHTML = `
-                        ${days ? `<div style="margin-bottom:8px;"><i class="fas fa-calendar-week" style="color:var(--primary);margin-right:6px;"></i>${days}</div>` : ''}
-                        ${hours ? `<div><i class="fas fa-clock" style="color:var(--primary);margin-right:6px;"></i>${hours}</div>` : ''}
-                    `;
-                } else {
+        if (availEl) {
+            if (t.availability) {
+                try {
+                    const avail = JSON.parse(t.availability);
+                    if (Array.isArray(avail)) {
+                        availEl.innerHTML = avail.map(a => `<div style="margin-bottom:6px;"><i class="fas fa-check-circle" style="color:var(--primary);margin-right:6px;"></i>${a}</div>`).join('');
+                    } else if (avail && typeof avail === 'object') {
+                        const days = Array.isArray(avail.days) ? avail.days.join(', ') : (avail.days || '');
+                        const hours = (avail.from && avail.until) ? `${avail.from} – ${avail.until}` : '';
+                        availEl.innerHTML = `
+                            ${days ? `<div style="margin-bottom:8px;"><i class="fas fa-calendar-week" style="color:var(--primary);margin-right:6px;"></i>${days}</div>` : ''}
+                            ${hours ? `<div><i class="fas fa-clock" style="color:var(--primary);margin-right:6px;"></i>${hours}</div>` : ''}
+                        `;
+                    } else {
+                        availEl.textContent = t.availability;
+                    }
+                } catch {
                     availEl.textContent = t.availability;
                 }
-            } catch {
-                availEl.textContent = t.availability;
+            } else {
+                availEl.innerHTML = '<p style="color:var(--dark-text-secondary);">Not specified</p>';
             }
-        } else {
-            availEl.innerHTML = '<p style="color:var(--dark-text-secondary);">Not specified</p>';
         }
 
         // Certifications
         const certEl = document.getElementById('trainerCertifications');
-        if (t.certifications) {
-            try {
-                const certs = JSON.parse(t.certifications);
-                certEl.innerHTML = Array.isArray(certs)
-                    ? certs.map(c => `<div style="margin-bottom:6px;"><i class="fas fa-medal" style="color:#f59e0b;margin-right:6px;"></i>${c}</div>`).join('')
-                    : `<p>${t.certifications}</p>`;
-            } catch {
-                certEl.textContent = t.certifications;
+        if (certEl) {
+            if (t.certifications) {
+                try {
+                    const certs = JSON.parse(t.certifications);
+                    certEl.innerHTML = Array.isArray(certs)
+                        ? certs.map(c => `<div style="margin-bottom:6px;"><i class="fas fa-medal" style="color:#f59e0b;margin-right:6px;"></i>${c}</div>`).join('')
+                        : `<p>${t.certifications}</p>`;
+                } catch {
+                    certEl.textContent = t.certifications;
+                }
+            } else {
+                certEl.innerHTML = '<p style="color:var(--dark-text-secondary);">No certifications listed</p>';
             }
-        } else {
-            certEl.innerHTML = '<p style="color:var(--dark-text-secondary);">No certifications listed</p>';
         }
 
         // Sessions

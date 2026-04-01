@@ -293,6 +293,7 @@ body.light-mode select {
     display: flex;
     align-items: center;
     gap: 12px;
+    margin-top: auto;
     transition: transform 0.3s, background-color 0s, color 0s, border-color 0s;
 }
 
