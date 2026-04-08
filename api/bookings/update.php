@@ -7,8 +7,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST' && $_SERVER['REQUEST_METHOD'] !== 'PUT
     sendResponse(false, 'Method not allowed', null, 405);
 }
 
-// Check if user is logged in and is admin
-if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
+// Check if user is logged in and is admin or manager
+if (!isset($_SESSION['user_id']) || !in_array($_SESSION['user_role'], ['admin', 'manager'])) {
     sendResponse(false, 'Unauthorized access', null, 401);
 }
 
@@ -34,7 +34,7 @@ try {
     }
     
     // Validate status
-    if (!in_array($status, ['pending', 'verified', 'rejected'])) {
+    if (!in_array($status, ['pending', 'verified', 'rejected', 'upgraded'])) {
         sendResponse(false, 'Invalid status', null, 400);
     }
     
@@ -162,6 +162,31 @@ try {
             } catch (Throwable $e) {
                 error_log("Failed to notify member: " . $e->getMessage());
             }
+
+            // Notify admins about booking verification
+            try {
+                $currentAdminId = $_SESSION['user_id'] ?? null;
+                $adminStmt = $conn->prepare("SELECT id FROM users WHERE role = 'admin' " . ($currentAdminId ? "AND id != ?" : ""));
+                if ($adminStmt) {
+                    if ($currentAdminId) {
+                        $adminStmt->bind_param("i", $currentAdminId);
+                    }
+                    $adminStmt->execute();
+                    $adminRes = $adminStmt->get_result();
+                    while ($adminRow = $adminRes->fetch_assoc()) {
+                        $adminId = (int)$adminRow['id'];
+                        createNotification(
+                            $adminId,
+                            'Booking Verified',
+                            $booking['name'] . ' booking verified for: ' . $booking['package_name'] . '.',
+                            'success'
+                        );
+                    }
+                    $adminStmt->close();
+                }
+            } catch (Throwable $e) {
+                error_log("Failed to notify admins about booking verification: " . $e->getMessage());
+            }
         }
     } elseif ($status === 'rejected') {
         try {
@@ -180,6 +205,31 @@ try {
                     'rejection_reason' => $notes
                 ]);
             }
+
+                // Notify admins about booking rejection
+                try {
+                    $currentAdminId = $_SESSION['user_id'] ?? null;
+                    $adminStmt = $conn->prepare("SELECT id FROM users WHERE role = 'admin' " . ($currentAdminId ? "AND id != ?" : ""));
+                    if ($adminStmt) {
+                        if ($currentAdminId) {
+                            $adminStmt->bind_param("i", $currentAdminId);
+                        }
+                        $adminStmt->execute();
+                        $adminRes = $adminStmt->get_result();
+                        while ($adminRow = $adminRes->fetch_assoc()) {
+                            $adminId = (int)$adminRow['id'];
+                            createNotification(
+                                $adminId,
+                                'Booking Rejected',
+                                $booking['name'] . ' booking was rejected for: ' . $booking['package_name'] . '.',
+                                'danger'
+                            );
+                        }
+                        $adminStmt->close();
+                    }
+                } catch (Throwable $e) {
+                    error_log("Failed to notify admins about booking rejection: " . $e->getMessage());
+                }
         } catch (Throwable $e) {
             error_log("Failed to send booking rejection email: " . $e->getMessage());
         }

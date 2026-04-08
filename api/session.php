@@ -40,6 +40,9 @@ if (session_status() === PHP_SESSION_NONE) {
     }
 }
 
+// Include enhanced access control
+require_once 'access-control.php';
+
 // Check if user is logged in
 function isLoggedIn() {
     // Ensure session is started
@@ -48,29 +51,114 @@ function isLoggedIn() {
     }
     
     $loggedIn = isset($_SESSION['user_id']) && isset($_SESSION['user_email']);
-    
-    // Debug logging
-    if (!$loggedIn) {
-        error_log("isLoggedIn() returned false - Session ID: " . session_id() . ", User ID: " . ($_SESSION['user_id'] ?? 'NOT SET'));
-    }
-    
     return $loggedIn;
 }
 
-// Check if user is admin
+// Check if user is admin (using enhanced access control)
 function isAdmin() {
-    return isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin';
+    return hasRoleLevel('admin');
 }
 
-// Check if user is trainer
+// Check if user is manager or higher
+function isManager() {
+    return hasRoleLevel('manager');
+}
+
+// Check if user is trainer or higher
 function isTrainer() {
-    return isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'trainer';
+    return hasRoleLevel('trainer');
 }
 
 function isApiRequest() {
     $script = $_SERVER['SCRIPT_NAME'] ?? $_SERVER['PHP_SELF'] ?? '';
     $normalized = str_replace('\\', '/', $script);
-    return stripos($normalized, '/api/') !== false;
+    return strpos($normalized, '/api/') !== false;
+}
+
+// Enhanced session validation
+function validateSession() {
+    if (!isLoggedIn()) {
+        if (isApiRequest()) {
+            header('Content-Type: application/json');
+            echo json_encode([
+                'success' => false,
+                'message' => 'Authentication required',
+                'error_code' => 'AUTH_REQUIRED'
+            ]);
+            exit;
+        } else {
+            // Redirect to login for web requests
+            $basePath = dirname($_SERVER['SCRIPT_NAME']);
+            while ($basePath != '/' && strpos($basePath, '/api') !== false) {
+                $basePath = dirname($basePath);
+            }
+            header('Location: ' . $basePath . '/views/login.php');
+            exit;
+        }
+    }
+}
+
+// Get current user info safely
+function getCurrentUser() {
+    if (!isLoggedIn()) {
+        return null;
+    }
+    
+    return [
+        'id' => $_SESSION['user_id'],
+        'name' => $_SESSION['user_name'] ?? null,
+        'email' => $_SESSION['user_email'],
+        'role' => $_SESSION['user_role'],
+        'contact' => $_SESSION['user_contact'] ?? null,
+        'address' => $_SESSION['user_address'] ?? null
+    ];
+}
+
+// Check if current user can access specific resource
+function canAccessResource($resourceType, $resourceId = null) {
+    $userRole = $_SESSION['user_role'] ?? null;
+    
+    switch ($resourceType) {
+        case 'admin_panel':
+            return isAdmin() || isManager(); // Managers can access admin panel
+            
+        case 'manager_panel':
+            return isManager() || isAdmin();
+            
+        case 'trainer_panel':
+            return isTrainer() || isManager() || isAdmin();
+            
+        case 'user_data':
+            if (isAdmin() || isManager()) {
+                return true; // Can access all user data
+            }
+            // Users can only access their own data
+            return $resourceId == $_SESSION['user_id'];
+            
+        case 'booking_management':
+            return isAdmin() || isManager(); // Both can manage bookings
+            
+        case 'payment_management':
+            return isAdmin() || isManager(); // Both can manage payments
+            
+        case 'user_management':
+            return isAdmin() || isManager(); // Both can manage users
+            
+        case 'trainer_management':
+            return isAdmin() || isManager(); // Both can manage trainers
+            
+        case 'reports':
+            return isAdmin() || isManager(); // Both can view reports
+            
+        case 'settings':
+            return isAdmin() || isManager(); // Both can access settings
+            
+        case 'system_config':
+            return isAdmin() || isManager(); // Both can configure system
+            
+        default:
+            return isAdmin() || isManager(); // Default to admin/manager access
+    }
 }
 
 // Require login - redirect to index if not logged in
@@ -125,10 +213,11 @@ function requireLogin() {
     }
 }
 
-// Require admin - redirect to appropriate dashboard if not admin
+// Require admin or manager - redirect to appropriate dashboard if not admin or manager
+// Managers have full access to all admin functions (bookings, payments, members)
 function requireAdmin() {
     requireLogin();
-    if (!isAdmin()) {
+    if (!isAdmin() && !isManager()) {
         // Handle API requests separately
         if (isApiRequest()) {
             if (!headers_sent()) {
@@ -137,7 +226,7 @@ function requireAdmin() {
             http_response_code(403);
             echo json_encode([
                 'success' => false,
-                'message' => 'Admin privileges required.',
+                'message' => 'Admin or Manager privileges required.',
                 'error_code' => 'FORBIDDEN'
             ]);
             exit();
@@ -157,10 +246,10 @@ function requireAdmin() {
     }
 }
 
-// Require trainer - redirect to user dashboard if not trainer or admin
+// Require trainer - redirect to user dashboard if not trainer, manager, or admin
 function requireTrainer() {
     requireLogin();
-    if (!isTrainer() && !isAdmin()) {
+    if (!isTrainer() && !isAdmin() && !isManager()) {
         // Handle API requests separately
         if (isApiRequest()) {
             if (!headers_sent()) {
@@ -187,22 +276,6 @@ function requireTrainer() {
         header("Location: $redirectUrl");
         exit();
     }
-}
-
-// Get current user data
-function getCurrentUser() {
-    if (!isLoggedIn()) {
-        return null;
-    }
-    
-    return [
-        'id' => $_SESSION['user_id'] ?? null,
-        'name' => $_SESSION['user_name'] ?? '',
-        'email' => $_SESSION['user_email'] ?? '',
-        'role' => $_SESSION['user_role'] ?? 'user',
-        'contact' => $_SESSION['user_contact'] ?? '',
-        'address' => $_SESSION['user_address'] ?? ''
-    ];
 }
 
 // Set user session

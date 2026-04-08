@@ -114,11 +114,12 @@ $conn->close();
 
         /* Modern Notification Modal Styling */
         #notificationsModal .modal {
-            background: #000 !important;
-            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            background: var(--dark-card) !important;
+            border: 1px solid var(--dark-border) !important;
             border-radius: 32px !important;
             overflow: hidden;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+            box-shadow: var(--shadow-xl) !important;
+            color: var(--dark-text);
         }
 
         #notificationsModal .modal-header {
@@ -133,13 +134,14 @@ $conn->close();
             display: flex;
             align-items: center;
             gap: 12px;
+            color: var(--primary);
         }
 
         #notificationsModal .notif-tabs {
             display: flex;
             gap: 8px;
             padding: 0 32px 24px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid var(--dark-border);
         }
 
         .notif-tab-btn {
@@ -147,7 +149,7 @@ $conn->close();
             border-radius: 12px;
             font-size: 0.75rem;
             font-weight: 700;
-            color: var(--premium-text-muted);
+            color: var(--dark-text-secondary);
             background: transparent;
             border: 1px solid transparent;
             cursor: pointer;
@@ -155,27 +157,28 @@ $conn->close();
         }
 
         .notif-tab-btn:hover {
-            color: #fff;
-            background: rgba(255, 255, 255, 0.05);
+            color: var(--primary);
+            background: var(--glass);
         }
 
         .notif-tab-btn.active {
-            color: #fff;
-            background: rgba(255, 255, 255, 0.08);
-            border-color: rgba(255, 255, 255, 0.1);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            color: var(--primary);
+            background: var(--glass);
+            border-color: var(--dark-border);
+            box-shadow: var(--shadow-sm);
         }
 
         .notif-item {
             padding: 20px 32px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            border-bottom: 1px solid var(--dark-border);
             transition: all 0.2s ease;
             cursor: pointer;
             position: relative;
+            background: var(--dark-card);
         }
 
         .notif-item:hover {
-            background: rgba(255, 255, 255, 0.02);
+            background: var(--glass);
         }
 
         .notif-item.unread::before {
@@ -228,14 +231,32 @@ $conn->close();
             --premium-card: #0f0f0f;
             --premium-border: rgba(255, 255, 255, 0.06);
             --premium-accent: #ffffff;
+            --premium-accent-reverse: #000000;
+            --premium-text: #ffffff;
             --premium-text-muted: rgba(255, 255, 255, 0.4);
             --premium-input-bg: rgba(255, 255, 255, 0.02);
             --premium-input-hover: rgba(255, 255, 255, 0.04);
+            --premium-sidebar-bg: #000000;
+            --premium-header-bg: rgba(0, 0, 0, 0.6);
+        }
+
+        .light-mode {
+            --premium-bg: #f8fafc;
+            --premium-card: #ffffff;
+            --premium-border: rgba(0, 0, 0, 0.1);
+            --premium-accent: #0f172a;
+            --premium-accent-reverse: #ffffff;
+            --premium-text: #0f172a;
+            --premium-text-muted: #64748b;
+            --premium-input-bg: rgba(0, 0, 0, 0.03);
+            --premium-input-hover: rgba(0, 0, 0, 0.06);
+            --premium-sidebar-bg: #ffffff;
+            --premium-header-bg: rgba(255, 255, 255, 0.8);
         }
 
         body {
             background-color: var(--premium-bg) !important;
-            color: #fff !important;
+            color: var(--premium-text) !important;
             font-family: 'Inter', sans-serif !important;
         }
 
@@ -245,12 +266,12 @@ $conn->close();
         }
 
         .sidebar {
-            background: #000 !important;
+            background: var(--premium-sidebar-bg) !important;
             border-right: 1px solid var(--premium-border) !important;
         }
 
         .top-bar {
-            background: rgba(0, 0, 0, 0.6) !important;
+            background: var(--premium-header-bg) !important;
             backdrop-filter: blur(20px);
             border-bottom: 1px solid var(--premium-border) !important;
             padding: 24px 40px !important;
@@ -260,7 +281,7 @@ $conn->close();
             font-size: 1.5rem !important;
             font-weight: 900 !important;
             letter-spacing: -1px !important;
-            color: #fff !important;
+            color: var(--premium-text) !important;
         }
 
         .page-title p {
@@ -301,7 +322,7 @@ $conn->close();
         }
 
         .search-box input {
-            color: #fff !important;
+            color: var(--premium-text) !important;
             font-weight: 500 !important;
         }
 
@@ -383,14 +404,14 @@ $conn->close();
         }
 
         .tab-btn:hover {
-            color: #fff !important;
+            color: var(--premium-text) !important;
             background: var(--premium-input-hover) !important;
         }
 
         .tab-btn.active {
-            background: #fff !important;
-            color: #000 !important;
-            box-shadow: 0 8px 24px rgba(255, 255, 255, 0.15) !important;
+            background: var(--premium-accent) !important;
+            color: var(--premium-accent-reverse) !important;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1) !important;
         }
 
         .tab-btn.active::after { display: none !important; }
@@ -411,7 +432,7 @@ $conn->close();
             border: 1px solid var(--premium-border) !important;
             border-radius: 14px !important;
             padding: 12px !important;
-            color: #fff !important;
+            color: var(--premium-text) !important;
             font-size: 0.85rem !important;
             font-weight: 500 !important;
             transition: all 0.3s ease !important;
@@ -420,14 +441,14 @@ $conn->close();
 
         .modern-input:focus {
             background: var(--premium-input-hover) !important;
-            border-color: rgba(255, 255, 255, 0.2) !important;
-            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2);
+            border-color: rgba(125, 125, 125, 0.2) !important;
+            box-shadow: 0 0 0 1px rgba(125, 125, 125, 0.1);
         }
 
         .save-btn {
             width: 100%;
-            background: #fff !important;
-            color: #000 !important;
+            background: var(--premium-accent) !important;
+            color: var(--premium-accent-reverse) !important;
             border: none !important;
             border-radius: 16px !important;
             padding: 16px !important;
@@ -444,8 +465,8 @@ $conn->close();
 
         .save-btn:hover {
             transform: scale(1.02);
-            box-shadow: 0 15px 30px rgba(255, 255, 255, 0.15);
-            background: #fff !important;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+            background: var(--premium-accent) !important;
         }
 
         .save-btn:active {
@@ -458,7 +479,7 @@ $conn->close();
             width: 44px;
             height: 44px;
             border-radius: 16px;
-            color: #fff !important;
+            color: var(--premium-text) !important;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -474,11 +495,11 @@ $conn->close();
 
         /* FullCalendar Customization */
         .fc {
-            --fc-border-color: rgba(255, 255, 255, 0.15);
+            --fc-border-color: var(--premium-border);
             --fc-page-bg-color: transparent;
             --fc-neutral-bg-color: transparent;
             --fc-list-event-hover-bg-color: var(--premium-input-hover);
-            --fc-today-bg-color: rgba(255, 255, 255, 0.05);
+            --fc-today-bg-color: var(--premium-input-bg);
             font-family: 'Inter', sans-serif;
         }
 
@@ -486,7 +507,7 @@ $conn->close();
             font-size: 1.2rem !important;
             font-weight: 800 !important;
             letter-spacing: -0.5px;
-            color: #fff;
+            color: var(--premium-text);
         }
 
         .fc .fc-button-primary {
@@ -501,7 +522,7 @@ $conn->close();
 
         .fc .fc-button-primary:hover {
             background: var(--premium-input-hover) !important;
-            border-color: rgba(255, 255, 255, 0.2) !important;
+            border-color: rgba(125, 125, 125, 0.2) !important;
         }
 
         .fc .fc-col-header-cell {
@@ -514,7 +535,7 @@ $conn->close();
         }
 
         .fc-theme-standard td, .fc-theme-standard th {
-            border-color: rgba(255, 255, 255, 0.05) !important;
+            border-color: var(--premium-border) !important;
         }
 
         .fc-daygrid-day-number {
@@ -525,7 +546,7 @@ $conn->close();
         }
 
         .fc-day-today .fc-daygrid-day-number {
-            color: #fff !important;
+            color: var(--premium-accent) !important;
         }
 
         /* Premium Event Styling */
@@ -591,9 +612,9 @@ $conn->close();
         }
 
         .event-progress {
-            background: rgba(255, 255, 255, 0.1) !important;
-            color: #fff !important;
-            border-left: 3px solid #fff !important;
+            background: var(--premium-input-bg) !important;
+            color: var(--premium-text) !important;
+            border-left: 3px solid var(--premium-accent) !important;
         }
 
         .event-progress::before {
@@ -632,15 +653,15 @@ $conn->close();
         .member-avatar {
             width: 64px;
             height: 64px;
-            background: #fff;
-            color: #000;
+            background: var(--premium-accent);
+            color: var(--premium-accent-reverse);
             border-radius: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 1.25rem;
             font-weight: 900;
-            box-shadow: 0 10px 20px rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
         }
 
         .status-pill {
@@ -697,7 +718,7 @@ $conn->close();
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 16px;
-            background: rgba(255, 255, 255, 0.02);
+            background: var(--premium-input-bg);
             padding: 20px;
             border-radius: 20px;
             border: 1px solid var(--premium-border);
@@ -720,7 +741,7 @@ $conn->close();
         .info-value {
             font-size: 0.9rem;
             font-weight: 600;
-            color: #fff;
+            color: var(--premium-text);
         }
 
         .member-actions {
@@ -742,24 +763,24 @@ $conn->close();
             justify-content: center;
             gap: 8px;
             border: 1px solid var(--premium-border);
-            color: #fff;
-            background: rgba(255, 255, 255, 0.03);
+            color: var(--premium-text);
+            background: var(--premium-input-bg);
         }
 
         .action-btn-modern:hover {
-            background: #fff;
-            color: #000;
-            border-color: #fff;
+            background: var(--premium-accent);
+            color: var(--premium-accent-reverse);
+            border-color: var(--premium-accent);
         }
 
         .action-btn-modern.primary {
-            background: #fff;
-            color: #000;
-            border-color: #fff;
+            background: var(--premium-accent);
+            color: var(--premium-accent-reverse);
+            border-color: var(--premium-accent);
         }
 
         .action-btn-modern.primary:hover {
-            background: #f0f0f0;
+            opacity: 0.85;
             transform: scale(1.02);
         }
 
@@ -771,8 +792,8 @@ $conn->close();
         }
 
         .manage-btn:hover {
-            border-color: rgba(255, 255, 255, 0.3);
-            color: #fff;
+            border-color: var(--premium-accent);
+            color: var(--premium-text);
             background: transparent;
         }
     </style>
@@ -782,8 +803,10 @@ $conn->close();
             const savedTheme = localStorage.getItem('theme') || 'dark';
             if (savedTheme === 'light') {
                 document.documentElement.classList.add('light-mode');
+                if (document.body) document.body.classList.add('light-mode');
             } else {
                 document.documentElement.classList.remove('light-mode');
+                if (document.body) document.body.classList.remove('light-mode');
             }
         })();
     </script>
@@ -835,6 +858,10 @@ $conn->close();
                     <i class="fas fa-search"></i>
                     <input type="text" id="memberSearch" placeholder="Search clients..." oninput="filterMembers()">
                 </div>
+                
+                <button class="action-btn theme-toggle-btn" onclick="toggleTheme()" title="Toggle Theme">
+                    <i class="fas fa-moon"></i>
+                </button>
                 
                 <button class="action-btn" title="Logout" onclick="handleLogout()">
                     <i class="fas fa-sign-out-alt"></i>
@@ -970,7 +997,6 @@ $conn->close();
                 <div class="tabs">
                     <button class="tab-btn active" onclick="switchTab('log')" id="tabLog">Log Session</button>
                     <button class="tab-btn" onclick="switchTab('history')" id="tabHistory">History</button>
-                    <button class="tab-btn" onclick="switchTab('calendar')" id="tabCalendar">Calendar</button>
                     <button class="tab-btn" onclick="switchTab('plan')" id="tabPlan">Manage Plan</button>
                 </div>
 
@@ -1784,17 +1810,20 @@ $conn->close();
                 right: 32px; 
                 background: ${bg}; 
                 color: ${color}; 
-                padding: 20px 32px; 
-                border-radius: 20px; 
+                padding: 12px 18px; 
+                border-radius: 14px; 
                 display: flex; 
                 align-items: center; 
-                gap: 16px; 
-                box-shadow: 0 20px 40px rgba(0,0,0,0.4); 
+                gap: 10px; 
+                box-shadow: 0 10px 30px rgba(0,0,0,0.3); 
                 z-index: 10001; 
                 animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); 
-                font-weight: 800;
-                font-size: 0.95rem;
-                letter-spacing: -0.2px;
+                font-weight: 700;
+                font-size: 0.85rem;
+                width: auto;
+                max-width: 320px;
+                white-space: normal;
+                word-break: break-word;
             `;
             document.body.appendChild(notification);
             setTimeout(() => {
@@ -1806,5 +1835,6 @@ $conn->close();
         document.getElementById('mobileMenuToggle')?.addEventListener('click', () => { document.querySelector('.sidebar').classList.toggle('active'); });
         window.onclick = function(event) { if (event.target.classList.contains('modal-overlay')) { event.target.classList.remove('active'); } }
     </script>
+    <script src="../../assets/js/theme.js"></script>
 </body>
 </html>

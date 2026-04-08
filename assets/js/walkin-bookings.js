@@ -254,18 +254,23 @@ class WalkinBookingsManager {
     // Parse duration string (e.g., "30 Days", "1 Year") to number of days
     parseDurationToDays(durationStr) {
         if (!durationStr) return 0;
-        
-        const parts = durationStr.toLowerCase().split(' ');
-        const value = parseInt(parts[0]);
-        const unit = parts[1];
-        
+
+        // Examples in this project: "30 Day", "30 Days", "7 Days", "6 months", "1  month"
+        const str = String(durationStr).toLowerCase().trim();
+        const match = str.match(/(\d+)\s*([a-z]+)/i);
+        if (!match) return 0;
+
+        const value = parseInt(match[1], 10);
+        const unit = match[2] ? String(match[2]).toLowerCase() : '';
+
         if (isNaN(value)) return 0;
-        
-        if (unit.includes('day')) return value;
-        if (unit.includes('week')) return value * 7;
-        if (unit.includes('month')) return value * 30;
-        if (unit.includes('year')) return value * 365;
-        
+
+        if (unit.startsWith('day')) return value;
+        if (unit.startsWith('week')) return value * 7;
+        if (unit.startsWith('month')) return value * 30;
+        if (unit.startsWith('year')) return value * 365;
+
+        // Fallback (best-effort)
         return value;
     }
 

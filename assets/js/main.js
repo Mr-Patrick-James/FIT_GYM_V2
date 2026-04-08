@@ -1,3 +1,36 @@
+// Theme Toggle Logic
+function initThemeToggle() {
+    const themeToggleBtn = document.getElementById('themeToggle');
+    if (!themeToggleBtn) return;
+
+    // Get saved theme from localStorage or default to 'dark'
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    updateThemeIcon(savedTheme);
+
+    // Theme toggle button click handler
+    themeToggleBtn.addEventListener('click', () => {
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        updateThemeIcon(newTheme);
+    });
+}
+
+function updateThemeIcon(theme) {
+    const themeToggleBtn = document.getElementById('themeToggle');
+    if (!themeToggleBtn) return;
+    
+    const icon = themeToggleBtn.querySelector('i');
+    if (theme === 'light') {
+        icon.className = 'fas fa-sun';
+    } else {
+        icon.className = 'fas fa-moon';
+    }
+}
+
 // Hero Slider Logic
 function initHeroSlider() {
     const slides = document.querySelectorAll('.hero-slider .slide');
@@ -16,6 +49,7 @@ function initHeroSlider() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    initThemeToggle();
     initHeroSlider();
     updateActiveNavLink();
 });

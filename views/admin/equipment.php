@@ -65,7 +65,7 @@ $user = getCurrentUser();
             ?></div>
             <div class="admin-info">
                 <h4><?php echo htmlspecialchars($adminName); ?></h4>
-                <p>Gym Owner / Manager</p>
+                <p><?php echo ($user['role'] === 'manager') ? 'Gym Manager' : 'Administrator'; ?></p>
             </div>
         </div>
     </aside>
@@ -78,6 +78,9 @@ $user = getCurrentUser();
             </div>
             
             <div class="header-actions">
+                <button class="action-btn theme-toggle-btn" onclick="toggleTheme()" title="Toggle Theme">
+                    <i class="fas fa-moon"></i>
+                </button>
                 <button class="action-btn primary" onclick="openAddEquipmentModal()">
                     <i class="fas fa-plus"></i>
                     <span>Add Equipment</span>
@@ -288,5 +291,6 @@ $user = getCurrentUser();
             document.querySelector('.sidebar').classList.toggle('active');
         });
     </script>
+    <script src="../../assets/js/theme.js"></script>
 </body>
 </html>

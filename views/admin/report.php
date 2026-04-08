@@ -139,7 +139,7 @@ $user = getCurrentUser();
             ?></div>
             <div class="admin-info">
                 <h4><?php echo htmlspecialchars($user['name'] ?? 'Admin'); ?></h4>
-                <p>Gym Owner / Manager</p>
+                <p><?php echo ($user['role'] === 'manager') ? 'Gym Manager' : 'Administrator'; ?></p>
             </div>
         </div>
     </aside>
@@ -152,6 +152,10 @@ $user = getCurrentUser();
                 <p>Track sales, package performance, and generate custom reports</p>
             </div>
             <div class="header-actions">
+                <button class="action-btn theme-toggle-btn" onclick="toggleTheme()" title="Toggle Theme">
+                    <i class="fas fa-moon"></i>
+                </button>
+                
                 <button class="action-btn notification-btn">
                     <i class="fas fa-bell"></i>
                     <span class="notification-badge" id="notificationBadge"></span>

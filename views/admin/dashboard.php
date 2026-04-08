@@ -97,7 +97,7 @@ function getSetting($key, $default = '', $settings = []) {
             ?></div>
             <div class="admin-info">
                 <h4><?php echo htmlspecialchars($adminName); ?></h4>
-                <p>Gym Owner / Manager</p>
+                <p><?php echo ($user['role'] === 'manager') ? 'Gym Manager' : 'Administrator'; ?></p>
             </div>
         </div>
     </aside>
@@ -116,6 +116,10 @@ function getSetting($key, $default = '', $settings = []) {
                     <i class="fas fa-search"></i>
                     <input type="text" placeholder="Search bookings, members...">
                 </div>
+                
+                <button class="action-btn theme-toggle-btn" onclick="toggleTheme()" title="Toggle Theme">
+                    <i class="fas fa-moon"></i>
+                </button>
                 
                 <button class="action-btn notification-btn">
                     <i class="fas fa-bell"></i>
@@ -375,6 +379,30 @@ function getSetting($key, $default = '', $settings = []) {
                         Verify Payment
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notifications Modal -->
+    <div class="modal-overlay" id="notificationsModal">
+        <div class="modal" style="max-width: 560px;">
+            <div class="modal-header">
+                <h3>
+                    <i class="fas fa-bell" style="color: var(--primary);"></i> Notifications
+                </h3>
+                <button class="close-modal" id="closeNotificationsModalBtn" type="button" aria-label="Close notifications">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="modal-body" style="padding: 0;">
+                <div id="notificationsList" style="max-height: 480px; overflow-y: auto; padding: 8px;"></div>
+            </div>
+
+            <div class="modal-footer" style="padding: 20px 32px; border-top: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: flex-end; gap: 12px;">
+                <button id="markAllNotificationsBtn" type="button" class="btn btn-secondary" style="padding: 10px 18px;" title="Mark all as read">
+                    <i class="fas fa-check-double"></i> Mark all as read
+                </button>
             </div>
         </div>
     </div>

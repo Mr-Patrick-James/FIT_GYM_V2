@@ -2,8 +2,8 @@
 require_once '../config.php';
 require_once '../session.php';
 
-// Ensure user is an admin
-if (!isAdmin()) {
+// Ensure user is an admin or manager
+if (!isAdmin() && !isManager()) {
     sendResponse(false, 'Unauthorized access', null, 403);
 }
 

@@ -1,19 +1,19 @@
 <?php return array(
     'root' => array(
         'name' => 'fitpay-gym/email-service',
-        'pretty_version' => '1.0.0+no-version-set',
-        'version' => '1.0.0.0',
-        'reference' => null,
+        'pretty_version' => 'dev-main',
+        'version' => 'dev-main',
+        'reference' => 'f561be1d5773950fe2b2e43ab0811f4a21ae5de5',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
-        'dev' => true,
+        'dev' => false,
     ),
     'versions' => array(
         'fitpay-gym/email-service' => array(
-            'pretty_version' => '1.0.0+no-version-set',
-            'version' => '1.0.0.0',
-            'reference' => null,
+            'pretty_version' => 'dev-main',
+            'version' => 'dev-main',
+            'reference' => 'f561be1d5773950fe2b2e43ab0811f4a21ae5de5',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

@@ -12,9 +12,12 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     sendResponse(false, 'Method not allowed', null, 405);
 }
 
-// Check if user is logged in and is admin
-if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
-    sendResponse(false, 'Unauthorized access', null, 401);
+// Check if user is logged in and has proper permissions
+requireLogin();
+
+// Only admin and manager can view all users
+if (!isAdmin() && !isManager()) {
+    sendResponse(false, 'Access denied. Admin or Manager privileges required.', null, 403);
 }
 
 try {

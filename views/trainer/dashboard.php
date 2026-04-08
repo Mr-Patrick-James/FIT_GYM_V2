@@ -99,11 +99,12 @@ if ($trainerId) {
 
         /* Modern Notification Modal Styling */
         #notificationsModal .modal {
-            background: #000 !important;
-            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            background: var(--dark-card) !important;
+            border: 1px solid var(--dark-border) !important;
             border-radius: 32px !important;
             overflow: hidden;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+            box-shadow: var(--shadow-xl) !important;
+            color: var(--dark-text);
         }
 
         #notificationsModal .modal-header {
@@ -118,13 +119,14 @@ if ($trainerId) {
             display: flex;
             align-items: center;
             gap: 12px;
+            color: var(--primary);
         }
 
         #notificationsModal .notif-tabs {
             display: flex;
             gap: 8px;
             padding: 0 32px 24px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid var(--dark-border);
         }
 
         .notif-tab-btn {
@@ -132,7 +134,7 @@ if ($trainerId) {
             border-radius: 12px;
             font-size: 0.75rem;
             font-weight: 700;
-            color: var(--premium-text-muted);
+            color: var(--dark-text-secondary);
             background: transparent;
             border: 1px solid transparent;
             cursor: pointer;
@@ -140,27 +142,28 @@ if ($trainerId) {
         }
 
         .notif-tab-btn:hover {
-            color: #fff;
-            background: rgba(255, 255, 255, 0.05);
+            color: var(--primary);
+            background: var(--glass);
         }
 
         .notif-tab-btn.active {
-            color: #fff;
-            background: rgba(255, 255, 255, 0.08);
-            border-color: rgba(255, 255, 255, 0.1);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            color: var(--primary);
+            background: var(--glass);
+            border-color: var(--dark-border);
+            box-shadow: var(--shadow-sm);
         }
 
         .notif-item {
             padding: 20px 32px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            border-bottom: 1px solid var(--dark-border);
             transition: all 0.2s ease;
             cursor: pointer;
             position: relative;
+            background: var(--dark-card);
         }
 
         .notif-item:hover {
-            background: rgba(255, 255, 255, 0.02);
+            background: var(--glass);
         }
 
         .notif-item.unread::before {
@@ -274,6 +277,9 @@ if ($trainerId) {
             </div>
             
             <div class="header-actions">
+                <button class="action-btn theme-toggle-btn" onclick="toggleTheme()" title="Toggle Theme">
+                    <i class="fas fa-moon"></i>
+                </button>
                 <button class="action-btn notification-btn" onclick="toggleNotifications()">
                     <i class="fas fa-bell"></i>
                     <span class="notification-badge" id="notifBadge">0</span>
@@ -605,5 +611,6 @@ if ($trainerId) {
             document.querySelector('.sidebar').classList.toggle('active');
         });
     </script>
+    <script src="../../assets/js/theme.js"></script>
 </body>
 </html>

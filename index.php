@@ -95,7 +95,7 @@ function getSetting($key, $default = '', $settings = []) {
 // If user is already logged in, redirect to appropriate dashboard
 // But only if we're not in the middle of a login/signup process
 if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
-    $redirect = isAdmin() ? 'views/admin/dashboard.php' : 'views/user/dashboard.php';
+    $redirect = (isAdmin() || isManager()) ? 'views/admin/dashboard.php' : 'views/user/dashboard.php';
     header("Location: $redirect");
     exit();
 }
@@ -105,7 +105,7 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Martinez Fitness | Elite Gym</title>
+    <title>Martinez Fitness | Local Gym</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Montserrat:wght@300;400;700;900&display=swap" rel="stylesheet">
@@ -140,16 +140,29 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
     <section class="hero" id="home">
         <div class="hero-slider">
             <?php 
-            $heroImagesJson = $settings['hero_images'] ?? '[]';
-            $heroImages = json_decode($heroImagesJson, true);
+            // Load images from assets/uploads/gym/ directory
+            $gymImageDir = 'assets/uploads/gym/';
+            $heroImages = [];
             
-            // If the key is not in settings, or the array is empty, we show nothing (solid color background via CSS)
+            if (is_dir($gymImageDir)) {
+                $files = scandir($gymImageDir);
+                $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+                
+                foreach ($files as $file) {
+                    if ($file === '.' || $file === '..') continue;
+                    
+                    $extension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+                    if (in_array($extension, $imageExtensions)) {
+                        $heroImages[] = $gymImageDir . $file;
+                    }
+                }
+            }
+            
+            // Display slide images
             if (!empty($heroImages)) {
                 foreach ($heroImages as $index => $image) {
                     $activeClass = ($index === 0) ? 'active' : '';
-                    // Ensure path is relative to root or absolute
-                    $imageUrl = (strpos($image, 'http') === 0) ? $image : $image . '?v=' . time();
-                    echo '<div class="slide ' . $activeClass . '" style="background-image: url(\'' . htmlspecialchars($imageUrl) . '\')"></div>';
+                    echo '<div class="slide ' . $activeClass . '" style="background-image: url(\'' . htmlspecialchars($image) . '\')"></div>';
                 }
             }
             ?>

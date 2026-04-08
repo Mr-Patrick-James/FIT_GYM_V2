@@ -74,7 +74,7 @@ $user = getCurrentUser();
             ?></div>
             <div class="admin-info">
                 <h4><?php echo htmlspecialchars($adminName); ?></h4>
-                <p>Gym Owner / Manager</p>
+                <p><?php echo ($user['role'] === 'manager') ? 'Gym Manager' : 'Administrator'; ?></p>
             </div>
         </div>
     </aside>
@@ -93,6 +93,10 @@ $user = getCurrentUser();
                     <i class="fas fa-search"></i>
                     <input type="text" id="searchInput" placeholder="Search members...">
                 </div>
+                
+                <button class="action-btn theme-toggle-btn" onclick="toggleTheme()" title="Toggle Theme">
+                    <i class="fas fa-moon"></i>
+                </button>
                 
                 <button class="action-btn notification-btn">
                     <i class="fas fa-bell"></i>

@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manager Account Setup</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+        
+        .content {
+            padding: 40px;
+        }
+        
+        .section {
+            margin-bottom: 40px;
+            padding: 25px;
+            border: 2px solid #f0f0f0;
+            border-radius: 10px;
+            background: #fafafa;
+        }
+        
+        .section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .section p {
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .message {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .message.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .managers-list {
+            margin-top: 20px;
+        }
+        
+        .manager-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .manager-info h3 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .manager-info p {
+            color: #666;
+            margin: 3px 0;
+            font-size: 0.9rem;
+        }
+        
+        .role-badge {
+            background: #28a745;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏋️ Manager Account Setup</h1>
+            <p>Add manager role and create manager accounts with lower accessibility than admin</p>
+        </div>
+        
+        <div class="content">
+            <div id="messageArea"></div>
+            
+            <!-- Step 1: Add Manager Role -->
+            <div class="section">
+                <h2>📋 Step 1: Add Manager Role</h2>
+                <p>This will add the 'manager' role to the users table if it doesn't already exist.</p>
+                <button class="btn" onclick="addManagerRole()" id="addRoleBtn">
+                    Add Manager Role to Database
+                </button>
+            </div>
+            
+            <!-- Step 2: Create Manager Account -->
+            <div class="section">
+                <h2>👤 Step 2: Create Manager Account</h2>
+                <p>Create a new manager account with lower accessibility than admin.</p>
+                
+                <form id="createManagerForm" onsubmit="createManager(event)">
+                    <div class="form-group">
+                        <label for="managerName">Full Name *</label>
+                        <input type="text" id="managerName" name="name" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="managerEmail">Email Address *</label>
+                        <input type="email" id="managerEmail" name="email" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="managerPassword">Password *</label>
+                        <input type="password" id="managerPassword" name="password" required minlength="6">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="managerContact">Contact Number</label>
+                        <input type="text" id="managerContact" name="contact">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="managerAddress">Address</label>
+                        <input type="text" id="managerAddress" name="address">
+                    </div>
+                    
+                    <button type="submit" class="btn" id="createManagerBtn">
+                        Create Manager Account
+                    </button>
+                </form>
+            </div>
+            
+            <!-- Step 3: View Managers -->
+            <div class="section">
+                <h2>👥 Step 3: View All Managers</h2>
+                <p>View all manager accounts in the system.</p>
+                <button class="btn" onclick="loadManagers()" id="loadManagersBtn">
+                    Load Managers List
+                </button>
+                <div id="managersList" class="managers-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showMessage(message, type = 'info') {
+            const messageArea = document.getElementById('messageArea');
+            messageArea.innerHTML = `<div class="message ${type}">${message}</div>`;
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                messageArea.innerHTML = '';
+            }, 5000);
+        }
+        
+        async function addManagerRole() {
+            const btn = document.getElementById('addRoleBtn');
+            const originalText = btn.innerHTML;
+            
+            btn.innerHTML = '<span class="loading"></span>Adding Role...';
+            btn.disabled = true;
+            
+            try {
+                const response = await fetch('../api/users/add-manager-role.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage(result.message, 'success');
+                } else {
+                    showMessage(result.message, 'error');
+                }
+            } catch (error) {
+                showMessage('Error: ' + error.message, 'error');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+        
+        async function createManager(event) {
+            event.preventDefault();
+            
+            const btn = document.getElementById('createManagerBtn');
+            const originalText = btn.innerHTML;
+            
+            const formData = new FormData(event.target);
+            const data = Object.fromEntries(formData.entries());
+            
+            btn.innerHTML = '<span class="loading"></span>Creating Account...';
+            btn.disabled = true;
+            
+            try {
+                const response = await fetch('../api/users/create-manager.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage(result.message, 'success');
+                    event.target.reset();
+                    loadManagers(); // Reload managers list
+                } else {
+                    showMessage(result.message, 'error');
+                }
+            } catch (error) {
+                showMessage('Error: ' + error.message, 'error');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+        
+        async function loadManagers() {
+            const btn = document.getElementById('loadManagersBtn');
+            const originalText = btn.innerHTML;
+            const listDiv = document.getElementById('managersList');
+            
+            btn.innerHTML = '<span class="loading"></span>Loading...';
+            btn.disabled = true;
+            
+            try {
+                const response = await fetch('../api/users/get-managers.php');
+                const result = await response.json();
+                
+                if (result.success) {
+                    if (result.data.length === 0) {
+                        listDiv.innerHTML = '<p style="text-align: center; color: #666; margin-top: 20px;">No managers found.</p>';
+                    } else {
+                        listDiv.innerHTML = result.data.map(manager => `
+                            <div class="manager-card">
+                                <div class="manager-info">
+                                    <h3>${manager.name}</h3>
+                                    <p>📧 ${manager.email}</p>
+                                    <p>📱 ${manager.contact || 'Not provided'}</p>
+                                    <p>📍 ${manager.address || 'Not provided'}</p>
+                                    <p>📅 Created: ${new Date(manager.created_at).toLocaleDateString()}</p>
+                                </div>
+                                <span class="role-badge">MANAGER</span>
+                            </div>
+                        `).join('');
+                    }
+                    showMessage(`Found ${result.count} manager(s)`, 'success');
+                } else {
+                    showMessage(result.message, 'error');
+                }
+            } catch (error) {
+                showMessage('Error: ' + error.message, 'error');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+        
+        // Load managers on page load
+        window.addEventListener('load', () => {
+            loadManagers();
+        });
+    </script>
+</body>
+</html>
