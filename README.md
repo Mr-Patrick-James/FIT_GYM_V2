@@ -2,16 +2,32 @@
 
 <div align="center">
 
-<img src="assets/preview/Screenshot%202026-04-09%20170619.png" alt="Landing Page" width="100%">
-<img src="assets/preview/Screenshot%202026-04-09%20170803.png" alt="Dashboard" width="100%">
+<h3>A modern, full-featured gym management platform</h3>
+
+<p>
+  <img src="https://img.shields.io/badge/PHP-8.0%2B-blue?style=for-the-badge&logo=php" alt="PHP">
+  <img src="https://img.shields.io/badge/MySQL-5.7%2B-orange?style=for-the-badge&logo=mysql" alt="MySQL">
+  <img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="License">
+</p>
+
+<br>
+
+<table>
+  <tr>
+    <td><img src="assets/preview/Screenshot%202026-04-09%20170619.png" alt="Landing Page" width="480"></td>
+    <td><img src="assets/preview/Screenshot%202026-04-09%20170803.png" alt="Admin Dashboard" width="480"></td>
+  </tr>
+  <tr>
+    <td align="center"><sub>🏠 Landing Page</sub></td>
+    <td align="center"><sub>📊 Admin Dashboard</sub></td>
+  </tr>
+</table>
 
 </div>
 
-A comprehensive web-based gym management system built with PHP and MySQL. Manage memberships, trainers, bookings, payments, and member progress tracking.
+<br>
 
-![PHP Version](https://img.shields.io/badge/PHP-8.0%2B-blue)
-![MySQL](https://img.shields.io/badge/MySQL-5.7%2B-orange)
-![License](https://img.shields.io/badge/license-MIT-green)
+A comprehensive web-based gym management system built with PHP and MySQL. Manage memberships, trainers, bookings, payments, and member progress tracking.
 
 ## 🌟 Features
 
