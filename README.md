@@ -1,5 +1,12 @@
 # FitPay Gym Management System
 
+<div align="center">
+
+<img src="assets/preview/Screenshot%202026-04-09%20170619.png" alt="Landing Page" width="100%">
+<img src="assets/preview/Screenshot%202026-04-09%20170803.png" alt="Dashboard" width="100%">
+
+</div>
+
 A comprehensive web-based gym management system built with PHP and MySQL. Manage memberships, trainers, bookings, payments, and member progress tracking.
 
 ![PHP Version](https://img.shields.io/badge/PHP-8.0%2B-blue)
