@@ -140,17 +140,15 @@ See [SECURITY_IMPROVEMENTS.md](SECURITY_IMPROVEMENTS.md) for detailed security a
 
 ## 📱 Screenshots
 
-### Landing Page
-Modern, responsive landing page with package showcase and gym information.
+<div align="center">
 
-### Member Dashboard
-Track bookings, view workout plans, and monitor progress.
+![Landing Page](assets/preview/Screenshot%202026-04-09%20170619.png)
+*Landing Page — Package showcase, testimonials, and gym info*
 
-### Admin Panel
-Comprehensive admin dashboard for managing all aspects of the gym.
+![Dashboard](assets/preview/Screenshot%202026-04-09%20170803.png)
+*Admin / Member Dashboard — Full management interface*
 
-### Trainer Portal
-Manage clients, create workout plans, and track member progress.
+</div>
 
 ## 🛠️ Configuration
 
