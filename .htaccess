@@ -1,0 +1,50 @@
+Options -Indexes
+Options +FollowSymLinks
+
+# Force HTTPS (uncomment on AWS after SSL is set up)
+# RewriteEngine On
+# RewriteCond %{HTTPS} off
+# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+RewriteEngine On
+
+# Block access to sensitive files
+<FilesMatch "(^\.env|\.env\..*|composer\.(json|lock)|\.git)">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Block access to debug/test/migration scripts in production
+<FilesMatch "(debug|test-|migrate_|seed_|check_|fix_|setup-|setup_|deploy_|create-manager)\.php$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Block direct access to api/config.php and api/session.php
+<Files "config.php">
+    Order allow,deny
+    Deny from all
+</Files>
+<Files "session.php">
+    Order allow,deny
+    Deny from all
+</Files>
+<Files "access-control.php">
+    Order allow,deny
+    Deny from all
+</Files>
+
+# Set default charset
+AddDefaultCharset UTF-8
+
+# Enable PHP error logging (not display) in production
+php_flag display_errors Off
+php_flag log_errors On
+
+# Prevent access to uploads directory from executing PHP
+<Directory "uploads">
+    php_flag engine off
+</Directory>
+<Directory "api/uploads">
+    php_flag engine off
+</Directory>
