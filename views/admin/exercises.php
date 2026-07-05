@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once '../../api/session.php';
 requireAdmin();
 $user = getCurrentUser();
@@ -17,7 +17,7 @@ $user = getCurrentUser();
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Dashboard Styles -->
-    <link rel="stylesheet" href="../../assets/css/dashboard.css?v=1.6">
+    <link rel="stylesheet" href="../../assets/css/dashboard.css?v=3.0">
     
     <script>
         (function() {
@@ -31,7 +31,7 @@ $user = getCurrentUser();
     </script>
 
     <style>
-        /* ── Category Filter Tabs ── */
+        /* â”€â”€ Category Filter Tabs â”€â”€ */
         .category-tabs {
             display: flex;
             gap: 8px;
@@ -53,7 +53,7 @@ $user = getCurrentUser();
         .cat-tab:hover { border-color: var(--primary); color: var(--primary); }
         .cat-tab.active { background: var(--primary); border-color: var(--primary); color: #000; }
 
-        /* ── Exercise Cards ── */
+        /* â”€â”€ Exercise Cards â”€â”€ */
         .exercise-card {
             background: var(--dark-card);
             border: 1px solid var(--dark-border);
@@ -90,7 +90,7 @@ $user = getCurrentUser();
         .exercise-card-actions { display: flex; gap: 8px; margin-top: auto; }
         .exercise-card-actions .btn { flex: 1; padding: 8px 10px; font-size: 0.8rem; border-radius: 10px; }
 
-        /* ── Equipment Picker inside modal ── */
+        /* â”€â”€ Equipment Picker inside modal â”€â”€ */
         .eq-picker-wrap { border: 1.5px solid var(--dark-border); border-radius: 12px; overflow: hidden; }
         .eq-search-bar { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--dark-border); background: var(--dark-bg); }
         .eq-search-bar input { background: transparent; border: none; outline: none; color: var(--dark-text); font-size: 0.88rem; flex: 1; font-family: 'Inter', sans-serif; }
@@ -121,6 +121,8 @@ $user = getCurrentUser();
     <button class="mobile-menu-btn" id="mobileMenuToggle">
         <i class="fas fa-bars"></i>
     </button>
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
     
     <!-- Sidebar -->
     <aside class="sidebar">
@@ -235,9 +237,9 @@ $user = getCurrentUser();
         </div>
     </main>
 
-    <!-- ══════════════════════════════════════════
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
          Add / Edit Exercise Modal
-    ══════════════════════════════════════════ -->
+    â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     <div class="modal-overlay" id="exerciseModal">
         <div class="modal" style="max-width: 680px; max-height: 92vh; overflow-y: auto;">
             <div class="modal-header" style="position: sticky; top: 0; z-index: 10; background: var(--dark-card);">
@@ -304,7 +306,7 @@ $user = getCurrentUser();
                         <div id="imageUploadArea" class="file-upload-area" style="padding: 24px; border: 2px dashed var(--dark-border); border-radius: 12px; text-align: center; cursor: pointer; transition: all 0.3s;" onclick="document.getElementById('exerciseImageFile').click()" ondragover="event.preventDefault(); this.style.borderColor='var(--primary)'" ondragleave="this.style.borderColor='var(--dark-border)'" ondrop="handleImageDrop(event)">
                             <i class="fas fa-cloud-upload-alt" style="font-size: 2rem; color: var(--primary); margin-bottom: 10px; display: block;"></i>
                             <p style="font-size: 0.9rem; margin-bottom: 4px; font-weight: 600;">Click or drag to upload</p>
-                            <span style="font-size: 0.75rem; color: var(--dark-text-secondary);">JPG, PNG or WebP • Max 5MB</span>
+                            <span style="font-size: 0.75rem; color: var(--dark-text-secondary);">JPG, PNG or WebP â€¢ Max 5MB</span>
                             <input type="file" id="exerciseImageFile" accept="image/*" style="display: none;" onchange="handleImagePreview(event)">
                         </div>
                         <div id="imagePreviewContainer" style="display: none; margin-top: 12px; position: relative;">
@@ -372,5 +374,6 @@ $user = getCurrentUser();
     <!-- Scripts -->
     <script src="../../assets/js/theme.js"></script>
     <script src="../../assets/js/exercises.js?v=2.0"></script>
+    <script src="../../assets/js/mobile-menu.js"></script>
 </body>
 </html>

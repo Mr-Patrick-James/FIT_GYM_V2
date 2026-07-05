@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once '../../api/session.php';
 requireAdmin();
 $user = getCurrentUser();
@@ -13,7 +13,7 @@ $user = getCurrentUser();
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="../../assets/css/dashboard.css?v=1.7">
+    <link rel="stylesheet" href="../../assets/css/dashboard.css?v=3.0">
     <script>
         (function() {
             const savedTheme = localStorage.getItem('theme') || 'dark';
@@ -79,6 +79,8 @@ $user = getCurrentUser();
 </head>
 <body>
     <button class="mobile-menu-btn" id="mobileMenuToggle"><i class="fas fa-bars"></i></button>
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
     <aside class="sidebar">
         <div class="logo"><h1>FitPay</h1><p>GYM MANAGEMENT</p></div>
@@ -186,7 +188,7 @@ $user = getCurrentUser();
         </div>
 
         <div class="footer">
-            <p><i class="fas fa-heart" style="color:var(--primary);"></i> © <?php echo date('Y'); ?> Martinez Fitness Gym • FitPay Management System v2.0</p>
+            <p><i class="fas fa-heart" style="color:var(--primary);"></i> Â© <?php echo date('Y'); ?> Martinez Fitness Gym â€¢ FitPay Management System v2.0</p>
         </div>
     </main>
 
@@ -213,7 +215,7 @@ $user = getCurrentUser();
                                 <button type="button" class="card-btn" onclick="document.getElementById('trainerPhotoFile').click()">
                                     <i class="fas fa-camera"></i> Choose Photo
                                 </button>
-                                <p style="font-size:0.72rem;color:var(--dark-text-secondary);margin-top:6px;">JPG, PNG, WEBP — max 5MB</p>
+                                <p style="font-size:0.72rem;color:var(--dark-text-secondary);margin-top:6px;">JPG, PNG, WEBP â€” max 5MB</p>
                             </div>
                         </div>
                         <input type="hidden" id="trainerPhotoUrl">
@@ -354,5 +356,6 @@ $user = getCurrentUser();
     <script src="../../assets/js/main.js"></script>
     <script src="../../assets/js/theme.js"></script>
     <script src="../../assets/js/trainers.js?v=2.0"></script>
+    <script src="../../assets/js/mobile-menu.js"></script>
 </body>
 </html>

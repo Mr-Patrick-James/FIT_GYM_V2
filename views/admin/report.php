@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once '../../api/session.php';
 requireAdmin();
 $user = getCurrentUser();
@@ -16,9 +16,9 @@ $user = getCurrentUser();
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <link rel="stylesheet" href="../../assets/css/dashboard.css?v=1.7">
+    <link rel="stylesheet" href="../../assets/css/dashboard.css?v=3.0">
     <style>
-        /* ── Report-specific styles ── */
+        /* â”€â”€ Report-specific styles â”€â”€ */
         .report-tabs { display: flex; gap: 4px; background: var(--dark-card); padding: 4px; border-radius: 12px; border: 1px solid var(--dark-border); margin-bottom: 28px; }
         .report-tab  { flex: 1; padding: 10px 16px; border: none; background: transparent; color: var(--dark-text-secondary); font-weight: 600; font-size: 0.78rem; border-radius: 9px; cursor: pointer; transition: all .2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .report-tab.active { background: var(--primary); color: var(--dark-bg); }
@@ -115,6 +115,8 @@ $user = getCurrentUser();
 </head>
 <body>
     <button class="mobile-menu-btn" id="mobileMenuToggle"><i class="fas fa-bars"></i></button>
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
     <aside class="sidebar">
         <div class="logo"><h1>FitPay</h1><p>GYM MANAGEMENT</p></div>
@@ -194,45 +196,45 @@ $user = getCurrentUser();
             <div class="custom-dates" id="customDates">
                 <label>From</label>
                 <input type="date" id="startDate">
-                <span class="sep">→</span>
+                <span class="sep">â†’</span>
                 <label>To</label>
                 <input type="date" id="endDate">
             </div>
             <button class="apply-btn" onclick="loadAll()"><i class="fas fa-sync-alt"></i> Apply</button>
         </div>
 
-        <!-- ══ TAB: Sales Overview ══ -->
+        <!-- â•â• TAB: Sales Overview â•â• -->
         <div class="tab-panel active" id="panel-sales">
             <!-- Summary cards -->
             <div class="summary-grid" id="salesSummary">
                 <div class="summary-card highlight">
                     <div class="sc-label">Total Sales</div>
-                    <div class="sc-value" id="s-total-sales">—</div>
+                    <div class="sc-value" id="s-total-sales">â€”</div>
                     <div class="sc-sub">bookings in period</div>
                 </div>
                 <div class="summary-card">
                     <div class="sc-label">Total Revenue</div>
-                    <div class="sc-value" id="s-total-rev">—</div>
+                    <div class="sc-value" id="s-total-rev">â€”</div>
                     <div class="sc-sub">all bookings</div>
                 </div>
                 <div class="summary-card">
                     <div class="sc-label">Verified Revenue</div>
-                    <div class="sc-value" id="s-verified-rev">—</div>
+                    <div class="sc-value" id="s-verified-rev">â€”</div>
                     <div class="sc-sub">confirmed payments</div>
                 </div>
                 <div class="summary-card">
                     <div class="sc-label">Unique Clients</div>
-                    <div class="sc-value" id="s-clients">—</div>
+                    <div class="sc-value" id="s-clients">â€”</div>
                     <div class="sc-sub">members + walk-ins</div>
                 </div>
                 <div class="summary-card">
                     <div class="sc-label">Walk-in Bookings</div>
-                    <div class="sc-value" id="s-walkin">—</div>
+                    <div class="sc-value" id="s-walkin">â€”</div>
                     <div class="sc-sub">of total bookings</div>
                 </div>
                 <div class="summary-card">
                     <div class="sc-label">Pending</div>
-                    <div class="sc-value" id="s-pending">—</div>
+                    <div class="sc-value" id="s-pending">â€”</div>
                     <div class="sc-sub">awaiting verification</div>
                 </div>
             </div>
@@ -244,7 +246,7 @@ $user = getCurrentUser();
                         <h3>Daily Sales</h3>
                         <div class="card-actions">
                             <select id="salesChartMode" class="card-btn" style="padding:6px 12px;cursor:pointer;" onchange="renderSalesChart()">
-                                <option value="revenue">Revenue (₱)</option>
+                                <option value="revenue">Revenue (â‚±)</option>
                                 <option value="count">Number of Sales</option>
                             </select>
                         </div>
@@ -270,12 +272,12 @@ $user = getCurrentUser();
                     </div>
                 </div>
                 <div class="data-table-wrap" style="margin-top:16px;" id="salesTableWrap">
-                    <div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Loading…</p></div>
+                    <div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Loadingâ€¦</p></div>
                 </div>
             </div>
         </div>
 
-        <!-- ══ TAB: Package Sales ══ -->
+        <!-- â•â• TAB: Package Sales â•â• -->
         <div class="tab-panel" id="panel-packages">
             <div class="chart-row">
                 <div class="content-card">
@@ -300,12 +302,12 @@ $user = getCurrentUser();
                     </div>
                 </div>
                 <div class="data-table-wrap" style="margin-top:16px;" id="pkgTableWrap">
-                    <div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Loading…</p></div>
+                    <div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Loadingâ€¦</p></div>
                 </div>
             </div>
         </div>
 
-        <!-- ══ TAB: Report Builder ══ -->
+        <!-- â•â• TAB: Report Builder â•â• -->
         <div class="tab-panel" id="panel-builder">
             <div class="builder-grid">
                 <div class="builder-section">
@@ -334,8 +336,8 @@ $user = getCurrentUser();
                 </div>
                 <div class="builder-section" style="grid-column: 1 / -1;">
                     <h4>Report Title & Notes</h4>
-                    <input type="text" id="reportTitle" class="settings-input" style="width:100%;margin-bottom:12px;" placeholder="e.g. Monthly Sales Report – March 2026" value="Gym Sales Report">
-                    <textarea id="reportNotes" class="settings-input" style="width:100%;height:80px;resize:vertical;" placeholder="Optional notes to include in the report…"></textarea>
+                    <input type="text" id="reportTitle" class="settings-input" style="width:100%;margin-bottom:12px;" placeholder="e.g. Monthly Sales Report â€“ March 2026" value="Gym Sales Report">
+                    <textarea id="reportNotes" class="settings-input" style="width:100%;height:80px;resize:vertical;" placeholder="Optional notes to include in the reportâ€¦"></textarea>
                 </div>
             </div>
             <button class="generate-btn" onclick="generateReport()">
@@ -344,7 +346,7 @@ $user = getCurrentUser();
         </div>
 
         <div class="footer">
-            <p><i class="fas fa-heart" style="color:var(--primary);"></i> © <?php echo date('Y'); ?> Martinez Fitness Gym • FitPay Management System v2.0</p>
+            <p><i class="fas fa-heart" style="color:var(--primary);"></i> Â© <?php echo date('Y'); ?> Martinez Fitness Gym â€¢ FitPay Management System v2.0</p>
         </div>
     </main>
 
@@ -353,5 +355,6 @@ $user = getCurrentUser();
 
     <script src="../../assets/js/theme.js"></script>
     <script src="../../assets/js/reports.js?v=2.0"></script>
+    <script src="../../assets/js/mobile-menu.js"></script>
 </body>
 </html>

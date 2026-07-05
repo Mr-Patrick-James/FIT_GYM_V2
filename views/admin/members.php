@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once '../../api/session.php';
 requireAdmin();
 $user = getCurrentUser();
@@ -17,7 +17,7 @@ $user = getCurrentUser();
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Dashboard Styles -->
-    <link rel="stylesheet" href="../../assets/css/dashboard.css?v=1.6">
+    <link rel="stylesheet" href="../../assets/css/dashboard.css?v=3.0">
     
     <!-- Apply theme immediately before page renders to prevent flash -->
     <script>
@@ -42,6 +42,8 @@ $user = getCurrentUser();
     <button class="mobile-menu-btn" id="mobileMenuToggle">
         <i class="fas fa-bars"></i>
     </button>
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
     
     <!-- Sidebar -->
     <aside class="sidebar">
@@ -187,7 +189,7 @@ $user = getCurrentUser();
         <div class="footer">
             <p>
                 <i class="fas fa-heart" style="color: var(--primary);"></i>
-                © <?php echo date('Y'); ?> Martinez Fitness Gym • FitPay Management System v2.0
+                Â© <?php echo date('Y'); ?> Martinez Fitness Gym â€¢ FitPay Management System v2.0
                 <i class="fas fa-bolt" style="color: var(--primary);"></i>
             </p>
         </div>
@@ -223,11 +225,11 @@ $user = getCurrentUser();
                     <div id="currentPackageBanner" class="current-pkg-banner">
                         <div>
                             <div class="cpb-label">Current Package</div>
-                            <div class="cpb-name" id="modalCurrentPackage">—</div>
+                            <div class="cpb-name" id="modalCurrentPackage">â€”</div>
                         </div>
                         <div style="text-align:right;">
                             <div class="cpb-label">Expires</div>
-                            <div class="cpb-expiry" id="modalPackageExpiry">—</div>
+                            <div class="cpb-expiry" id="modalPackageExpiry">â€”</div>
                         </div>
                     </div>
 
@@ -258,7 +260,7 @@ $user = getCurrentUser();
                         </div>
                         <div class="detail-group">
                             <label>Total Spent</label>
-                            <div class="value" id="modalTotalSpent" style="font-weight:800;color:var(--success);">₱0</div>
+                            <div class="value" id="modalTotalSpent" style="font-weight:800;color:var(--success);">â‚±0</div>
                         </div>
                         <div class="detail-group">
                             <label>Member Type</label>
@@ -300,5 +302,6 @@ $user = getCurrentUser();
     <script src="../../assets/js/theme.js"></script>
     <!-- Members Scripts -->
     <script src="../../assets/js/members.js"></script>
+    <script src="../../assets/js/mobile-menu.js"></script>
 </body>
 </html>

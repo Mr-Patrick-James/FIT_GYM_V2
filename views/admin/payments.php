@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once '../../api/session.php';
 requireAdmin();
 $user = getCurrentUser();
@@ -20,7 +20,7 @@ $user = getCurrentUser();
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <!-- Dashboard Styles -->
-    <link rel="stylesheet" href="../../assets/css/dashboard.css?v=1.6">
+    <link rel="stylesheet" href="../../assets/css/dashboard.css?v=3.0">
     
     <!-- Apply theme immediately before page renders to prevent flash -->
     <script>
@@ -45,6 +45,8 @@ $user = getCurrentUser();
     <button class="mobile-menu-btn" id="mobileMenuToggle">
         <i class="fas fa-bars"></i>
     </button>
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
     
     <!-- Sidebar -->
     <aside class="sidebar">
@@ -221,7 +223,7 @@ $user = getCurrentUser();
         <div class="footer">
             <p>
                 <i class="fas fa-heart" style="color: var(--primary);"></i>
-                © <?php echo date('Y'); ?> Martinez Fitness Gym • FitPay Management System v2.0
+                Â© <?php echo date('Y'); ?> Martinez Fitness Gym â€¢ FitPay Management System v2.0
                 <i class="fas fa-bolt" style="color: var(--primary);"></i>
             </p>
         </div>
@@ -298,5 +300,6 @@ $user = getCurrentUser();
     <script src="../../assets/js/theme.js"></script>
     <!-- Payments Scripts -->
     <script src="../../assets/js/payments.js"></script>
+    <script src="../../assets/js/mobile-menu.js"></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once '../../api/session.php';
 requireAdmin();
 $user = getCurrentUser();
@@ -17,7 +17,7 @@ $user = getCurrentUser();
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Dashboard Styles -->
-    <link rel="stylesheet" href="../../assets/css/dashboard.css?v=1.6">
+    <link rel="stylesheet" href="../../assets/css/dashboard.css?v=3.0">
     
     <script>
         (function() {
@@ -34,6 +34,8 @@ $user = getCurrentUser();
     <button class="mobile-menu-btn" id="mobileMenuToggle">
         <i class="fas fa-bars"></i>
     </button>
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
     
     <aside class="sidebar">
         <div class="logo">
@@ -292,5 +294,6 @@ $user = getCurrentUser();
         });
     </script>
     <script src="../../assets/js/theme.js"></script>
+    <script src="../../assets/js/mobile-menu.js"></script>
 </body>
 </html>

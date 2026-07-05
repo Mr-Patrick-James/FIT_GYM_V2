@@ -40,7 +40,7 @@ function getSetting($key, $default = '', $settings = []) {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <!-- Dashboard Styles -->
-    <link rel="stylesheet" href="../../assets/css/dashboard.css?v=1.6">
+    <link rel="stylesheet" href="../../assets/css/dashboard.css?v=3.0">
     
     <!-- Apply theme immediately before page renders to prevent flash -->
     <script>
@@ -65,6 +65,9 @@ function getSetting($key, $default = '', $settings = []) {
     <button class="mobile-menu-btn" id="mobileMenuToggle">
         <i class="fas fa-bars"></i>
     </button>
+
+    <!-- Sidebar Overlay (mobile backdrop) -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
     
     <!-- Sidebar -->
     <aside class="sidebar">
@@ -411,5 +414,6 @@ function getSetting($key, $default = '', $settings = []) {
     <script src="../../assets/js/theme.js"></script>
     <!-- Dashboard Scripts -->
     <script src="../../assets/js/dashboard.js"></script>
+    <script src="../../assets/js/mobile-menu.js"></script>
 </body>
 </html>
