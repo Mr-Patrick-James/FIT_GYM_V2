@@ -1,10 +1,33 @@
 # FitPay Gym Management System
 
-A comprehensive web-based gym management system built with PHP and MySQL. Manage memberships, trainers, bookings, payments, and member progress tracking.
+<div align="center">
 
-![PHP Version](https://img.shields.io/badge/PHP-8.0%2B-blue)
-![MySQL](https://img.shields.io/badge/MySQL-5.7%2B-orange)
-![License](https://img.shields.io/badge/license-MIT-green)
+<h3>A modern, full-featured gym management platform</h3>
+
+<p>
+  <img src="https://img.shields.io/badge/PHP-8.0%2B-blue?style=for-the-badge&logo=php" alt="PHP">
+  <img src="https://img.shields.io/badge/MySQL-5.7%2B-orange?style=for-the-badge&logo=mysql" alt="MySQL">
+  <img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="License">
+</p>
+
+<br>
+
+<table>
+  <tr>
+    <td><img src="assets/preview/Screenshot%202026-04-09%20170619.png" alt="Landing Page" width="480"></td>
+    <td><img src="assets/preview/Screenshot%202026-04-09%20170803.png" alt="Admin Dashboard" width="480"></td>
+  </tr>
+  <tr>
+    <td align="center"><sub>🏠 Landing Page</sub></td>
+    <td align="center"><sub>📊 Admin Dashboard</sub></td>
+  </tr>
+</table>
+
+</div>
+
+<br>
+
+A comprehensive web-based gym management system built with PHP and MySQL. Manage memberships, trainers, bookings, payments, and member progress tracking.
 
 ## 🌟 Features
 
@@ -140,17 +163,15 @@ See [SECURITY_IMPROVEMENTS.md](SECURITY_IMPROVEMENTS.md) for detailed security a
 
 ## 📱 Screenshots
 
-### Landing Page
-Modern, responsive landing page with package showcase and gym information.
+<div align="center">
 
-### Member Dashboard
-Track bookings, view workout plans, and monitor progress.
+![Landing Page](assets/preview/Screenshot%202026-04-09%20170619.png)
+*Landing Page — Package showcase, testimonials, and gym info*
 
-### Admin Panel
-Comprehensive admin dashboard for managing all aspects of the gym.
+![Dashboard](assets/preview/Screenshot%202026-04-09%20170803.png)
+*Admin / Member Dashboard — Full management interface*
 
-### Trainer Portal
-Manage clients, create workout plans, and track member progress.
+</div>
 
 ## 🛠️ Configuration
 
@@ -274,6 +295,30 @@ Contributions are welcome! Please follow these steps:
 ## 📝 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+```
+MIT License
+
+Copyright (c) 2026 Martinez Fitness Gym
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
 
 ## 👥 Authors
 
