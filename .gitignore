@@ -51,6 +51,8 @@ Thumbs.db
 *.cache
 *.bak
 *.old
+/api/sessions/sess_*
+!/api/sessions/.htaccess
 
 # Database dumps (except schema)
 *.sql.gz

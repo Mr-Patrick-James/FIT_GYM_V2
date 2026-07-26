@@ -2,9 +2,9 @@
 require_once '../config.php';
 require_once '../session.php';
 
-// Ensure user is an admin or manager
-if (!isAdmin() && !isManager()) {
-    sendResponse(false, 'Unauthorized access', null, 403);
+// Ensure user is an admin (Managers cannot manage admins)
+if (!isAdmin()) {
+    sendResponse(false, 'Unauthorized access. Admin privileges required.', null, 403);
 }
 
 $method = $_SERVER['REQUEST_METHOD'];

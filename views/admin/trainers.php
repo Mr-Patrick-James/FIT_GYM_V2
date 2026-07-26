@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once '../../api/session.php';
 requireAdmin();
 $user = getCurrentUser();
@@ -77,7 +77,7 @@ $user = getCurrentUser();
         #trainersGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px; padding: 24px; }
     </style>
 </head>
-<body>
+<body class="role-<?php echo $user['role']; ?>">
     <button class="mobile-menu-btn" id="mobileMenuToggle"><i class="fas fa-bars"></i></button>
     <!-- Sidebar Overlay -->
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
@@ -94,7 +94,9 @@ $user = getCurrentUser();
             <li><a href="equipment.php"><i class="fas fa-tools"></i> <span>Equipment</span></a></li>
             <li><a href="exercises.php"><i class="fas fa-running"></i> <span>Exercises</span></a></li>
             <li><a href="report.php"><i class="fas fa-file-invoice-dollar"></i> <span>Reports</span></a></li>
+            <?php if (isAdmin()): ?>
             <li><a href="settings.php"><i class="fas fa-cog"></i> <span>Settings</span></a></li>
+            <?php endif; ?>
         </ul>
         <div class="admin-profile">
             <div class="admin-avatar"><?php
@@ -139,9 +141,11 @@ $user = getCurrentUser();
             <div class="card-header">
                 <h3>All Trainers</h3>
                 <div class="card-actions">
+                    <?php if (hasPermission('export_data')): ?>
                     <button class="card-btn" onclick="exportTrainers()">
                         <i class="fas fa-file-csv"></i> Export CSV
                     </button>
+                    <?php endif; ?>
                     <button class="card-btn primary" onclick="loadTrainers()">
                         <i class="fas fa-sync-alt"></i> Refresh
                     </button>

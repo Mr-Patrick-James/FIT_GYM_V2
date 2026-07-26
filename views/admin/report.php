@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once '../../api/session.php';
 requireAdmin();
 $user = getCurrentUser();
@@ -113,7 +113,7 @@ $user = getCurrentUser();
         })();
     </script>
 </head>
-<body>
+<body class="role-<?php echo $user['role']; ?>">
     <button class="mobile-menu-btn" id="mobileMenuToggle"><i class="fas fa-bars"></i></button>
     <!-- Sidebar Overlay -->
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
@@ -130,7 +130,9 @@ $user = getCurrentUser();
             <li><a href="equipment.php"><i class="fas fa-tools"></i><span>Equipment</span></a></li>
             <li><a href="exercises.php"><i class="fas fa-running"></i><span>Exercises</span></a></li>
             <li><a href="report.php" class="active"><i class="fas fa-file-chart-line"></i><span>Reports</span></a></li>
+            <?php if (isAdmin()): ?>
             <li><a href="settings.php"><i class="fas fa-cog"></i><span>Settings</span></a></li>
+            <?php endif; ?>
         </ul>
         <div class="admin-profile">
             <div class="admin-avatar"><?php
@@ -267,9 +269,11 @@ $user = getCurrentUser();
             <div class="content-card" style="margin-bottom:28px;">
                 <div class="card-header">
                     <h3>Sales by Date</h3>
+                    <?php if (hasPermission('export_data')): ?>
                     <div class="card-actions">
                         <button class="card-btn" onclick="exportSalesCsv()"><i class="fas fa-download"></i> CSV</button>
                     </div>
+                    <?php endif; ?>
                 </div>
                 <div class="data-table-wrap" style="margin-top:16px;" id="salesTableWrap">
                     <div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Loadingâ€¦</p></div>
@@ -297,9 +301,11 @@ $user = getCurrentUser();
             <div class="content-card" style="margin-bottom:28px;">
                 <div class="card-header">
                     <h3>Package Sales Breakdown</h3>
+                    <?php if (hasPermission('export_data')): ?>
                     <div class="card-actions">
                         <button class="card-btn" onclick="exportPackageCsv()"><i class="fas fa-download"></i> CSV</button>
                     </div>
+                    <?php endif; ?>
                 </div>
                 <div class="data-table-wrap" style="margin-top:16px;" id="pkgTableWrap">
                     <div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Loadingâ€¦</p></div>
@@ -340,9 +346,16 @@ $user = getCurrentUser();
                     <textarea id="reportNotes" class="settings-input" style="width:100%;height:80px;resize:vertical;" placeholder="Optional notes to include in the reportâ€¦"></textarea>
                 </div>
             </div>
+            <?php if (hasPermission('export_data')): ?>
             <button class="generate-btn" onclick="generateReport()">
                 <i class="fas fa-file-export"></i> Generate & Download Report
             </button>
+            <?php else: ?>
+            <div style="margin-top:20px; padding:20px; background:rgba(255,255,255,0.03); border-radius:12px; text-align:center; color:var(--dark-text-secondary);">
+                <i class="fas fa-lock" style="margin-bottom:10px; display:block; font-size:1.5rem;"></i>
+                Custom report generation and data exports are restricted to Administrators.
+            </div>
+            <?php endif; ?>
         </div>
 
         <div class="footer">

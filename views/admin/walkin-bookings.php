@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once '../../api/session.php';
 requireAdmin();
 $user = getCurrentUser();
@@ -37,7 +37,7 @@ $user = getCurrentUser();
         })();
     </script>
 </head>
-<body>
+<body class="role-<?php echo $user['role']; ?>">
     <!-- Mobile Menu Toggle Button -->
     <button class="mobile-menu-btn" id="mobileMenuToggle">
         <i class="fas fa-bars"></i>
@@ -61,6 +61,10 @@ $user = getCurrentUser();
                 <li><a href="exercises.php"><i class="fas fa-running"></i> Exercises</a></li>
                 <li><a href="bookings.php"><i class="fas fa-calendar-check"></i> Bookings</a></li>
                 <li><a href="walkin-bookings.php" class="active"><i class="fas fa-walking"></i> Walk-ins</a></li>
+                <li><a href="report.php"><i class="fas fa-file-invoice-dollar"></i> Reports</a></li>
+                <?php if (isAdmin()): ?>
+                <li><a href="settings.php"><i class="fas fa-cog"></i> Settings</a></li>
+                <?php endif; ?>
                 <li><a href="../user/dashboard.php"><i class="fas fa-home"></i> User View</a></li>
             </ul>
         </nav>

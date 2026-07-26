@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once '../../api/session.php';
 requireAdmin();
 $user = getCurrentUser();
@@ -116,7 +116,7 @@ $user = getCurrentUser();
         @media (max-width: 520px) { .form-row { grid-template-columns: 1fr; } }
     </style>
 </head>
-<body>
+<body class="role-<?php echo $user['role']; ?>">
     <!-- Mobile Menu Toggle Button -->
     <button class="mobile-menu-btn" id="mobileMenuToggle">
         <i class="fas fa-bars"></i>
@@ -141,7 +141,9 @@ $user = getCurrentUser();
             <li><a href="equipment.php"><i class="fas fa-tools"></i> <span>Equipment</span></a></li>
             <li><a href="exercises.php" class="active"><i class="fas fa-running"></i> <span>Exercises</span></a></li>
             <li><a href="report.php"><i class="fas fa-file-invoice-dollar"></i> <span>Reports</span></a></li>
+            <?php if (isAdmin()): ?>
             <li><a href="settings.php"><i class="fas fa-cog"></i> <span>Settings</span></a></li>
+            <?php endif; ?>
         </ul>
         
         <div class="admin-profile">

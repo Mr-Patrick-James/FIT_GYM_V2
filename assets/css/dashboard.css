@@ -1,4 +1,4 @@
-﻿:root {
+:root {
     /* Landing Page Color Palette - Dark, White, Black */
     --primary: #ffffff;
     --dark-bg: #0a0a0a;
@@ -3769,6 +3769,25 @@ body.light-mode .theme-option.active {
     .ml-bookings, .ml-joined { display: none; }
 }
 
+
+/* ============================================================
+   ROLE-BASED ACCESS CONTROL (UI Hiding)
+   ============================================================ */
+.role-manager .btn-danger,
+.role-manager .icon-btn.danger,
+.role-manager .card-btn[onclick*="delete"],
+.role-manager .card-btn[onclick*="Delete"],
+.role-manager [id*="delete"],
+.role-manager [id*="Delete"] {
+    display: none !important;
+}
+
+/* Specific overrides if needed */
+.role-manager #deleteTrainerModal,
+.role-manager #deletePackageModal,
+.role-manager #deleteMemberModal {
+    display: none !important;
+}
 
 /* ============================================================
    RESPONSIVE OVERHAUL — Dashboard & Sidebar

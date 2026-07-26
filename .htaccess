@@ -9,28 +9,23 @@ RewriteEngine On
 
 # Block access to sensitive files
 <FilesMatch "(^\.env|\.env\..*|composer\.(json|lock)|\.git)">
-    Order allow,deny
-    Deny from all
+    Require all denied
 </FilesMatch>
 
 # Block access to debug/test/migration scripts
 <FilesMatch "(debug|test-|migrate_|seed_|check_|fix_|setup-|setup_|deploy_|create-manager)\.php$">
-    Order allow,deny
-    Deny from all
+    Require all denied
 </FilesMatch>
 
 # Block direct access to sensitive API files
 <Files "config.php">
-    Order allow,deny
-    Deny from all
+    Require all denied
 </Files>
 <Files "session.php">
-    Order allow,deny
-    Deny from all
+    Require all denied
 </Files>
 <Files "access-control.php">
-    Order allow,deny
-    Deny from all
+    Require all denied
 </Files>
 
 # Set default charset

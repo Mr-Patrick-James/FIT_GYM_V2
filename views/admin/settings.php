@@ -1,6 +1,10 @@
-﻿<?php
+<?php
 require_once '../../api/session.php';
 requireAdmin();
+if (!isAdmin()) {
+    header('Location: dashboard.php');
+    exit;
+}
 $user = getCurrentUser();
 ?>
 <!DOCTYPE html>
@@ -126,7 +130,7 @@ $user = getCurrentUser();
         })();
     </script>
 </head>
-<body>
+<body class="role-<?php echo $user['role']; ?>">
     <!-- Mobile Menu Toggle Button -->
     <button class="mobile-menu-btn" id="mobileMenuToggle">
         <i class="fas fa-bars"></i>
@@ -216,10 +220,12 @@ $user = getCurrentUser();
                         <i class="fas fa-user"></i>
                         <span>Account</span>
                     </button>
+                    <?php if (isAdmin()): ?>
                     <button class="settings-nav-item" onclick="showSettingsTab('backup')" id="nav-backup">
                         <i class="fas fa-database"></i>
                         <span>Backup</span>
                     </button>
+                    <?php endif; ?>
                 </div>
             </div>
 
@@ -241,7 +247,7 @@ $user = getCurrentUser();
                                 <label>Gym Name</label>
                                 <span class="settings-hint">The name displayed to members</span>
                             </div>
-                            <input type="text" id="gymName" class="settings-input" placeholder="Martinez Fitness Gym">
+                            <input type="text" id="gymName" class="settings-input" placeholder="Martinez Fitness Gym" <?php echo !isAdmin() ? 'disabled' : ''; ?>>
                         </div>
 
                         <div class="settings-item">
@@ -249,7 +255,7 @@ $user = getCurrentUser();
                                 <label>Gym Address</label>
                                 <span class="settings-hint">Physical location of your gym</span>
                             </div>
-                            <textarea id="gymAddress" class="settings-input" rows="3" placeholder="Enter gym address..."></textarea>
+                            <textarea id="gymAddress" class="settings-input" rows="3" placeholder="Enter gym address..." <?php echo !isAdmin() ? 'disabled' : ''; ?>></textarea>
                         </div>
 
                         <div class="settings-item">
@@ -257,7 +263,7 @@ $user = getCurrentUser();
                                 <label>Contact Number</label>
                                 <span class="settings-hint">Primary contact number</span>
                             </div>
-                            <input type="tel" id="gymContact" class="settings-input" placeholder="0917-123-4567">
+                            <input type="tel" id="gymContact" class="settings-input" placeholder="0917-123-4567" <?php echo !isAdmin() ? 'disabled' : ''; ?>>
                         </div>
 
                         <div class="settings-item">
@@ -265,7 +271,7 @@ $user = getCurrentUser();
                                 <label>Email Address</label>
                                 <span class="settings-hint">Contact email for inquiries</span>
                             </div>
-                            <input type="email" id="gymEmail" class="settings-input" placeholder="info@martinezfitness.com">
+                            <input type="email" id="gymEmail" class="settings-input" placeholder="info@martinezfitness.com" <?php echo !isAdmin() ? 'disabled' : ''; ?>>
                         </div>
 
                         <div class="settings-item">
@@ -276,11 +282,11 @@ $user = getCurrentUser();
                             <div class="settings-time-group">
                                 <div class="settings-time-input">
                                     <label>Opening Time</label>
-                                    <input type="time" id="openingTime" class="settings-input" value="06:00">
+                                    <input type="time" id="openingTime" class="settings-input" value="06:00" <?php echo !isAdmin() ? 'disabled' : ''; ?>>
                                 </div>
                                 <div class="settings-time-input">
                                     <label>Closing Time</label>
-                                    <input type="time" id="closingTime" class="settings-input" value="22:00">
+                                    <input type="time" id="closingTime" class="settings-input" value="22:00" <?php echo !isAdmin() ? 'disabled' : ''; ?>>
                                 </div>
                             </div>
                         </div>
@@ -290,7 +296,7 @@ $user = getCurrentUser();
                                 <label>Timezone</label>
                                 <span class="settings-hint">Time zone for scheduling and reports</span>
                             </div>
-                            <select id="timezone" class="settings-input">
+                            <select id="timezone" class="settings-input" <?php echo !isAdmin() ? 'disabled' : ''; ?>>
                                 <option value="Asia/Manila" selected>Asia/Manila (PHT)</option>
                                 <option value="UTC">UTC</option>
                                 <option value="America/New_York">America/New_York (EST)</option>
@@ -307,7 +313,7 @@ $user = getCurrentUser();
                                     <label>About Us Text</label>
                                     <span class="settings-hint">The main description in the About section</span>
                                 </div>
-                                <textarea id="aboutText" class="settings-input" rows="4" placeholder="Enter gym description..."></textarea>
+                                <textarea id="aboutText" class="settings-input" rows="4" placeholder="Enter gym description..." <?php echo !isAdmin() ? 'disabled' : ''; ?>></textarea>
                             </div>
 
                             <div class="settings-item">
@@ -315,7 +321,7 @@ $user = getCurrentUser();
                                     <label>Our Mission</label>
                                     <span class="settings-hint">Your gym's mission statement</span>
                                 </div>
-                                <textarea id="missionText" class="settings-input" rows="3" placeholder="Enter mission statement..."></textarea>
+                                <textarea id="missionText" class="settings-input" rows="3" placeholder="Enter mission statement..." <?php echo !isAdmin() ? 'disabled' : ''; ?>></textarea>
                             </div>
 
                             <div class="settings-item">
@@ -323,7 +329,7 @@ $user = getCurrentUser();
                                     <label>Years of Experience</label>
                                     <span class="settings-hint">Displayed in the stats section (e.g., 10+)</span>
                                 </div>
-                                <input type="text" id="yearsExperience" class="settings-input" placeholder="10+">
+                                <input type="text" id="yearsExperience" class="settings-input" placeholder="10+" <?php echo !isAdmin() ? 'disabled' : ''; ?>>
                             </div>
 
                             <div class="settings-item">
@@ -332,10 +338,14 @@ $user = getCurrentUser();
                                     <span class="settings-hint">Multiple images for the home page hero section slider.</span>
                                 </div>
                                 <div class="modern-upload-area" id="hero-upload-area">
-                                    <div class="upload-dropzone" onclick="document.getElementById('heroImageInput').click()">
+                                    <div class="upload-dropzone" <?php echo isAdmin() ? 'onclick="document.getElementById(\'heroImageInput\').click()"' : 'style="cursor: default; opacity: 0.7;"'; ?>>
                                         <i class="fas fa-cloud-upload-alt"></i>
                                         <div class="upload-text">
+                                            <?php if (isAdmin()): ?>
                                             <strong>Click to upload</strong> or drag and drop
+                                            <?php else: ?>
+                                            <strong>Viewing only</strong> (Admin only)
+                                            <?php endif; ?>
                                             <span>PNG, JPG, WEBP up to 5MB</span>
                                         </div>
                                     </div>
@@ -356,10 +366,14 @@ $user = getCurrentUser();
                                     <span class="settings-hint">Multiple images for the About section slider.</span>
                                 </div>
                                 <div class="modern-upload-area" id="about-upload-area">
-                                    <div class="upload-dropzone" onclick="document.getElementById('aboutImageInput').click()">
+                                    <div class="upload-dropzone" <?php echo isAdmin() ? 'onclick="document.getElementById(\'aboutImageInput\').click()"' : 'style="cursor: default; opacity: 0.7;"'; ?>>
                                         <i class="fas fa-images"></i>
                                         <div class="upload-text">
+                                            <?php if (isAdmin()): ?>
                                             <strong>Click to upload</strong> or drag and drop
+                                            <?php else: ?>
+                                            <strong>Viewing only</strong> (Admin only)
+                                            <?php endif; ?>
                                             <span>PNG, JPG, WEBP up to 5MB</span>
                                         </div>
                                     </div>
@@ -379,16 +393,18 @@ $user = getCurrentUser();
                                     <label>Footer Tagline</label>
                                     <span class="settings-hint">Brief description shown in the footer</span>
                                 </div>
-                                <input type="text" id="footerTagline" class="settings-input" placeholder="Pushing your limits since 2014...">
+                                <input type="text" id="footerTagline" class="settings-input" placeholder="Pushing your limits since 2014..." <?php echo !isAdmin() ? 'disabled' : ''; ?>>
                             </div>
                         </div>
 
+                        <?php if (isAdmin()): ?>
                         <div class="settings-actions">
                             <button class="btn btn-primary" onclick="saveGeneralSettings()">
                                 <i class="fas fa-save"></i>
                                 Save Changes
                             </button>
                         </div>
+                        <?php endif; ?>
                     </div>
                 </div>
 
@@ -407,7 +423,7 @@ $user = getCurrentUser();
                                 <label>GCash Number</label>
                                 <span class="settings-hint">Mobile number for GCash payments</span>
                             </div>
-                            <input type="tel" id="gcashNumber" class="settings-input" placeholder="0917-123-4567">
+                            <input type="tel" id="gcashNumber" class="settings-input" placeholder="0917-123-4567" <?php echo !isAdmin() ? 'disabled' : ''; ?>>
                         </div>
 
                         <div class="settings-item">
@@ -415,7 +431,7 @@ $user = getCurrentUser();
                                 <label>GCash Account Name</label>
                                 <span class="settings-hint">Name associated with the GCash account</span>
                             </div>
-                            <input type="text" id="gcashName" class="settings-input" placeholder="Martinez Fitness">
+                            <input type="text" id="gcashName" class="settings-input" placeholder="Martinez Fitness" <?php echo !isAdmin() ? 'disabled' : ''; ?>>
                         </div>
 
                         <div class="settings-item">
@@ -429,9 +445,11 @@ $user = getCurrentUser();
                                 </div>
                                 <div class="qr-upload-actions">
                                     <input type="file" id="gcashQR" accept="image/*" style="display: none;" onchange="previewQR(this)">
+                                    <?php if (isAdmin()): ?>
                                     <button class="btn btn-secondary" onclick="document.getElementById('gcashQR').click()">
                                         <i class="fas fa-upload"></i> Upload Image
                                     </button>
+                                    <?php endif; ?>
                                     <p class="settings-hint" style="margin-top: 8px;">Recommended: Square image, max 5MB</p>
                                 </div>
                             </div>
@@ -442,15 +460,17 @@ $user = getCurrentUser();
                                 <label>Payment Instructions</label>
                                 <span class="settings-hint">Instructions shown to members when making payments</span>
                             </div>
-                            <textarea id="paymentInstructions" class="settings-input" rows="4" placeholder="Enter payment instructions for members..."></textarea>
+                            <textarea id="paymentInstructions" class="settings-input" rows="4" placeholder="Enter payment instructions for members..." <?php echo !isAdmin() ? 'disabled' : ''; ?>></textarea>
                         </div>
 
+                        <?php if (isAdmin()): ?>
                         <div class="settings-actions">
                             <button class="btn btn-primary" onclick="savePaymentSettings()">
                                 <i class="fas fa-save"></i>
                                 Save Changes
                             </button>
                         </div>
+                        <?php endif; ?>
                     </div>
                 </div>
 
@@ -473,7 +493,7 @@ $user = getCurrentUser();
                                 </div>
                                 <div class="settings-toggle">
                                     <label class="toggle-switch">
-                                        <input type="checkbox" id="emailNewBooking" checked>
+                                        <input type="checkbox" id="emailNewBooking" checked <?php echo !isAdmin() ? 'disabled' : ''; ?>>
                                         <span class="toggle-slider"></span>
                                     </label>
                                 </div>
@@ -486,7 +506,7 @@ $user = getCurrentUser();
                                 </div>
                                 <div class="settings-toggle">
                                     <label class="toggle-switch">
-                                        <input type="checkbox" id="emailPaymentVerified" checked>
+                                        <input type="checkbox" id="emailPaymentVerified" checked <?php echo !isAdmin() ? 'disabled' : ''; ?>>
                                         <span class="toggle-slider"></span>
                                     </label>
                                 </div>
@@ -499,7 +519,7 @@ $user = getCurrentUser();
                                 </div>
                                 <div class="settings-toggle">
                                     <label class="toggle-switch">
-                                        <input type="checkbox" id="emailDailyReport">
+                                        <input type="checkbox" id="emailDailyReport" <?php echo !isAdmin() ? 'disabled' : ''; ?>>
                                         <span class="toggle-slider"></span>
                                     </label>
                                 </div>
@@ -515,7 +535,7 @@ $user = getCurrentUser();
                                 </div>
                                 <div class="settings-toggle">
                                     <label class="toggle-switch">
-                                        <input type="checkbox" id="browserNewBooking" checked>
+                                        <input type="checkbox" id="browserNewBooking" checked <?php echo !isAdmin() ? 'disabled' : ''; ?>>
                                         <span class="toggle-slider"></span>
                                     </label>
                                 </div>
@@ -528,7 +548,7 @@ $user = getCurrentUser();
                                 </div>
                                 <div class="settings-toggle">
                                     <label class="toggle-switch">
-                                        <input type="checkbox" id="browserPaymentVerified" checked>
+                                        <input type="checkbox" id="browserPaymentVerified" checked <?php echo !isAdmin() ? 'disabled' : ''; ?>>
                                         <span class="toggle-slider"></span>
                                     </label>
                                 </div>
@@ -544,19 +564,21 @@ $user = getCurrentUser();
                                 </div>
                                 <div class="settings-toggle">
                                     <label class="toggle-switch">
-                                        <input type="checkbox" id="notificationSound" checked>
+                                        <input type="checkbox" id="notificationSound" checked <?php echo !isAdmin() ? 'disabled' : ''; ?>>
                                         <span class="toggle-slider"></span>
                                     </label>
                                 </div>
                             </div>
                         </div>
 
+                        <?php if (isAdmin()): ?>
                         <div class="settings-actions">
                             <button class="btn btn-primary" onclick="saveNotificationSettings()">
                                 <i class="fas fa-save"></i>
                                 Save Changes
                             </button>
                         </div>
+                        <?php endif; ?>
                     </div>
                 </div>
 
@@ -623,6 +645,7 @@ $user = getCurrentUser();
                         </div>
 
                         <!-- Manage Sub-Admins Section -->
+                        <?php if (isAdmin()): ?>
                         <div class="settings-subsection" style="margin-top: 48px; border-top: 1px solid var(--premium-border); padding-top: 32px;">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
                                 <div>
@@ -642,10 +665,12 @@ $user = getCurrentUser();
                                 </div>
                             </div>
                         </div>
+                        <?php endif; ?>
                     </div>
                 </div>
 
                 <!-- Backup Settings -->
+                <?php if (isAdmin()): ?>
                 <div id="settings-backup" class="settings-section" style="display: none;">
                     <div class="settings-section-header">
                         <div>
@@ -679,6 +704,7 @@ $user = getCurrentUser();
                         </div>
                     </div>
                 </div>
+                <?php endif; ?>
             </div>
         </div>
         

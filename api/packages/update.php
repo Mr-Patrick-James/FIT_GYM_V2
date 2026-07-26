@@ -1,8 +1,14 @@
 <?php
 ob_start();
 require_once '../config.php';
+require_once '../session.php';
 require_once '../email.php';
 ob_end_clean();
+
+requireLogin();
+if (!isAdmin()) {
+    sendResponse(false, 'Unauthorized access. Admin privileges required to manage packages.', null, 403);
+}
 
 if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
     sendResponse(false, 'Method not allowed', null, 405);

@@ -2,8 +2,11 @@
 require_once '../config.php';
 require_once '../session.php';
 
-// Only admins can update settings
-requireAdmin();
+// Only admins can update settings (Managers restricted)
+requireLogin();
+if (!isAdmin()) {
+    sendResponse(false, 'Unauthorized access. Admin privileges required.', null, 403);
+}
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     sendResponse(false, 'Method not allowed', null, 405);

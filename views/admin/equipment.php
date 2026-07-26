@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once '../../api/session.php';
 requireAdmin();
 $user = getCurrentUser();
@@ -30,7 +30,7 @@ $user = getCurrentUser();
         })();
     </script>
 </head>
-<body>
+<body class="role-<?php echo $user['role']; ?>">
     <button class="mobile-menu-btn" id="mobileMenuToggle">
         <i class="fas fa-bars"></i>
     </button>
@@ -53,7 +53,9 @@ $user = getCurrentUser();
             <li><a href="equipment.php" class="active"><i class="fas fa-tools"></i> <span>Equipment</span></a></li>
             <li><a href="exercises.php"><i class="fas fa-running"></i> <span>Exercises</span></a></li>
             <li><a href="report.php"><i class="fas fa-file-invoice-dollar"></i> <span>Reports</span></a></li>
+            <?php if (isAdmin()): ?>
             <li><a href="settings.php"><i class="fas fa-cog"></i> <span>Settings</span></a></li>
+            <?php endif; ?>
         </ul>
         
         <div class="admin-profile">
