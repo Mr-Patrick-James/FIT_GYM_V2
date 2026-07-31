@@ -255,7 +255,13 @@ $user = getCurrentUser();
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
                         <div class="form-group">
                             <label id="passwordLabel">Login Password</label>
-                            <input type="password" id="trainerPassword" placeholder="Leave blank to keep current">
+                            <div style="position:relative;">
+                                <input type="password" id="trainerPassword" placeholder="Leave blank to keep current" style="padding-right:42px;width:100%;">
+                                <button type="button" onclick="togglePasswordVisibility('trainerPassword', this)"
+                                    style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--dark-text-secondary);padding:4px;display:flex;align-items:center;">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
                         </div>
                         <div class="form-group">
                             <label>Max Clients Capacity</label>
