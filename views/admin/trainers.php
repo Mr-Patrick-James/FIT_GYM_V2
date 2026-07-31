@@ -149,6 +149,11 @@ $user = getCurrentUser();
                     <button class="card-btn primary" onclick="loadTrainers()">
                         <i class="fas fa-sync-alt"></i> Refresh
                     </button>
+                    <?php if (hasPermission('manage_trainers')): ?>
+                    <button class="card-btn primary" onclick="openAddTrainerModal()" style="background: var(--primary); color: #fff;">
+                        <i class="fas fa-plus"></i> Add New
+                    </button>
+                    <?php endif; ?>
                 </div>
             </div>
 
