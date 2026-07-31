@@ -666,6 +666,29 @@ $user = getCurrentUser();
                             </div>
                         </div>
                         <?php endif; ?>
+
+                        <!-- Manage Trainer Managers Section -->
+                        <?php if (isAdmin()): ?>
+                        <div class="settings-subsection" style="margin-top: 48px; border-top: 1px solid var(--premium-border); padding-top: 32px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                                <div>
+                                    <h3 style="margin-bottom: 4px;">Manage Trainer Managers</h3>
+                                    <p class="settings-hint">Add trainer managers who can oversee trainers and members but cannot access admin-only settings</p>
+                                </div>
+                                <button class="btn btn-primary" onclick="openAddManagerModal()">
+                                    <i class="fas fa-user-tie"></i> Add Manager
+                                </button>
+                            </div>
+
+                            <div id="managers-list" class="admins-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+                                <!-- Managers will be listed here -->
+                                <div style="grid-column: 1/-1; text-align: center; padding: 40px; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px dashed var(--premium-border);">
+                                    <i class="fas fa-user-tie" style="font-size: 2.5rem; color: var(--premium-text-muted); opacity: 0.2; margin-bottom: 16px; display: block;"></i>
+                                    <p style="color: var(--premium-text-muted);">Loading managers...</p>
+                                </div>
+                            </div>
+                        </div>
+                        <?php endif; ?>
                     </div>
                 </div>
 
@@ -758,6 +781,63 @@ $user = getCurrentUser();
                         <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; border-radius: 12px; font-weight: 800; font-size: 0.9rem;">
                             <i class="fas fa-user-check"></i>
                             Create Admin Account
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Manager Modal -->
+    <div class="modal-overlay" id="addManagerModal">
+        <div class="modal" style="max-width: 500px !important;">
+            <div class="modal-header" style="padding: 24px 24px 16px; border: none; background: transparent; display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                        <div style="width: 28px; height: 28px; background: var(--primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff;">
+                            <i class="fas fa-user-tie" style="font-size: 0.8rem;"></i>
+                        </div>
+                        <h3 style="font-size: 1.25rem; font-weight: 800; color: #fff; letter-spacing: -0.8px;">Add Trainer Manager</h3>
+                    </div>
+                    <p style="color: var(--premium-text-muted); font-size: 0.8rem; font-weight: 500;">Create a new trainer manager account</p>
+                </div>
+                <button class="close-modal" onclick="closeAddManagerModal()" style="background: var(--premium-input-bg); border: 1px solid var(--premium-border); width: 36px; height: 36px; border-radius: 12px; color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="modal-body" style="padding: 0 24px 24px;">
+                <form id="addManagerForm" onsubmit="handleAddManager(event)" style="display: flex; flex-direction: column; gap: 16px;">
+                    <div class="form-group">
+                        <label>Full Name <span style="color:#e74c3c">*</span></label>
+                        <input type="text" id="newManagerName" required class="modern-input" placeholder="e.g. Jane Smith">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Email Address <span style="color:#e74c3c">*</span></label>
+                        <input type="email" id="newManagerEmail" required class="modern-input" placeholder="e.g. jane@example.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Temporary Password <span style="color:#e74c3c">*</span></label>
+                        <input type="password" id="newManagerPassword" required class="modern-input" placeholder="Must be at least 6 characters" minlength="6">
+                        <p class="settings-hint" style="margin-top: 6px;">The manager can change this after logging in.</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Contact Number</label>
+                        <input type="text" id="newManagerContact" class="modern-input" placeholder="e.g. 09171234567">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Address</label>
+                        <input type="text" id="newManagerAddress" class="modern-input" placeholder="e.g. Gym Office">
+                    </div>
+
+                    <div style="margin-top: 8px;">
+                        <button type="submit" class="btn btn-primary" id="createManagerSubmitBtn" style="width: 100%; padding: 12px; border-radius: 12px; font-weight: 800; font-size: 0.9rem;">
+                            <i class="fas fa-user-check"></i>
+                            Create Manager Account
                         </button>
                     </div>
                 </form>
