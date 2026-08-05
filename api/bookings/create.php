@@ -20,12 +20,19 @@ try {
         sendResponse(false, 'Invalid request data', null, 400);
     }
     
-    $package_name = $input['package'] ?? null;
-    $booking_date = $input['date'] ?? null;
-    $contact = $input['contact'] ?? null;
-    $notes = $input['notes'] ?? null;
-    $receipt_url = $input['receipt'] ?? null;
-    $user_id = $_SESSION['user_id'];
+    $package_name    = $input['package']        ?? null;
+    $booking_date    = $input['date']           ?? null;
+    $contact         = $input['contact']        ?? null;
+    $notes           = $input['notes']          ?? null;
+    $receipt_url     = $input['receipt']        ?? null;
+    $is_student      = !empty($input['is_student']) ? 1 : 0;
+    $student_id_url  = $input['student_id_url'] ?? null;
+    $user_id         = $_SESSION['user_id'];
+
+    // If user claims student but did not provide proof, reject early
+    if ($is_student && empty($student_id_url)) {
+        sendResponse(false, 'Please upload your student ID photo as proof.', null, 400);
+    }
     
     // Get user info
     $userQuery = "SELECT name, email FROM users WHERE id = ?";
@@ -39,8 +46,8 @@ try {
         sendResponse(false, 'User not found', null, 404);
     }
     
-    // Get package info
-    $packageQuery = "SELECT id, price, duration FROM packages WHERE name = ? AND is_active = 1";
+    // Get package info (including student discount if available)
+    $packageQuery = "SELECT id, price, duration, COALESCE(student_discount, 0) as student_discount FROM packages WHERE name = ? AND is_active = 1";
     $packageStmt = $conn->prepare($packageQuery);
     $packageStmt->bind_param("s", $package_name);
     $packageStmt->execute();
@@ -104,23 +111,39 @@ try {
         $expiresAt = date('Y-m-d H:i:s', strtotime($booking_date . " + $days days"));
     }
     
+    // Calculate final amount with student discount if applicable
+    $finalAmount = $package['price'];
+    $discountApplied = null;
+    
+    if ($is_student && !empty($student_id_url)) {
+        // Apply student discount from package
+        $studentDiscount = floatval($package['student_discount'] ?? 0);
+        if ($studentDiscount > 0) {
+            $discountApplied = ($finalAmount * $studentDiscount) / 100;
+            $finalAmount = $finalAmount - $discountApplied;
+        }
+    }
+    
     // Insert booking into database
-    $sql = "INSERT INTO bookings (user_id, name, email, contact, package_id, package_name, amount, booking_date, expires_at, notes, receipt_url) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    $sql = "INSERT INTO bookings (user_id, name, email, contact, package_id, package_name, amount, booking_date, expires_at, notes, receipt_url, is_student, student_id_url, student_discount_applied) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("isssisdssss", 
+    $stmt->bind_param("isssisdssssisd", 
         $user_id,
         $user['name'],
         $user['email'],
         $contact,
         $package['id'],
         $package_name,
-        $package['price'],
+        $finalAmount,
         $booking_date,
         $expiresAt,
         $notes,
-        $receipt_url
+        $receipt_url,
+        $is_student,
+        $student_id_url,
+        $discountApplied
     );
     
     $result = $stmt->execute();

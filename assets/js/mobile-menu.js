@@ -1,36 +1,50 @@
 /**
  * mobile-menu.js
- * Shared mobile sidebar toggle — works on all admin pages.
+ * Shared mobile sidebar toggle — works on all admin and user pages.
  * Handles: open/close sidebar, overlay backdrop, icon swap, body scroll lock.
  */
 (function () {
+    var initialized = false;
+
     function initMobileMenu() {
-        var btn     = document.getElementById('mobileMenuToggle');
+        if (initialized) return;
+        initialized = true;
+
+        var btn = document.getElementById('mobileMenuToggle');
         var sidebar = document.querySelector('.sidebar');
         var overlay = document.getElementById('sidebarOverlay');
 
         if (!btn || !sidebar) return;
 
-        function openSidebar() {
-            sidebar.classList.add('active');
-            if (overlay) overlay.classList.add('active');
-            document.body.style.overflow = 'hidden';
+        function setSidebarOpen(isOpen) {
+            sidebar.classList.toggle('active', isOpen);
+            if (overlay) {
+                overlay.classList.toggle('active', isOpen);
+            }
+            document.body.style.overflow = isOpen ? 'hidden' : '';
+
             var icon = btn.querySelector('i');
-            if (icon) { icon.classList.remove('fa-bars'); icon.classList.add('fa-times'); }
+            if (icon) {
+                icon.classList.toggle('fa-times', isOpen);
+                icon.classList.toggle('fa-bars', !isOpen);
+            }
+
+            btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        }
+
+        function openSidebar() {
+            setSidebarOpen(true);
         }
 
         function closeSidebar() {
-            sidebar.classList.remove('active');
-            if (overlay) overlay.classList.remove('active');
-            document.body.style.overflow = '';
-            var icon = btn.querySelector('i');
-            if (icon) { icon.classList.remove('fa-times'); icon.classList.add('fa-bars'); }
+            setSidebarOpen(false);
         }
 
         btn.addEventListener('click', function (e) {
-            e.stopPropagation();
-            sidebar.classList.contains('active') ? closeSidebar() : openSidebar();
-        });
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            setSidebarOpen(!sidebar.classList.contains('active'));
+        }, true);
 
         // Close when clicking the overlay
         if (overlay) {
@@ -59,14 +73,13 @@
         // Re-open body scroll if window is resized above breakpoint
         window.addEventListener('resize', function () {
             if (window.innerWidth > 1280) {
-                document.body.style.overflow = '';
-                if (overlay) overlay.classList.remove('active');
+                setSidebarOpen(false);
             }
         });
     }
 
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initMobileMenu);
+        document.addEventListener('DOMContentLoaded', initMobileMenu, { once: true });
     } else {
         initMobileMenu();
     }

@@ -134,6 +134,14 @@ try {
         } else {
             $booking['receipt_full_url'] = null;
         }
+
+        // Add full URL for student ID
+        if (!empty($booking['student_id_url'])) {
+            $cleanStudentPath = ltrim(str_replace(['Fit/', 'Fit\\'], '', $booking['student_id_url']), '/\\');
+            $booking['student_id_full_url'] = BASE_URL . '/' . $cleanStudentPath;
+        } else {
+            $booking['student_id_full_url'] = null;
+        }
     }
     
     sendResponse(true, 'Bookings retrieved successfully', $bookings);

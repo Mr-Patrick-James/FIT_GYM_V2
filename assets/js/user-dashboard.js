@@ -1,8 +1,14 @@
 // User Dashboard JavaScript
 
+function getApiUrl(path) {
+    const rootPath = window.location.pathname.split('/views/')[0] || '';
+    return `${window.location.origin}${rootPath}/api/${path}`;
+}
+
 // Sample data - In a real app, this would come from a backend API
 let userBookings = [];
 let selectedFile = null;
+let selectedStudentIdFile = null;
 let activeExercisesByPackage = {}; // Cache for package exercises
 let userData = null;
 
@@ -166,8 +172,10 @@ async function loadPackagesData() {
                 duration: pkg.duration,
                 // Ensure price is treated as a number
                 price: '₱' + parseFloat(String(pkg.price).replace(/[^\d.-]/g, '')).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }),
+                rawPrice: parseFloat(pkg.price) || 0,
                 tag: pkg.tag || 'Standard',
-                description: pkg.description || 'Full gym access with all facilities'
+                description: pkg.description || 'Full gym access with all facilities',
+                studentDiscount: parseFloat(pkg.student_discount || pkg.studentDiscount || 0) || 0,
             }));
         } else {
             console.error('Error loading packages:', data.message);
@@ -183,11 +191,11 @@ async function loadPackagesData() {
 
 function getDefaultPackages() {
     return [
-        { name: "Walk-in Pass", duration: "1 Day", price: "₱200.00", tag: "Basic", description: "Perfect for trying out our facilities" },
-        { name: "Weekly Pass", duration: "7 Days", price: "₱500.00", tag: "Popular", description: "Great for short-term fitness goals" },
-        { name: "Monthly Membership", duration: "30 Days", price: "₱1,500.00", tag: "Best Value", description: "Most popular choice for regular gym-goers" },
-        { name: "3-Month Package", duration: "90 Days", price: "₱4,000.00", tag: "Premium", description: "Save more with our 3-month package" },
-        { name: "Annual Membership", duration: "1 Year", price: "₱15,000.00", tag: "VIP", description: "Best value for long-term commitment" }
+        { name: "Walk-in Pass", duration: "1 Day", rawPrice: 200, price: "₱200.00", studentDiscount: 0, tag: "Basic", description: "Perfect for trying out our facilities" },
+        { name: "Weekly Pass", duration: "7 Days", rawPrice: 500, price: "₱500.00", studentDiscount: 0, tag: "Popular", description: "Great for short-term fitness goals" },
+        { name: "Monthly Membership", duration: "30 Days", rawPrice: 1500, price: "₱1,500.00", studentDiscount: 0, tag: "Best Value", description: "Most popular choice for regular gym-goers" },
+        { name: "3-Month Package", duration: "90 Days", rawPrice: 4000, price: "₱4,000.00", studentDiscount: 0, tag: "Premium", description: "Save more with our 3-month package" },
+        { name: "Annual Membership", duration: "1 Year", rawPrice: 15000, price: "₱15,000.00", studentDiscount: 0, tag: "VIP", description: "Best value for long-term commitment" }
     ];
 }
 
@@ -283,7 +291,9 @@ function checkStepValid() {
 
 async function checkSurveyStatus() {
     try {
-        const response = await fetch('../../api/users/get-questionnaire.php');
+        const response = await fetch('../../api/users/get-questionnaire.php', {
+            credentials: 'include'
+        });
         const data = await response.json();
         
         if (data.success) {
@@ -1458,14 +1468,18 @@ async function updateBookingPackageSelect() {
     packagesData.forEach(pkg => {
         const option = document.createElement('option');
         option.value = pkg.name;
+        option.dataset.price = pkg.rawPrice;
+        option.dataset.studentDiscount = pkg.studentDiscount;
         option.textContent = `${pkg.name} - ${pkg.price} (${pkg.duration})`;
         select.appendChild(option);
     });
+    select.onchange = updateBookingPriceSummary;
     
     // Restore previous value if it still exists
     if (currentValue) {
         select.value = currentValue;
     }
+    updateBookingPriceSummary();
 }
 
 // Select package for booking
@@ -1621,7 +1635,7 @@ function createBookingRow(booking, includeExpiry = false) {
         row.innerHTML = `
             <td data-label="Package">
                 <div style="font-weight: 700;">${booking.package_name || booking.package}</div>
-                ${(booking.status === 'verified' || booking.status === 'pending' || booking.status === 'expired') ? `
+                ${(booking.status === 'verified' || booking.status === 'expired') ? `
                     <div style="font-size: 0.75rem; margin-top: 4px;">
                         <span class="status-badge" style="padding: 2px 8px; font-size: 0.7rem; ${isActive ? 'background:rgba(34,197,94,0.1);color:#22c55e;border:1px solid rgba(34,197,94,0.2);' : 'background:rgba(239,68,68,0.12);color:#ef4444;border:1px solid rgba(239,68,68,0.3);'}">
                             ${isActive ? 'Active' : 'Expired'}
@@ -2048,6 +2062,12 @@ function closeBookingModal() {
     document.body.style.overflow = '';
     document.getElementById('bookingForm').reset();
     removeFile();
+    // Reset student section
+    const isStudentCb = document.getElementById('isStudent');
+    if (isStudentCb) isStudentCb.checked = false;
+    const studentSection = document.getElementById('studentSection');
+    if (studentSection) studentSection.style.display = 'none';
+    removeStudentId();
 }
 
 // Handle file select
@@ -2092,6 +2112,124 @@ function removeFile() {
     }
 }
 
+// Toggle student section visibility
+function toggleStudentSection(checkbox) {
+    const section = document.getElementById('studentSection');
+    if (!section) return;
+    if (checkbox.checked) {
+        section.style.display = 'block';
+    } else {
+        section.style.display = 'none';
+        removeStudentId();
+    }
+    updateBookingPriceSummary();
+}
+
+function formatCurrency(amount) {
+    return '₱' + Number(amount).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+}
+
+function updateBookingPriceSummary() {
+    const packageSelect = document.getElementById('bookingPackage');
+    const priceSummary = document.getElementById('bookingPriceSummary');
+    const priceLabel = document.getElementById('bookingPriceLabel');
+    const studentPriceLabel = document.getElementById('bookingStudentPrice');
+    const studentNotice = document.getElementById('bookingStudentNotice');
+    const isStudent = document.getElementById('isStudent')?.checked || false;
+
+    if (!packageSelect || !priceSummary || !priceLabel || !studentPriceLabel || !studentNotice) return;
+
+    const selectedPackageName = packageSelect.value;
+    const selectedPackage = packagesData.find(pkg => pkg.name === selectedPackageName);
+    if (!selectedPackage) {
+        priceSummary.style.display = 'none';
+        return;
+    }
+
+    const rawPrice = selectedPackage.rawPrice || 0;
+    const discountPercent = selectedPackage.studentDiscount || 0;
+    const studentPrice = rawPrice - (rawPrice * discountPercent / 100);
+
+    priceSummary.style.display = 'block';
+    priceLabel.textContent = `Package price: ${formatCurrency(rawPrice)}`;
+
+    if (isStudent) {
+        if (discountPercent > 0) {
+            studentPriceLabel.innerHTML = `Student price: <strong>${formatCurrency(studentPrice)}</strong> <span style="font-size:0.85rem; color:var(--dark-text-secondary);">(${discountPercent}% off)</span>`;
+            studentPriceLabel.style.display = 'block';
+            studentNotice.textContent = 'Your student discount will be applied when you submit a valid ID.';
+            studentNotice.style.display = 'block';
+        } else {
+            studentPriceLabel.textContent = 'No student discount is available for this package.';
+            studentPriceLabel.style.display = 'block';
+            studentNotice.textContent = '';
+            studentNotice.style.display = 'none';
+        }
+    } else {
+        studentPriceLabel.style.display = 'none';
+        studentNotice.style.display = 'none';
+    }
+}
+
+// Handle student ID file select
+function handleStudentIdSelect(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+        showNotification('Student ID image is too large. Maximum allowed size is 5MB.', 'warning');
+        event.target.value = '';
+        return;
+    }
+
+    selectedStudentIdFile = file;
+    const preview  = document.getElementById('studentIdPreview');
+    const fileName = document.getElementById('studentIdFileName');
+    const uploadArea = document.getElementById('studentIdUploadArea');
+
+    if (fileName) fileName.textContent = file.name;
+    if (preview) preview.style.display = 'block';
+    if (uploadArea) {
+        uploadArea.style.borderColor = 'var(--primary)';
+        uploadArea.style.background = 'var(--glass)';
+        uploadArea.style.display = 'none';
+    }
+}
+
+// Remove student ID file
+function removeStudentId() {
+    selectedStudentIdFile = null;
+    const preview    = document.getElementById('studentIdPreview');
+    const input      = document.getElementById('studentIdFile');
+    const uploadArea = document.getElementById('studentIdUploadArea');
+    if (preview) preview.style.display = 'none';
+    if (input) input.value = '';
+    if (uploadArea) {
+        uploadArea.style.borderColor = '';
+        uploadArea.style.background = '';
+        uploadArea.style.display = 'block';
+    }
+}
+
+// Upload student ID photo
+async function uploadStudentId(file) {
+    const formData = new FormData();
+    formData.append('student_id', file);
+
+    const response = await fetch('../../api/upload/student-id.php', {
+        method: 'POST',
+        body: formData
+    });
+
+    const result = await response.json();
+    if (result.success) {
+        return result.data.url;
+    } else {
+        throw new Error(result.message);
+    }
+}
+
 // Submit booking
 async function submitBooking(event) {
     event.preventDefault();
@@ -2112,6 +2250,13 @@ async function submitBooking(event) {
     const date = document.getElementById('bookingDate').value;
     const contact = document.getElementById('bookingContact').value;
     const notes = document.getElementById('bookingNotes').value;
+    const isStudent = document.getElementById('isStudent')?.checked || false;
+
+    // Validate student ID upload when student option is checked
+    if (isStudent && !selectedStudentIdFile) {
+        showNotification('Please upload your Student ID photo as proof.', 'warning');
+        return;
+    }
     
     // Validate contact number
     if (!validateContactNumber(contact)) {
@@ -2136,6 +2281,12 @@ async function submitBooking(event) {
         
         // Upload receipt file
         const receiptUrl = await uploadReceipt(selectedFile);
+
+        // Upload student ID if applicable
+        let studentIdUrl = null;
+        if (isStudent && selectedStudentIdFile) {
+            studentIdUrl = await uploadStudentId(selectedStudentIdFile);
+        }
         
         // Create booking data
         const bookingData = {
@@ -2143,7 +2294,9 @@ async function submitBooking(event) {
             date: date,
             contact: contact,
             notes: notes,
-            receipt: receiptUrl
+            receipt: receiptUrl,
+            is_student: isStudent,
+            student_id_url: studentIdUrl
         };
         
         // Submit booking to database
@@ -3602,6 +3755,7 @@ async function updateProfile() {
         
         const response = await fetch('../../api/users/update-profile.php', {
             method: 'POST',
+            credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name, contact, address })
         });
@@ -3657,6 +3811,7 @@ async function changePassword(event) {
         
         const response = await fetch('../../api/users/change-password.php', {
             method: 'POST',
+            credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ currentPassword, newPassword })
         });
@@ -3810,8 +3965,9 @@ async function finishSurvey() {
         // Prepare focus areas as string
         const focusAreasString = Array.isArray(surveyData.focus_areas) ? surveyData.focus_areas.join(', ') : surveyData.focus_areas;
         
-        const response = await fetch('../../api/users/save-questionnaire.php', {
+        const response = await fetch(getApiUrl('users/save-questionnaire.php'), {
             method: 'POST',
+            credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 ...surveyData,
@@ -3819,7 +3975,32 @@ async function finishSurvey() {
             })
         });
         
-        const result = await response.json();
+        if (!response.ok) {
+            const text = await response.text();
+            console.error('Save questionnaire failed', response.status, response.statusText, text);
+            let message = 'Server error while saving profile';
+            try {
+                const json = JSON.parse(text);
+                if (json.message) {
+                    message = json.message;
+                }
+            } catch (_) {
+                // Keep generic message
+            }
+            showNotification('Error saving profile: ' + message + ' (' + response.status + ')', 'warning');
+            return;
+        }
+        
+        let result;
+        try {
+            result = await response.json();
+        } catch (parseError) {
+            const text = await response.text();
+            console.error('Invalid JSON response from save-questionnaire.php:', text);
+            showNotification('Error saving profile: server returned invalid response', 'warning');
+            return;
+        }
+        
         if (result.success) {
             document.getElementById('surveyModal').classList.remove('active');
             

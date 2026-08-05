@@ -2,18 +2,50 @@
 require_once '../config.php';
 require_once '../session.php';
 
+ini_set('display_errors', '1');
+ini_set('display_startup_errors', '1');
+error_reporting(E_ALL);
+
+file_put_contents(__DIR__ . '/save-questionnaire-debug.log', date('c') . " START\nSCRIPT=" . basename(__FILE__) . "\nREQUEST_METHOD=" . ($_SERVER['REQUEST_METHOD'] ?? '') . "\nSESSION=" . var_export($_SESSION, true) . "\n\n", FILE_APPEND);
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    sendResponse(false, 'Method not allowed', null, 405);
+}
+
 if (!isLoggedIn()) {
-    sendResponse(false, 'Unauthorized access');
+    sendResponse(false, 'Unauthorized access', null, 401);
 }
 
 $user_id = $_SESSION['user_id'];
-$data = json_decode(file_get_contents('php://input'), true);
+$data = getRequestData();
 
-if (!$data) {
-    sendResponse(false, 'Invalid data');
+// Fallback if JSON body parsing failed
+if ((!is_array($data) || empty($data)) && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $rawBody = file_get_contents('php://input');
+    if (!empty($rawBody)) {
+        $decoded = json_decode($rawBody, true);
+        if (json_last_error() === JSON_ERROR_NONE) {
+            $data = $decoded;
+        } else {
+            error_log('save-questionnaire.php JSON parse error: ' . json_last_error_msg() . ' raw=' . substr($rawBody, 0, 1000));
+        }
+    }
 }
 
+if (!is_array($data) || empty($data)) {
+    file_put_contents(__DIR__ . '/save-questionnaire-debug.log', date('c') . " INVALID REQUEST DATA\n" . var_export($data, true) . "\nBODY=" . file_get_contents('php://input') . "\nSESSION=" . var_export($_SESSION, true) . "\n\n", FILE_APPEND);
+    sendResponse(false, 'Invalid request data', null, 400);
+}
+
+file_put_contents(__DIR__ . '/save-questionnaire-debug.log', date('c') . " REQUEST\n" . json_encode([
+    'method' => $_SERVER['REQUEST_METHOD'] ?? '',
+    'uri' => $_SERVER['REQUEST_URI'] ?? '',
+    'user_id' => $_SESSION['user_id'] ?? null,
+    'payload' => $data
+], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) . "\n\n", FILE_APPEND);
+
 $conn = getDBConnection();
+file_put_contents(__DIR__ . '/save-questionnaire-debug.log', date('c') . " DB CONNECTED\n\n", FILE_APPEND);
 
 // Prepare the fields
 $age = isset($data['age']) ? (int)$data['age'] : null;
@@ -40,9 +72,20 @@ $equipment_confidence = isset($data['equipment_confidence']) ? $conn->real_escap
 // Check if profile already exists
 $check_sql = "SELECT id FROM user_questionnaire WHERE user_id = ?";
 $stmt = $conn->prepare($check_sql);
+if (!$stmt) {
+    $prepareError = "Prepare failed on check: (" . $conn->errno . ") " . $conn->error;
+    file_put_contents(__DIR__ . '/save-questionnaire-debug.log', date('c') . " CHECK PREPARE ERROR\n" . $prepareError . "\nSQL=" . $check_sql . "\n\n", FILE_APPEND);
+    sendResponse(false, 'Server error preparing query', null, 500);
+}
 $stmt->bind_param("i", $user_id);
-$stmt->execute();
+$bindOk = $stmt->execute();
+file_put_contents(__DIR__ . '/save-questionnaire-debug.log', date('c') . " CHECK EXECUTE " . ($bindOk ? 'OK' : 'FAIL') . "\nstmt_errno=" . $stmt->errno . " stmt_error=" . $stmt->error . "\n\n", FILE_APPEND);
 $result = $stmt->get_result();
+file_put_contents(__DIR__ . '/save-questionnaire-debug.log', date('c') . " CHECK GET_RESULT " . ($result === false ? 'FALSE' : 'OK') . "\n\n", FILE_APPEND);
+
+if ($result === false) {
+    sendResponse(false, 'Server error retrieving questionnaire check', null, 500);
+}
 
 if ($result->num_rows > 0) {
     // Update existing profile
@@ -53,6 +96,12 @@ if ($result->num_rows > 0) {
             equipment_confidence = ?
             WHERE user_id = ?";
     $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+        $prepareError = "Prepare failed on update: (" . $conn->errno . ") " . $conn->error;
+        error_log($prepareError);
+        file_put_contents(__DIR__ . '/save-questionnaire-debug.log', date('c') . " PREPARE ERROR\n" . $prepareError . "\nSQL=" . $sql . "\n\n", FILE_APPEND);
+        sendResponse(false, 'Error preparing questionnaire update: ' . $conn->error, null, 500);
+    }
     $stmt->bind_param("isddsssssssssssi", 
         $age, $sex, $height, $weight, $medical_conditions, $exercise_history,
         $primary_goal, $goal_pace, $workout_days_per_week, $preferred_workout_time,
@@ -68,6 +117,12 @@ if ($result->num_rows > 0) {
             equipment_confidence
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+        $prepareError = "Prepare failed on insert: (" . $conn->errno . ") " . $conn->error;
+        error_log($prepareError);
+        file_put_contents(__DIR__ . '/save-questionnaire-debug.log', date('c') . " PREPARE ERROR\n" . $prepareError . "\nSQL=" . $sql . "\n\n", FILE_APPEND);
+        sendResponse(false, 'Error saving questionnaire: prepare failed', null, 500);
+    }
     $stmt->bind_param("iisddsssssssssss", 
         $user_id, $age, $sex, $height, $weight, $medical_conditions, $exercise_history,
         $primary_goal, $goal_pace, $workout_days_per_week, $preferred_workout_time,
@@ -77,10 +132,13 @@ if ($result->num_rows > 0) {
 }
 
 if ($stmt->execute()) {
+    file_put_contents(__DIR__ . '/save-questionnaire-debug.log', date('c') . " SUCCESS\n" . json_encode(['user_id' => $user_id, 'user_id_session' => $_SESSION['user_id'], 'payload' => $data], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) . "\n\n", FILE_APPEND);
     sendResponse(true, 'Questionnaire saved successfully');
 } else {
-    error_log("Execute failed: (" . $stmt->errno . ") " . $stmt->error);
-    sendResponse(false, 'Error saving questionnaire: ' . $stmt->error);
+    $errorMessage = "Execute failed: (" . $stmt->errno . ") " . $stmt->error;
+    error_log($errorMessage);
+    file_put_contents(__DIR__ . '/save-questionnaire-debug.log', date('c') . " SQL ERROR\n" . $errorMessage . "\n\n", FILE_APPEND);
+    sendResponse(false, 'Error saving questionnaire: ' . $stmt->error, null, 500);
 }
 
 $conn->close();

@@ -308,6 +308,8 @@ function getSetting($key, $default = '', $settings = [])
             border: 1px solid var(--dark-border);
             margin-left: auto;
             gap: 6px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
         }
 
         .user-view-btn {
@@ -323,6 +325,7 @@ function getSetting($key, $default = '', $settings = [])
             align-items: center;
             gap: 8px;
             transition: all 0.2s;
+            white-space: nowrap;
         }
 
         .user-view-btn.active {
@@ -337,6 +340,87 @@ function getSetting($key, $default = '', $settings = [])
             border-radius: var(--radius-lg);
             padding: 12px;
             border: 1px solid var(--dark-border);
+        }
+
+        @media (max-width: 768px) {
+            .content-card .card-header {
+                flex-wrap: wrap;
+                gap: 12px;
+            }
+
+            .content-card .card-header h3 {
+                flex: 1 1 100%;
+                margin-bottom: 0;
+            }
+
+            .user-view-toggle {
+                width: 100%;
+                justify-content: stretch;
+            }
+
+            .user-view-btn {
+                flex: 1 1 calc(50% - 6px);
+                min-width: 140px;
+                justify-content: center;
+                text-align: center;
+            }
+
+            .package-price-large,
+            .package-footer,
+            .table-container {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .user-view-btn {
+                flex: 1 1 100%;
+            }
+
+            #userCalendarView {
+                margin: 16px 0 24px;
+            }
+
+            .table-container table {
+                width: 100%;
+                min-width: 100%;
+            }
+
+            .table-container thead {
+                display: none;
+            }
+
+            .table-container tr {
+                display: block;
+                margin-bottom: 12px;
+                border: 1px solid var(--dark-border);
+                border-radius: var(--radius-lg);
+                padding: 12px;
+            }
+
+            .table-container td {
+                display: flex;
+                justify-content: space-between;
+                padding: 8px 0;
+                border: none;
+                border-bottom: 1px solid var(--dark-border);
+            }
+
+            .table-container td:last-child {
+                border-bottom: none;
+            }
+
+            .table-container td::before {
+                content: attr(data-label);
+                font-weight: 600;
+                color: var(--dark-text-secondary);
+                flex: 1;
+            }
+
+            .table-container td span {
+                flex: 1;
+                text-align: right;
+            }
         }
 
         /* FullCalendar Dark Theme Tweaks */
@@ -955,6 +1039,8 @@ function getSetting($key, $default = '', $settings = [])
         .package-btn-group {
             display: flex;
             gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
         }
 
         .package-btn-group .btn {
@@ -963,6 +1049,7 @@ function getSetting($key, $default = '', $settings = [])
             font-weight: 600;
             font-size: 0.75rem;
             padding: 0 16px;
+            white-space: nowrap;
         }
 
         .btn-exercise {
@@ -985,6 +1072,30 @@ function getSetting($key, $default = '', $settings = [])
         .btn-book:hover {
             background: #fff;
             transform: translateY(-2px);
+        }
+
+        @media (max-width: 480px) {
+            .package-footer {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .package-btn-group {
+                width: 100%;
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .package-btn-group .btn {
+                width: 100%;
+                min-width: 0;
+                padding: 10px 14px;
+            }
+
+            .package-price-large {
+                width: 100%;
+                text-align: left;
+            }
         }
 
         /* Exercise Plan Styles */
@@ -1226,6 +1337,9 @@ function getSetting($key, $default = '', $settings = [])
     <button class="mobile-menu-btn" id="mobileMenuToggle">
         <i class="fas fa-bars"></i>
     </button>
+
+    <!-- Sidebar Overlay (mobile backdrop) -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
@@ -1896,6 +2010,12 @@ function getSetting($key, $default = '', $settings = [])
                                 </select>
                             </div>
 
+                            <div id="bookingPriceSummary" style="display:none; margin-bottom:16px; padding:14px 16px; background: rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius: 12px;">
+                                <div id="bookingPriceLabel" style="font-size:0.95rem; color: var(--dark-text); margin-bottom:6px;"></div>
+                                <div id="bookingStudentPrice" style="font-size:0.95rem; color: var(--primary); margin-bottom:6px; display:none;"></div>
+                                <div id="bookingStudentNotice" style="font-size:0.8rem; color: var(--dark-text-secondary); display:none;"></div>
+                            </div>
+
                             <div class="form-group">
                                 <label>Booking Date <span style="color: var(--warning);">*</span></label>
                                 <input type="date" id="bookingDate" required>
@@ -1934,6 +2054,42 @@ function getSetting($key, $default = '', $settings = [])
                                 <label>Additional Notes (Optional)</label>
                                 <textarea id="bookingNotes" rows="3"
                                     placeholder="Any special requests or notes..."></textarea>
+                            </div>
+
+                            <!-- Student Discount Section -->
+                            <div class="form-group">
+                                <label style="display:flex; align-items:center; gap:10px; cursor:pointer; user-select:none;">
+                                    <input type="checkbox" id="isStudent" onchange="toggleStudentSection(this)" style="width:18px; height:18px; cursor:pointer; accent-color: var(--primary);">
+                                    <span>I am a student <span style="font-size:0.75rem; color:var(--dark-text-secondary);">(May student discount)</span></span>
+                                </label>
+                            </div>
+
+                            <div id="studentSection" style="display:none;">
+                                <div style="background: rgba(99,102,241,0.07); border:1px solid rgba(99,102,241,0.25); border-radius: 12px; padding: 12px 16px; margin-bottom: 14px; display:flex; gap:10px; align-items:flex-start;">
+                                    <i class="fas fa-graduation-cap" style="color:var(--primary); margin-top:2px;"></i>
+                                    <p style="color:var(--dark-text-secondary); font-size:0.78rem; line-height:1.5; margin:0;">
+                                        Please upload a clear photo of your valid <strong style="color:var(--dark-text);">School / Student ID</strong> as proof. This will be reviewed by the admin before your booking is verified.
+                                    </p>
+                                </div>
+
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <label>Student ID Photo <span style="color: var(--warning);">*</span></label>
+                                    <div class="file-upload-area" id="studentIdUploadArea" onclick="document.getElementById('studentIdFile').click()">
+                                        <i class="fas fa-id-card"></i>
+                                        <p>Click to upload your Student ID</p>
+                                        <span>PNG, JPG up to 5MB</span>
+                                        <input type="file" id="studentIdFile" accept="image/*" style="display:none;" onchange="handleStudentIdSelect(event)">
+                                    </div>
+                                    <div id="studentIdPreview" style="display:none; margin-top:12px;">
+                                        <div class="file-preview-item">
+                                            <i class="fas fa-id-card" style="color:var(--primary);"></i>
+                                            <span id="studentIdFileName"></span>
+                                            <button type="button" onclick="removeStudentId()" class="remove-file-btn">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="modal-actions">
@@ -2666,6 +2822,7 @@ function getSetting($key, $default = '', $settings = [])
     <!-- Core App Logic -->
     <script src="../../assets/js/user-dashboard.js?v=<?= time() ?>"></script>
     <script src="../../assets/js/theme.js"></script>
+    <script src="../../assets/js/mobile-menu.js"></script>
 </body>
 
 </html>

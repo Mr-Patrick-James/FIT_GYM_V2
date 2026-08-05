@@ -508,6 +508,19 @@ function viewBooking(id) {
         } else {
             receiptSection.style.display = 'none';
         }
+
+        // Show student ID if available
+        const studentIdSection = document.getElementById('studentIdSection');
+        const studentIdImg     = document.getElementById('modalStudentId');
+        const studentIdUrl     = booking.student_id_full_url || booking.student_id_url;
+        if (studentIdUrl && studentIdSection && studentIdImg) {
+            const fixedStudentUrl = fixReceiptUrl(studentIdUrl);
+            studentIdImg.src   = fixedStudentUrl;
+            studentIdImg.onclick = () => window.open(fixedStudentUrl, '_blank');
+            studentIdSection.style.display = 'block';
+        } else if (studentIdSection) {
+            studentIdSection.style.display = 'none';
+        }
         
         // Update action buttons based on status
         const verifyBtn = document.querySelector('.modal-actions .btn-primary');

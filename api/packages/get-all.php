@@ -54,7 +54,7 @@ try {
              ($hasGoal ? "goal, " : "'General Fitness' as goal, ") . 
              ($hasDiet ? "diet_info, " : "'' as diet_info, ") . 
              ($hasGuidance ? "guidance_info, " : "'' as guidance_info, ") . 
-             "is_active, created_at, updated_at FROM packages WHERE is_active = TRUE ORDER BY name ASC";
+             "COALESCE(student_discount, 0) as student_discount, is_active, created_at, updated_at FROM packages WHERE is_active = TRUE ORDER BY name ASC";
              
     $stmt = $conn->prepare($query);
     $stmt->execute();
@@ -86,6 +86,7 @@ try {
             'name' => $row['name'],
             'duration' => $row['duration'],
             'price' => (float)$row['price'],
+            'student_discount' => (float)$row['student_discount'],
             'tag' => $row['tag'],
             'description' => $row['description'],
             'is_trainer_assisted' => (bool)$row['is_trainer_assisted'],

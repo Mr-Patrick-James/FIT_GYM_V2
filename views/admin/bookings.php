@@ -52,7 +52,83 @@ $user = getCurrentUser();
             background: var(--primary);
             color: var(--dark-bg);
         }
-        
+
+        @media (max-width: 768px) {
+            .view-toggle {
+                width: 100%;
+                flex-wrap: wrap;
+                gap: 8px;
+                justify-content: stretch;
+            }
+
+            .view-btn {
+                flex: 1 1 calc(50% - 8px);
+                min-width: 140px;
+                width: auto;
+                justify-content: center;
+                padding: 10px 12px;
+                font-size: 0.75rem;
+            }
+
+            .view-btn i {
+                margin-right: 6px;
+            }
+
+            .header-actions {
+                flex-wrap: wrap;
+                gap: 10px;
+                align-items: stretch;
+            }
+
+            .search-box {
+                flex: 1 1 100%;
+                min-width: 0;
+                width: 100%;
+            }
+
+            .search-box input {
+                width: 100%;
+            }
+
+            .action-btn {
+                min-width: 44px;
+                width: 44px;
+                height: 44px;
+            }
+
+            .card-actions {
+                width: 100%;
+                flex-wrap: wrap;
+                justify-content: flex-end;
+                gap: 10px;
+            }
+
+            .card-btn {
+                width: 100%;
+                max-width: 100%;
+                padding: 10px 14px !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .view-btn {
+                flex: 1 1 100%;
+                min-width: 0;
+            }
+
+            .header-actions {
+                justify-content: space-between;
+            }
+
+            .view-toggle {
+                gap: 6px;
+            }
+
+            .card-actions {
+                justify-content: center;
+            }
+        }
+
         #calendar-view {
             display: none;
             margin-top: 24px;
@@ -470,6 +546,16 @@ $user = getCurrentUser();
                 <div class="receipt-section" id="receiptSection" style="display: none;">
                     <h4><i class="fas fa-receipt"></i> Payment Receipt</h4>
                     <img src="" alt="Payment Receipt" class="receipt-image" id="modalReceipt">
+                </div>
+
+                <!-- Student ID Section (Hidden by default, shown for student bookings) -->
+                <div class="receipt-section" id="studentIdSection" style="display: none;">
+                    <h4 style="display:flex; align-items:center; gap:8px;">
+                        <i class="fas fa-graduation-cap" style="color: var(--primary-color);"></i>
+                        Student ID
+                        <span style="font-size:0.7rem; font-weight:600; background:rgba(99,102,241,0.15); color:var(--primary-color); padding:2px 8px; border-radius:20px; border:1px solid rgba(99,102,241,0.3);">Student Booking</span>
+                    </h4>
+                    <img src="" alt="Student ID" class="receipt-image" id="modalStudentId" style="cursor:zoom-in;" title="Click to view full image">
                 </div>
 
                 <!-- Trainer Assignment (Hidden by default, shown for trainer-assisted packages) -->
