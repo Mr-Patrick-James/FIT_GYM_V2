@@ -18,6 +18,16 @@ requireLogin();
 try {
     $conn = getDBConnection();
 
+    // Auto-add student columns if missing (compatible with older MySQL)
+    $colCheck = $conn->query("SHOW COLUMNS FROM bookings LIKE 'is_student'");
+    if ($colCheck && $colCheck->num_rows === 0) {
+        $conn->query("ALTER TABLE bookings ADD COLUMN is_student TINYINT(1) NOT NULL DEFAULT 0 AFTER notes");
+    }
+    $colCheck2 = $conn->query("SHOW COLUMNS FROM bookings LIKE 'student_id_url'");
+    if ($colCheck2 && $colCheck2->num_rows === 0) {
+        $conn->query("ALTER TABLE bookings ADD COLUMN student_id_url VARCHAR(500) DEFAULT NULL AFTER is_student");
+    }
+
     // Get filter parameters
     $status = $_GET['status'] ?? 'all';
     $search = $_GET['search'] ?? '';
