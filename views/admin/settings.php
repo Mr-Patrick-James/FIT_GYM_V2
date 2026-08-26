@@ -644,53 +644,30 @@ $user = getCurrentUser();
                             </button>
                         </div>
 
-                        <!-- Manage Sub-Admins Section -->
-                        <?php if (isAdmin()): ?>
-                        <div class="settings-subsection" style="margin-top: 48px; border-top: 1px solid var(--premium-border); padding-top: 32px;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-                                <div>
-                                    <h3 style="margin-bottom: 4px;">Manage Administrators</h3>
-                                    <p class="settings-hint">Add sub-admins to help manage the gym when you're away</p>
-                                </div>
-                                <button class="btn btn-primary" onclick="openAddAdminModal()">
-                                    <i class="fas fa-user-plus"></i> Add Admin
-                                </button>
-                            </div>
-
-                            <div id="admins-list" class="admins-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
-                                <!-- Admins will be listed here -->
-                                <div style="grid-column: 1/-1; text-align: center; padding: 40px; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px dashed var(--premium-border);">
-                                    <i class="fas fa-users-cog" style="font-size: 2.5rem; color: var(--premium-text-muted); opacity: 0.2; margin-bottom: 16px; display: block;"></i>
-                                    <p style="color: var(--premium-text-muted);">Loading administrators...</p>
-                                </div>
-                            </div>
-                        </div>
-                        <?php endif; ?>
-
-                        <!-- Manage Trainer Managers Section -->
-                        <?php if (isAdmin()): ?>
-                        <div class="settings-subsection" style="margin-top: 48px; border-top: 1px solid var(--premium-border); padding-top: 32px;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-                                <div>
-                                    <h3 style="margin-bottom: 4px;">Manage Trainer Managers</h3>
-                                    <p class="settings-hint">Add trainer managers who can oversee trainers and members but cannot access admin-only settings</p>
-                                </div>
-                                <button class="btn btn-primary" onclick="openAddManagerModal()">
-                                    <i class="fas fa-user-tie"></i> Add Manager
-                                </button>
-                            </div>
-
-                            <div id="managers-list" class="admins-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
-                                <!-- Managers will be listed here -->
-                                <div style="grid-column: 1/-1; text-align: center; padding: 40px; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px dashed var(--premium-border);">
-                                    <i class="fas fa-user-tie" style="font-size: 2.5rem; color: var(--premium-text-muted); opacity: 0.2; margin-bottom: 16px; display: block;"></i>
-                                    <p style="color: var(--premium-text-muted);">Loading managers...</p>
-                                </div>
-                            </div>
-                        </div>
-                        <?php endif; ?>
                     </div>
                 </div>
+
+                <!-- Manage Trainer Managers Section -->
+                <?php if (isAdmin()): ?>
+                <div class="settings-subsection" style="margin-top: 48px; border-top: 1px solid var(--premium-border); padding-top: 32px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                        <div>
+                            <h3 style="margin-bottom: 4px;">Manage Trainer Managers</h3>
+                            <p class="settings-hint">Add trainer managers who can oversee trainers and members but cannot access admin-only settings</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="openAddManagerModal()">
+                            <i class="fas fa-user-tie"></i> Add Manager
+                        </button>
+                    </div>
+
+                    <div id="managers-list" class="admins-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+                        <div style="grid-column: 1/-1; text-align: center; padding: 40px; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px dashed var(--premium-border);">
+                            <i class="fas fa-user-tie" style="font-size: 2.5rem; color: var(--premium-text-muted); opacity: 0.2; margin-bottom: 16px; display: block;"></i>
+                            <p style="color: var(--premium-text-muted);">Loading managers...</p>
+                        </div>
+                    </div>
+                </div>
+                <?php endif; ?>
 
                 <!-- Backup Settings -->
                 <?php if (isAdmin()): ?>
