@@ -1,72 +1,40 @@
 <?php
 /**
- * API to verify student and apply discount
+ * API to mark a booking as student-verified (no discount applied)
  * POST /api/bookings/verify-student.php
  */
-require_once '../../api/config.php';
-require_once '../../api/session.php';
+require_once '../config.php';
+require_once '../session.php';
 
-$method = $_SERVER['REQUEST_METHOD'];
-$input = json_decode(file_get_contents('php://input'), true) ?? [];
-
-if ($method !== 'POST') {
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     sendResponse(false, 'Method not allowed', null, 405);
     exit;
 }
 
-// Get booking ID
-$bookingId = $input['booking_id'] ?? null;
+$input = json_decode(file_get_contents('php://input'), true) ?? [];
+
+$bookingId    = $input['booking_id']    ?? null;
 $studentIdUrl = $input['student_id_url'] ?? null;
 
-if (!$bookingId || !$studentIdUrl) {
-    sendResponse(false, 'Booking ID and student ID URL are required', null, 400);
+if (!$bookingId) {
+    sendResponse(false, 'Booking ID is required', null, 400);
     exit;
 }
 
 try {
     $conn = getDBConnection();
 
-    // Get booking details
-    $bookingStmt = $conn->prepare("SELECT b.*, p.student_discount FROM bookings b 
-                                  LEFT JOIN packages p ON b.package_id = p.id 
-                                  WHERE b.id = ?");
-    $bookingStmt->bind_param("i", $bookingId);
-    $bookingStmt->execute();
-    $bookingResult = $bookingStmt->get_result();
+    // Just flag the booking as student — no amount change
+    $stmt = $conn->prepare("UPDATE bookings SET is_student = 1, student_id_url = ? WHERE id = ?");
+    $stmt->bind_param("si", $studentIdUrl, $bookingId);
 
-    if ($bookingResult->num_rows === 0) {
-        sendResponse(false, 'Booking not found', null, 404);
-        exit;
-    }
-
-    $booking = $bookingResult->fetch_assoc();
-    $studentDiscount = $booking['student_discount'] ?? 10;
-
-    // Calculate discount
-    $discountAmount = ($booking['amount'] * $studentDiscount) / 100;
-    $newAmount = $booking['amount'] - $discountAmount;
-
-    // Update booking with student verification
-    $updateStmt = $conn->prepare("UPDATE bookings 
-                                 SET is_student = 1, 
-                                     student_id_url = ?, 
-                                     student_discount_applied = ?,
-                                     amount = ?
-                                 WHERE id = ?");
-    $updateStmt->bind_param("sddi", $studentIdUrl, $discountAmount, $newAmount, $bookingId);
-    
-    if (!$updateStmt->execute()) {
+    if (!$stmt->execute()) {
         sendResponse(false, 'Failed to update booking', null, 500);
         exit;
     }
 
-    sendResponse(true, 'Student discount applied successfully', [
-        'booking_id' => $bookingId,
-        'original_amount' => floatval($booking['amount']),
-        'discount_percentage' => floatval($studentDiscount),
-        'discount_amount' => floatval($discountAmount),
-        'new_amount' => floatval($newAmount),
-        'student_id_url' => $studentIdUrl
+    sendResponse(true, 'Student ID verified — no discount applied', [
+        'booking_id' => $bookingId
     ]);
 
 } catch (Exception $e) {
