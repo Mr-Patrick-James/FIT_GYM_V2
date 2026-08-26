@@ -610,7 +610,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Setup event listeners
     document.getElementById('statusFilter').addEventListener('change', applyFilters);
     document.getElementById('sortBy').addEventListener('change', applyFilters);
-    document.getElementById('bookingsFilter').addEventListener('change', applyFilters);
     document.getElementById('searchInput').addEventListener('input', applyFilters);
     
     // Close modal on outside click
