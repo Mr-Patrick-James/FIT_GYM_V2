@@ -2140,13 +2140,20 @@ function handlePackageSelectChange() {
         if (isStudentCb) isStudentCb.checked = true;
         if (studentSection) studentSection.style.display = 'block';
         if (studentAutoNotice) studentAutoNotice.style.display = 'flex';
-    } else {
-        // Normal package: show checkbox, reset student section to manual control
+    } else if (packageName) {
+        // A non-student package is selected: show the optional checkbox, hide auto stuff
         if (studentCheckboxRow) studentCheckboxRow.style.display = 'block';
         if (studentAutoNotice) studentAutoNotice.style.display = 'none';
-        if (!isStudentCb?.checked) {
-            if (studentSection) studentSection.style.display = 'none';
-        }
+        if (isStudentCb) isStudentCb.checked = false;
+        if (studentSection) studentSection.style.display = 'none';
+        removeStudentId();
+    } else {
+        // Nothing selected yet: hide everything
+        if (studentCheckboxRow) studentCheckboxRow.style.display = 'none';
+        if (studentAutoNotice) studentAutoNotice.style.display = 'none';
+        if (isStudentCb) isStudentCb.checked = false;
+        if (studentSection) studentSection.style.display = 'none';
+        removeStudentId();
     }
 }
 

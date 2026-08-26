@@ -2065,8 +2065,8 @@ function getSetting($key, $default = '', $settings = [])
                                 </p>
                             </div>
 
-                            <!-- Manual checkbox — hidden when a student package is auto-detected -->
-                            <div class="form-group" id="studentCheckboxRow">
+                            <!-- Manual checkbox — only shown for non-student packages after one is selected -->
+                            <div class="form-group" id="studentCheckboxRow" style="display:none;">
                                 <label style="display:flex; align-items:center; gap:10px; cursor:pointer; user-select:none;">
                                     <input type="checkbox" id="isStudent" onchange="toggleStudentSection(this)" style="width:18px; height:18px; cursor:pointer; accent-color: var(--primary);">
                                     <span>I am a student
