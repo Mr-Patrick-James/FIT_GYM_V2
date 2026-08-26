@@ -504,6 +504,106 @@ function getSetting($key, $default = '', $settings = [])
             border: 1px solid rgba(255, 255, 255, 0.05) !important;
         }
 
+        /* ── FullCalendar Mobile Responsive ── */
+        @media (max-width: 768px) {
+            #userCalendarView {
+                margin: 12px 0 16px;
+                padding: 8px;
+            }
+
+            .fc .fc-toolbar {
+                flex-direction: column;
+                gap: 10px;
+                padding: 8px 4px;
+            }
+
+            .fc .fc-toolbar-title {
+                font-size: 0.85rem;
+                text-align: center;
+            }
+
+            .fc .fc-toolbar-chunk {
+                display: flex;
+                justify-content: center;
+                flex-wrap: wrap;
+                gap: 4px;
+            }
+
+            .fc .fc-button-primary {
+                padding: 5px 10px;
+                font-size: 0.7rem;
+                border-radius: 8px;
+            }
+
+            .fc .fc-col-header-cell-cushion {
+                font-size: 0.6rem;
+                letter-spacing: 0.5px;
+                padding: 0 2px;
+            }
+
+            .fc .fc-daygrid-day-number {
+                font-size: 0.65rem;
+                padding: 4px 6px;
+            }
+
+            .fc .fc-daygrid-day-top {
+                justify-content: center;
+            }
+
+            .fc .fc-event {
+                font-size: 0.6rem !important;
+                padding: 1px 3px !important;
+                line-height: 1.2 !important;
+            }
+
+            .fc .fc-daygrid-event-harness {
+                margin-top: 1px !important;
+            }
+
+            /* Hide extra view buttons on mobile — list view is cleaner */
+            .fc .fc-timeGridWeek-button,
+            .fc .fc-timeGridDay-button {
+                display: none !important;
+            }
+
+            .fc .fc-col-header-cell {
+                padding: 6px 0;
+            }
+
+            .fc .fc-daygrid-day {
+                min-height: 40px !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .fc .fc-toolbar-title {
+                font-size: 0.8rem;
+            }
+
+            .fc .fc-button-primary {
+                padding: 4px 8px;
+                font-size: 0.65rem;
+            }
+
+            .fc .fc-daygrid-day-number {
+                font-size: 0.6rem;
+                padding: 2px 4px;
+            }
+
+            .fc .fc-event {
+                font-size: 0.55rem !important;
+            }
+
+            /* On very small screens show dot only */
+            .fc .fc-event-title {
+                display: none !important;
+            }
+
+            .fc .fc-daygrid-event-dot {
+                display: inline-block !important;
+            }
+        }
+
         /* Event Styles */
         .fc-event {
             border: none !important;

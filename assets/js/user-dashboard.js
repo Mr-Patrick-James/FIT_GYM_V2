@@ -482,15 +482,22 @@ async function initUserCalendar() {
     const events = await getUserCalendarEvents();
     
     userCalendar = new FullCalendar.Calendar(el, {
-        initialView: 'dayGridMonth',
-        headerToolbar: {
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay'
-        },
+        initialView: window.innerWidth <= 768 ? 'listWeek' : 'dayGridMonth',
+        headerToolbar: window.innerWidth <= 768
+            ? { left: 'prev,next', center: 'title', right: 'dayGridMonth,listWeek' }
+            : { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' },
         height: 'auto',
-        dayMaxEvents: 2,
+        dayMaxEvents: window.innerWidth <= 480 ? 1 : 2,
         events: events,
+        windowResize: function(view) {
+            if (window.innerWidth <= 768) {
+                userCalendar.setOption('headerToolbar', { left: 'prev,next', center: 'title', right: 'dayGridMonth,listWeek' });
+                userCalendar.setOption('dayMaxEvents', 1);
+            } else {
+                userCalendar.setOption('headerToolbar', { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' });
+                userCalendar.setOption('dayMaxEvents', 2);
+            }
+        },
         eventClick: (info) => {
             const type = info.event.extendedProps.type;
             if (type === 'session') {
