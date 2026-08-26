@@ -1131,24 +1131,133 @@ function populateUpgradePlans(currentPackageId) {
 }
 
 // Select upgrade plan
+// Track selected upgrade package and file
+let selectedUpgradePackageId = null;
+let selectedUpgradeFile = null;
+
 function selectUpgradePlan(packageId) {
     const pkg = packagesData.find(p => p.id === packageId);
     if (!pkg) return;
-    
-    // Close upgrade modal
+
+    selectedUpgradePackageId = packageId;
+
+    // Close plan-selection modal
     closeUpgradeModal();
-    
-    // Pre-fill booking form
-    showSection('bookings');
-    updateBookingPackageSelect().then(() => {
-        const packageSelect = document.getElementById('bookingPackage');
-        if (packageSelect) {
-            packageSelect.value = pkg.name;
+
+    // Show the upgrade booking modal with package summary
+    const summary = document.getElementById('upgradePackageSummary');
+    if (summary) {
+        const rawPrice = pkg.rawPrice || parseFloat(String(pkg.price).replace(/[^0-9.]/g, '')) || 0;
+        summary.innerHTML = `
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                    <div style="font-size:0.72rem;font-weight:700;color:var(--dark-text-secondary);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Upgrading to</div>
+                    <div style="font-size:1.1rem;font-weight:900;color:var(--primary);">${pkg.name}</div>
+                    <div style="font-size:0.8rem;color:var(--dark-text-secondary);margin-top:2px;">${pkg.duration} &bull; ${pkg.tag || 'Standard'}</div>
+                </div>
+                <div style="font-size:1.5rem;font-weight:900;color:var(--primary);">₱${rawPrice.toLocaleString()}</div>
+            </div>`;
+    }
+
+    // Reset form
+    removeUpgradeFile();
+    const form = document.getElementById('upgradeBookingForm');
+    if (form) form.reset();
+
+    document.getElementById('upgradeBookingModal')?.classList.add('active');
+}
+
+function closeUpgradeBookingModal() {
+    document.getElementById('upgradeBookingModal')?.classList.remove('active');
+    selectedUpgradePackageId = null;
+    removeUpgradeFile();
+}
+
+function handleUpgradeFileSelect(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+        showNotification('File too large. Max 5MB.', 'warning');
+        event.target.value = '';
+        return;
+    }
+    selectedUpgradeFile = file;
+    const preview  = document.getElementById('upgradeFilePreview');
+    const fileName = document.getElementById('upgradeFileName');
+    const area     = document.getElementById('upgradeFileUploadArea');
+    if (fileName) fileName.textContent = file.name;
+    if (preview) preview.style.display = 'block';
+    if (area) area.style.display = 'none';
+}
+
+function removeUpgradeFile() {
+    selectedUpgradeFile = null;
+    const preview = document.getElementById('upgradeFilePreview');
+    const input   = document.getElementById('upgradeReceiptFile');
+    const area    = document.getElementById('upgradeFileUploadArea');
+    if (preview) preview.style.display = 'none';
+    if (input)   input.value = '';
+    if (area)    area.style.display = 'block';
+}
+
+async function submitUpgradeBooking(event) {
+    event.preventDefault();
+
+    if (!selectedUpgradeFile) {
+        showNotification('Please upload your payment receipt.', 'warning');
+        return;
+    }
+    if (!selectedUpgradePackageId) {
+        showNotification('No upgrade package selected.', 'warning');
+        return;
+    }
+
+    const contact = document.getElementById('upgradeContact').value.trim();
+    const notes   = document.getElementById('upgradeNotes').value.trim();
+
+    if (!validateContactNumber(contact)) {
+        showNotification('Contact number must be exactly 11 digits.', 'error');
+        return;
+    }
+
+    const submitBtn = document.querySelector('#upgradeBookingModal .btn-primary');
+    const origText  = submitBtn ? submitBtn.innerHTML : '';
+    if (submitBtn) { submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...'; submitBtn.disabled = true; }
+
+    try {
+        // Upload receipt
+        const receiptUrl = await uploadReceipt(selectedUpgradeFile);
+
+        // Call upgrade API
+        const response = await fetch('../../api/bookings/upgrade.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                package_id: selectedUpgradePackageId,
+                contact:    contact,
+                notes:      notes,
+                receipt:    receiptUrl
+            })
+        });
+
+        const result = await response.json();
+
+        if (submitBtn) { submitBtn.innerHTML = origText; submitBtn.disabled = false; }
+
+        if (result.success) {
+            closeUpgradeBookingModal();
+            await loadUserBookings();
+            populateBookings();
+            populatePayments();
+            updateStats();
+            showNotification('Upgrade submitted successfully!', 'success');
+        } else {
+            showNotification('Upgrade failed: ' + result.message, 'error');
         }
-        openBookingModal();
-    });
-    
-    showNotification(`Upgrading to ${pkg.name}`, 'success');
+    } catch (err) {
+        if (submitBtn) { submitBtn.innerHTML = origText; submitBtn.disabled = false; }
+        showNotification('Error: ' + err.message, 'error');
+    }
 }
 
 // Show notification helper
