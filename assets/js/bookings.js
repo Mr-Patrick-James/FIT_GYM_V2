@@ -21,9 +21,28 @@ let packages = [];
 async function loadTrainers(allowedIds = null) {
     try {
         const response = await fetch('../../api/trainers/get-all.php');
-        const data = await response.json();
+        
+        if (!response.ok) {
+            console.error('Trainers API error:', response.status, response.statusText);
+            return;
+        }
+
+        const text = await response.text();
+        let data;
+        try {
+            data = JSON.parse(text);
+        } catch(e) {
+            console.error('Trainers API bad JSON:', text.substring(0, 200));
+            return;
+        }
+
+        console.log('Trainers API response:', data);
+
         if (data.success) {
             trainersList = data.data.filter(t => t.is_active);
+            console.log('Active trainers:', trainersList.length, trainersList);
+            console.log('allowedIds:', allowedIds);
+
             const select = document.getElementById('modalTrainerSelect');
             if (select) {
                 select.innerHTML = '<option value="">Select Trainer...</option>';
@@ -34,6 +53,8 @@ async function loadTrainers(allowedIds = null) {
                 const filteredTrainers = hasFilter
                     ? trainersList.filter(t => allowedIds.includes(t.id))
                     : trainersList;
+
+                console.log('filteredTrainers:', filteredTrainers.length);
 
                 if (filteredTrainers.length === 0) {
                     const option = document.createElement('option');
@@ -51,6 +72,8 @@ async function loadTrainers(allowedIds = null) {
                     });
                 }
             }
+        } else {
+            console.error('Trainers API returned success=false:', data.message);
         }
     } catch (error) {
         console.error('Error loading trainers:', error);
