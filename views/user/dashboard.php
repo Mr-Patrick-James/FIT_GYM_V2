@@ -2257,7 +2257,7 @@ function getSetting($key, $default = '', $settings = [])
         </div>
     </div>
 
-    <!-- Upgrade Modal -->
+    <!-- Upgrade Modal — Plan Selection -->
     <div class="modal-overlay" id="upgradeModal">
         <div class="modal" style="max-width: 900px;">
             <div class="modal-header">
@@ -2283,6 +2283,66 @@ function getSetting($key, $default = '', $settings = [])
                 <button class="btn btn-secondary" onclick="closeUpgradeModal()">
                     <i class="fas fa-times"></i> Cancel
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upgrade Booking Modal — Receipt Upload -->
+    <div class="modal-overlay" id="upgradeBookingModal">
+        <div class="modal" style="max-width: 560px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-arrow-up" style="margin-right:8px;"></i>Confirm Upgrade</h3>
+                <button class="close-modal" onclick="closeUpgradeBookingModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="upgradePackageSummary" style="background:rgba(255,255,255,0.04);border:1px solid var(--dark-border);border-radius:12px;padding:16px;margin-bottom:20px;">
+                    <!-- Filled by JS -->
+                </div>
+
+                <form id="upgradeBookingForm" onsubmit="submitUpgradeBooking(event)">
+                    <div class="form-group">
+                        <label>Contact Number <span style="color:var(--warning);">*</span></label>
+                        <input type="tel" id="upgradeContact" placeholder="09171234567" maxlength="11"
+                               pattern="[0-9]{11}" title="Please enter exactly 11 digits" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Payment Receipt (GCash) <span style="color:var(--warning);">*</span></label>
+                        <div class="file-upload-area" id="upgradeFileUploadArea"
+                             onclick="document.getElementById('upgradeReceiptFile').click()">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p>Click to upload or drag and drop</p>
+                            <span>PNG, JPG, PDF up to 5MB</span>
+                            <input type="file" id="upgradeReceiptFile" accept="image/*,.pdf"
+                                   style="display:none;" onchange="handleUpgradeFileSelect(event)">
+                        </div>
+                        <div id="upgradeFilePreview" style="display:none; margin-top:12px;">
+                            <div class="file-preview-item">
+                                <i class="fas fa-file-image"></i>
+                                <span id="upgradeFileName"></span>
+                                <button type="button" onclick="removeUpgradeFile()" class="remove-file-btn">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Notes (Optional)</label>
+                        <textarea id="upgradeNotes" rows="2" placeholder="Any notes..."></textarea>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeUpgradeBookingModal()">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-arrow-up"></i> Submit Upgrade
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
