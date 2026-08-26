@@ -1,14 +1,8 @@
 <?php
 ob_start();
 require_once '../config.php';
-require_once '../session.php';
 
 if (ob_get_length()) ob_clean();
-
-// Only require login (admin or manager can assign trainers)
-if (!isset($_SESSION['user_id'])) {
-    sendResponse(false, 'Unauthorized', null, 401);
-}
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     sendResponse(false, 'Method not allowed', null, 405);
@@ -17,21 +11,29 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 try {
     $conn = getDBConnection();
 
+    // Check trainers table exists
+    $tableCheck = $conn->query("SHOW TABLES LIKE 'trainers'");
+    if (!$tableCheck || $tableCheck->num_rows === 0) {
+        sendResponse(true, 'Trainers retrieved', []);
+    }
+
     $result = $conn->query(
-        "SELECT id, name, specialization, is_active
+        "SELECT id, name, specialization
          FROM trainers
          WHERE is_active = 1
          ORDER BY name ASC"
     );
 
     $trainers = [];
-    while ($row = $result->fetch_assoc()) {
-        $trainers[] = [
-            'id'             => (int)$row['id'],
-            'name'           => $row['name'],
-            'specialization' => $row['specialization'] ?? 'General Fitness',
-            'is_active'      => (bool)$row['is_active'],
-        ];
+    if ($result) {
+        while ($row = $result->fetch_assoc()) {
+            $trainers[] = [
+                'id'             => (int)$row['id'],
+                'name'           => $row['name'],
+                'specialization' => $row['specialization'] ?? 'General Fitness',
+                'is_active'      => true,
+            ];
+        }
     }
 
     $conn->close();

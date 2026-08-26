@@ -1,7 +1,27 @@
 <?php
 require_once '../../api/session.php';
+require_once '../../api/config.php';
 requireAdmin();
 $user = getCurrentUser();
+
+// Load trainers directly via PHP — no fetch needed
+$_trainers = [];
+try {
+    $conn = getDBConnection();
+    $tr = $conn->query("SELECT id, name, specialization FROM trainers WHERE is_active = 1 ORDER BY name ASC");
+    if ($tr) {
+        while ($row = $tr->fetch_assoc()) {
+            $_trainers[] = [
+                'id'   => (int)$row['id'],
+                'name' => $row['name'],
+                'specialization' => $row['specialization'] ?? 'General Fitness',
+                'is_active' => true
+            ];
+        }
+    }
+} catch (Exception $e) {
+    error_log("bookings.php trainer load error: " . $e->getMessage());
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -661,8 +681,44 @@ $user = getCurrentUser();
 
     <!-- Theme Script -->
     <script src="../../assets/js/theme.js"></script>
+
+    <!-- Trainer data injected server-side (no fetch needed) -->
+    <script>
+        window.__TRAINERS__ = <?php echo json_encode($_trainers, JSON_HEX_TAG); ?>;
+    </script>
+
     <!-- Bookings Scripts -->
     <script src="../../assets/js/bookings.js"></script>
     <script src="../../assets/js/mobile-menu.js"></script>
+
+    <!-- Override loadTrainers to use server-injected data -->
+    <script>
+    async function loadTrainers(allowedIds) {
+        const allTrainers = window.__TRAINERS__ || [];
+        const select = document.getElementById('modalTrainerSelect');
+        if (!select) return;
+
+        select.innerHTML = '<option value="">Select Trainer...</option>';
+
+        const hasFilter = Array.isArray(allowedIds) && allowedIds.length > 0;
+        const list = hasFilter
+            ? allTrainers.filter(t => allowedIds.includes(t.id))
+            : allTrainers;
+
+        if (list.length === 0) {
+            const opt = document.createElement('option');
+            opt.disabled = true;
+            opt.textContent = hasFilter ? 'No assigned trainers for this package' : 'No active trainers available';
+            select.appendChild(opt);
+        } else {
+            list.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t.id;
+                opt.textContent = t.name + (t.specialization ? ' — ' + t.specialization : '');
+                select.appendChild(opt);
+            });
+        }
+    }
+    </script>
 </body>
 </html>
