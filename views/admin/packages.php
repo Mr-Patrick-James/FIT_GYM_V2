@@ -88,15 +88,7 @@ $user = getCurrentUser();
             color: #000;
         }
 
-        /* Manager Restrictions */
-        .role-manager .action-btn.primary,
-        .role-manager .package-card .btn-secondary[onclick*="editPackage"],
-        .role-manager .package-card .btn-secondary[onclick*="deletePackage"] {
-            display: none !important;
-        }
-        .role-manager .package-card .btn-secondary {
-            grid-column: span 2;
-        }
+        /* Manager Restrictions — handled globally in dashboard.css */
     </style>
     
     <!-- Apply theme immediately before page renders to prevent flash -->
@@ -557,5 +549,6 @@ $user = getCurrentUser();
     <!-- Packages Scripts -->
     <script src="../../assets/js/packages.js"></script>
     <script src="../../assets/js/mobile-menu.js"></script>
+ <script src="../../assets/js/role-restrictions.js"></script>
 </body>
 </html>

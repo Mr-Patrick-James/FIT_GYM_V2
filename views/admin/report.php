@@ -369,5 +369,6 @@ $user = getCurrentUser();
     <script src="../../assets/js/theme.js"></script>
     <script src="../../assets/js/reports.js?v=2.0"></script>
     <script src="../../assets/js/mobile-menu.js"></script>
+ <script src="../../assets/js/role-restrictions.js"></script>
 </body>
 </html>

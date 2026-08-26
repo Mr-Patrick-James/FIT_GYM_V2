@@ -419,5 +419,6 @@ function getSetting($key, $default = '', $settings = []) {
     <!-- Dashboard Scripts -->
     <script src="../../assets/js/dashboard.js"></script>
     <script src="../../assets/js/mobile-menu.js"></script>
+ <script src="../../assets/js/role-restrictions.js"></script>
 </body>
 </html>

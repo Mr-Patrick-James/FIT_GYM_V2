@@ -307,5 +307,6 @@ $user = getCurrentUser();
     <!-- Members Scripts -->
     <script src="../../assets/js/members.js?v=<?= time() ?>"></script>
     <script src="../../assets/js/mobile-menu.js"></script>
+ <script src="../../assets/js/role-restrictions.js"></script>
 </body>
 </html>

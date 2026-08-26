@@ -4064,3 +4064,61 @@ body.light-mode .theme-option.active {
         font-size: 0.75rem;
     }
 }
+
+/* ============================================================
+   ROLE-MANAGER: Hide edit & delete buttons on all admin pages
+   ============================================================ */
+
+/* Generic edit/delete button selectors */
+.role-manager [onclick*="edit"],
+.role-manager [onclick*="Edit"],
+.role-manager [onclick*="delete"],
+.role-manager [onclick*="Delete"],
+.role-manager [onclick*="remove"],
+.role-manager [onclick*="Remove"] {
+    display: none !important;
+}
+
+/* Specific icon button variants */
+.role-manager .icon-btn.danger,
+.role-manager .btn-danger,
+.role-manager .card-btn.danger {
+    display: none !important;
+}
+
+/* Trainers page — edit & delete card buttons */
+.role-manager .card-btn[onclick*="editTrainer"],
+.role-manager .card-btn[onclick*="deleteTrainer"] {
+    display: none !important;
+}
+
+/* Packages page — edit & delete buttons */
+.role-manager .btn-secondary[onclick*="editPackage"],
+.role-manager .btn-secondary[onclick*="deletePackage"] {
+    display: none !important;
+}
+
+/* Exercises page — edit & delete buttons */
+.role-manager .btn-secondary[onclick*="editExercise"],
+.role-manager .btn[onclick*="deleteExercise"] {
+    display: none !important;
+}
+
+/* Equipment page — edit & delete buttons */
+.role-manager .btn-secondary[onclick*="editEquipment"],
+.role-manager .btn[onclick*="deleteEquipment"] {
+    display: none !important;
+}
+
+/* Settings page — hide danger zone and admin-only actions */
+.role-manager .settings-danger-zone,
+.role-manager .btn-danger,
+.role-manager [onclick*="deleteAdmin"],
+.role-manager [onclick*="exportDatabase"] {
+    display: none !important;
+}
+
+/* Table action cells — hide when only edit/delete remain */
+.role-manager .table-actions:empty {
+    display: none !important;
+}

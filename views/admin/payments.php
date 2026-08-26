@@ -305,5 +305,6 @@ $user = getCurrentUser();
     <!-- Payments Scripts -->
     <script src="../../assets/js/payments.js"></script>
     <script src="../../assets/js/mobile-menu.js"></script>
+ <script src="../../assets/js/role-restrictions.js"></script>
 </body>
 </html>
