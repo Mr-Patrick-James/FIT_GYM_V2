@@ -175,7 +175,6 @@ async function loadPackagesData() {
                 rawPrice: parseFloat(pkg.price) || 0,
                 tag: pkg.tag || 'Standard',
                 description: pkg.description || 'Full gym access with all facilities',
-                studentDiscount: parseFloat(pkg.student_discount || pkg.studentDiscount || 0) || 0,
             }));
         } else {
             console.error('Error loading packages:', data.message);
@@ -191,11 +190,11 @@ async function loadPackagesData() {
 
 function getDefaultPackages() {
     return [
-        { name: "Walk-in Pass", duration: "1 Day", rawPrice: 200, price: "₱200.00", studentDiscount: 0, tag: "Basic", description: "Perfect for trying out our facilities" },
-        { name: "Weekly Pass", duration: "7 Days", rawPrice: 500, price: "₱500.00", studentDiscount: 0, tag: "Popular", description: "Great for short-term fitness goals" },
-        { name: "Monthly Membership", duration: "30 Days", rawPrice: 1500, price: "₱1,500.00", studentDiscount: 0, tag: "Best Value", description: "Most popular choice for regular gym-goers" },
-        { name: "3-Month Package", duration: "90 Days", rawPrice: 4000, price: "₱4,000.00", studentDiscount: 0, tag: "Premium", description: "Save more with our 3-month package" },
-        { name: "Annual Membership", duration: "1 Year", rawPrice: 15000, price: "₱15,000.00", studentDiscount: 0, tag: "VIP", description: "Best value for long-term commitment" }
+        { name: "Walk-in Pass", duration: "1 Day", rawPrice: 200, price: "₱200.00", tag: "Basic", description: "Perfect for trying out our facilities" },
+        { name: "Weekly Pass", duration: "7 Days", rawPrice: 500, price: "₱500.00", tag: "Popular", description: "Great for short-term fitness goals" },
+        { name: "Monthly Membership", duration: "30 Days", rawPrice: 1500, price: "₱1,500.00", tag: "Best Value", description: "Most popular choice for regular gym-goers" },
+        { name: "3-Month Package", duration: "90 Days", rawPrice: 4000, price: "₱4,000.00", tag: "Premium", description: "Save more with our 3-month package" },
+        { name: "Annual Membership", duration: "1 Year", rawPrice: 15000, price: "₱15,000.00", tag: "VIP", description: "Best value for long-term commitment" }
     ];
 }
 

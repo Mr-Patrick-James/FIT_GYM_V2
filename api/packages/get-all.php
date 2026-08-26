@@ -30,8 +30,7 @@ try {
         'goal' => "varchar(255) DEFAULT 'General Fitness'",
         'diet_info' => "text",
         'guidance_info' => "text",
-        'is_active' => "tinyint(1) DEFAULT '1'",
-        'student_discount' => "decimal(10,2) DEFAULT '0.00'"
+        'is_active' => "tinyint(1) DEFAULT '1'"
     ];
 
     foreach ($columns as $col => $def) {
@@ -49,15 +48,11 @@ try {
 
     $checkGuidance = $conn->query("SHOW COLUMNS FROM packages LIKE 'guidance_info'");
     $hasGuidance = ($checkGuidance && $checkGuidance->num_rows > 0);
-
-    $checkStudentDiscount = $conn->query("SHOW COLUMNS FROM packages LIKE 'student_discount'");
-    $hasStudentDiscount = ($checkStudentDiscount && $checkStudentDiscount->num_rows > 0);
     
     $query = "SELECT id, name, duration, price, tag, description, is_trainer_assisted, " . 
              ($hasGoal ? "goal, " : "'General Fitness' as goal, ") . 
              ($hasDiet ? "diet_info, " : "'' as diet_info, ") . 
              ($hasGuidance ? "guidance_info, " : "'' as guidance_info, ") . 
-             ($hasStudentDiscount ? "COALESCE(student_discount, 0) as student_discount, " : "0 as student_discount, ") .
              "is_active, created_at, updated_at FROM packages WHERE is_active = TRUE ORDER BY name ASC";
              
     $stmt = $conn->prepare($query);
@@ -90,7 +85,6 @@ try {
             'name' => $row['name'],
             'duration' => $row['duration'],
             'price' => (float)$row['price'],
-            'student_discount' => (float)$row['student_discount'],
             'tag' => $row['tag'],
             'description' => $row['description'],
             'is_trainer_assisted' => (bool)$row['is_trainer_assisted'],
