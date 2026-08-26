@@ -31,9 +31,6 @@ async function loadAllMembers() {
                 .map(user => {
                     const userBookings = allBookings.filter(b => String(b.user_id) === String(user.id));
                     const verifiedBookings = userBookings.filter(b => b.status === 'verified');
-                    
-                    if (verifiedBookings.length === 0) return null;
-
                     const totalSpent = verifiedBookings.reduce((sum, b) => sum + (parseFloat(b.amount) || 0), 0);
                     
                     return {
@@ -50,8 +47,7 @@ async function loadAllMembers() {
                         totalSpent: totalSpent,
                         joinedDate: user.created_at
                     };
-                })
-                .filter(member => member !== null);
+                });
 
             // 2. Process walk-in customers as members if they have verified bookings
             // Group walk-ins by email to avoid duplicates
