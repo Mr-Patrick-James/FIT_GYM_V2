@@ -2069,9 +2069,7 @@ function getSetting($key, $default = '', $settings = [])
                             <div class="form-group" id="studentCheckboxRow" style="display:none;">
                                 <label style="display:flex; align-items:center; gap:10px; cursor:pointer; user-select:none;">
                                     <input type="checkbox" id="isStudent" onchange="toggleStudentSection(this)" style="width:18px; height:18px; cursor:pointer; accent-color: var(--primary);">
-                                    <span>I am a student
-                                        <span style="font-size:0.75rem; color:var(--dark-text-secondary);">(20% off on Daily Pass)</span>
-                                    </span>
+                                    <span>I am a student</span>
                                 </label>
                             </div>
 

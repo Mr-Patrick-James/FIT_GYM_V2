@@ -126,15 +126,8 @@ try {
         $expiresAt = date('Y-m-d H:i:s', strtotime($booking_date . " + $days days"));
     }
 
-    // Student discount: 20% off for student packages (name contains "student") or 1-Day passes
-    $STUDENT_DISCOUNT_PERCENT = 20;
+    // No discount — student must just upload ID as proof, full price applies
     $finalAmount = (float)$package['price'];
-    $isDailyPass = (strtolower(trim($package['duration'])) === '1 day' || $days === 1);
-    $isStudentPkg = stripos($package_name, 'student') !== false;
-
-    if ($is_student && !empty($student_id_url) && ($isDailyPass || $isStudentPkg)) {
-        $finalAmount = $finalAmount - ($finalAmount * $STUDENT_DISCOUNT_PERCENT / 100);
-    }
 
     // Insert booking into database
     $sql = "INSERT INTO bookings (user_id, name, email, contact, package_id, package_name, amount, booking_date, expires_at, notes, receipt_url, is_student, student_id_url) 

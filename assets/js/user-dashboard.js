@@ -2281,27 +2281,13 @@ function updateBookingPriceSummary() {
     }
 
     const rawPrice = selectedPackage.rawPrice || 0;
-    const discountPercent = selectedPackage.studentDiscount || 0;
-    const studentPrice = rawPrice - (rawPrice * discountPercent / 100);
 
     priceSummary.style.display = 'block';
     priceLabel.textContent = `Package price: ${formatCurrency(rawPrice)}`;
 
-    if (isStudent) {
-        if (discountPercent > 0) {
-            studentPriceLabel.innerHTML = `Student price: <strong>${formatCurrency(studentPrice)}</strong> <span style="font-size:0.85rem; color:var(--dark-text-secondary);">(${discountPercent}% off)</span>`;
-            studentPriceLabel.style.display = 'block';
-            studentNotice.textContent = 'Your student discount will be applied when you submit a valid ID.';
-            studentNotice.style.display = 'block';
-        } else {
-            studentPriceLabel.textContent = 'No student discount is available for this package.';
-            studentPriceLabel.style.display = 'block';
-            studentNotice.textContent = '';
-            studentNotice.style.display = 'none';
-        }
-    } else {
-        studentPriceLabel.style.display = 'none';
-        studentNotice.style.display = 'none';
+    // No discount — just show the full price regardless of student status
+    studentPriceLabel.style.display = 'none';
+    studentNotice.style.display = 'none';
     }
 }
 
