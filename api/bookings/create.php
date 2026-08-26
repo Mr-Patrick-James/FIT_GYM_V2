@@ -29,7 +29,12 @@ try {
     $student_id_url  = $input['student_id_url'] ?? null;
     $user_id         = $_SESSION['user_id'];
 
-    // If user claims student but did not provide proof, reject early
+    // Auto-flag as student if the package name contains "student"
+    if (stripos($package_name ?? '', 'student') !== false) {
+        $is_student = 1;
+    }
+
+    // If student booking, proof photo is required
     if ($is_student && empty($student_id_url)) {
         sendResponse(false, 'Please upload your student ID photo as proof.', null, 400);
     }
@@ -110,7 +115,17 @@ try {
     if ($days > 0) {
         $expiresAt = date('Y-m-d H:i:s', strtotime($booking_date . " + $days days"));
     }
-    
+
+    // Student discount: 20% off for student packages (name contains "student") or 1-Day passes
+    $STUDENT_DISCOUNT_PERCENT = 20;
+    $finalAmount = (float)$package['price'];
+    $isDailyPass = (strtolower(trim($package['duration'])) === '1 day' || $days === 1);
+    $isStudentPkg = stripos($package_name, 'student') !== false;
+
+    if ($is_student && !empty($student_id_url) && ($isDailyPass || $isStudentPkg)) {
+        $finalAmount = $finalAmount - ($finalAmount * $STUDENT_DISCOUNT_PERCENT / 100);
+    }
+
     // Insert booking into database
     $sql = "INSERT INTO bookings (user_id, name, email, contact, package_id, package_name, amount, booking_date, expires_at, notes, receipt_url, is_student, student_id_url) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -123,7 +138,7 @@ try {
         $contact,
         $package['id'],
         $package_name,
-        $package['price'],
+        $finalAmount,
         $booking_date,
         $expiresAt,
         $notes,

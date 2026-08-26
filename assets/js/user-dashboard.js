@@ -1468,16 +1468,20 @@ async function updateBookingPackageSelect() {
         const option = document.createElement('option');
         option.value = pkg.name;
         option.dataset.price = pkg.rawPrice;
-        option.dataset.studentDiscount = pkg.studentDiscount;
+        option.dataset.duration = pkg.duration || '';
         option.textContent = `${pkg.name} - ${pkg.price} (${pkg.duration})`;
         select.appendChild(option);
     });
-    select.onchange = updateBookingPriceSummary;
+    select.onchange = () => {
+        handlePackageSelectChange();
+        updateBookingPriceSummary();
+    };
     
     // Restore previous value if it still exists
     if (currentValue) {
         select.value = currentValue;
     }
+    handlePackageSelectChange();
     updateBookingPriceSummary();
 }
 
@@ -2066,6 +2070,10 @@ function closeBookingModal() {
     if (isStudentCb) isStudentCb.checked = false;
     const studentSection = document.getElementById('studentSection');
     if (studentSection) studentSection.style.display = 'none';
+    const studentCheckboxRow = document.getElementById('studentCheckboxRow');
+    if (studentCheckboxRow) studentCheckboxRow.style.display = 'block';
+    const studentAutoNotice = document.getElementById('studentAutoNotice');
+    if (studentAutoNotice) studentAutoNotice.style.display = 'none';
     removeStudentId();
 }
 
@@ -2111,7 +2119,38 @@ function removeFile() {
     }
 }
 
-// Toggle student section visibility
+// Returns true if the package name indicates a student package
+function isStudentPackage(packageName) {
+    if (!packageName) return false;
+    return packageName.toLowerCase().includes('student');
+}
+
+// Called every time the package dropdown changes.
+// Auto-shows / hides the student ID section and checkbox row.
+function handlePackageSelectChange() {
+    const packageName = document.getElementById('bookingPackage')?.value || '';
+    const studentCheckboxRow = document.getElementById('studentCheckboxRow');
+    const studentSection     = document.getElementById('studentSection');
+    const isStudentCb        = document.getElementById('isStudent');
+    const studentAutoNotice  = document.getElementById('studentAutoNotice');
+
+    if (isStudentPackage(packageName)) {
+        // Auto-activate: hide manual checkbox, always show ID upload
+        if (studentCheckboxRow) studentCheckboxRow.style.display = 'none';
+        if (isStudentCb) isStudentCb.checked = true;
+        if (studentSection) studentSection.style.display = 'block';
+        if (studentAutoNotice) studentAutoNotice.style.display = 'flex';
+    } else {
+        // Normal package: show checkbox, reset student section to manual control
+        if (studentCheckboxRow) studentCheckboxRow.style.display = 'block';
+        if (studentAutoNotice) studentAutoNotice.style.display = 'none';
+        if (!isStudentCb?.checked) {
+            if (studentSection) studentSection.style.display = 'none';
+        }
+    }
+}
+
+// Toggle student section visibility (manual checkbox)
 function toggleStudentSection(checkbox) {
     const section = document.getElementById('studentSection');
     if (!section) return;
@@ -2249,9 +2288,10 @@ async function submitBooking(event) {
     const date = document.getElementById('bookingDate').value;
     const contact = document.getElementById('bookingContact').value;
     const notes = document.getElementById('bookingNotes').value;
-    const isStudent = document.getElementById('isStudent')?.checked || false;
+    // is_student is true if checkbox checked OR if selected package is a student package
+    const isStudent = document.getElementById('isStudent')?.checked || isStudentPackage(packageName);
 
-    // Validate student ID upload when student option is checked
+    // Validate student ID upload when student option is active
     if (isStudent && !selectedStudentIdFile) {
         showNotification('Please upload your Student ID photo as proof.', 'warning');
         return;

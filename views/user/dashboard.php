@@ -2056,11 +2056,22 @@ function getSetting($key, $default = '', $settings = [])
                                     placeholder="Any special requests or notes..."></textarea>
                             </div>
 
-                            <!-- Student Discount Section -->
-                            <div class="form-group">
+                            <!-- Student ID Section -->
+                            <!-- Auto-notice shown when a student package is selected -->
+                            <div id="studentAutoNotice" style="display:none; background:rgba(99,102,241,0.1); border:1px solid rgba(99,102,241,0.3); border-radius:12px; padding:12px 16px; margin-bottom:16px; gap:10px; align-items:flex-start;">
+                                <i class="fas fa-graduation-cap" style="color:var(--primary); margin-top:2px; flex-shrink:0;"></i>
+                                <p style="color:var(--dark-text); font-size:0.82rem; line-height:1.5; margin:0;">
+                                    <strong>Student Package selected.</strong> A valid Student ID photo is <strong style="color:var(--warning);">required</strong> to complete this booking. The admin will verify your ID before approving.
+                                </p>
+                            </div>
+
+                            <!-- Manual checkbox — hidden when a student package is auto-detected -->
+                            <div class="form-group" id="studentCheckboxRow">
                                 <label style="display:flex; align-items:center; gap:10px; cursor:pointer; user-select:none;">
                                     <input type="checkbox" id="isStudent" onchange="toggleStudentSection(this)" style="width:18px; height:18px; cursor:pointer; accent-color: var(--primary);">
-                                    <span>I am a student <span style="font-size:0.75rem; color:var(--dark-text-secondary);">(May student discount)</span></span>
+                                    <span>I am a student
+                                        <span style="font-size:0.75rem; color:var(--dark-text-secondary);">(20% off on Daily Pass)</span>
+                                    </span>
                                 </label>
                             </div>
 
