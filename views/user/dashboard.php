@@ -879,6 +879,147 @@ function getSetting($key, $default = '', $settings = [])
             }
         }
     </style>
+
+    <style>
+/* Quick Actions Styles */
+.quick-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 16px;
+    margin: 20px 0;
+}
+
+.quick-action-card {
+    background: var(--dark-card);
+    border: 1px solid var(--dark-border);
+    border-radius: var(--radius-lg);
+    padding: 20px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    transition: var(--transition);
+    cursor: pointer;
+    text-decoration: none;
+    min-height: 100px;
+}
+
+.quick-action-card:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--primary);
+    transform: translateY(-2px);
+}
+
+.quick-action-card i {
+    font-size: 2rem;
+    color: var(--primary);
+}
+
+.quick-action-card h4 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--dark-text);
+    margin: 0;
+    text-align: center;
+}
+
+.quick-action-card p {
+    font-size: 0.75rem;
+    color: var(--dark-text-secondary);
+    text-align: center;
+    margin: 0;
+    line-height: 1.3;
+}
+
+/* Action Button Styles (Header) */
+.action-btn {
+    background: var(--dark-card);
+    border: 1px solid var(--dark-border);
+    border-radius: var(--radius-md);
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+    cursor: pointer;
+    position: relative;
+}
+
+.action-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--primary);
+}
+
+.action-btn i {
+    font-size: 1.25rem;
+    color: var(--dark-text);
+}
+
+.action-btn.notification-btn {
+    position: relative;
+}
+
+.action-btn .notification-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    background: var(--warning);
+    color: var(--dark-bg);
+    font-size: 0.65rem;
+    font-weight: 700;
+    min-width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 2px solid var(--dark-card);
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .quick-actions-grid {
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        gap: 12px;
+    }
+
+    .quick-action-card {
+        padding: 16px 12px;
+        min-height: 85px;
+    }
+
+    .quick-action-card i {
+        font-size: 1.75rem;
+    }
+
+    .quick-action-card h4 {
+        font-size: 0.8rem;
+    }
+
+    .quick-action-card p {
+        font-size: 0.7rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .quick-actions-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .quick-action-card {
+        padding: 20px;
+        min-height: auto;
+    }
+
+    .action-btn {
+        width: 52px;
+        height: 52px;
+    }
+}
+</style>
+
     <style>
         /* Modern Booking Details Modal */
         #bookingDetailsModal .modal {
