@@ -615,19 +615,16 @@ if (document.readyState === 'loading') {
 
 // Initialize page
 function initializePage() {
-    loadAllMembers();
-    applyFilters();
+    loadAllMembers().then(() => applyFilters());
 
-    // Setup event listeners
-    document.getElementById('statusFilter').addEventListener('change', applyFilters);
-    document.getElementById('sortBy').addEventListener('change', applyFilters);
-    document.getElementById('searchInput').addEventListener('input', applyFilters);
+    // Setup event listeners — use ?. to safely skip missing elements
+    document.getElementById('statusFilter')?.addEventListener('change', applyFilters);
+    document.getElementById('sortBy')?.addEventListener('change', applyFilters);
+    document.getElementById('searchInput')?.addEventListener('input', applyFilters);
 
     // Close modal on outside click
-    document.getElementById('memberModal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            closeModal();
-        }
+    document.getElementById('memberModal')?.addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
     });
 
     // Notification button
@@ -643,18 +640,16 @@ function initializePage() {
         });
     }
 
-    // Refresh members every 10 seconds
+    // Refresh members every 30 seconds
     setInterval(async () => {
         await loadAllMembers();
         applyFilters();
-    }, 10000);
+    }, 30000);
 }
 
 // Auto-initialize page - check if DOM is ready
 if (document.readyState === 'loading') {
-    // DOM is still loading, wait for DOMContentLoaded event
     document.addEventListener('DOMContentLoaded', initializePage);
 } else {
-    // DOM is already ready, initialize immediately
     initializePage();
 }
