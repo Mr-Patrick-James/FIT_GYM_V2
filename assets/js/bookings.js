@@ -27,24 +27,28 @@ async function loadTrainers(allowedIds = null) {
             const select = document.getElementById('modalTrainerSelect');
             if (select) {
                 select.innerHTML = '<option value="">Select Trainer...</option>';
-                
-                // Filter trainers if allowedIds is provided
-                const filteredTrainers = allowedIds && allowedIds.length > 0
+
+                // If allowedIds is provided AND non-empty, filter to only those trainers
+                // If allowedIds is empty/null, show ALL active trainers
+                const hasFilter = allowedIds && allowedIds.length > 0;
+                const filteredTrainers = hasFilter
                     ? trainersList.filter(t => allowedIds.includes(t.id))
                     : trainersList;
 
-                filteredTrainers.forEach(trainer => {
-                    const option = document.createElement('option');
-                    option.value = trainer.id;
-                    option.textContent = trainer.name;
-                    select.appendChild(option);
-                });
-
-                if (allowedIds && allowedIds.length > 0 && filteredTrainers.length === 0) {
+                if (filteredTrainers.length === 0) {
                     const option = document.createElement('option');
                     option.disabled = true;
-                    option.textContent = "No assigned trainers for this package";
+                    option.textContent = hasFilter
+                        ? 'No assigned trainers for this package'
+                        : 'No active trainers available';
                     select.appendChild(option);
+                } else {
+                    filteredTrainers.forEach(trainer => {
+                        const option = document.createElement('option');
+                        option.value = trainer.id;
+                        option.textContent = trainer.name;
+                        select.appendChild(option);
+                    });
                 }
             }
         }
