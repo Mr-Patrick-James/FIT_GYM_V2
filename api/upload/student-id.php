@@ -28,8 +28,8 @@ try {
         sendResponse(false, 'File too large. Maximum size is 5MB.', null, 400);
     }
 
-    // Create upload directory
-    $uploadDir = dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'student-ids' . DIRECTORY_SEPARATOR;
+    // Create upload directory — keep inside api/uploads/ same as receipts
+    $uploadDir = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'student-ids' . DIRECTORY_SEPARATOR;
     if (!file_exists($uploadDir)) {
         if (!mkdir($uploadDir, 0777, true)) {
             sendResponse(false, 'Failed to create upload directory. Please check permissions.', null, 500);
@@ -45,7 +45,7 @@ try {
         sendResponse(false, 'Failed to save uploaded file', null, 500);
     }
 
-    $relativePath = 'uploads/student-ids/' . $filename;
+    $relativePath = 'api/uploads/student-ids/' . $filename;
     sendResponse(true, 'Student ID uploaded successfully', ['url' => $relativePath]);
 
 } catch (Exception $e) {
