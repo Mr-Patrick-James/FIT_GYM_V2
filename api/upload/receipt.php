@@ -33,7 +33,7 @@ try {
     }
     
     // Create upload directory if it doesn't exist
-    $uploadDir = dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'receipts' . DIRECTORY_SEPARATOR;
+    $uploadDir = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'receipts' . DIRECTORY_SEPARATOR;
     if (!file_exists($uploadDir)) {
         if (!mkdir($uploadDir, 0777, true)) {
             sendResponse(false, 'Failed to create upload directory. Please check permissions.', null, 500);
@@ -51,7 +51,7 @@ try {
     }
     
     // Return the file path (relative to project root)
-    $relativePath = 'uploads/receipts/' . $filename;
+    $relativePath = 'api/uploads/receipts/' . $filename;
     
     sendResponse(true, 'Receipt uploaded successfully', ['url' => $relativePath]);
 

@@ -1081,51 +1081,27 @@ function populateUpgradePlans(currentPackageId) {
     const container = document.getElementById('upgradePlansContainer');
     if (!container) return;
     
-    // Define package hierarchy (case-insensitive)
-    const packageHierarchy = ['basic', 'popular', 'best value', 'premium', 'vip'];
-    
-    // Get current package tier
     const currentPackage = packagesData.find(p => p.id === currentPackageId);
     if (!currentPackage) {
-        console.error('Current package not found:', currentPackageId);
-        container.innerHTML = '<div style="text-align: center; padding: 40px; color: #ef4444;">Error: Current package not found</div>';
+        container.innerHTML = '<div style="text-align:center;padding:40px;color:#ef4444;">Error: Current package not found</div>';
         return;
     }
-    
-    const currentTag = (currentPackage.tag || 'Basic').toLowerCase().trim();
-    const currentTier = packageHierarchy.indexOf(currentTag);
-    
-    // Filter packages that are higher tier
-    const upgradablePackages = packagesData.filter(pkg => {
-        // Skip the current package
-        if (pkg.id === currentPackageId) return false;
-        
-        const pkgTag = (pkg.tag || 'Basic').toLowerCase().trim();
-        const pkgTier = packageHierarchy.indexOf(pkgTag);
-        
-        // If tier is found and higher, include it
-        if (pkgTier !== -1 && pkgTier > currentTier) {
-            return true;
-        }
-        
-        // If current tier is -1 (unknown), include all packages
-        if (currentTier === -1) {
-            return true;
-        }
-        
-        return false;
-    });
-    
-    console.log('Upgradable packages:', upgradablePackages);
-    
-    // Sort by tier
-    upgradablePackages.sort((a, b) => {
-        const aTier = packageHierarchy.indexOf((a.tag || 'Basic').toLowerCase().trim());
-        const bTier = packageHierarchy.indexOf((b.tag || 'Basic').toLowerCase().trim());
-        return aTier - bTier;
-    });
-    
-    // Render upgrade options
+
+    const currentRawPrice = currentPackage.rawPrice || parseFloat(String(currentPackage.price).replace(/[^0-9.]/g, '')) || 0;
+
+    // Show ALL packages that cost more than the current one
+    const upgradablePackages = packagesData
+        .filter(pkg => {
+            if (pkg.id === currentPackageId) return false;
+            const pkgPrice = pkg.rawPrice || parseFloat(String(pkg.price).replace(/[^0-9.]/g, '')) || 0;
+            return pkgPrice > currentRawPrice;
+        })
+        .sort((a, b) => {
+            const aPrice = a.rawPrice || parseFloat(String(a.price).replace(/[^0-9.]/g, '')) || 0;
+            const bPrice = b.rawPrice || parseFloat(String(b.price).replace(/[^0-9.]/g, '')) || 0;
+            return aPrice - bPrice;
+        });
+
     if (upgradablePackages.length > 0) {
         container.innerHTML = upgradablePackages.map(pkg => `
             <div class="upgrade-plan-card" onclick="selectUpgradePlan(${pkg.id})">
@@ -1146,7 +1122,11 @@ function populateUpgradePlans(currentPackageId) {
             </div>
         `).join('');
     } else {
-        container.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--dark-text-secondary);"><i class="fas fa-crown" style="font-size: 3rem; opacity: 0.2; margin-bottom: 16px;"></i><p>You\'re already on the highest tier!</p><p style="font-size: 0.85rem; margin-top: 8px;">Current package: ' + currentPackage.name + ' (' + currentPackage.tag + ')</p></div>';
+        container.innerHTML = `<div style="text-align:center;padding:40px;color:var(--dark-text-secondary);">
+            <i class="fas fa-crown" style="font-size:3rem;opacity:0.2;margin-bottom:16px;display:block;"></i>
+            <p>You're already on the highest tier!</p>
+            <p style="font-size:0.85rem;margin-top:8px;">Current package: ${currentPackage.name}</p>
+        </div>`;
     }
 }
 
