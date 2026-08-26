@@ -474,11 +474,11 @@ function viewBooking(id) {
         const assignedValue = document.getElementById('modalAssignedTrainer');
         const trainerSelect = document.getElementById('modalTrainerSelect');
         
-        if (booking.status === 'pending' && booking.is_trainer_assisted) {
+        if (booking.status === 'pending') {
             assignmentGroup.style.display = 'block';
             assignedGroup.style.display = 'none';
             trainerSelect.value = '';
-            // Load filtered trainers for this package
+            // Load trainers — filter to package-assigned ones if available, else show all
             loadTrainers(booking.package_trainer_ids);
         } else if (booking.trainer_name) {
             assignmentGroup.style.display = 'none';
