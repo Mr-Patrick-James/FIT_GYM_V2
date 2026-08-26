@@ -569,56 +569,67 @@ async function handleLogout() {
 }
 
 // Mobile menu toggle functionality
-const mobileMenuToggle = document.getElementById('mobileMenuToggle');
-const sidebar = document.querySelector('.sidebar');
+function setupMobileMenuToggle() {
+    const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+    const sidebar = document.querySelector('.sidebar');
 
-if (mobileMenuToggle && sidebar) {
-    mobileMenuToggle.addEventListener('click', function(e) {
-        e.stopPropagation();
-        sidebar.classList.toggle('active');
-        
-        // Change icon based on state
-        const icon = this.querySelector('i');
-        if (sidebar.classList.contains('active')) {
-            icon.classList.remove('fa-bars');
-            icon.classList.add('fa-times');
-        } else {
-            icon.classList.remove('fa-times');
-            icon.classList.add('fa-bars');
-        }
-    });
-    
-    // Close sidebar when clicking outside
-    document.addEventListener('click', function(e) {
-        if (!sidebar.contains(e.target) && 
-            e.target !== mobileMenuToggle && 
-            !mobileMenuToggle.contains(e.target) &&
-            sidebar.classList.contains('active')) {
-            sidebar.classList.remove('active');
-            const icon = mobileMenuToggle.querySelector('i');
-            icon.classList.remove('fa-times');
-            icon.classList.add('fa-bars');
-        }
-    });
+    if (mobileMenuToggle && sidebar) {
+        mobileMenuToggle.addEventListener('click', function(e) {
+            e.stopPropagation();
+            sidebar.classList.toggle('active');
+
+            // Change icon based on state
+            const icon = this.querySelector('i');
+            if (sidebar.classList.contains('active')) {
+                icon.classList.remove('fa-bars');
+                icon.classList.add('fa-times');
+            } else {
+                icon.classList.remove('fa-times');
+                icon.classList.add('fa-bars');
+            }
+        });
+
+        // Close sidebar when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!sidebar.contains(e.target) &&
+                e.target !== mobileMenuToggle &&
+                !mobileMenuToggle.contains(e.target) &&
+                sidebar.classList.contains('active')) {
+                sidebar.classList.remove('active');
+                const icon = mobileMenuToggle.querySelector('i');
+                icon.classList.remove('fa-times');
+                icon.classList.add('fa-bars');
+            }
+        });
+    }
+}
+
+// Initialize mobile menu toggle - check if DOM is ready
+if (document.readyState === 'loading') {
+    // DOM is still loading, wait for DOMContentLoaded event
+    document.addEventListener('DOMContentLoaded', setupMobileMenuToggle);
+} else {
+    // DOM is already ready, initialize immediately
+    setupMobileMenuToggle();
 }
 
 // Initialize page
-document.addEventListener('DOMContentLoaded', async function() {
-    await loadAllMembers();
+function initializePage() {
+    loadAllMembers();
     applyFilters();
-    
+
     // Setup event listeners
     document.getElementById('statusFilter').addEventListener('change', applyFilters);
     document.getElementById('sortBy').addEventListener('change', applyFilters);
     document.getElementById('searchInput').addEventListener('input', applyFilters);
-    
+
     // Close modal on outside click
     document.getElementById('memberModal').addEventListener('click', function(e) {
         if (e.target === this) {
             closeModal();
         }
     });
-    
+
     // Notification button
     const notificationBtn = document.querySelector('.notification-btn');
     if (notificationBtn) {
@@ -631,10 +642,19 @@ document.addEventListener('DOMContentLoaded', async function() {
             } catch (e) {}
         });
     }
-    
+
     // Refresh members every 10 seconds
     setInterval(async () => {
         await loadAllMembers();
         applyFilters();
     }, 10000);
-});
+}
+
+// Auto-initialize page - check if DOM is ready
+if (document.readyState === 'loading') {
+    // DOM is still loading, wait for DOMContentLoaded event
+    document.addEventListener('DOMContentLoaded', initializePage);
+} else {
+    // DOM is already ready, initialize immediately
+    initializePage();
+}
