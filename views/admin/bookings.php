@@ -700,18 +700,13 @@ try {
 
         select.innerHTML = '<option value="">Select Trainer...</option>';
 
-        const hasFilter = Array.isArray(allowedIds) && allowedIds.length > 0;
-        const list = hasFilter
-            ? allTrainers.filter(t => allowedIds.includes(t.id))
-            : allTrainers;
-
-        if (list.length === 0) {
+        if (allTrainers.length === 0) {
             const opt = document.createElement('option');
             opt.disabled = true;
-            opt.textContent = hasFilter ? 'No assigned trainers for this package' : 'No active trainers available';
+            opt.textContent = 'No active trainers available';
             select.appendChild(opt);
         } else {
-            list.forEach(t => {
+            allTrainers.forEach(t => {
                 const opt = document.createElement('option');
                 opt.value = t.id;
                 opt.textContent = t.name + (t.specialization ? ' — ' + t.specialization : '');
