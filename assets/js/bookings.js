@@ -20,8 +20,9 @@ let packages = [];
 // Load trainers for assignment
 async function loadTrainers(allowedIds = null) {
     try {
-        const response = await fetch('../../api/trainers/get-all.php');
-        
+        // Use dedicated lightweight endpoint that only requires login (not strict admin)
+        const response = await fetch('../../api/trainers/get-for-assignment.php');
+
         if (!response.ok) {
             console.error('Trainers API error:', response.status, response.statusText);
             return;
@@ -32,48 +33,42 @@ async function loadTrainers(allowedIds = null) {
         try {
             data = JSON.parse(text);
         } catch(e) {
-            console.error('Trainers API bad JSON:', text.substring(0, 200));
+            console.error('Trainers API bad JSON:', text.substring(0, 300));
             return;
         }
 
-        console.log('Trainers API response:', data);
-
         if (data.success) {
-            trainersList = data.data.filter(t => t.is_active);
-            console.log('Active trainers:', trainersList.length, trainersList);
-            console.log('allowedIds:', allowedIds);
-
+            trainersList = data.data; // already filtered to is_active=1 server-side
             const select = document.getElementById('modalTrainerSelect');
-            if (select) {
-                select.innerHTML = '<option value="">Select Trainer...</option>';
+            if (!select) return;
 
-                // If allowedIds is provided AND non-empty, filter to only those trainers
-                // If allowedIds is empty/null, show ALL active trainers
-                const hasFilter = allowedIds && allowedIds.length > 0;
-                const filteredTrainers = hasFilter
-                    ? trainersList.filter(t => allowedIds.includes(t.id))
-                    : trainersList;
+            select.innerHTML = '<option value="">Select Trainer...</option>';
 
-                console.log('filteredTrainers:', filteredTrainers.length);
+            // If allowedIds non-empty → filter to package-assigned trainers only
+            // If allowedIds empty/null → show all active trainers
+            const hasFilter = Array.isArray(allowedIds) && allowedIds.length > 0;
+            const list = hasFilter
+                ? trainersList.filter(t => allowedIds.includes(t.id))
+                : trainersList;
 
-                if (filteredTrainers.length === 0) {
-                    const option = document.createElement('option');
-                    option.disabled = true;
-                    option.textContent = hasFilter
-                        ? 'No assigned trainers for this package'
-                        : 'No active trainers available';
-                    select.appendChild(option);
-                } else {
-                    filteredTrainers.forEach(trainer => {
-                        const option = document.createElement('option');
-                        option.value = trainer.id;
-                        option.textContent = trainer.name;
-                        select.appendChild(option);
-                    });
-                }
+            if (list.length === 0) {
+                const opt = document.createElement('option');
+                opt.disabled = true;
+                opt.textContent = hasFilter
+                    ? 'No assigned trainers for this package'
+                    : 'No active trainers available';
+                select.appendChild(opt);
+            } else {
+                list.forEach(trainer => {
+                    const opt = document.createElement('option');
+                    opt.value = trainer.id;
+                    opt.textContent = trainer.name +
+                        (trainer.specialization ? ' — ' + trainer.specialization : '');
+                    select.appendChild(opt);
+                });
             }
         } else {
-            console.error('Trainers API returned success=false:', data.message);
+            console.error('Trainers API error:', data.message);
         }
     } catch (error) {
         console.error('Error loading trainers:', error);
