@@ -553,6 +553,12 @@ function getInitials(name) {
 
 // Show section
 function showSection(section, event) {
+    // Prevent default anchor behavior
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+
     // Hide all sections
     document.querySelectorAll('.content-section').forEach(sec => {
         sec.classList.remove('active');
