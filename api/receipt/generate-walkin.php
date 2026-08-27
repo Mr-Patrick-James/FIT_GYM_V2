@@ -119,14 +119,16 @@ function generateWalkinReceiptHTML($booking, $payment) {
     }
     
     $isWalkin = !isset($booking['user_id']) || is_null($booking['user_id']);
-    $customerType = $isWalkin ? 'Walk-in Customer' : 'Member';
+    $customerType = $isWalkin ? 'Walk-in' : 'Member';
     
     $paymentMethod = $payment['payment_method'] ?? 'Cash';
     $paymentStatus = $payment['status'] ?? 'completed';
     $transactionId = $payment['transaction_id'] ?? 'TXN' . strtoupper(uniqid());
     
     $companyName = "MARTINEZ FITNESS";
-    $companyAddress = "123 Fitness Street\nGym City, 1234\nTel: (123) 456-7890";
+    $companyAddress = "123 Fitness Street";
+    $companyCity = "Gym City, 1234";
+    $companyContact = "(123) 456-7890";
     
     // Safely get booking details with defaults
     $customerName = htmlspecialchars($booking['name'] ?? 'Guest');
@@ -135,141 +137,175 @@ function generateWalkinReceiptHTML($booking, $payment) {
     $packageName = htmlspecialchars($booking['package_name'] ?? 'Standard Package');
     $bookingAmount = isset($booking['amount']) ? (float)$booking['amount'] : 0.0;
     
-    // Generate complete HTML for printing
+    // POS 58mm thermal receipt format
     $html = '<!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
     <title>Receipt #' . $bookingId . '</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        @page {
+            size: 58mm auto;
+            margin: 0;
+        }
+        
         @media print {
             body { 
                 margin: 0; 
-                padding: 10px; 
-                font-family: "Courier New", monospace;
+                padding: 0;
+                width: 58mm;
             }
             .no-print { 
                 display: none !important; 
             }
             .thermal-receipt { 
-                box-shadow: none !important; 
-                margin: 0 !important;
-                width: 300px !important;
-            }
-        }
-        @media screen {
-            body { 
-                background: #f0f0f0; 
-                padding: 20px; 
-                font-family: Arial, sans-serif;
-            }
-            .thermal-receipt { 
-                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-                margin: 20px auto;
-                background: white;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+                width: 58mm !important;
+                padding: 2mm !important;
             }
         }
         
+        body {
+            font-family: "Courier New", "Courier", monospace;
+            font-size: 9pt;
+            line-height: 1.3;
+            color: #000;
+            background: #f5f5f5;
+            padding: 10px;
+        }
+        
         .thermal-receipt {
-            font-family: "Courier New", monospace;
-            width: 300px;
-            margin: 0 auto;
+            width: 58mm;
+            max-width: 100%;
             background: white;
-            padding: 20px;
-            border-radius: 8px;
+            padding: 3mm;
+            margin: 0 auto;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-radius: 3px;
         }
         
         .header {
             text-align: center;
-            border-bottom: 2px dashed #000;
-            padding-bottom: 15px;
-            margin-bottom: 15px;
+            border-bottom: 1px dashed #000;
+            padding-bottom: 3mm;
+            margin-bottom: 3mm;
         }
         
         .company-name {
-            font-size: 18px;
+            font-size: 11pt;
             font-weight: bold;
-            text-transform: uppercase;
-            margin: 0;
+            letter-spacing: 0.5px;
+            margin-bottom: 1mm;
         }
         
         .company-info {
-            font-size: 11px;
-            margin: 5px 0;
-            white-space: pre-line;
+            font-size: 8pt;
+            line-height: 1.2;
         }
         
         .receipt-title {
-            font-size: 10px;
+            font-size: 8pt;
             font-weight: bold;
-            margin: 5px 0;
+            margin-top: 2mm;
         }
         
         .section {
-            margin-bottom: 15px;
+            margin-bottom: 3mm;
+            font-size: 8pt;
         }
         
-        .section-title {
+        .row {
+            display: flex;
+            justify-content: space-between;
+            margin: 1mm 0;
+        }
+        
+        .label {
+            font-weight: normal;
+        }
+        
+        .value {
             font-weight: bold;
-            font-size: 10px;
-            margin-bottom: 5px;
+            text-align: right;
         }
         
-        .detail {
-            font-size: 9px;
-            margin: 2px 0;
+        .item-line {
+            margin: 1mm 0;
+        }
+        
+        .separator {
+            border-bottom: 1px dashed #000;
+            margin: 3mm 0;
         }
         
         .total-section {
-            border-top: 1px dashed #000;
-            border-bottom: 1px dashed #000;
-            padding: 10px 0;
-            margin: 15px 0;
+            border-top: 1px solid #000;
+            border-bottom: 1px solid #000;
+            padding: 2mm 0;
+            margin: 3mm 0;
         }
         
         .total-row {
             display: flex;
             justify-content: space-between;
-            margin: 5px 0;
-            font-size: 10px;
+            margin: 1mm 0;
+            font-size: 9pt;
         }
         
-        .total-row.bold {
+        .grand-total {
             font-weight: bold;
-            font-size: 11px;
+            font-size: 10pt;
+            margin-top: 2mm;
         }
         
         .footer {
             text-align: center;
-            border-top: 2px dashed #000;
-            padding-top: 15px;
-            margin-top: 15px;
+            border-top: 1px dashed #000;
+            padding-top: 3mm;
+            margin-top: 3mm;
+            font-size: 8pt;
         }
         
         .thank-you {
             font-weight: bold;
-            font-size: 10px;
-            margin: 5px 0;
+            margin-bottom: 2mm;
         }
         
         .footer-text {
-            font-size: 9px;
-            margin: 3px 0;
-            color: #666;
+            font-size: 7pt;
+            margin: 1mm 0;
+            color: #333;
         }
         
         .print-button {
-            background: #007bff;
+            background: #2196F3;
             color: white;
             border: none;
-            padding: 10px 20px;
+            padding: 8px 16px;
             border-radius: 4px;
             cursor: pointer;
-            margin: 10px;
-            font-size: 14px;
+            margin: 5px;
+            font-size: 12px;
+            font-family: Arial, sans-serif;
         }
         
         .print-button:hover {
-            background: #0056b3;
+            background: #1976D2;
+        }
+        
+        .print-button.secondary {
+            background: #757575;
+        }
+        
+        .print-button.secondary:hover {
+            background: #616161;
         }
     </style>
 </head>
@@ -278,29 +314,46 @@ function generateWalkinReceiptHTML($booking, $payment) {
         <div class="header">
             <div class="company-name">' . $companyName . '</div>
             <div class="company-info">' . $companyAddress . '</div>
-            <div class="receipt-title">*** GYM RECEIPT ***</div>
+            <div class="company-info">' . $companyCity . '</div>
+            <div class="company-info">Tel: ' . $companyContact . '</div>
+            <div class="receipt-title">*** RECEIPT ***</div>
         </div>
         
         <div class="section">
-            <div class="detail"><strong>Receipt #' . $transactionId . '</strong></div>
-            <div class="detail">Date: ' . $receiptDate . '</div>
-            <div class="detail">Customer Type: ' . $customerType . '</div>
+            <div class="row">
+                <span class="label">Receipt:</span>
+                <span class="value">#' . $bookingId . '</span>
+            </div>
+            <div class="row">
+                <span class="label">Date:</span>
+                <span class="value" style="font-size:7pt;">' . $receiptDate . '</span>
+            </div>
+            <div class="row">
+                <span class="label">Type:</span>
+                <span class="value">' . $customerType . '</span>
+            </div>
         </div>
         
-        <div class="section">
-            <div class="section-title">Customer Details:</div>
-            <div class="detail">Name: ' . $customerName . '</div>
-            <div class="detail">Email: ' . $customerEmail . '</div>
-            <div class="detail">Contact: ' . $customerContact . '</div>
-        </div>
+        <div class="separator"></div>
         
         <div class="section">
-            <div class="section-title">Booking Details:</div>
-            <div class="detail">Package: ' . $packageName . '</div>
-            <div class="detail">Booking Date: ' . $formattedBookingDate . '</div>';
+            <div style="font-weight:bold; margin-bottom:1mm;">CUSTOMER:</div>
+            <div class="item-line">' . $customerName . '</div>
+            <div class="item-line" style="font-size:7pt;">' . $customerContact . '</div>
+        </div>
+        
+        <div class="separator"></div>
+        
+        <div class="section">
+            <div style="font-weight:bold; margin-bottom:1mm;">PACKAGE:</div>
+            <div class="row">
+                <span>' . $packageName . '</span>
+                <span style="font-weight:bold;">₱' . number_format($bookingAmount, 2) . '</span>
+            </div>
+            <div class="item-line" style="font-size:7pt;">Date: ' . $formattedBookingDate . '</div>';
     
     if (!empty($booking['notes'])) {
-        $html .= '<div class="detail">Notes: ' . htmlspecialchars($booking['notes']) . '</div>';
+        $html .= '<div class="item-line" style="font-size:7pt;">Note: ' . htmlspecialchars($booking['notes']) . '</div>';
     }
     
     $html .= '
@@ -315,44 +368,57 @@ function generateWalkinReceiptHTML($booking, $payment) {
                 <span>Tax (0%):</span>
                 <span>₱0.00</span>
             </div>
-            <div class="total-row bold">
+            <div class="total-row grand-total">
                 <span>TOTAL:</span>
                 <span>₱' . number_format($bookingAmount, 2) . '</span>
             </div>
         </div>
         
         <div class="section">
-            <div class="section-title">Payment:</div>
-            <div class="detail">Method: ' . ucfirst($paymentMethod) . '</div>
-            <div class="detail">Status: ' . ucfirst($paymentStatus) . '</div>
+            <div class="row">
+                <span class="label">Payment:</span>
+                <span class="value">' . ucfirst($paymentMethod) . '</span>
+            </div>
+            <div class="row">
+                <span class="label">Status:</span>
+                <span class="value">' . ucfirst($paymentStatus) . '</span>
+            </div>
+            <div class="row">
+                <span class="label">Ref:</span>
+                <span class="value" style="font-size:7pt;">' . $transactionId . '</span>
+            </div>
         </div>
         
         <div class="footer">
-            <div class="thank-you">THANK YOU FOR YOUR BUSINESS!</div>
-            <div class="footer-text">Please keep this receipt for your records</div>
-            <div class="footer-text">Questions? Call us at (123) 456-7890</div>
-            <div class="footer-text">Powered by FitPay Gym Management System</div>
+            <div class="thank-you">THANK YOU!</div>
+            <div class="footer-text">Keep this receipt</div>
+            <div class="footer-text">Questions? Call us!</div>
+            <div class="footer-text" style="margin-top:2mm;">Powered by FitPay GMS</div>
         </div>
     </div>
     
-    <div class="no-print" style="text-align: center; margin: 20px 0;">
+    <div class="no-print" style="text-align:center; margin-top:15px;">
         <button class="print-button" onclick="window.print()">
-            <i class="fas fa-print"></i> Print Receipt
+            🖨️ Print Receipt
         </button>
-        <button class="print-button" onclick="window.close()" style="background: #6c757d;">
-            <i class="fas fa-times"></i> Close
+        <button class="print-button secondary" onclick="window.close()">
+            ✕ Close
         </button>
     </div>
     
     <script>
-        // Auto-focus on print button when page loads
+        // Auto-print dialog on page load
         window.onload = function() {
             setTimeout(() => {
-                const printBtn = document.querySelector(".print-button");
-                if (printBtn) {
-                    printBtn.focus();
-                }
-            }, 100);
+                // Uncomment to enable auto-print
+                // window.print();
+            }, 500);
+        };
+        
+        // Close window after print (if opened as popup)
+        window.onafterprint = function() {
+            // Uncomment to auto-close after print
+            // setTimeout(() => window.close(), 500);
         };
     </script>
 </body>
