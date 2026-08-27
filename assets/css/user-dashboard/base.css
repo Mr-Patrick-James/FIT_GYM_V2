@@ -1274,3 +1274,96 @@ tr:hover td {
     font-size: 0.75rem;
     letter-spacing: 0.5px;
 }
+
+
+/* ============================================================
+   SIDEBAR MOBILE — FINAL AUTHORITATIVE RULES (must stay last)
+   These override every earlier block.
+   ============================================================ */
+@media (max-width: 992px) {
+
+    /* 1. Sidebar hidden off-screen by default */
+    .sidebar {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 280px !important;
+        max-width: 85vw !important;
+        height: 100vh !important;
+        z-index: 9000 !important;
+        transform: translateX(-100%) !important;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        box-shadow: none !important;
+        margin-left: 0 !important;
+    }
+
+    /* 2. Sidebar visible when JS adds .active */
+    .sidebar.active {
+        transform: translateX(0) !important;
+        box-shadow: 8px 0 40px rgba(0, 0, 0, 0.6) !important;
+    }
+
+    /* 3. Main content full-width — no left margin */
+    .main-content {
+        margin-left: 0 !important;
+        width: 100% !important;
+        padding: 24px 16px !important;
+        overflow-x: hidden !important;
+    }
+
+    /* 4. Toggle button visible and clickable */
+    .mobile-menu-btn {
+        display: flex !important;
+        position: fixed !important;
+        top: 14px !important;
+        left: 14px !important;
+        z-index: 9999 !important;
+        width: 46px !important;
+        height: 46px !important;
+        border-radius: 12px !important;
+        background: var(--primary) !important;
+        color: var(--dark-bg) !important;
+        border: none !important;
+        font-size: 1.2rem !important;
+        align-items: center !important;
+        justify-content: center !important;
+        cursor: pointer !important;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.4) !important;
+        pointer-events: all !important;
+    }
+
+    /* 5. Overlay */
+    .sidebar-overlay {
+        display: block !important;
+        position: fixed !important;
+        inset: 0 !important;
+        background: rgba(0, 0, 0, 0) !important;
+        z-index: 8999 !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        transition: opacity 0.3s ease, background 0.3s ease !important;
+    }
+
+    .sidebar-overlay.active {
+        opacity: 1 !important;
+        background: rgba(0, 0, 0, 0.7) !important;
+        pointer-events: all !important;
+    }
+
+    /* 6. Top-bar spacing for toggle button */
+    .top-bar {
+        margin-top: 72px !important;
+        padding-top: 0 !important;
+    }
+
+    /* 7. Nav links — ensure they're clickable */
+    .nav-links a {
+        pointer-events: all !important;
+        cursor: pointer !important;
+        display: flex !important;
+        align-items: center !important;
+        padding: 12px 16px !important;
+    }
+}
