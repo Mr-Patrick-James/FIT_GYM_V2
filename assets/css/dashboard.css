@@ -4145,6 +4145,7 @@ body.light-mode .theme-option.active {
         overflow-x: hidden !important;
         box-shadow: none !important;
         margin-left: 0 !important;
+        pointer-events: all !important;
     }
 
     /* 2. Sidebar visible when JS adds .active */
@@ -4189,5 +4190,24 @@ body.light-mode .theme-option.active {
     .sidebar-overlay.active {
         opacity: 1 !important;
         pointer-events: all !important;
+    }
+
+    /* 6. Nav links — ensure they're clickable */
+    .nav-links {
+        position: relative !important;
+        z-index: 1 !important;
+    }
+
+    .nav-links a {
+        pointer-events: all !important;
+        cursor: pointer !important;
+        position: relative !important;
+        z-index: 1 !important;
+        -webkit-tap-highlight-color: transparent !important;
+    }
+
+    .nav-links li {
+        position: relative !important;
+        z-index: 1 !important;
     }
 }
