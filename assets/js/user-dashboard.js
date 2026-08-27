@@ -2304,7 +2304,6 @@ function updateBookingPriceSummary() {
     // No discount — just show the full price regardless of student status
     studentPriceLabel.style.display = 'none';
     studentNotice.style.display = 'none';
-    }
 }
 
 // Handle student ID file select
