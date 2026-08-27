@@ -618,6 +618,9 @@ function showSection(section, event) {
     }
 }
 
+// Expose showSection globally for onclick handlers
+window.showSection = showSection;
+
 // Populate packages grid
 function populatePackages() {
     const grid = document.getElementById('packagesGrid');
