@@ -53,27 +53,36 @@ function getSetting($key, $default = '', $settings = [])
 
     <style>
         /* Survey & Recommendation Modal Styles */
+        /* ============================================================
+           SURVEY & RECOMMENDATION MODAL — BASE STYLES
+           ============================================================ */
         .survey-modal .modal,
         .recommendation-modal .modal {
             max-width: 600px;
+            width: 95%;
             background: var(--dark-card);
             border: 1px solid var(--dark-border);
             border-radius: var(--radius-xl);
             overflow: hidden;
             animation: modalFadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            /* Ensure modal never taller than viewport */
+            max-height: 96vh;
+            display: flex;
+            flex-direction: column;
         }
 
         .survey-header,
         .recommendation-header {
-            padding: 40px 40px 20px;
+            padding: 32px 32px 16px;
             text-align: center;
+            flex-shrink: 0;
         }
 
         .survey-header i,
         .recommendation-header i {
-            font-size: 3rem;
+            font-size: 2.4rem;
             color: var(--primary);
-            margin-bottom: 20px;
+            margin-bottom: 14px;
             filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.3));
         }
 
@@ -81,7 +90,7 @@ function getSetting($key, $default = '', $settings = [])
         .recommendation-header h2 {
             font-size: 1.2rem;
             font-weight: 800;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             background: linear-gradient(135deg, #fff 0%, #888 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -95,15 +104,18 @@ function getSetting($key, $default = '', $settings = [])
 
         .survey-body,
         .recommendation-body {
-            padding: 0 40px 40px;
-            max-height: 60vh;
+            padding: 0 32px 24px;
+            /* Fill remaining space between header and footer; scroll when needed */
+            flex: 1 1 auto;
             overflow-y: auto;
             overflow-x: hidden;
+            /* min-height prevents collapse on short steps */
+            min-height: 0;
         }
 
         /* Custom scrollbar for survey body */
         .survey-body::-webkit-scrollbar {
-            width: 6px;
+            width: 5px;
         }
 
         .survey-body::-webkit-scrollbar-track {
@@ -111,12 +123,12 @@ function getSetting($key, $default = '', $settings = [])
         }
 
         .survey-body::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.12);
             border-radius: 10px;
         }
 
         .survey-body::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.25);
         }
 
         .survey-step {
@@ -132,7 +144,7 @@ function getSetting($key, $default = '', $settings = [])
             display: block;
             font-size: 0.85rem;
             font-weight: 600;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
             color: #fff;
             text-align: center;
         }
@@ -140,13 +152,13 @@ function getSetting($key, $default = '', $settings = [])
         .options-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 16px;
+            gap: 12px;
         }
 
         .option-card {
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid var(--dark-border);
-            padding: 16px 12px;
+            padding: 14px 10px;
             border-radius: var(--radius-lg);
             cursor: pointer;
             transition: var(--transition);
@@ -154,24 +166,32 @@ function getSetting($key, $default = '', $settings = [])
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
+            /* Prevent tap-delay on mobile */
+            touch-action: manipulation;
         }
 
         .option-card i {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             color: var(--dark-text-secondary);
             transition: var(--transition);
         }
 
         .option-card span {
             font-weight: 600;
-            font-size: 0.75rem;
+            font-size: 0.72rem;
+            line-height: 1.3;
         }
 
         .option-card:hover {
             background: rgba(255, 255, 255, 0.06);
             border-color: #666;
-            transform: translateY(-4px);
+            transform: translateY(-3px);
+        }
+
+        /* Active/pressed state on touch */
+        .option-card:active {
+            transform: scale(0.97);
         }
 
         .option-card.selected {
@@ -186,32 +206,34 @@ function getSetting($key, $default = '', $settings = [])
 
         .survey-footer {
             margin-top: 0;
-            padding: 20px 40px 40px;
+            padding: 16px 32px 24px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             border-top: 1px solid var(--dark-border);
             background: var(--dark-card);
+            flex-shrink: 0;
+            gap: 12px;
         }
 
         .progress-bar {
             flex: 1;
-            height: 6px;
+            height: 5px;
             background: var(--dark-border);
             border-radius: 3px;
-            margin-right: 24px;
+            margin-right: 16px;
             overflow: hidden;
         }
 
         .progress-fill {
             height: 100%;
             background: var(--primary);
-            width: 33%;
+            width: 20%;
             transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .survey-nav-btn {
-            padding: 12px 24px;
+            padding: 11px 22px;
             border-radius: var(--radius-md);
             font-weight: 700;
             cursor: pointer;
@@ -220,6 +242,10 @@ function getSetting($key, $default = '', $settings = [])
             align-items: center;
             gap: 8px;
             border: none;
+            white-space: nowrap;
+            /* Minimum touch target */
+            min-height: 44px;
+            touch-action: manipulation;
         }
 
         .btn-next {
@@ -228,14 +254,63 @@ function getSetting($key, $default = '', $settings = [])
         }
 
         .btn-next:hover {
-            transform: scale(1.05);
+            transform: scale(1.04);
             box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
         }
 
         .btn-next:disabled {
-            opacity: 0.5;
+            opacity: 0.45;
             cursor: not-allowed;
             transform: none;
+        }
+
+        /* Back button */
+        .btn-back {
+            background: transparent;
+            border: 1px solid var(--dark-border) !important;
+            color: var(--dark-text-secondary);
+        }
+
+        .btn-back:hover {
+            border-color: var(--primary) !important;
+            color: var(--primary);
+        }
+
+        /* Close button — ensure minimum touch target */
+        .survey-modal .close-modal {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            width: 36px;
+            height: 36px;
+            min-width: 36px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid var(--dark-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--dark-text-secondary);
+            cursor: pointer;
+            transition: var(--transition);
+            touch-action: manipulation;
+            z-index: 10;
+        }
+
+        .survey-modal .close-modal:hover,
+        .survey-modal .close-modal:focus {
+            background: rgba(255,255,255,0.15);
+            color: var(--primary);
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+
+        /* Step 1 inline grids — make them responsive via class instead of inline style */
+        .survey-profile-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 20px;
         }
 
         /* Recommendation Specific */
@@ -243,38 +318,183 @@ function getSetting($key, $default = '', $settings = [])
             background: rgba(255, 255, 255, 0.05);
             border: 2px solid var(--primary);
             border-radius: var(--radius-lg);
-            padding: 30px;
+            padding: 24px;
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 24px;
         }
 
         .recommended-package-preview h3 {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             font-weight: 800;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
 
         .recommended-package-preview .price {
-            font-size: 1.5rem;
+            font-size: 1.4rem;
             font-weight: 900;
             color: var(--primary);
-            margin-bottom: 15px;
+            margin-bottom: 12px;
         }
 
         .recommended-package-preview .duration {
             color: var(--dark-text-secondary);
             font-size: 0.75rem;
             font-weight: 600;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
 
         .recommended-actions {
             display: flex;
-            gap: 16px;
+            gap: 12px;
         }
 
         .recommended-actions button {
             flex: 1;
+        }
+
+        /* ============================================================
+           SURVEY MODAL — MOBILE RESPONSIVE OVERRIDES
+           ============================================================ */
+
+        /* Tablets (≤ 768px) */
+        @media (max-width: 768px) {
+            .survey-modal .modal,
+            .recommendation-modal .modal {
+                width: 98%;
+                border-radius: var(--radius-lg);
+                max-height: 94vh;
+            }
+
+            .survey-header,
+            .recommendation-header {
+                padding: 24px 20px 12px;
+            }
+
+            .survey-header i,
+            .recommendation-header i {
+                font-size: 2rem;
+                margin-bottom: 10px;
+            }
+
+            .survey-body,
+            .recommendation-body {
+                padding: 0 20px 20px;
+            }
+
+            .survey-footer {
+                padding: 14px 20px 20px;
+            }
+
+            .options-grid {
+                gap: 10px;
+            }
+        }
+
+        /* Small phones (≤ 480px) */
+        @media (max-width: 480px) {
+            .survey-modal .modal,
+            .recommendation-modal .modal {
+                width: 100%;
+                border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+                max-height: 92vh;
+                /* Slide up from bottom on small screens */
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                margin: 0;
+                transform: none;
+            }
+
+            /* Align modal-overlay to bottom on small screens */
+            .survey-modal,
+            .recommendation-modal {
+                align-items: flex-end;
+            }
+
+            .survey-header,
+            .recommendation-header {
+                padding: 20px 16px 10px;
+            }
+
+            .survey-header i,
+            .recommendation-header i {
+                font-size: 1.8rem;
+                margin-bottom: 8px;
+            }
+
+            .survey-header h2,
+            .recommendation-header h2 {
+                font-size: 1rem;
+            }
+
+            .survey-body,
+            .recommendation-body {
+                padding: 0 16px 16px;
+            }
+
+            /* Step 1 profile grid: 1 column on very small screens */
+            .survey-profile-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+                margin-bottom: 16px;
+            }
+
+            /* Options always 1 column on very small screens */
+            .options-grid {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+
+            /* Make option cards horizontal on 1-column layout */
+            .option-card {
+                flex-direction: row;
+                text-align: left;
+                padding: 12px 14px;
+                gap: 14px;
+            }
+
+            .option-card i {
+                font-size: 1rem;
+                width: 20px;
+                flex-shrink: 0;
+            }
+
+            .option-card span {
+                font-size: 0.8rem;
+            }
+
+            .survey-footer {
+                padding: 12px 16px 20px;
+                /* Stack progress + buttons vertically on very small screens */
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+
+            .progress-bar {
+                flex: 1 1 100%;
+                margin-right: 0;
+                order: -1;
+            }
+
+            .survey-nav-btn {
+                flex: 1;
+                justify-content: center;
+                padding: 12px 16px;
+            }
+
+            .recommended-actions {
+                flex-direction: column;
+            }
+
+            .recommended-actions button {
+                width: 100%;
+            }
+
+            .survey-modal .close-modal {
+                top: 10px;
+                right: 10px;
+            }
         }
 
         @keyframes modalFadeIn {
@@ -2782,8 +3002,8 @@ function getSetting($key, $default = '', $settings = [])
 
     <!-- Survey Modal -->
     <div class="modal-overlay survey-modal" id="surveyModal">
-        <div class="modal" style="max-width: 700px;">
-            <button class="close-modal" onclick="skipSurvey()" style="top: 20px; right: 20px;">
+        <div class="modal">
+            <button class="close-modal" onclick="skipSurvey()" aria-label="Skip survey">
                 <i class="fas fa-times"></i>
             </button>
             <div class="survey-header">
@@ -2796,7 +3016,7 @@ function getSetting($key, $default = '', $settings = [])
                 <!-- Step 1: Basic Profile -->
                 <div class="survey-step active" data-step="1">
                     <label class="question-label">A. Basic Profile</label>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
+                    <div class="survey-profile-grid">
                         <div class="form-group">
                             <label
                                 style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px;">Age</label>
@@ -2814,7 +3034,7 @@ function getSetting($key, $default = '', $settings = [])
                             </select>
                         </div>
                     </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
+                    <div class="survey-profile-grid">
                         <div class="form-group">
                             <label
                                 style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px;">Height
@@ -2832,16 +3052,16 @@ function getSetting($key, $default = '', $settings = [])
                                 style="background: rgba(255,255,255,0.05); border: 1px solid var(--dark-border); color: #fff; padding: 12px; border-radius: 8px; width: 100%;">
                         </div>
                     </div>
-                    <div class="form-group" style="margin-bottom: 24px;">
+                    <div class="form-group" style="margin-bottom: 20px;">
                         <label
                             style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px;">Medical
                             Conditions (if any)</label>
                         <textarea id="surveyMedical" class="form-control"
                             placeholder="Specify any conditions or type 'None'"
-                            style="background: rgba(255,255,255,0.05); border: 1px solid var(--dark-border); color: #fff; padding: 12px; border-radius: 8px; width: 100%; height: 80px;"></textarea>
+                            style="background: rgba(255,255,255,0.05); border: 1px solid var(--dark-border); color: #fff; padding: 12px; border-radius: 8px; width: 100%; height: 72px;"></textarea>
                     </div>
                     <label
-                        style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px; text-align: center;">Exercise
+                        style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 10px; text-align: center;">Exercise
                         Experience</label>
                     <div class="options-grid">
                         <div class="option-card" onclick="selectSurveyOption(this, 'exercise_history', 'Beginner')">
@@ -3044,9 +3264,9 @@ function getSetting($key, $default = '', $settings = [])
                 <div class="progress-bar">
                     <div class="progress-fill" id="surveyProgress" style="width: 20%;"></div>
                 </div>
-                <div style="display: flex; gap: 10px;">
-                    <button class="survey-nav-btn" id="surveyBackBtn"
-                        style="display: none; background: rgba(255,255,255,0.05); color: #fff;"
+                <div style="display: flex; gap: 10px; flex-shrink: 0;">
+                    <button class="survey-nav-btn btn-back" id="surveyBackBtn"
+                        style="display: none;"
                         onclick="prevSurveyStep()">
                         <i class="fas fa-arrow-left"></i>
                         <span>Back</span>
@@ -3059,7 +3279,6 @@ function getSetting($key, $default = '', $settings = [])
             </div>
         </div>
     </div>
-
     <!-- Recommendation Modal -->
     <div class="modal-overlay recommendation-modal" id="recommendationModal">
         <div class="modal">

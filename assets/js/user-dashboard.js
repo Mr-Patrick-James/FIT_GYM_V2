@@ -1,8 +1,17 @@
 // User Dashboard JavaScript
 
 function getApiUrl(path) {
-    const rootPath = window.location.pathname.split('/views/')[0] || '';
-    return `${window.location.origin}${rootPath}/api/${path}`;
+    // If the current URL contains /views/, build an absolute URL from the root.
+    // Otherwise fall back to a relative path that works from any sub-directory.
+    const parts = window.location.pathname.split('/views/');
+    if (parts.length >= 2) {
+        const rootPath = parts[0] || '';
+        return `${window.location.origin}${rootPath}/api/${path}`;
+    }
+    // Fallback: count how deep we are and step back to root
+    const depth = (window.location.pathname.match(/\//g) || []).length - 1;
+    const prefix = depth > 0 ? '../'.repeat(depth) : '';
+    return `${prefix}api/${path}`;
 }
 
 // Sample data - In a real app, this would come from a backend API
@@ -290,33 +299,45 @@ function checkStepValid() {
 
 async function checkSurveyStatus() {
     try {
-        const response = await fetch('../../api/users/get-questionnaire.php', {
+        const response = await fetch(getApiUrl('users/get-questionnaire.php'), {
             credentials: 'include'
         });
+
+        // Session expired or not logged in — redirect to login
+        if (response.status === 401) {
+            window.location.href = '../../index.php';
+            return;
+        }
+
         const data = await response.json();
-        
+
         if (data.success) {
-            // Already completed
+            // Already completed — nothing to show
             console.log('Survey already completed');
             return;
         }
+
+        // data.success === false means no questionnaire yet — show the modal
     } catch (e) {
+        // Network error checking status — skip the survey silently rather than
+        // showing a form the user can't save (they'll see it next session).
         console.error('Error checking survey status:', e);
+        return;
     }
-    
-    // Reset survey state
+
+    // Reset survey state and show modal
     currentSurveyStep = 1;
-    
+
     setTimeout(() => {
         const modal = document.getElementById('surveyModal');
         if (modal) {
             document.querySelectorAll('.survey-step').forEach(step => step.classList.remove('active'));
             const firstStep = document.querySelector('.survey-step[data-step="1"]');
             if (firstStep) firstStep.classList.add('active');
-            
+
             const progressBar = document.getElementById('surveyProgress');
             if (progressBar) progressBar.style.width = '20%';
-            
+
             const nextBtn = document.getElementById('surveyNextBtn');
             const backBtn = document.getElementById('surveyBackBtn');
             if (nextBtn) {
@@ -324,9 +345,9 @@ async function checkSurveyStatus() {
                 nextBtn.innerHTML = '<span>Next Step</span> <i class="fas fa-arrow-right"></i>';
             }
             if (backBtn) backBtn.style.display = 'none';
-            
+
             document.querySelectorAll('.option-card').forEach(card => card.classList.remove('selected'));
-            
+
             modal.classList.add('active');
         }
     }, 1500);
@@ -4110,6 +4131,12 @@ async function finishSurvey() {
                 focus_areas: focusAreasString
             })
         });
+
+        // Session expired — redirect to login instead of showing a confusing error
+        if (response.status === 401) {
+            window.location.href = '../../index.php';
+            return;
+        }
         
         if (!response.ok) {
             const text = await response.text();
@@ -4147,7 +4174,7 @@ async function finishSurvey() {
         }
     } catch (error) {
         console.error('Error finishing survey:', error);
-        showNotification('Connection error while saving profile', 'warning');
+        showNotification('Network error — please check your connection and try again.', 'warning');
     }
 }
 
