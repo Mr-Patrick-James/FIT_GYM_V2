@@ -1,6 +1,20 @@
 Options -Indexes
 Options +FollowSymLinks
 
+# -------------------------------------------------------
+# PHP upload limits — increase to handle large screenshots
+# -------------------------------------------------------
+<IfModule mod_php.c>
+    php_value upload_max_filesize 10M
+    php_value post_max_size 12M
+    php_value max_execution_time 60
+</IfModule>
+<IfModule mod_php8.c>
+    php_value upload_max_filesize 10M
+    php_value post_max_size 12M
+    php_value max_execution_time 60
+</IfModule>
+
 RewriteEngine On
 
 # Force HTTPS (uncomment on AWS after SSL is set up)

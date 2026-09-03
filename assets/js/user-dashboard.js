@@ -2207,10 +2207,10 @@ function closeBookingModal() {
 function handleFileSelect(event) {
     const file = event.target.files[0];
     if (file) {
-        // Validate file size (max 5MB)
-        const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+        // Validate file size (max 10MB — matches server limit)
+        const maxSize = 10 * 1024 * 1024; // 10MB in bytes
         if (file.size > maxSize) {
-            showNotification('Image size is too huge! Maximum allowed size is 5MB.', 'warning');
+            showNotification('Image size is too large. Maximum allowed size is 10MB. Please compress the screenshot.', 'warning');
             event.target.value = ''; // Clear the input
             return;
         }
@@ -2373,10 +2373,16 @@ async function uploadStudentId(file) {
     const formData = new FormData();
     formData.append('student_id', file);
 
-    const response = await fetch('../../api/upload/student-id.php', {
+    const response = await fetch(getApiUrl('upload/student-id.php'), {
         method: 'POST',
+        credentials: 'include',
         body: formData
     });
+
+    if (response.status === 401) {
+        window.location.href = '../../index.php';
+        throw new Error('Session expired. Please log in again.');
+    }
 
     const result = await response.json();
     if (result.success) {
@@ -2396,9 +2402,9 @@ async function submitBooking(event) {
     }
 
     // Double check file size before uploading
-    const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+    const maxSize = 10 * 1024 * 1024; // 10MB in bytes
     if (selectedFile.size > maxSize) {
-        showNotification('Image size is too huge! Maximum allowed size is 5MB.', 'warning');
+        showNotification('Image size is too large. Maximum allowed size is 10MB. Please compress the screenshot.', 'warning');
         return;
     }
     
@@ -2497,14 +2503,22 @@ async function submitBooking(event) {
 }
 
 // Upload receipt file
+// Upload receipt file
 async function uploadReceipt(file) {
     const formData = new FormData();
     formData.append('receipt', file);
     
-    const response = await fetch('../../api/upload/receipt.php', {
+    const response = await fetch(getApiUrl('upload/receipt.php'), {
         method: 'POST',
+        credentials: 'include',
         body: formData
     });
+
+    // Session expired
+    if (response.status === 401) {
+        window.location.href = '../../index.php';
+        throw new Error('Session expired. Please log in again.');
+    }
     
     const result = await response.json();
     
