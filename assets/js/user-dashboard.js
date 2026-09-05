@@ -2332,9 +2332,9 @@ function handleStudentIdSelect(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    const maxSize = 5 * 1024 * 1024;
+    const maxSize = 10 * 1024 * 1024; // 10MB — matches server limit
     if (file.size > maxSize) {
-        showNotification('Student ID image is too large. Maximum allowed size is 5MB.', 'warning');
+        showNotification('Student ID image is too large. Maximum allowed size is 10MB. Please compress the photo.', 'warning');
         event.target.value = '';
         return;
     }
