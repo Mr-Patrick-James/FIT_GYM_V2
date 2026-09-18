@@ -3297,6 +3297,10 @@ function getSetting($key, $default = '', $settings = [])
                 </div>
 
                 <div class="recommended-actions">
+                    <button id="bookRecommendedBtn" class="btn btn-primary">
+                        <i class="fas fa-check"></i>
+                        <span>Book This Package</span>
+                    </button>
                     <button class="btn btn-secondary" onclick="closeRecommendationModal()">
                         <i class="fas fa-times"></i>
                         <span>Close</span>

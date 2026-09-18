@@ -4246,20 +4246,30 @@ function calculateRecommendation() {
 }
 
 function showRecommendationModal(pkg) {
-    document.getElementById('recPackageName').textContent = pkg.name;
-    document.getElementById('recPackagePrice').textContent = pkg.price;
-    document.getElementById('recPackageDuration').textContent = pkg.duration;
-    document.getElementById('recPackageDesc').textContent = pkg.description || 'Full gym access with all facilities';
-    
+    const recName = document.getElementById('recPackageName');
+    const recPrice = document.getElementById('recPackagePrice');
+    const recDuration = document.getElementById('recPackageDuration');
+    const recDesc = document.getElementById('recPackageDesc');
+    const recommendationModal = document.getElementById('recommendationModal');
     const bookBtn = document.getElementById('bookRecommendedBtn');
-    bookBtn.onclick = () => {
-        closeRecommendationModal();
-        openBookingModal(pkg.name, pkg.price);
-    };
-    
-    setTimeout(() => {
-        document.getElementById('recommendationModal').classList.add('active');
-    }, 500);
+
+    if (recName) recName.textContent = pkg.name;
+    if (recPrice) recPrice.textContent = pkg.price;
+    if (recDuration) recDuration.textContent = pkg.duration;
+    if (recDesc) recDesc.textContent = pkg.description || 'Full gym access with all facilities';
+
+    if (bookBtn) {
+        bookBtn.onclick = () => {
+            closeRecommendationModal();
+            openBookingModal(pkg.name, pkg.price);
+        };
+    }
+
+    if (recommendationModal) {
+        setTimeout(() => {
+            recommendationModal.classList.add('active');
+        }, 500);
+    }
 }
 
 function closeRecommendationModal() {
