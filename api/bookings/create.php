@@ -19,13 +19,35 @@ try {
     if (!$input) {
         sendResponse(false, 'Invalid request data', null, 400);
     }
+
+    // Auto-add student columns if missing (compatible with older MySQL)
+    $colCheck = $conn->query("SHOW COLUMNS FROM bookings LIKE 'is_student'");
+    if ($colCheck && $colCheck->num_rows === 0) {
+        $conn->query("ALTER TABLE bookings ADD COLUMN is_student TINYINT(1) NOT NULL DEFAULT 0 AFTER notes");
+    }
+    $colCheck2 = $conn->query("SHOW COLUMNS FROM bookings LIKE 'student_id_url'");
+    if ($colCheck2 && $colCheck2->num_rows === 0) {
+        $conn->query("ALTER TABLE bookings ADD COLUMN student_id_url VARCHAR(500) DEFAULT NULL AFTER is_student");
+    }
     
-    $package_name = $input['package'] ?? null;
-    $booking_date = $input['date'] ?? null;
-    $contact = $input['contact'] ?? null;
-    $notes = $input['notes'] ?? null;
-    $receipt_url = $input['receipt'] ?? null;
-    $user_id = $_SESSION['user_id'];
+    $package_name    = $input['package']        ?? null;
+    $booking_date    = $input['date']           ?? null;
+    $contact         = $input['contact']        ?? null;
+    $notes           = $input['notes']          ?? null;
+    $receipt_url     = $input['receipt']        ?? null;
+    $is_student      = !empty($input['is_student']) ? 1 : 0;
+    $student_id_url  = $input['student_id_url'] ?? null;
+    $user_id         = $_SESSION['user_id'];
+
+    // Auto-flag as student if the package name contains "student"
+    if (stripos($package_name ?? '', 'student') !== false) {
+        $is_student = 1;
+    }
+
+    // If student booking, proof photo is required
+    if ($is_student && empty($student_id_url)) {
+        sendResponse(false, 'Please upload your student ID photo as proof.', null, 400);
+    }
     
     // Get user info
     $userQuery = "SELECT name, email FROM users WHERE id = ?";
@@ -103,24 +125,29 @@ try {
     if ($days > 0) {
         $expiresAt = date('Y-m-d H:i:s', strtotime($booking_date . " + $days days"));
     }
-    
+
+    // No discount — student must just upload ID as proof, full price applies
+    $finalAmount = (float)$package['price'];
+
     // Insert booking into database
-    $sql = "INSERT INTO bookings (user_id, name, email, contact, package_id, package_name, amount, booking_date, expires_at, notes, receipt_url) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    $sql = "INSERT INTO bookings (user_id, name, email, contact, package_id, package_name, amount, booking_date, expires_at, notes, receipt_url, is_student, student_id_url) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("isssisdssss", 
+    $stmt->bind_param("isssisdssssis", 
         $user_id,
         $user['name'],
         $user['email'],
         $contact,
         $package['id'],
         $package_name,
-        $package['price'],
+        $finalAmount,
         $booking_date,
         $expiresAt,
         $notes,
-        $receipt_url
+        $receipt_url,
+        $is_student,
+        $student_id_url
     );
     
     $result = $stmt->execute();

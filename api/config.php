@@ -35,7 +35,8 @@ function getEnvVar($key, $default = '') {
 // ============================================
 
 // Toggle between LOCAL and REMOTE here
-$is_local = true; // Set to true for WAMP, false for InfinityFree
+// Set to true for WAMP/local, false for AWS/production
+$is_local = (getEnvVar('APP_ENV', 'local') === 'local');
 
 if ($is_local) {
     // LOCAL WAMP SETTINGS
@@ -44,11 +45,11 @@ if ($is_local) {
     define('DB_PASS', getEnvVar('DB_PASS', ''));
     define('DB_NAME', getEnvVar('DB_NAME', 'fitpay_gym'));
 } else {
-    // REMOTE INFINITYFREE SETTINGS - Use environment variables for security
-    define('DB_HOST', getEnvVar('DB_HOST', 'sql109.infinityfree.com'));
-    define('DB_USER', getEnvVar('DB_USER', 'if0_40968761'));
+    // REMOTE AWS / PRODUCTION SETTINGS
+    define('DB_HOST', getEnvVar('DB_HOST', 'localhost'));
+    define('DB_USER', getEnvVar('DB_USER', 'root'));
     define('DB_PASS', getEnvVar('DB_PASS', ''));
-    define('DB_NAME', getEnvVar('DB_NAME', 'if0_40968761_fitpay_gym'));
+    define('DB_NAME', getEnvVar('DB_NAME', 'fitpay_gym'));
 }
 
 // ============================================

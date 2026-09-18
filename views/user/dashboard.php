@@ -53,27 +53,36 @@ function getSetting($key, $default = '', $settings = [])
 
     <style>
         /* Survey & Recommendation Modal Styles */
+        /* ============================================================
+           SURVEY & RECOMMENDATION MODAL — BASE STYLES
+           ============================================================ */
         .survey-modal .modal,
         .recommendation-modal .modal {
             max-width: 600px;
+            width: 95%;
             background: var(--dark-card);
             border: 1px solid var(--dark-border);
             border-radius: var(--radius-xl);
             overflow: hidden;
             animation: modalFadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            /* Ensure modal never taller than viewport */
+            max-height: 96vh;
+            display: flex;
+            flex-direction: column;
         }
 
         .survey-header,
         .recommendation-header {
-            padding: 40px 40px 20px;
+            padding: 32px 32px 16px;
             text-align: center;
+            flex-shrink: 0;
         }
 
         .survey-header i,
         .recommendation-header i {
-            font-size: 3rem;
+            font-size: 2.4rem;
             color: var(--primary);
-            margin-bottom: 20px;
+            margin-bottom: 14px;
             filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.3));
         }
 
@@ -81,7 +90,7 @@ function getSetting($key, $default = '', $settings = [])
         .recommendation-header h2 {
             font-size: 1.2rem;
             font-weight: 800;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             background: linear-gradient(135deg, #fff 0%, #888 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -95,15 +104,18 @@ function getSetting($key, $default = '', $settings = [])
 
         .survey-body,
         .recommendation-body {
-            padding: 0 40px 40px;
-            max-height: 60vh;
+            padding: 0 32px 24px;
+            /* Fill remaining space between header and footer; scroll when needed */
+            flex: 1 1 auto;
             overflow-y: auto;
             overflow-x: hidden;
+            /* min-height prevents collapse on short steps */
+            min-height: 0;
         }
 
         /* Custom scrollbar for survey body */
         .survey-body::-webkit-scrollbar {
-            width: 6px;
+            width: 5px;
         }
 
         .survey-body::-webkit-scrollbar-track {
@@ -111,12 +123,12 @@ function getSetting($key, $default = '', $settings = [])
         }
 
         .survey-body::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.12);
             border-radius: 10px;
         }
 
         .survey-body::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.25);
         }
 
         .survey-step {
@@ -132,7 +144,7 @@ function getSetting($key, $default = '', $settings = [])
             display: block;
             font-size: 0.85rem;
             font-weight: 600;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
             color: #fff;
             text-align: center;
         }
@@ -140,13 +152,13 @@ function getSetting($key, $default = '', $settings = [])
         .options-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 16px;
+            gap: 12px;
         }
 
         .option-card {
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid var(--dark-border);
-            padding: 16px 12px;
+            padding: 14px 10px;
             border-radius: var(--radius-lg);
             cursor: pointer;
             transition: var(--transition);
@@ -154,24 +166,32 @@ function getSetting($key, $default = '', $settings = [])
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
+            /* Prevent tap-delay on mobile */
+            touch-action: manipulation;
         }
 
         .option-card i {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             color: var(--dark-text-secondary);
             transition: var(--transition);
         }
 
         .option-card span {
             font-weight: 600;
-            font-size: 0.75rem;
+            font-size: 0.72rem;
+            line-height: 1.3;
         }
 
         .option-card:hover {
             background: rgba(255, 255, 255, 0.06);
             border-color: #666;
-            transform: translateY(-4px);
+            transform: translateY(-3px);
+        }
+
+        /* Active/pressed state on touch */
+        .option-card:active {
+            transform: scale(0.97);
         }
 
         .option-card.selected {
@@ -186,32 +206,34 @@ function getSetting($key, $default = '', $settings = [])
 
         .survey-footer {
             margin-top: 0;
-            padding: 20px 40px 40px;
+            padding: 16px 32px 24px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             border-top: 1px solid var(--dark-border);
             background: var(--dark-card);
+            flex-shrink: 0;
+            gap: 12px;
         }
 
         .progress-bar {
             flex: 1;
-            height: 6px;
+            height: 5px;
             background: var(--dark-border);
             border-radius: 3px;
-            margin-right: 24px;
+            margin-right: 16px;
             overflow: hidden;
         }
 
         .progress-fill {
             height: 100%;
             background: var(--primary);
-            width: 33%;
+            width: 20%;
             transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .survey-nav-btn {
-            padding: 12px 24px;
+            padding: 11px 22px;
             border-radius: var(--radius-md);
             font-weight: 700;
             cursor: pointer;
@@ -220,6 +242,10 @@ function getSetting($key, $default = '', $settings = [])
             align-items: center;
             gap: 8px;
             border: none;
+            white-space: nowrap;
+            /* Minimum touch target */
+            min-height: 44px;
+            touch-action: manipulation;
         }
 
         .btn-next {
@@ -228,14 +254,63 @@ function getSetting($key, $default = '', $settings = [])
         }
 
         .btn-next:hover {
-            transform: scale(1.05);
+            transform: scale(1.04);
             box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
         }
 
         .btn-next:disabled {
-            opacity: 0.5;
+            opacity: 0.45;
             cursor: not-allowed;
             transform: none;
+        }
+
+        /* Back button */
+        .btn-back {
+            background: transparent;
+            border: 1px solid var(--dark-border) !important;
+            color: var(--dark-text-secondary);
+        }
+
+        .btn-back:hover {
+            border-color: var(--primary) !important;
+            color: var(--primary);
+        }
+
+        /* Close button — ensure minimum touch target */
+        .survey-modal .close-modal {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            width: 36px;
+            height: 36px;
+            min-width: 36px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid var(--dark-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--dark-text-secondary);
+            cursor: pointer;
+            transition: var(--transition);
+            touch-action: manipulation;
+            z-index: 10;
+        }
+
+        .survey-modal .close-modal:hover,
+        .survey-modal .close-modal:focus {
+            background: rgba(255,255,255,0.15);
+            color: var(--primary);
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+
+        /* Step 1 inline grids — make them responsive via class instead of inline style */
+        .survey-profile-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 20px;
         }
 
         /* Recommendation Specific */
@@ -243,38 +318,183 @@ function getSetting($key, $default = '', $settings = [])
             background: rgba(255, 255, 255, 0.05);
             border: 2px solid var(--primary);
             border-radius: var(--radius-lg);
-            padding: 30px;
+            padding: 24px;
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 24px;
         }
 
         .recommended-package-preview h3 {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             font-weight: 800;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
 
         .recommended-package-preview .price {
-            font-size: 1.5rem;
+            font-size: 1.4rem;
             font-weight: 900;
             color: var(--primary);
-            margin-bottom: 15px;
+            margin-bottom: 12px;
         }
 
         .recommended-package-preview .duration {
             color: var(--dark-text-secondary);
             font-size: 0.75rem;
             font-weight: 600;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
 
         .recommended-actions {
             display: flex;
-            gap: 16px;
+            gap: 12px;
         }
 
         .recommended-actions button {
             flex: 1;
+        }
+
+        /* ============================================================
+           SURVEY MODAL — MOBILE RESPONSIVE OVERRIDES
+           ============================================================ */
+
+        /* Tablets (≤ 768px) */
+        @media (max-width: 768px) {
+            .survey-modal .modal,
+            .recommendation-modal .modal {
+                width: 98%;
+                border-radius: var(--radius-lg);
+                max-height: 94vh;
+            }
+
+            .survey-header,
+            .recommendation-header {
+                padding: 24px 20px 12px;
+            }
+
+            .survey-header i,
+            .recommendation-header i {
+                font-size: 2rem;
+                margin-bottom: 10px;
+            }
+
+            .survey-body,
+            .recommendation-body {
+                padding: 0 20px 20px;
+            }
+
+            .survey-footer {
+                padding: 14px 20px 20px;
+            }
+
+            .options-grid {
+                gap: 10px;
+            }
+        }
+
+        /* Small phones (≤ 480px) */
+        @media (max-width: 480px) {
+            .survey-modal .modal,
+            .recommendation-modal .modal {
+                width: 100%;
+                border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+                max-height: 92vh;
+                /* Slide up from bottom on small screens */
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                margin: 0;
+                transform: none;
+            }
+
+            /* Align modal-overlay to bottom on small screens */
+            .survey-modal,
+            .recommendation-modal {
+                align-items: flex-end;
+            }
+
+            .survey-header,
+            .recommendation-header {
+                padding: 20px 16px 10px;
+            }
+
+            .survey-header i,
+            .recommendation-header i {
+                font-size: 1.8rem;
+                margin-bottom: 8px;
+            }
+
+            .survey-header h2,
+            .recommendation-header h2 {
+                font-size: 1rem;
+            }
+
+            .survey-body,
+            .recommendation-body {
+                padding: 0 16px 16px;
+            }
+
+            /* Step 1 profile grid: 1 column on very small screens */
+            .survey-profile-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+                margin-bottom: 16px;
+            }
+
+            /* Options always 1 column on very small screens */
+            .options-grid {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+
+            /* Make option cards horizontal on 1-column layout */
+            .option-card {
+                flex-direction: row;
+                text-align: left;
+                padding: 12px 14px;
+                gap: 14px;
+            }
+
+            .option-card i {
+                font-size: 1rem;
+                width: 20px;
+                flex-shrink: 0;
+            }
+
+            .option-card span {
+                font-size: 0.8rem;
+            }
+
+            .survey-footer {
+                padding: 12px 16px 20px;
+                /* Stack progress + buttons vertically on very small screens */
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+
+            .progress-bar {
+                flex: 1 1 100%;
+                margin-right: 0;
+                order: -1;
+            }
+
+            .survey-nav-btn {
+                flex: 1;
+                justify-content: center;
+                padding: 12px 16px;
+            }
+
+            .recommended-actions {
+                flex-direction: column;
+            }
+
+            .recommended-actions button {
+                width: 100%;
+            }
+
+            .survey-modal .close-modal {
+                top: 10px;
+                right: 10px;
+            }
         }
 
         @keyframes modalFadeIn {
@@ -308,6 +528,8 @@ function getSetting($key, $default = '', $settings = [])
             border: 1px solid var(--dark-border);
             margin-left: auto;
             gap: 6px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
         }
 
         .user-view-btn {
@@ -323,6 +545,7 @@ function getSetting($key, $default = '', $settings = [])
             align-items: center;
             gap: 8px;
             transition: all 0.2s;
+            white-space: nowrap;
         }
 
         .user-view-btn.active {
@@ -337,6 +560,87 @@ function getSetting($key, $default = '', $settings = [])
             border-radius: var(--radius-lg);
             padding: 12px;
             border: 1px solid var(--dark-border);
+        }
+
+        @media (max-width: 768px) {
+            .content-card .card-header {
+                flex-wrap: wrap;
+                gap: 12px;
+            }
+
+            .content-card .card-header h3 {
+                flex: 1 1 100%;
+                margin-bottom: 0;
+            }
+
+            .user-view-toggle {
+                width: 100%;
+                justify-content: stretch;
+            }
+
+            .user-view-btn {
+                flex: 1 1 calc(50% - 6px);
+                min-width: 140px;
+                justify-content: center;
+                text-align: center;
+            }
+
+            .package-price-large,
+            .package-footer,
+            .table-container {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .user-view-btn {
+                flex: 1 1 100%;
+            }
+
+            #userCalendarView {
+                margin: 16px 0 24px;
+            }
+
+            .table-container table {
+                width: 100%;
+                min-width: 100%;
+            }
+
+            .table-container thead {
+                display: none;
+            }
+
+            .table-container tr {
+                display: block;
+                margin-bottom: 12px;
+                border: 1px solid var(--dark-border);
+                border-radius: var(--radius-lg);
+                padding: 12px;
+            }
+
+            .table-container td {
+                display: flex;
+                justify-content: space-between;
+                padding: 8px 0;
+                border: none;
+                border-bottom: 1px solid var(--dark-border);
+            }
+
+            .table-container td:last-child {
+                border-bottom: none;
+            }
+
+            .table-container td::before {
+                content: attr(data-label);
+                font-weight: 600;
+                color: var(--dark-text-secondary);
+                flex: 1;
+            }
+
+            .table-container td span {
+                flex: 1;
+                text-align: right;
+            }
         }
 
         /* FullCalendar Dark Theme Tweaks */
@@ -418,6 +722,106 @@ function getSetting($key, $default = '', $settings = [])
         .fc-theme-standard td,
         .fc-theme-standard th {
             border: 1px solid rgba(255, 255, 255, 0.05) !important;
+        }
+
+        /* ── FullCalendar Mobile Responsive ── */
+        @media (max-width: 768px) {
+            #userCalendarView {
+                margin: 12px 0 16px;
+                padding: 8px;
+            }
+
+            .fc .fc-toolbar {
+                flex-direction: column;
+                gap: 10px;
+                padding: 8px 4px;
+            }
+
+            .fc .fc-toolbar-title {
+                font-size: 0.85rem;
+                text-align: center;
+            }
+
+            .fc .fc-toolbar-chunk {
+                display: flex;
+                justify-content: center;
+                flex-wrap: wrap;
+                gap: 4px;
+            }
+
+            .fc .fc-button-primary {
+                padding: 5px 10px;
+                font-size: 0.7rem;
+                border-radius: 8px;
+            }
+
+            .fc .fc-col-header-cell-cushion {
+                font-size: 0.6rem;
+                letter-spacing: 0.5px;
+                padding: 0 2px;
+            }
+
+            .fc .fc-daygrid-day-number {
+                font-size: 0.65rem;
+                padding: 4px 6px;
+            }
+
+            .fc .fc-daygrid-day-top {
+                justify-content: center;
+            }
+
+            .fc .fc-event {
+                font-size: 0.6rem !important;
+                padding: 1px 3px !important;
+                line-height: 1.2 !important;
+            }
+
+            .fc .fc-daygrid-event-harness {
+                margin-top: 1px !important;
+            }
+
+            /* Hide extra view buttons on mobile — list view is cleaner */
+            .fc .fc-timeGridWeek-button,
+            .fc .fc-timeGridDay-button {
+                display: none !important;
+            }
+
+            .fc .fc-col-header-cell {
+                padding: 6px 0;
+            }
+
+            .fc .fc-daygrid-day {
+                min-height: 40px !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .fc .fc-toolbar-title {
+                font-size: 0.8rem;
+            }
+
+            .fc .fc-button-primary {
+                padding: 4px 8px;
+                font-size: 0.65rem;
+            }
+
+            .fc .fc-daygrid-day-number {
+                font-size: 0.6rem;
+                padding: 2px 4px;
+            }
+
+            .fc .fc-event {
+                font-size: 0.55rem !important;
+            }
+
+            /* On very small screens show dot only */
+            .fc .fc-event-title {
+                display: none !important;
+            }
+
+            .fc .fc-daygrid-event-dot {
+                display: inline-block !important;
+            }
         }
 
         /* Event Styles */
@@ -695,6 +1099,147 @@ function getSetting($key, $default = '', $settings = [])
             }
         }
     </style>
+
+    <style>
+/* Quick Actions Styles */
+.quick-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 16px;
+    margin: 20px 0;
+}
+
+.quick-action-card {
+    background: var(--dark-card);
+    border: 1px solid var(--dark-border);
+    border-radius: var(--radius-lg);
+    padding: 20px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    transition: var(--transition);
+    cursor: pointer;
+    text-decoration: none;
+    min-height: 100px;
+}
+
+.quick-action-card:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--primary);
+    transform: translateY(-2px);
+}
+
+.quick-action-card i {
+    font-size: 2rem;
+    color: var(--primary);
+}
+
+.quick-action-card h4 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--dark-text);
+    margin: 0;
+    text-align: center;
+}
+
+.quick-action-card p {
+    font-size: 0.75rem;
+    color: var(--dark-text-secondary);
+    text-align: center;
+    margin: 0;
+    line-height: 1.3;
+}
+
+/* Action Button Styles (Header) */
+.action-btn {
+    background: var(--dark-card);
+    border: 1px solid var(--dark-border);
+    border-radius: var(--radius-md);
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+    cursor: pointer;
+    position: relative;
+}
+
+.action-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--primary);
+}
+
+.action-btn i {
+    font-size: 1.25rem;
+    color: var(--dark-text);
+}
+
+.action-btn.notification-btn {
+    position: relative;
+}
+
+.action-btn .notification-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    background: var(--warning);
+    color: var(--dark-bg);
+    font-size: 0.65rem;
+    font-weight: 700;
+    min-width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 2px solid var(--dark-card);
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .quick-actions-grid {
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        gap: 12px;
+    }
+
+    .quick-action-card {
+        padding: 16px 12px;
+        min-height: 85px;
+    }
+
+    .quick-action-card i {
+        font-size: 1.75rem;
+    }
+
+    .quick-action-card h4 {
+        font-size: 0.8rem;
+    }
+
+    .quick-action-card p {
+        font-size: 0.7rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .quick-actions-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .quick-action-card {
+        padding: 20px;
+        min-height: auto;
+    }
+
+    .action-btn {
+        width: 52px;
+        height: 52px;
+    }
+}
+</style>
+
     <style>
         /* Modern Booking Details Modal */
         #bookingDetailsModal .modal {
@@ -955,6 +1500,8 @@ function getSetting($key, $default = '', $settings = [])
         .package-btn-group {
             display: flex;
             gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
         }
 
         .package-btn-group .btn {
@@ -963,6 +1510,7 @@ function getSetting($key, $default = '', $settings = [])
             font-weight: 600;
             font-size: 0.75rem;
             padding: 0 16px;
+            white-space: nowrap;
         }
 
         .btn-exercise {
@@ -985,6 +1533,30 @@ function getSetting($key, $default = '', $settings = [])
         .btn-book:hover {
             background: #fff;
             transform: translateY(-2px);
+        }
+
+        @media (max-width: 480px) {
+            .package-footer {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .package-btn-group {
+                width: 100%;
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .package-btn-group .btn {
+                width: 100%;
+                min-width: 0;
+                padding: 10px 14px;
+            }
+
+            .package-price-large {
+                width: 100%;
+                text-align: left;
+            }
         }
 
         /* Exercise Plan Styles */
@@ -1226,6 +1798,9 @@ function getSetting($key, $default = '', $settings = [])
     <button class="mobile-menu-btn" id="mobileMenuToggle">
         <i class="fas fa-bars"></i>
     </button>
+
+    <!-- Sidebar Overlay (mobile backdrop) -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
@@ -1896,6 +2471,12 @@ function getSetting($key, $default = '', $settings = [])
                                 </select>
                             </div>
 
+                            <div id="bookingPriceSummary" style="display:none; margin-bottom:16px; padding:14px 16px; background: rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius: 12px;">
+                                <div id="bookingPriceLabel" style="font-size:0.95rem; color: var(--dark-text); margin-bottom:6px;"></div>
+                                <div id="bookingStudentPrice" style="font-size:0.95rem; color: var(--primary); margin-bottom:6px; display:none;"></div>
+                                <div id="bookingStudentNotice" style="font-size:0.8rem; color: var(--dark-text-secondary); display:none;"></div>
+                            </div>
+
                             <div class="form-group">
                                 <label>Booking Date <span style="color: var(--warning);">*</span></label>
                                 <input type="date" id="bookingDate" required>
@@ -1934,6 +2515,51 @@ function getSetting($key, $default = '', $settings = [])
                                 <label>Additional Notes (Optional)</label>
                                 <textarea id="bookingNotes" rows="3"
                                     placeholder="Any special requests or notes..."></textarea>
+                            </div>
+
+                            <!-- Student ID Section -->
+                            <!-- Auto-notice shown when a student package is selected -->
+                            <div id="studentAutoNotice" style="display:none; background:rgba(99,102,241,0.1); border:1px solid rgba(99,102,241,0.3); border-radius:12px; padding:12px 16px; margin-bottom:16px; gap:10px; align-items:flex-start;">
+                                <i class="fas fa-graduation-cap" style="color:var(--primary); margin-top:2px; flex-shrink:0;"></i>
+                                <p style="color:var(--dark-text); font-size:0.82rem; line-height:1.5; margin:0;">
+                                    <strong>Student Package selected.</strong> A valid Student ID photo is <strong style="color:var(--warning);">required</strong> to complete this booking. The admin will verify your ID before approving.
+                                </p>
+                            </div>
+
+                            <!-- Manual checkbox — only shown for non-student packages after one is selected -->
+                            <div class="form-group" id="studentCheckboxRow" style="display:none;">
+                                <label style="display:flex; align-items:center; gap:10px; cursor:pointer; user-select:none;">
+                                    <input type="checkbox" id="isStudent" onchange="toggleStudentSection(this)" style="width:18px; height:18px; cursor:pointer; accent-color: var(--primary);">
+                                    <span>I am a student</span>
+                                </label>
+                            </div>
+
+                            <div id="studentSection" style="display:none;">
+                                <div style="background: rgba(99,102,241,0.07); border:1px solid rgba(99,102,241,0.25); border-radius: 12px; padding: 12px 16px; margin-bottom: 14px; display:flex; gap:10px; align-items:flex-start;">
+                                    <i class="fas fa-graduation-cap" style="color:var(--primary); margin-top:2px;"></i>
+                                    <p style="color:var(--dark-text-secondary); font-size:0.78rem; line-height:1.5; margin:0;">
+                                        Please upload a clear photo of your valid <strong style="color:var(--dark-text);">School / Student ID</strong> as proof. This will be reviewed by the admin before your booking is verified.
+                                    </p>
+                                </div>
+
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <label>Student ID Photo <span style="color: var(--warning);">*</span></label>
+                                    <div class="file-upload-area" id="studentIdUploadArea" onclick="document.getElementById('studentIdFile').click()">
+                                        <i class="fas fa-id-card"></i>
+                                        <p>Click to upload your Student ID</p>
+                                        <span>PNG, JPG up to 5MB</span>
+                                        <input type="file" id="studentIdFile" accept="image/*" style="display:none;" onchange="handleStudentIdSelect(event)">
+                                    </div>
+                                    <div id="studentIdPreview" style="display:none; margin-top:12px;">
+                                        <div class="file-preview-item">
+                                            <i class="fas fa-id-card" style="color:var(--primary);"></i>
+                                            <span id="studentIdFileName"></span>
+                                            <button type="button" onclick="removeStudentId()" class="remove-file-btn">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="modal-actions">
@@ -2090,7 +2716,7 @@ function getSetting($key, $default = '', $settings = [])
         </div>
     </div>
 
-    <!-- Upgrade Modal -->
+    <!-- Upgrade Modal — Plan Selection -->
     <div class="modal-overlay" id="upgradeModal">
         <div class="modal" style="max-width: 900px;">
             <div class="modal-header">
@@ -2116,6 +2742,66 @@ function getSetting($key, $default = '', $settings = [])
                 <button class="btn btn-secondary" onclick="closeUpgradeModal()">
                     <i class="fas fa-times"></i> Cancel
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upgrade Booking Modal — Receipt Upload -->
+    <div class="modal-overlay" id="upgradeBookingModal">
+        <div class="modal" style="max-width: 560px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-arrow-up" style="margin-right:8px;"></i>Confirm Upgrade</h3>
+                <button class="close-modal" onclick="closeUpgradeBookingModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="upgradePackageSummary" style="background:rgba(255,255,255,0.04);border:1px solid var(--dark-border);border-radius:12px;padding:16px;margin-bottom:20px;">
+                    <!-- Filled by JS -->
+                </div>
+
+                <form id="upgradeBookingForm" onsubmit="submitUpgradeBooking(event)">
+                    <div class="form-group">
+                        <label>Contact Number <span style="color:var(--warning);">*</span></label>
+                        <input type="tel" id="upgradeContact" placeholder="09171234567" maxlength="11"
+                               pattern="[0-9]{11}" title="Please enter exactly 11 digits" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Payment Receipt (GCash) <span style="color:var(--warning);">*</span></label>
+                        <div class="file-upload-area" id="upgradeFileUploadArea"
+                             onclick="document.getElementById('upgradeReceiptFile').click()">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p>Click to upload or drag and drop</p>
+                            <span>PNG, JPG, PDF up to 5MB</span>
+                            <input type="file" id="upgradeReceiptFile" accept="image/*,.pdf"
+                                   style="display:none;" onchange="handleUpgradeFileSelect(event)">
+                        </div>
+                        <div id="upgradeFilePreview" style="display:none; margin-top:12px;">
+                            <div class="file-preview-item">
+                                <i class="fas fa-file-image"></i>
+                                <span id="upgradeFileName"></span>
+                                <button type="button" onclick="removeUpgradeFile()" class="remove-file-btn">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Notes (Optional)</label>
+                        <textarea id="upgradeNotes" rows="2" placeholder="Any notes..."></textarea>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeUpgradeBookingModal()">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-arrow-up"></i> Submit Upgrade
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -2316,8 +3002,8 @@ function getSetting($key, $default = '', $settings = [])
 
     <!-- Survey Modal -->
     <div class="modal-overlay survey-modal" id="surveyModal">
-        <div class="modal" style="max-width: 700px;">
-            <button class="close-modal" onclick="skipSurvey()" style="top: 20px; right: 20px;">
+        <div class="modal">
+            <button class="close-modal" onclick="skipSurvey()" aria-label="Skip survey">
                 <i class="fas fa-times"></i>
             </button>
             <div class="survey-header">
@@ -2330,7 +3016,7 @@ function getSetting($key, $default = '', $settings = [])
                 <!-- Step 1: Basic Profile -->
                 <div class="survey-step active" data-step="1">
                     <label class="question-label">A. Basic Profile</label>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
+                    <div class="survey-profile-grid">
                         <div class="form-group">
                             <label
                                 style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px;">Age</label>
@@ -2348,7 +3034,7 @@ function getSetting($key, $default = '', $settings = [])
                             </select>
                         </div>
                     </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
+                    <div class="survey-profile-grid">
                         <div class="form-group">
                             <label
                                 style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px;">Height
@@ -2366,16 +3052,16 @@ function getSetting($key, $default = '', $settings = [])
                                 style="background: rgba(255,255,255,0.05); border: 1px solid var(--dark-border); color: #fff; padding: 12px; border-radius: 8px; width: 100%;">
                         </div>
                     </div>
-                    <div class="form-group" style="margin-bottom: 24px;">
+                    <div class="form-group" style="margin-bottom: 20px;">
                         <label
                             style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px;">Medical
                             Conditions (if any)</label>
                         <textarea id="surveyMedical" class="form-control"
                             placeholder="Specify any conditions or type 'None'"
-                            style="background: rgba(255,255,255,0.05); border: 1px solid var(--dark-border); color: #fff; padding: 12px; border-radius: 8px; width: 100%; height: 80px;"></textarea>
+                            style="background: rgba(255,255,255,0.05); border: 1px solid var(--dark-border); color: #fff; padding: 12px; border-radius: 8px; width: 100%; height: 72px;"></textarea>
                     </div>
                     <label
-                        style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px; text-align: center;">Exercise
+                        style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 10px; text-align: center;">Exercise
                         Experience</label>
                     <div class="options-grid">
                         <div class="option-card" onclick="selectSurveyOption(this, 'exercise_history', 'Beginner')">
@@ -2578,9 +3264,9 @@ function getSetting($key, $default = '', $settings = [])
                 <div class="progress-bar">
                     <div class="progress-fill" id="surveyProgress" style="width: 20%;"></div>
                 </div>
-                <div style="display: flex; gap: 10px;">
-                    <button class="survey-nav-btn" id="surveyBackBtn"
-                        style="display: none; background: rgba(255,255,255,0.05); color: #fff;"
+                <div style="display: flex; gap: 10px; flex-shrink: 0;">
+                    <button class="survey-nav-btn btn-back" id="surveyBackBtn"
+                        style="display: none;"
                         onclick="prevSurveyStep()">
                         <i class="fas fa-arrow-left"></i>
                         <span>Back</span>
@@ -2593,7 +3279,6 @@ function getSetting($key, $default = '', $settings = [])
             </div>
         </div>
     </div>
-
     <!-- Recommendation Modal -->
     <div class="modal-overlay recommendation-modal" id="recommendationModal">
         <div class="modal">
@@ -2666,6 +3351,7 @@ function getSetting($key, $default = '', $settings = [])
     <!-- Core App Logic -->
     <script src="../../assets/js/user-dashboard.js?v=<?= time() ?>"></script>
     <script src="../../assets/js/theme.js"></script>
+    <script src="../../assets/js/mobile-menu.js"></script>
 </body>
 
 </html>

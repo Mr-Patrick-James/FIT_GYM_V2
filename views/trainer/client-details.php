@@ -400,7 +400,10 @@ $questionnaire = $q_stmt->get_result()->fetch_assoc();
     <button class="mobile-menu-btn" id="mobileMenuToggle">
         <i class="fas fa-bars"></i>
     </button>
-    
+
+    <!-- Sidebar Overlay (mobile backdrop) -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
     <aside class="sidebar">
         <div class="logo">
             <h1>FitPay</h1>
@@ -1390,5 +1393,6 @@ $questionnaire = $q_stmt->get_result()->fetch_assoc();
         });
     </script>
     <script src="../../assets/js/theme.js"></script>
+    <script src="../../assets/js/mobile-menu.js"></script>
 </body>
 </html>

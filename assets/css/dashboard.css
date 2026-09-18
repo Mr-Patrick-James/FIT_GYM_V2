@@ -110,8 +110,10 @@ body {
     line-height: 1.6;
     /* Instant theme changes - no transitions */
     width: 100%;
+    max-width: 100vw;
     margin: 0;
     padding: 0;
+    overflow-x: hidden;
 }
 
 body.light-mode {
@@ -183,9 +185,27 @@ body.light-mode select {
     display: flex;
     flex-direction: column;
     z-index: 100;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.1) transparent;
     /* Theme changes apply instantly - only transform/width have transitions */
     transition: transform 0.3s, width 0.3s;
     transition-property: transform, width;
+}
+
+.sidebar::-webkit-scrollbar {
+    width: 4px;
+}
+.sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+.sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.15);
+    border-radius: 4px;
+}
+.sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255,255,255,0.3);
 }
 
 .logo {
@@ -332,27 +352,26 @@ body.light-mode select {
 .mobile-menu-btn {
     display: none;
     position: fixed;
-    top: 20px;
-    left: 20px;
-    width: 48px;
-    height: 48px;
-    border-radius: var(--radius-md);
-    background: var(--dark-card);
-    border: 2px solid var(--dark-border);
-    color: var(--primary);
-    font-size: 1.5rem;
+    top: 14px;
+    left: 14px;
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    background: var(--primary);
+    color: var(--dark-bg);
+    border: none;
+    font-size: 1.2rem;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    z-index: 3000; /* Ensure it stays above everything */
-    box-shadow: var(--shadow-lg);
-    transition: var(--transition);
+    z-index: 9999;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .mobile-menu-btn:hover {
-    background: var(--glass);
-    border-color: var(--primary);
-    transform: scale(1.05);
+    transform: scale(1.06);
+    box-shadow: 0 6px 28px rgba(0,0,0,0.5);
 }
 
 /* Main Content */
@@ -361,11 +380,13 @@ body.light-mode select {
     margin-left: 280px;
     padding: 40px;
     width: calc(100% - 280px);
+    min-width: 0;
+    overflow-x: hidden;
     transition: transform 0.3s, opacity 0.3s;
 }
 
-/* Mobile Responsiveness */
-@media (max-width: 1024px) {
+/* Mobile Responsiveness — kept for non-sidebar layout tweaks only */
+@media (max-width: 1024px) and (min-width: 993px) {
     .sidebar {
         width: 260px;
     }
@@ -376,69 +397,6 @@ body.light-mode select {
     }
     .stats-grid {
         grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (max-width: 992px) {
-    .mobile-menu-btn {
-        display: flex;
-        position: fixed;
-        top: 15px;
-        left: 15px;
-        width: 44px;
-        height: 44px;
-        border-radius: 10px;
-        background: var(--primary);
-        color: var(--dark-bg);
-        border: none;
-        font-size: 1.2rem;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        z-index: 5000; /* Extremely high priority */
-        box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-        transition: var(--transition);
-    }
-
-    .sidebar {
-        transform: translateX(-100%);
-        width: 280px;
-        z-index: 4000;
-    }
-
-    .sidebar.active {
-        transform: translateX(0);
-        box-shadow: 20px 0 50px rgba(0, 0, 0, 0.5);
-    }
-
-    .main-content {
-        margin-left: 0;
-        width: 100%;
-        padding: 80px 20px 40px;
-    }
-
-    .top-bar {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 24px;
-        margin-bottom: 32px;
-    }
-
-    .header-actions {
-        width: 100%;
-        justify-content: space-between;
-    }
-
-    .search-box {
-        flex: 1;
-    }
-
-    .search-box input:focus {
-        width: 100%;
-    }
-
-    .content-grid {
-        grid-template-columns: 1fr;
     }
 }
 
@@ -1017,9 +975,16 @@ body.light-mode select {
 /* Content Grid */
 .content-grid {
     display: grid;
-    grid-template-columns: 2fr 1fr;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
     gap: 32px;
     margin-bottom: 48px;
+    width: 100%;
+}
+
+.left-column,
+.right-column {
+    min-width: 0;
+    overflow: hidden;
 }
 
 /* Content Cards */
@@ -2570,6 +2535,12 @@ body.light-mode .btn-primary:hover {
 }
 
 /* Responsive */
+@media (max-width: 1400px) {
+    .content-grid {
+        grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    }
+}
+
 @media (max-width: 1200px) {
     .content-grid {
         grid-template-columns: 1fr;
@@ -2580,7 +2551,7 @@ body.light-mode .btn-primary:hover {
     }
 }
 
-/* Tablets & Mobile (Unified Facebook/GCash/YouTube Style) */
+/* Tablets & Mobile — table styles only */
 @media (max-width: 992px) {
     /* Tablet table styles */
     .table-container {
@@ -2600,76 +2571,10 @@ body.light-mode .btn-primary:hover {
         font-size: 0.75rem !important;
         padding: 5px 10px !important;
     }
+}
 
-    .sidebar {
-        transform: translateX(-100%) !important;
-        width: 280px !important;
-        max-width: 80vw !important;
-        position: fixed !important;
-        z-index: 2000 !important;
-        height: 100vh !important;
-        top: 0 !important;
-        left: 0 !important;
-        box-shadow: none;
-        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    
-    .sidebar.active {
-        transform: translateX(0) !important;
-        box-shadow: 20px 0 50px rgba(0,0,0,0.5);
-    }
-    
-    .main-content {
-        margin-left: 0 !important;
-        width: 100% !important;
-        padding: 24px !important;
-        overflow-x: hidden;
-    }
-    
-    .mobile-menu-btn {
-        display: flex !important;
-        position: fixed;
-        top: 20px;
-        left: 20px;
-        z-index: 3000; /* Higher than sidebar z-index 2000 */
-        background: var(--primary);
-        color: var(--dark-bg);
-        border: none;
-        width: 48px;
-        height: 48px;
-        border-radius: 12px;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.4rem;
-        box-shadow: 0 8px 16px rgba(0,0,0,0.3);
-        cursor: pointer;
-        transition: var(--transition);
-    }
-
-    .mobile-menu-btn:active {
-        transform: scale(0.9);
-    }
-    
-    .top-bar {
-        margin-top: 60px;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 20px;
-    }
-
-    .page-title h1 {
-        font-size: 2rem;
-    }
-
-    .stats-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .detail-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    /* Settings responsive */
+/* Settings responsive */
+@media (max-width: 992px) {
     .settings-container {
         grid-template-columns: 1fr !important;
     }
@@ -3086,6 +2991,19 @@ body.light-mode .btn-primary:hover {
     .action-btn {
         width: 40px;
         height: 40px;
+    }
+
+    .header-actions {
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+
+    .action-btn.primary {
+        min-width: 0;
+        width: auto;
+        padding: 10px 14px;
+        white-space: normal;
+        justify-content: center;
     }
 
     /* Adjust table container for smaller screens */
@@ -3732,4 +3650,564 @@ body.light-mode .theme-option.active {
         padding: 16px;
     }
     .ml-bookings, .ml-joined { display: none; }
+}
+
+
+/* ============================================================
+   ROLE-BASED ACCESS CONTROL (UI Hiding)
+   ============================================================ */
+.role-manager .btn-danger,
+.role-manager .icon-btn.danger,
+.role-manager .card-btn[onclick*="delete"],
+.role-manager .card-btn[onclick*="Delete"],
+.role-manager [id*="delete"],
+.role-manager [id*="Delete"] {
+    display: none !important;
+}
+
+/* Specific overrides if needed */
+.role-manager #deleteTrainerModal,
+.role-manager #deletePackageModal,
+.role-manager #deleteMemberModal {
+    display: none !important;
+}
+
+/* ============================================================
+   RESPONSIVE OVERHAUL — Dashboard & Sidebar
+   ============================================================ */
+
+/* --- Sidebar Overlay (backdrop when sidebar is open on mobile) --- */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 8000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.sidebar-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+@media (max-width: 992px) {
+    .sidebar-overlay {
+        display: block;
+    }
+}
+
+/* --- Intermediate breakpoint: 1280px --- */
+@media (max-width: 1280px) and (min-width: 993px) {
+    .sidebar {
+        width: 240px;
+    }
+    .main-content {
+        margin-left: 240px;
+        width: calc(100% - 240px);
+        padding: 32px 28px;
+    }
+    .logo {
+        padding: 0 20px 32px;
+    }
+    .nav-links {
+        padding: 0 12px;
+    }
+    .admin-profile {
+        padding: 14px 16px;
+    }
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* --- 1024px breakpoint --- */
+@media (max-width: 1024px) and (min-width: 993px) {
+    .sidebar {
+        width: 220px;
+    }
+    .main-content {
+        margin-left: 220px;
+        width: calc(100% - 220px);
+        padding: 28px 20px;
+    }
+    .nav-links a {
+        font-size: 0.7rem;
+        padding: 10px 12px;
+    }
+    .logo h1 {
+        font-size: 1rem;
+    }
+    .page-title h1 {
+        font-size: 1.6rem;
+    }
+    .top-bar {
+        flex-wrap: wrap;
+        gap: 16px;
+        margin-bottom: 28px;
+    }
+    .header-actions {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    .search-box input {
+        max-width: 200px;
+    }
+    .search-box input:focus {
+        width: 220px;
+        max-width: 220px;
+    }
+    .control-bar {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .control-tab {
+        flex: unset;
+        min-width: calc(33.33% - 8px);
+        font-size: 0.75rem;
+        padding: 10px 12px;
+    }
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+    }
+    .content-grid {
+        grid-template-columns: 1fr;
+        gap: 24px;
+    }
+    .quick-actions-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+    }
+    .package-stats-content {
+        grid-template-columns: 1fr;
+    }
+    .package-summary-cards {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+/* --- 992px: Sidebar goes off-canvas --- */
+@media (max-width: 992px) {
+    .sidebar {
+        transform: translateX(-100%);
+        width: 280px !important;
+        max-width: 80vw !important;
+        position: fixed !important;
+        z-index: 9000 !important;
+        top: 0 !important;
+        left: 0 !important;
+        height: 100vh !important;
+        box-shadow: none;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+    .sidebar.active {
+        transform: translateX(0) !important;
+        box-shadow: 8px 0 40px rgba(0, 0, 0, 0.6);
+    }
+    .main-content {
+        margin-left: 0 !important;
+        width: 100% !important;
+        padding: 24px 20px !important;
+        overflow-x: hidden;
+    }
+    .mobile-menu-btn {
+        display: flex !important;
+        position: fixed !important;
+        top: 14px !important;
+        left: 14px !important;
+        z-index: 9999 !important;
+        background: var(--primary) !important;
+        color: var(--dark-bg) !important;
+        border: none !important;
+        width: 46px !important;
+        height: 46px !important;
+        border-radius: 12px !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 1.2rem !important;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.45) !important;
+        cursor: pointer !important;
+        transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+    }
+    .mobile-menu-btn:active {
+        transform: scale(0.92) !important;
+    }
+    .top-bar {
+        margin-top: 72px;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+    .header-actions {
+        width: 100%;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    .search-box {
+        flex: 1;
+        min-width: 0;
+    }
+    .search-box input {
+        max-width: 100%;
+        width: 100%;
+    }
+    .search-box input:focus {
+        width: 100%;
+        max-width: 100%;
+    }
+    .control-tab {
+        min-width: calc(33.33% - 8px);
+        flex: 1;
+    }
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .content-grid {
+        grid-template-columns: 1fr;
+    }
+    .quick-actions-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* --- 768px: Mobile --- */
+@media (max-width: 768px) {
+    .main-content {
+        padding: 20px 16px !important;
+    }
+    .top-bar {
+        margin-top: 68px;
+        margin-bottom: 20px;
+        gap: 12px;
+    }
+    .page-title h1 {
+        font-size: 1.5rem;
+    }
+    .page-title p {
+        font-size: 0.7rem;
+    }
+    .header-actions {
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+    .action-btn {
+        width: 44px;
+        height: 44px;
+    }
+    .action-btn.primary {
+        min-width: 0;
+        width: auto;
+        padding: 10px 16px;
+        white-space: normal;
+        justify-content: center;
+    }
+    .control-bar {
+        padding: 6px;
+        border-radius: 14px;
+        gap: 6px;
+    }
+    .control-tab {
+        min-width: calc(50% - 6px);
+        flex: 1 1 calc(50% - 6px);
+        font-size: 0.72rem;
+        padding: 10px 8px;
+        gap: 6px;
+    }
+    .control-tab i {
+        font-size: 0.8rem;
+    }
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+    .stat-value {
+        font-size: 1.6rem;
+    }
+    .quick-actions-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        padding: 16px;
+    }
+    .quick-action-card {
+        padding: 20px 16px;
+        gap: 10px;
+    }
+    .quick-action-card i {
+        font-size: 1.3rem;
+    }
+    .card-header {
+        padding: 16px 20px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    .card-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+    .pkg-header-top {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    .pkg-header-controls {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+    }
+    .date-filter {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .date-filter .card-btn[type="date"] {
+        flex: 1;
+        min-width: 130px;
+    }
+    .date-filter .card-btn.primary {
+        width: 100%;
+        justify-content: center;
+    }
+    .package-stats-content {
+        grid-template-columns: 1fr;
+        padding: 16px;
+        gap: 16px;
+    }
+    .package-summary-cards {
+        grid-template-columns: 1fr;
+    }
+    .chart-container {
+        padding: 16px;
+        height: 280px;
+    }
+}
+
+/* --- 480px: Small phones --- */
+@media (max-width: 480px) {
+    .main-content {
+        padding: 16px 12px !important;
+    }
+    .top-bar {
+        margin-top: 60px;
+    }
+    .mobile-menu-btn {
+        top: 12px;
+        left: 12px;
+        width: 42px;
+        height: 42px;
+        font-size: 1.1rem;
+    }
+    .page-title h1 {
+        font-size: 1.3rem;
+    }
+    .control-tab {
+        min-width: 100%;
+        flex: 1 1 100%;
+        font-size: 0.8rem;
+    }
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    .stat-card {
+        padding: 16px;
+    }
+    .stat-value {
+        font-size: 2rem;
+    }
+    .quick-actions-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    .action-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 0.9rem;
+    }
+    .notification-badge {
+        width: 18px;
+        height: 18px;
+        font-size: 0.6rem;
+    }
+    .header-actions {
+        gap: 6px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+    .action-btn.primary {
+        min-width: 0;
+        width: auto;
+        padding: 10px 14px;
+        white-space: normal;
+        justify-content: center;
+    }
+    .search-box input {
+        font-size: 0.75rem;
+        padding: 10px 14px 10px 40px;
+    }
+    .card-header h3 {
+        font-size: 0.9rem;
+    }
+    .footer p {
+        flex-direction: column;
+        gap: 6px;
+        font-size: 0.75rem;
+    }
+}
+
+/* ============================================================
+   ROLE-MANAGER: Hide edit & delete buttons on all admin pages
+   ============================================================ */
+
+/* Generic edit/delete button selectors */
+.role-manager [onclick*="edit"],
+.role-manager [onclick*="Edit"],
+.role-manager [onclick*="delete"],
+.role-manager [onclick*="Delete"],
+.role-manager [onclick*="remove"],
+.role-manager [onclick*="Remove"] {
+    display: none !important;
+}
+
+/* Specific icon button variants */
+.role-manager .icon-btn.danger,
+.role-manager .btn-danger,
+.role-manager .card-btn.danger {
+    display: none !important;
+}
+
+/* Trainers page — edit & delete card buttons */
+.role-manager .card-btn[onclick*="editTrainer"],
+.role-manager .card-btn[onclick*="deleteTrainer"] {
+    display: none !important;
+}
+
+/* Packages page — edit & delete buttons */
+.role-manager .btn-secondary[onclick*="editPackage"],
+.role-manager .btn-secondary[onclick*="deletePackage"] {
+    display: none !important;
+}
+
+/* Exercises page — edit & delete buttons */
+.role-manager .btn-secondary[onclick*="editExercise"],
+.role-manager .btn[onclick*="deleteExercise"] {
+    display: none !important;
+}
+
+/* Equipment page — edit & delete buttons */
+.role-manager .btn-secondary[onclick*="editEquipment"],
+.role-manager .btn[onclick*="deleteEquipment"] {
+    display: none !important;
+}
+
+/* Settings page — hide danger zone and admin-only actions */
+.role-manager .settings-danger-zone,
+.role-manager .btn-danger,
+.role-manager [onclick*="deleteAdmin"],
+.role-manager [onclick*="exportDatabase"] {
+    display: none !important;
+}
+
+/* Table action cells — hide when only edit/delete remain */
+.role-manager .table-actions:empty {
+    display: none !important;
+}
+
+
+/* ============================================================
+   SIDEBAR MOBILE — FINAL AUTHORITATIVE RULES (must stay last)
+   These override every earlier block.
+   ============================================================ */
+@media (max-width: 992px) {
+
+    /* 1. Sidebar hidden off-screen by default */
+    .sidebar {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 280px !important;
+        max-width: 85vw !important;
+        height: 100vh !important;
+        z-index: 9000 !important;
+        transform: translateX(-100%) !important;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        box-shadow: none !important;
+        margin-left: 0 !important;
+        pointer-events: all !important;
+    }
+
+    /* 2. Sidebar visible when JS adds .active */
+    .sidebar.active {
+        transform: translateX(0) !important;
+        box-shadow: 8px 0 40px rgba(0, 0, 0, 0.6) !important;
+    }
+
+    /* 3. Main content full-width — no left margin */
+    .main-content {
+        margin-left: 0 !important;
+        width: 100% !important;
+        padding-top: 72px !important;
+        overflow-x: hidden !important;
+    }
+
+    /* 4. Toggle button visible */
+    .mobile-menu-btn {
+        display: flex !important;
+        position: fixed !important;
+        top: 14px !important;
+        left: 14px !important;
+        z-index: 9999 !important;
+        width: 46px !important;
+        height: 46px !important;
+        border-radius: 12px !important;
+        background: var(--primary) !important;
+        color: var(--dark-bg) !important;
+        border: none !important;
+        font-size: 1.2rem !important;
+        align-items: center !important;
+        justify-content: center !important;
+        cursor: pointer !important;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.4) !important;
+    }
+
+    /* 5. Overlay */
+    .sidebar-overlay {
+        display: block !important;
+    }
+
+    .sidebar-overlay.active {
+        opacity: 1 !important;
+        pointer-events: all !important;
+    }
+
+    /* 6. Nav links — ensure they're clickable */
+    .nav-links {
+        position: relative !important;
+        z-index: 1 !important;
+    }
+
+    .nav-links a {
+        pointer-events: all !important;
+        cursor: pointer !important;
+        position: relative !important;
+        z-index: 1 !important;
+        -webkit-tap-highlight-color: transparent !important;
+    }
+
+    .nav-links li {
+        position: relative !important;
+        z-index: 1 !important;
+    }
 }

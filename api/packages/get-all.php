@@ -40,7 +40,6 @@ try {
         }
     }
 
-    // Check if new columns exist for query logic (legacy fallback)
     $checkGoal = $conn->query("SHOW COLUMNS FROM packages LIKE 'goal'");
     $hasGoal = ($checkGoal && $checkGoal->num_rows > 0);
     

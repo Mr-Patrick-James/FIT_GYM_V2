@@ -67,8 +67,8 @@ try {
     }
     
     // Validate that target package is actually higher tier (more expensive)
-    if ($targetPackage['price'] <= $currentBooking['current_price']) {
-        sendResponse(false, 'Target package must be higher tier than current package', null, 400);
+    if ((float)$targetPackage['price'] <= (float)$currentBooking['amount']) {
+        sendResponse(false, 'Please select a package with a higher price than your current one.', null, 400);
     }
     
     // Get user info for the upgrade booking
@@ -124,9 +124,9 @@ try {
         $updateCurrentStmt->bind_param("i", $currentBooking['id']);
         $updateCurrentStmt->execute();
         
-        // Create new upgrade booking
+        // Create new upgrade booking (pending — admin must verify receipt)
         $upgradeBookingQuery = "INSERT INTO bookings (user_id, name, email, contact, package_id, package_name, amount, booking_date, expires_at, notes, receipt_url, status) 
-                               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'verified')";
+                               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')";
         
         $upgradeNotes = "Upgrade from: " . $currentBooking['package_name'] . "\n" . ($notes ?: '');
         

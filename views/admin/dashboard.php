@@ -40,7 +40,7 @@ function getSetting($key, $default = '', $settings = []) {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <!-- Dashboard Styles -->
-    <link rel="stylesheet" href="../../assets/css/dashboard.css?v=1.6">
+    <link rel="stylesheet" href="../../assets/css/dashboard.css?v=3.0">
     
     <!-- Apply theme immediately before page renders to prevent flash -->
     <script>
@@ -60,11 +60,14 @@ function getSetting($key, $default = '', $settings = []) {
         })();
     </script>
 </head>
-<body class="dark-mode">
+<body class="role-<?php echo $user['role']; ?>">
     <!-- Mobile Menu Toggle Button -->
     <button class="mobile-menu-btn" id="mobileMenuToggle">
         <i class="fas fa-bars"></i>
     </button>
+
+    <!-- Sidebar Overlay (mobile backdrop) -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
     
     <!-- Sidebar -->
     <aside class="sidebar">
@@ -83,7 +86,9 @@ function getSetting($key, $default = '', $settings = []) {
             <li><a href="equipment.php"><i class="fas fa-tools"></i> <span>Equipment</span></a></li>
             <li><a href="exercises.php"><i class="fas fa-running"></i> <span>Exercises</span></a></li>
             <li><a href="report.php"><i class="fas fa-file-invoice-dollar"></i> <span>Reports</span></a></li>
+            <?php if (isAdmin()): ?>
             <li><a href="settings.php"><i class="fas fa-cog"></i> <span>Settings</span></a></li>
+            <?php endif; ?>
         </ul>
         
         <div class="admin-profile">
@@ -203,10 +208,12 @@ function getSetting($key, $default = '', $settings = []) {
                                 <i class="fas fa-filter"></i>
                                 <span>Filter</span>
                             </button>
+                            <?php if (hasPermission('export_data')): ?>
                             <button class="card-btn primary">
                                 <i class="fas fa-download"></i>
                                 <span>Export</span>
                             </button>
+                            <?php endif; ?>
                         </div>
                     </div>
                     
@@ -411,5 +418,7 @@ function getSetting($key, $default = '', $settings = []) {
     <script src="../../assets/js/theme.js"></script>
     <!-- Dashboard Scripts -->
     <script src="../../assets/js/dashboard.js"></script>
+    <script src="../../assets/js/mobile-menu.js"></script>
+ <script src="../../assets/js/role-restrictions.js"></script>
 </body>
 </html>

@@ -1,7 +1,10 @@
 <?php
 require_once '../config.php';
 require_once '../session.php';
-requireAdmin();
+requireLogin();
+if (!isAdmin()) {
+    sendResponse(false, 'Unauthorized access. Admin privileges required to export data.', null, 403);
+}
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     sendResponse(false, 'Method not allowed', null, 405);

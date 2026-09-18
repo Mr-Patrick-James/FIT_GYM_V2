@@ -17,7 +17,7 @@ $user = getCurrentUser();
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Dashboard Styles -->
-    <link rel="stylesheet" href="../../assets/css/dashboard.css?v=1.6">
+    <link rel="stylesheet" href="../../assets/css/dashboard.css?v=3.0">
     <style>
         .package-card:hover {
             transform: translateY(-5px);
@@ -87,6 +87,8 @@ $user = getCurrentUser();
             border-color: var(--primary);
             color: #000;
         }
+
+        /* Manager Restrictions — handled globally in dashboard.css */
     </style>
     
     <!-- Apply theme immediately before page renders to prevent flash -->
@@ -107,11 +109,13 @@ $user = getCurrentUser();
         })();
     </script>
 </head>
-<body>
+<body class="role-<?php echo $user['role']; ?>">
     <!-- Mobile Menu Toggle Button -->
     <button class="mobile-menu-btn" id="mobileMenuToggle">
         <i class="fas fa-bars"></i>
     </button>
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
     
     <!-- Sidebar -->
     <aside class="sidebar">
@@ -130,7 +134,9 @@ $user = getCurrentUser();
             <li><a href="equipment.php"><i class="fas fa-tools"></i> <span>Equipment</span></a></li>
             <li><a href="exercises.php"><i class="fas fa-running"></i> <span>Exercises</span></a></li>
             <li><a href="report.php"><i class="fas fa-file-invoice-dollar"></i> <span>Reports</span></a></li>
+            <?php if (isAdmin()): ?>
             <li><a href="settings.php"><i class="fas fa-cog"></i> <span>Settings</span></a></li>
+            <?php endif; ?>
         </ul>
         
         <div class="admin-profile">
@@ -205,7 +211,7 @@ $user = getCurrentUser();
         <div class="footer">
             <p>
                 <i class="fas fa-heart" style="color: var(--primary);"></i>
-                © <?php echo date('Y'); ?> Martinez Fitness Gym • FitPay Management System v2.0
+                Â© <?php echo date('Y'); ?> Martinez Fitness Gym â€¢ FitPay Management System v2.0
                 <i class="fas fa-bolt" style="color: var(--primary);"></i>
             </p>
         </div>
@@ -235,7 +241,7 @@ $user = getCurrentUser();
                     
                     <div class="form-group">
                         <label>Price <span style="color: var(--warning);">*</span></label>
-                        <input type="text" id="packagePrice" required placeholder="e.g., ₱1,500" onfocus="prependPesoSymbol()">
+                        <input type="text" id="packagePrice" required placeholder="e.g., â‚±1,500" onfocus="prependPesoSymbol()">
                     </div>
                     
                     <div class="form-group">
@@ -496,7 +502,7 @@ $user = getCurrentUser();
                             <span style="display: block; font-size: 0.75rem; font-weight: 700; color: var(--dark-text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Standard Price</span>
                             <div class="detail-value" id="detailAmount" style="display: flex; align-items: center; gap: 10px; font-size: 1.25rem; font-weight: 800; color: var(--primary);">
                                 <i class="fas fa-tag"></i>
-                                <span>₱0.00</span>
+                                <span>â‚±0.00</span>
                             </div>
                         </div>
                     </div>
@@ -542,5 +548,7 @@ $user = getCurrentUser();
     <script src="../../assets/js/theme.js"></script>
     <!-- Packages Scripts -->
     <script src="../../assets/js/packages.js"></script>
+    <script src="../../assets/js/mobile-menu.js"></script>
+ <script src="../../assets/js/role-restrictions.js"></script>
 </body>
 </html>

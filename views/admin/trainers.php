@@ -13,7 +13,7 @@ $user = getCurrentUser();
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="../../assets/css/dashboard.css?v=1.7">
+    <link rel="stylesheet" href="../../assets/css/dashboard.css?v=3.0">
     <script>
         (function() {
             const savedTheme = localStorage.getItem('theme') || 'dark';
@@ -77,8 +77,10 @@ $user = getCurrentUser();
         #trainersGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px; padding: 24px; }
     </style>
 </head>
-<body>
+<body class="role-<?php echo $user['role']; ?>">
     <button class="mobile-menu-btn" id="mobileMenuToggle"><i class="fas fa-bars"></i></button>
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
     <aside class="sidebar">
         <div class="logo"><h1>FitPay</h1><p>GYM MANAGEMENT</p></div>
@@ -92,7 +94,9 @@ $user = getCurrentUser();
             <li><a href="equipment.php"><i class="fas fa-tools"></i> <span>Equipment</span></a></li>
             <li><a href="exercises.php"><i class="fas fa-running"></i> <span>Exercises</span></a></li>
             <li><a href="report.php"><i class="fas fa-file-invoice-dollar"></i> <span>Reports</span></a></li>
+            <?php if (isAdmin()): ?>
             <li><a href="settings.php"><i class="fas fa-cog"></i> <span>Settings</span></a></li>
+            <?php endif; ?>
         </ul>
         <div class="admin-profile">
             <div class="admin-avatar"><?php
@@ -137,12 +141,19 @@ $user = getCurrentUser();
             <div class="card-header">
                 <h3>All Trainers</h3>
                 <div class="card-actions">
+                    <?php if (hasPermission('export_data')): ?>
                     <button class="card-btn" onclick="exportTrainers()">
                         <i class="fas fa-file-csv"></i> Export CSV
                     </button>
+                    <?php endif; ?>
                     <button class="card-btn primary" onclick="loadTrainers()">
                         <i class="fas fa-sync-alt"></i> Refresh
                     </button>
+                    <?php if (hasPermission('manage_trainers')): ?>
+                    <button class="card-btn" onclick="openAddTrainerModal()" style="background:#e50914;color:#fff;border-color:#e50914;">
+                        <i class="fas fa-plus"></i> Add New
+                    </button>
+                    <?php endif; ?>
                 </div>
             </div>
 
@@ -186,7 +197,7 @@ $user = getCurrentUser();
         </div>
 
         <div class="footer">
-            <p><i class="fas fa-heart" style="color:var(--primary);"></i> © <?php echo date('Y'); ?> Martinez Fitness Gym • FitPay Management System v2.0</p>
+            <p><i class="fas fa-heart" style="color:var(--primary);"></i> Â© <?php echo date('Y'); ?> Martinez Fitness Gym â€¢ FitPay Management System v2.0</p>
         </div>
     </main>
 
@@ -213,7 +224,7 @@ $user = getCurrentUser();
                                 <button type="button" class="card-btn" onclick="document.getElementById('trainerPhotoFile').click()">
                                     <i class="fas fa-camera"></i> Choose Photo
                                 </button>
-                                <p style="font-size:0.72rem;color:var(--dark-text-secondary);margin-top:6px;">JPG, PNG, WEBP — max 5MB</p>
+                                <p style="font-size:0.72rem;color:var(--dark-text-secondary);margin-top:6px;">JPG, PNG, WEBP â€” max 5MB</p>
                             </div>
                         </div>
                         <input type="hidden" id="trainerPhotoUrl">
@@ -244,7 +255,13 @@ $user = getCurrentUser();
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
                         <div class="form-group">
                             <label id="passwordLabel">Login Password</label>
-                            <input type="password" id="trainerPassword" placeholder="Leave blank to keep current">
+                            <div style="position:relative;">
+                                <input type="password" id="trainerPassword" placeholder="Leave blank to keep current" style="padding-right:42px;width:100%;">
+                                <button type="button" onclick="togglePasswordVisibility('trainerPassword', this)"
+                                    style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--dark-text-secondary);padding:4px;display:flex;align-items:center;">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
                         </div>
                         <div class="form-group">
                             <label>Max Clients Capacity</label>
@@ -354,5 +371,7 @@ $user = getCurrentUser();
     <script src="../../assets/js/main.js"></script>
     <script src="../../assets/js/theme.js"></script>
     <script src="../../assets/js/trainers.js?v=2.0"></script>
+    <script src="../../assets/js/mobile-menu.js"></script>
+ <script src="../../assets/js/role-restrictions.js"></script>
 </body>
 </html>

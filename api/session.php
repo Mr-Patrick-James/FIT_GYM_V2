@@ -17,13 +17,23 @@ if (!defined('SESSION_COOKIE_PATH')) {
 }
 
 if (session_status() === PHP_SESSION_NONE) {
+    // Set custom session save path to avoid permission issues on some local servers
+    $sessionPath = __DIR__ . '/sessions';
+    if (is_writable($sessionPath)) {
+        session_save_path($sessionPath);
+    }
+
     // IMPORTANT: Use consistent cookie path for all requests
     // This ensures the session cookie is available across all pages
+    $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')
+        || (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443);
+
     session_set_cookie_params([
         'lifetime' => 0,
         'path' => SESSION_COOKIE_PATH,
         'domain' => '',
-        'secure' => false,
+        'secure' => $isHttps,
         'httponly' => true,
         'samesite' => 'Lax'
     ]);
@@ -151,10 +161,10 @@ function canAccessResource($resourceType, $resourceId = null) {
             return isAdmin() || isManager(); // Both can view reports
             
         case 'settings':
-            return isAdmin() || isManager(); // Both can access settings
+            return isAdmin(); // Only Admin can access settings
             
         case 'system_config':
-            return isAdmin() || isManager(); // Both can configure system
+            return isAdmin(); // Only Admin can configure system
             
         default:
             return isAdmin() || isManager(); // Default to admin/manager access

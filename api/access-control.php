@@ -36,10 +36,32 @@ define('ROLE_PERMISSIONS', [
         'manage_client_sessions'
     ],
     'manager' => [
-        'all_permissions' // Manager has almost all permissions like admin
+        'view_own_profile',
+        'view_own_bookings',
+        'view_own_payments',
+        'manage_own_progress',
+        'view_trainer_info',
+        'manage_assigned_clients',
+        'view_client_progress',
+        'create_training_plans',
+        'manage_client_sessions',
+        'manage_members',
+        'manage_trainers',
+        'manage_bookings',
+        'manage_payments',
+        'view_reports',
+        'manage_inventory',
+        'manage_exercises',
+        'delete_records'
     ],
     'admin' => [
-        'all_permissions' // Admin has access to everything
+        'all_permissions', // Admin has access to everything
+        'manage_admins',
+        'system_config',
+        'delete_records',
+        'view_audit_logs',
+        'manage_packages',
+        'export_data'
     ]
 ]);
 

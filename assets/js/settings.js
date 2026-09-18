@@ -306,6 +306,9 @@ function populateSettings() {
     // Load sub-admins
     loadAdmins();
 
+    // Load trainer managers
+    loadManagers();
+
     // Render gallery
     renderGallery();
     renderHeroGallery();
@@ -663,6 +666,126 @@ async function removeAdmin(id, name) {
     } catch (e) {
         console.error('Error removing admin:', e);
         showNotification('Failed to remove admin', 'error');
+    }
+}
+
+// ============================================================
+// Manage Trainer Managers logic
+// ============================================================
+async function loadManagers() {
+    const list = document.getElementById('managers-list');
+    if (!list) return;
+
+    try {
+        const response = await fetch('../../api/settings/manage-managers.php');
+        const result = await response.json();
+
+        if (result.success) {
+            if (!result.data || result.data.length === 0) {
+                list.innerHTML = `
+                    <div style="grid-column: 1/-1; text-align: center; padding: 40px; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px dashed var(--premium-border);">
+                        <i class="fas fa-user-tie" style="font-size: 2.5rem; color: var(--premium-text-muted); opacity: 0.2; margin-bottom: 16px; display: block;"></i>
+                        <p style="color: var(--premium-text-muted);">No trainer managers yet. Add one to help oversee the gym.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = result.data.map(mgr => {
+                const initials = mgr.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+                const contact  = mgr.contact ? `<div class="admin-item-email"><i class="fas fa-phone" style="margin-right:4px;"></i>${mgr.contact}</div>` : '';
+                return `
+                    <div class="admin-item-card">
+                        <div class="admin-item-avatar" style="background: linear-gradient(135deg, #f39c12, #e67e22);">${initials}</div>
+                        <div class="admin-item-info">
+                            <div class="admin-item-name">${mgr.name}</div>
+                            <div class="admin-item-email">${mgr.email}</div>
+                            ${contact}
+                            <div class="admin-item-badge" style="background: rgba(243,156,18,0.15); color: #f39c12; border: 1px solid rgba(243,156,18,0.3);">Trainer Manager</div>
+                        </div>
+                        <div class="admin-item-actions">
+                            <button class="admin-action-btn" onclick="removeManager(${mgr.id}, '${mgr.name.replace(/'/g, "\\'")}')" title="Remove Manager">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        } else {
+            list.innerHTML = `<div style="grid-column:1/-1;color:var(--premium-text-muted);text-align:center;padding:20px;">${result.message}</div>`;
+        }
+    } catch (e) {
+        console.error('Error loading managers:', e);
+    }
+}
+
+function openAddManagerModal() {
+    document.getElementById('addManagerModal').classList.add('active');
+    document.getElementById('addManagerForm').reset();
+}
+
+function closeAddManagerModal() {
+    document.getElementById('addManagerModal').classList.remove('active');
+}
+
+async function handleAddManager(e) {
+    e.preventDefault();
+    const name     = document.getElementById('newManagerName').value.trim();
+    const email    = document.getElementById('newManagerEmail').value.trim();
+    const password = document.getElementById('newManagerPassword').value;
+    const contact  = document.getElementById('newManagerContact').value.trim();
+    const address  = document.getElementById('newManagerAddress').value.trim();
+
+    const submitBtn = document.getElementById('createManagerSubmitBtn');
+    const originalText = submitBtn.innerHTML;
+
+    try {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
+
+        const response = await fetch('../../api/settings/manage-managers.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, email, password, contact, address })
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            showNotification('Trainer manager account created successfully!', 'success');
+            closeAddManagerModal();
+            loadManagers();
+        } else {
+            showNotification(result.message, 'warning');
+        }
+    } catch (e) {
+        console.error('Error adding manager:', e);
+        showNotification('Failed to create manager account', 'error');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+    }
+}
+
+async function removeManager(id, name) {
+    if (!confirm(`Are you sure you want to remove ${name} as a trainer manager? They will lose manager access immediately.`)) return;
+
+    try {
+        const response = await fetch('../../api/settings/manage-managers.php', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id })
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            showNotification('Manager removed successfully', 'success');
+            loadManagers();
+        } else {
+            showNotification(result.message, 'warning');
+        }
+    } catch (e) {
+        console.error('Error removing manager:', e);
+        showNotification('Failed to remove manager', 'error');
     }
 }
 

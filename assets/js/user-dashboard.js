@@ -1,8 +1,23 @@
 // User Dashboard JavaScript
 
+function getApiUrl(path) {
+    // If the current URL contains /views/, build an absolute URL from the root.
+    // Otherwise fall back to a relative path that works from any sub-directory.
+    const parts = window.location.pathname.split('/views/');
+    if (parts.length >= 2) {
+        const rootPath = parts[0] || '';
+        return `${window.location.origin}${rootPath}/api/${path}`;
+    }
+    // Fallback: count how deep we are and step back to root
+    const depth = (window.location.pathname.match(/\//g) || []).length - 1;
+    const prefix = depth > 0 ? '../'.repeat(depth) : '';
+    return `${prefix}api/${path}`;
+}
+
 // Sample data - In a real app, this would come from a backend API
 let userBookings = [];
 let selectedFile = null;
+let selectedStudentIdFile = null;
 let activeExercisesByPackage = {}; // Cache for package exercises
 let userData = null;
 
@@ -166,8 +181,9 @@ async function loadPackagesData() {
                 duration: pkg.duration,
                 // Ensure price is treated as a number
                 price: '₱' + parseFloat(String(pkg.price).replace(/[^\d.-]/g, '')).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }),
+                rawPrice: parseFloat(pkg.price) || 0,
                 tag: pkg.tag || 'Standard',
-                description: pkg.description || 'Full gym access with all facilities'
+                description: pkg.description || 'Full gym access with all facilities',
             }));
         } else {
             console.error('Error loading packages:', data.message);
@@ -183,11 +199,11 @@ async function loadPackagesData() {
 
 function getDefaultPackages() {
     return [
-        { name: "Walk-in Pass", duration: "1 Day", price: "₱200.00", tag: "Basic", description: "Perfect for trying out our facilities" },
-        { name: "Weekly Pass", duration: "7 Days", price: "₱500.00", tag: "Popular", description: "Great for short-term fitness goals" },
-        { name: "Monthly Membership", duration: "30 Days", price: "₱1,500.00", tag: "Best Value", description: "Most popular choice for regular gym-goers" },
-        { name: "3-Month Package", duration: "90 Days", price: "₱4,000.00", tag: "Premium", description: "Save more with our 3-month package" },
-        { name: "Annual Membership", duration: "1 Year", price: "₱15,000.00", tag: "VIP", description: "Best value for long-term commitment" }
+        { name: "Walk-in Pass", duration: "1 Day", rawPrice: 200, price: "₱200.00", tag: "Basic", description: "Perfect for trying out our facilities" },
+        { name: "Weekly Pass", duration: "7 Days", rawPrice: 500, price: "₱500.00", tag: "Popular", description: "Great for short-term fitness goals" },
+        { name: "Monthly Membership", duration: "30 Days", rawPrice: 1500, price: "₱1,500.00", tag: "Best Value", description: "Most popular choice for regular gym-goers" },
+        { name: "3-Month Package", duration: "90 Days", rawPrice: 4000, price: "₱4,000.00", tag: "Premium", description: "Save more with our 3-month package" },
+        { name: "Annual Membership", duration: "1 Year", rawPrice: 15000, price: "₱15,000.00", tag: "VIP", description: "Best value for long-term commitment" }
     ];
 }
 
@@ -283,31 +299,45 @@ function checkStepValid() {
 
 async function checkSurveyStatus() {
     try {
-        const response = await fetch('../../api/users/get-questionnaire.php');
+        const response = await fetch(getApiUrl('users/get-questionnaire.php'), {
+            credentials: 'include'
+        });
+
+        // Session expired or not logged in — redirect to login
+        if (response.status === 401) {
+            window.location.href = '../../index.php';
+            return;
+        }
+
         const data = await response.json();
-        
+
         if (data.success) {
-            // Already completed
+            // Already completed — nothing to show
             console.log('Survey already completed');
             return;
         }
+
+        // data.success === false means no questionnaire yet — show the modal
     } catch (e) {
+        // Network error checking status — skip the survey silently rather than
+        // showing a form the user can't save (they'll see it next session).
         console.error('Error checking survey status:', e);
+        return;
     }
-    
-    // Reset survey state
+
+    // Reset survey state and show modal
     currentSurveyStep = 1;
-    
+
     setTimeout(() => {
         const modal = document.getElementById('surveyModal');
         if (modal) {
             document.querySelectorAll('.survey-step').forEach(step => step.classList.remove('active'));
             const firstStep = document.querySelector('.survey-step[data-step="1"]');
             if (firstStep) firstStep.classList.add('active');
-            
+
             const progressBar = document.getElementById('surveyProgress');
             if (progressBar) progressBar.style.width = '20%';
-            
+
             const nextBtn = document.getElementById('surveyNextBtn');
             const backBtn = document.getElementById('surveyBackBtn');
             if (nextBtn) {
@@ -315,9 +345,9 @@ async function checkSurveyStatus() {
                 nextBtn.innerHTML = '<span>Next Step</span> <i class="fas fa-arrow-right"></i>';
             }
             if (backBtn) backBtn.style.display = 'none';
-            
+
             document.querySelectorAll('.option-card').forEach(card => card.classList.remove('selected'));
-            
+
             modal.classList.add('active');
         }
     }, 1500);
@@ -473,15 +503,22 @@ async function initUserCalendar() {
     const events = await getUserCalendarEvents();
     
     userCalendar = new FullCalendar.Calendar(el, {
-        initialView: 'dayGridMonth',
-        headerToolbar: {
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay'
-        },
+        initialView: window.innerWidth <= 768 ? 'listWeek' : 'dayGridMonth',
+        headerToolbar: window.innerWidth <= 768
+            ? { left: 'prev,next', center: 'title', right: 'dayGridMonth,listWeek' }
+            : { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' },
         height: 'auto',
-        dayMaxEvents: 2,
+        dayMaxEvents: window.innerWidth <= 480 ? 1 : 2,
         events: events,
+        windowResize: function(view) {
+            if (window.innerWidth <= 768) {
+                userCalendar.setOption('headerToolbar', { left: 'prev,next', center: 'title', right: 'dayGridMonth,listWeek' });
+                userCalendar.setOption('dayMaxEvents', 1);
+            } else {
+                userCalendar.setOption('headerToolbar', { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' });
+                userCalendar.setOption('dayMaxEvents', 2);
+            }
+        },
         eventClick: (info) => {
             const type = info.event.extendedProps.type;
             if (type === 'session') {
@@ -537,6 +574,12 @@ function getInitials(name) {
 
 // Show section
 function showSection(section, event) {
+    // Prevent default anchor behavior
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+
     // Hide all sections
     document.querySelectorAll('.content-section').forEach(sec => {
         sec.classList.remove('active');
@@ -595,6 +638,9 @@ function showSection(section, event) {
         }
     }
 }
+
+// Expose showSection globally for onclick handlers
+window.showSection = showSection;
 
 // Populate packages grid
 function populatePackages() {
@@ -1072,51 +1118,27 @@ function populateUpgradePlans(currentPackageId) {
     const container = document.getElementById('upgradePlansContainer');
     if (!container) return;
     
-    // Define package hierarchy (case-insensitive)
-    const packageHierarchy = ['basic', 'popular', 'best value', 'premium', 'vip'];
-    
-    // Get current package tier
     const currentPackage = packagesData.find(p => p.id === currentPackageId);
     if (!currentPackage) {
-        console.error('Current package not found:', currentPackageId);
-        container.innerHTML = '<div style="text-align: center; padding: 40px; color: #ef4444;">Error: Current package not found</div>';
+        container.innerHTML = '<div style="text-align:center;padding:40px;color:#ef4444;">Error: Current package not found</div>';
         return;
     }
-    
-    const currentTag = (currentPackage.tag || 'Basic').toLowerCase().trim();
-    const currentTier = packageHierarchy.indexOf(currentTag);
-    
-    // Filter packages that are higher tier
-    const upgradablePackages = packagesData.filter(pkg => {
-        // Skip the current package
-        if (pkg.id === currentPackageId) return false;
-        
-        const pkgTag = (pkg.tag || 'Basic').toLowerCase().trim();
-        const pkgTier = packageHierarchy.indexOf(pkgTag);
-        
-        // If tier is found and higher, include it
-        if (pkgTier !== -1 && pkgTier > currentTier) {
-            return true;
-        }
-        
-        // If current tier is -1 (unknown), include all packages
-        if (currentTier === -1) {
-            return true;
-        }
-        
-        return false;
-    });
-    
-    console.log('Upgradable packages:', upgradablePackages);
-    
-    // Sort by tier
-    upgradablePackages.sort((a, b) => {
-        const aTier = packageHierarchy.indexOf((a.tag || 'Basic').toLowerCase().trim());
-        const bTier = packageHierarchy.indexOf((b.tag || 'Basic').toLowerCase().trim());
-        return aTier - bTier;
-    });
-    
-    // Render upgrade options
+
+    const currentRawPrice = currentPackage.rawPrice || parseFloat(String(currentPackage.price).replace(/[^0-9.]/g, '')) || 0;
+
+    // Show ALL packages that cost more than the current one
+    const upgradablePackages = packagesData
+        .filter(pkg => {
+            if (pkg.id === currentPackageId) return false;
+            const pkgPrice = pkg.rawPrice || parseFloat(String(pkg.price).replace(/[^0-9.]/g, '')) || 0;
+            return pkgPrice > currentRawPrice;
+        })
+        .sort((a, b) => {
+            const aPrice = a.rawPrice || parseFloat(String(a.price).replace(/[^0-9.]/g, '')) || 0;
+            const bPrice = b.rawPrice || parseFloat(String(b.price).replace(/[^0-9.]/g, '')) || 0;
+            return aPrice - bPrice;
+        });
+
     if (upgradablePackages.length > 0) {
         container.innerHTML = upgradablePackages.map(pkg => `
             <div class="upgrade-plan-card" onclick="selectUpgradePlan(${pkg.id})">
@@ -1137,29 +1159,142 @@ function populateUpgradePlans(currentPackageId) {
             </div>
         `).join('');
     } else {
-        container.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--dark-text-secondary);"><i class="fas fa-crown" style="font-size: 3rem; opacity: 0.2; margin-bottom: 16px;"></i><p>You\'re already on the highest tier!</p><p style="font-size: 0.85rem; margin-top: 8px;">Current package: ' + currentPackage.name + ' (' + currentPackage.tag + ')</p></div>';
+        container.innerHTML = `<div style="text-align:center;padding:40px;color:var(--dark-text-secondary);">
+            <i class="fas fa-crown" style="font-size:3rem;opacity:0.2;margin-bottom:16px;display:block;"></i>
+            <p>You're already on the highest tier!</p>
+            <p style="font-size:0.85rem;margin-top:8px;">Current package: ${currentPackage.name}</p>
+        </div>`;
     }
 }
 
 // Select upgrade plan
+// Track selected upgrade package and file
+let selectedUpgradePackageId = null;
+let selectedUpgradeFile = null;
+
 function selectUpgradePlan(packageId) {
     const pkg = packagesData.find(p => p.id === packageId);
     if (!pkg) return;
-    
-    // Close upgrade modal
+
+    selectedUpgradePackageId = packageId;
+
+    // Close plan-selection modal
     closeUpgradeModal();
-    
-    // Pre-fill booking form
-    showSection('bookings');
-    updateBookingPackageSelect().then(() => {
-        const packageSelect = document.getElementById('bookingPackage');
-        if (packageSelect) {
-            packageSelect.value = pkg.name;
+
+    // Show the upgrade booking modal with package summary
+    const summary = document.getElementById('upgradePackageSummary');
+    if (summary) {
+        const rawPrice = pkg.rawPrice || parseFloat(String(pkg.price).replace(/[^0-9.]/g, '')) || 0;
+        summary.innerHTML = `
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                    <div style="font-size:0.72rem;font-weight:700;color:var(--dark-text-secondary);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Upgrading to</div>
+                    <div style="font-size:1.1rem;font-weight:900;color:var(--primary);">${pkg.name}</div>
+                    <div style="font-size:0.8rem;color:var(--dark-text-secondary);margin-top:2px;">${pkg.duration} &bull; ${pkg.tag || 'Standard'}</div>
+                </div>
+                <div style="font-size:1.5rem;font-weight:900;color:var(--primary);">₱${rawPrice.toLocaleString()}</div>
+            </div>`;
+    }
+
+    // Reset form
+    removeUpgradeFile();
+    const form = document.getElementById('upgradeBookingForm');
+    if (form) form.reset();
+
+    document.getElementById('upgradeBookingModal')?.classList.add('active');
+}
+
+function closeUpgradeBookingModal() {
+    document.getElementById('upgradeBookingModal')?.classList.remove('active');
+    selectedUpgradePackageId = null;
+    removeUpgradeFile();
+}
+
+function handleUpgradeFileSelect(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+        showNotification('File too large. Max 5MB.', 'warning');
+        event.target.value = '';
+        return;
+    }
+    selectedUpgradeFile = file;
+    const preview  = document.getElementById('upgradeFilePreview');
+    const fileName = document.getElementById('upgradeFileName');
+    const area     = document.getElementById('upgradeFileUploadArea');
+    if (fileName) fileName.textContent = file.name;
+    if (preview) preview.style.display = 'block';
+    if (area) area.style.display = 'none';
+}
+
+function removeUpgradeFile() {
+    selectedUpgradeFile = null;
+    const preview = document.getElementById('upgradeFilePreview');
+    const input   = document.getElementById('upgradeReceiptFile');
+    const area    = document.getElementById('upgradeFileUploadArea');
+    if (preview) preview.style.display = 'none';
+    if (input)   input.value = '';
+    if (area)    area.style.display = 'block';
+}
+
+async function submitUpgradeBooking(event) {
+    event.preventDefault();
+
+    if (!selectedUpgradeFile) {
+        showNotification('Please upload your payment receipt.', 'warning');
+        return;
+    }
+    if (!selectedUpgradePackageId) {
+        showNotification('No upgrade package selected.', 'warning');
+        return;
+    }
+
+    const contact = document.getElementById('upgradeContact').value.trim();
+    const notes   = document.getElementById('upgradeNotes').value.trim();
+
+    if (!validateContactNumber(contact)) {
+        showNotification('Contact number must be exactly 11 digits.', 'error');
+        return;
+    }
+
+    const submitBtn = document.querySelector('#upgradeBookingModal .btn-primary');
+    const origText  = submitBtn ? submitBtn.innerHTML : '';
+    if (submitBtn) { submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...'; submitBtn.disabled = true; }
+
+    try {
+        // Upload receipt
+        const receiptUrl = await uploadReceipt(selectedUpgradeFile);
+
+        // Call upgrade API
+        const response = await fetch('../../api/bookings/upgrade.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                package_id: selectedUpgradePackageId,
+                contact:    contact,
+                notes:      notes,
+                receipt:    receiptUrl
+            })
+        });
+
+        const result = await response.json();
+
+        if (submitBtn) { submitBtn.innerHTML = origText; submitBtn.disabled = false; }
+
+        if (result.success) {
+            closeUpgradeBookingModal();
+            await loadUserBookings();
+            populateBookings();
+            populatePayments();
+            updateStats();
+            showNotification('Upgrade submitted successfully!', 'success');
+        } else {
+            showNotification('Upgrade failed: ' + result.message, 'error');
         }
-        openBookingModal();
-    });
-    
-    showNotification(`Upgrading to ${pkg.name}`, 'success');
+    } catch (err) {
+        if (submitBtn) { submitBtn.innerHTML = origText; submitBtn.disabled = false; }
+        showNotification('Error: ' + err.message, 'error');
+    }
 }
 
 // Show notification helper
@@ -1458,14 +1593,22 @@ async function updateBookingPackageSelect() {
     packagesData.forEach(pkg => {
         const option = document.createElement('option');
         option.value = pkg.name;
+        option.dataset.price = pkg.rawPrice;
+        option.dataset.duration = pkg.duration || '';
         option.textContent = `${pkg.name} - ${pkg.price} (${pkg.duration})`;
         select.appendChild(option);
     });
+    select.onchange = () => {
+        handlePackageSelectChange();
+        updateBookingPriceSummary();
+    };
     
     // Restore previous value if it still exists
     if (currentValue) {
         select.value = currentValue;
     }
+    handlePackageSelectChange();
+    updateBookingPriceSummary();
 }
 
 // Select package for booking
@@ -1621,7 +1764,7 @@ function createBookingRow(booking, includeExpiry = false) {
         row.innerHTML = `
             <td data-label="Package">
                 <div style="font-weight: 700;">${booking.package_name || booking.package}</div>
-                ${(booking.status === 'verified' || booking.status === 'pending' || booking.status === 'expired') ? `
+                ${(booking.status === 'verified' || booking.status === 'expired') ? `
                     <div style="font-size: 0.75rem; margin-top: 4px;">
                         <span class="status-badge" style="padding: 2px 8px; font-size: 0.7rem; ${isActive ? 'background:rgba(34,197,94,0.1);color:#22c55e;border:1px solid rgba(34,197,94,0.2);' : 'background:rgba(239,68,68,0.12);color:#ef4444;border:1px solid rgba(239,68,68,0.3);'}">
                             ${isActive ? 'Active' : 'Expired'}
@@ -2048,16 +2191,26 @@ function closeBookingModal() {
     document.body.style.overflow = '';
     document.getElementById('bookingForm').reset();
     removeFile();
+    // Reset student section
+    const isStudentCb = document.getElementById('isStudent');
+    if (isStudentCb) isStudentCb.checked = false;
+    const studentSection = document.getElementById('studentSection');
+    if (studentSection) studentSection.style.display = 'none';
+    const studentCheckboxRow = document.getElementById('studentCheckboxRow');
+    if (studentCheckboxRow) studentCheckboxRow.style.display = 'block';
+    const studentAutoNotice = document.getElementById('studentAutoNotice');
+    if (studentAutoNotice) studentAutoNotice.style.display = 'none';
+    removeStudentId();
 }
 
 // Handle file select
 function handleFileSelect(event) {
     const file = event.target.files[0];
     if (file) {
-        // Validate file size (max 5MB)
-        const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+        // Validate file size (max 10MB — matches server limit)
+        const maxSize = 10 * 1024 * 1024; // 10MB in bytes
         if (file.size > maxSize) {
-            showNotification('Image size is too huge! Maximum allowed size is 5MB.', 'warning');
+            showNotification('Image size is too large. Maximum allowed size is 10MB. Please compress the screenshot.', 'warning');
             event.target.value = ''; // Clear the input
             return;
         }
@@ -2092,6 +2245,153 @@ function removeFile() {
     }
 }
 
+// Returns true if the package name indicates a student package
+function isStudentPackage(packageName) {
+    if (!packageName) return false;
+    return packageName.toLowerCase().includes('student');
+}
+
+// Called every time the package dropdown changes.
+// Auto-shows / hides the student ID section and checkbox row.
+function handlePackageSelectChange() {
+    const packageName = document.getElementById('bookingPackage')?.value || '';
+    const studentCheckboxRow = document.getElementById('studentCheckboxRow');
+    const studentSection     = document.getElementById('studentSection');
+    const isStudentCb        = document.getElementById('isStudent');
+    const studentAutoNotice  = document.getElementById('studentAutoNotice');
+
+    if (isStudentPackage(packageName)) {
+        // Auto-activate: hide manual checkbox, always show ID upload
+        if (studentCheckboxRow) studentCheckboxRow.style.display = 'none';
+        if (isStudentCb) isStudentCb.checked = true;
+        if (studentSection) studentSection.style.display = 'block';
+        if (studentAutoNotice) studentAutoNotice.style.display = 'flex';
+    } else if (packageName) {
+        // A non-student package is selected: show the optional checkbox, hide auto stuff
+        if (studentCheckboxRow) studentCheckboxRow.style.display = 'block';
+        if (studentAutoNotice) studentAutoNotice.style.display = 'none';
+        if (isStudentCb) isStudentCb.checked = false;
+        if (studentSection) studentSection.style.display = 'none';
+        removeStudentId();
+    } else {
+        // Nothing selected yet: hide everything
+        if (studentCheckboxRow) studentCheckboxRow.style.display = 'none';
+        if (studentAutoNotice) studentAutoNotice.style.display = 'none';
+        if (isStudentCb) isStudentCb.checked = false;
+        if (studentSection) studentSection.style.display = 'none';
+        removeStudentId();
+    }
+}
+
+// Toggle student section visibility (manual checkbox)
+function toggleStudentSection(checkbox) {
+    const section = document.getElementById('studentSection');
+    if (!section) return;
+    if (checkbox.checked) {
+        section.style.display = 'block';
+    } else {
+        section.style.display = 'none';
+        removeStudentId();
+    }
+    updateBookingPriceSummary();
+}
+
+function formatCurrency(amount) {
+    return '₱' + Number(amount).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+}
+
+function updateBookingPriceSummary() {
+    const packageSelect = document.getElementById('bookingPackage');
+    const priceSummary = document.getElementById('bookingPriceSummary');
+    const priceLabel = document.getElementById('bookingPriceLabel');
+    const studentPriceLabel = document.getElementById('bookingStudentPrice');
+    const studentNotice = document.getElementById('bookingStudentNotice');
+    const isStudent = document.getElementById('isStudent')?.checked || false;
+
+    if (!packageSelect || !priceSummary || !priceLabel || !studentPriceLabel || !studentNotice) return;
+
+    const selectedPackageName = packageSelect.value;
+    const selectedPackage = packagesData.find(pkg => pkg.name === selectedPackageName);
+    if (!selectedPackage) {
+        priceSummary.style.display = 'none';
+        return;
+    }
+
+    const rawPrice = selectedPackage.rawPrice || 0;
+
+    priceSummary.style.display = 'block';
+    priceLabel.textContent = `Package price: ${formatCurrency(rawPrice)}`;
+
+    // No discount — just show the full price regardless of student status
+    studentPriceLabel.style.display = 'none';
+    studentNotice.style.display = 'none';
+}
+
+// Handle student ID file select
+function handleStudentIdSelect(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const maxSize = 10 * 1024 * 1024; // 10MB — matches server limit
+    if (file.size > maxSize) {
+        showNotification('Student ID image is too large. Maximum allowed size is 10MB. Please compress the photo.', 'warning');
+        event.target.value = '';
+        return;
+    }
+
+    selectedStudentIdFile = file;
+    const preview  = document.getElementById('studentIdPreview');
+    const fileName = document.getElementById('studentIdFileName');
+    const uploadArea = document.getElementById('studentIdUploadArea');
+
+    if (fileName) fileName.textContent = file.name;
+    if (preview) preview.style.display = 'block';
+    if (uploadArea) {
+        uploadArea.style.borderColor = 'var(--primary)';
+        uploadArea.style.background = 'var(--glass)';
+        uploadArea.style.display = 'none';
+    }
+}
+
+// Remove student ID file
+function removeStudentId() {
+    selectedStudentIdFile = null;
+    const preview    = document.getElementById('studentIdPreview');
+    const input      = document.getElementById('studentIdFile');
+    const uploadArea = document.getElementById('studentIdUploadArea');
+    if (preview) preview.style.display = 'none';
+    if (input) input.value = '';
+    if (uploadArea) {
+        uploadArea.style.borderColor = '';
+        uploadArea.style.background = '';
+        uploadArea.style.display = 'block';
+    }
+}
+
+// Upload student ID photo
+async function uploadStudentId(file) {
+    const formData = new FormData();
+    formData.append('student_id', file);
+
+    const response = await fetch(getApiUrl('upload/student-id.php'), {
+        method: 'POST',
+        credentials: 'include',
+        body: formData
+    });
+
+    if (response.status === 401) {
+        window.location.href = '../../index.php';
+        throw new Error('Session expired. Please log in again.');
+    }
+
+    const result = await response.json();
+    if (result.success) {
+        return result.data.url;
+    } else {
+        throw new Error(result.message);
+    }
+}
+
 // Submit booking
 async function submitBooking(event) {
     event.preventDefault();
@@ -2102,9 +2402,9 @@ async function submitBooking(event) {
     }
 
     // Double check file size before uploading
-    const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+    const maxSize = 10 * 1024 * 1024; // 10MB in bytes
     if (selectedFile.size > maxSize) {
-        showNotification('Image size is too huge! Maximum allowed size is 5MB.', 'warning');
+        showNotification('Image size is too large. Maximum allowed size is 10MB. Please compress the screenshot.', 'warning');
         return;
     }
     
@@ -2112,6 +2412,14 @@ async function submitBooking(event) {
     const date = document.getElementById('bookingDate').value;
     const contact = document.getElementById('bookingContact').value;
     const notes = document.getElementById('bookingNotes').value;
+    // is_student is true if checkbox checked OR if selected package is a student package
+    const isStudent = document.getElementById('isStudent')?.checked || isStudentPackage(packageName);
+
+    // Validate student ID upload when student option is active
+    if (isStudent && !selectedStudentIdFile) {
+        showNotification('Please upload your Student ID photo as proof.', 'warning');
+        return;
+    }
     
     // Validate contact number
     if (!validateContactNumber(contact)) {
@@ -2136,6 +2444,12 @@ async function submitBooking(event) {
         
         // Upload receipt file
         const receiptUrl = await uploadReceipt(selectedFile);
+
+        // Upload student ID if applicable
+        let studentIdUrl = null;
+        if (isStudent && selectedStudentIdFile) {
+            studentIdUrl = await uploadStudentId(selectedStudentIdFile);
+        }
         
         // Create booking data
         const bookingData = {
@@ -2143,7 +2457,9 @@ async function submitBooking(event) {
             date: date,
             contact: contact,
             notes: notes,
-            receipt: receiptUrl
+            receipt: receiptUrl,
+            is_student: isStudent,
+            student_id_url: studentIdUrl
         };
         
         // Submit booking to database
@@ -2187,14 +2503,22 @@ async function submitBooking(event) {
 }
 
 // Upload receipt file
+// Upload receipt file
 async function uploadReceipt(file) {
     const formData = new FormData();
     formData.append('receipt', file);
     
-    const response = await fetch('../../api/upload/receipt.php', {
+    const response = await fetch(getApiUrl('upload/receipt.php'), {
         method: 'POST',
+        credentials: 'include',
         body: formData
     });
+
+    // Session expired
+    if (response.status === 401) {
+        window.location.href = '../../index.php';
+        throw new Error('Session expired. Please log in again.');
+    }
     
     const result = await response.json();
     
@@ -3602,6 +3926,7 @@ async function updateProfile() {
         
         const response = await fetch('../../api/users/update-profile.php', {
             method: 'POST',
+            credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name, contact, address })
         });
@@ -3657,6 +3982,7 @@ async function changePassword(event) {
         
         const response = await fetch('../../api/users/change-password.php', {
             method: 'POST',
+            credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ currentPassword, newPassword })
         });
@@ -3810,16 +4136,48 @@ async function finishSurvey() {
         // Prepare focus areas as string
         const focusAreasString = Array.isArray(surveyData.focus_areas) ? surveyData.focus_areas.join(', ') : surveyData.focus_areas;
         
-        const response = await fetch('../../api/users/save-questionnaire.php', {
+        const response = await fetch(getApiUrl('users/save-questionnaire.php'), {
             method: 'POST',
+            credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 ...surveyData,
                 focus_areas: focusAreasString
             })
         });
+
+        // Session expired — redirect to login instead of showing a confusing error
+        if (response.status === 401) {
+            window.location.href = '../../index.php';
+            return;
+        }
         
-        const result = await response.json();
+        if (!response.ok) {
+            const text = await response.text();
+            console.error('Save questionnaire failed', response.status, response.statusText, text);
+            let message = 'Server error while saving profile';
+            try {
+                const json = JSON.parse(text);
+                if (json.message) {
+                    message = json.message;
+                }
+            } catch (_) {
+                // Keep generic message
+            }
+            showNotification('Error saving profile: ' + message + ' (' + response.status + ')', 'warning');
+            return;
+        }
+        
+        let result;
+        try {
+            result = await response.json();
+        } catch (parseError) {
+            const text = await response.text();
+            console.error('Invalid JSON response from save-questionnaire.php:', text);
+            showNotification('Error saving profile: server returned invalid response', 'warning');
+            return;
+        }
+        
         if (result.success) {
             document.getElementById('surveyModal').classList.remove('active');
             
@@ -3830,7 +4188,7 @@ async function finishSurvey() {
         }
     } catch (error) {
         console.error('Error finishing survey:', error);
-        showNotification('Connection error while saving profile', 'warning');
+        showNotification('Network error — please check your connection and try again.', 'warning');
     }
 }
 

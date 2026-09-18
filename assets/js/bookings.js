@@ -20,33 +20,55 @@ let packages = [];
 // Load trainers for assignment
 async function loadTrainers(allowedIds = null) {
     try {
-        const response = await fetch('../../api/trainers/get-all.php');
-        const data = await response.json();
+        // Use dedicated lightweight endpoint that only requires login (not strict admin)
+        const response = await fetch('../../api/trainers/get-for-assignment.php');
+
+        if (!response.ok) {
+            console.error('Trainers API error:', response.status, response.statusText);
+            return;
+        }
+
+        const text = await response.text();
+        let data;
+        try {
+            data = JSON.parse(text);
+        } catch(e) {
+            console.error('Trainers API bad JSON:', text.substring(0, 300));
+            return;
+        }
+
         if (data.success) {
-            trainersList = data.data.filter(t => t.is_active);
+            trainersList = data.data; // already filtered to is_active=1 server-side
             const select = document.getElementById('modalTrainerSelect');
-            if (select) {
-                select.innerHTML = '<option value="">Select Trainer...</option>';
-                
-                // Filter trainers if allowedIds is provided
-                const filteredTrainers = allowedIds && allowedIds.length > 0
-                    ? trainersList.filter(t => allowedIds.includes(t.id))
-                    : trainersList;
+            if (!select) return;
 
-                filteredTrainers.forEach(trainer => {
-                    const option = document.createElement('option');
-                    option.value = trainer.id;
-                    option.textContent = trainer.name;
-                    select.appendChild(option);
+            select.innerHTML = '<option value="">Select Trainer...</option>';
+
+            // If allowedIds non-empty → filter to package-assigned trainers only
+            // If allowedIds empty/null → show all active trainers
+            const hasFilter = Array.isArray(allowedIds) && allowedIds.length > 0;
+            const list = hasFilter
+                ? trainersList.filter(t => allowedIds.includes(t.id))
+                : trainersList;
+
+            if (list.length === 0) {
+                const opt = document.createElement('option');
+                opt.disabled = true;
+                opt.textContent = hasFilter
+                    ? 'No assigned trainers for this package'
+                    : 'No active trainers available';
+                select.appendChild(opt);
+            } else {
+                list.forEach(trainer => {
+                    const opt = document.createElement('option');
+                    opt.value = trainer.id;
+                    opt.textContent = trainer.name +
+                        (trainer.specialization ? ' — ' + trainer.specialization : '');
+                    select.appendChild(opt);
                 });
-
-                if (allowedIds && allowedIds.length > 0 && filteredTrainers.length === 0) {
-                    const option = document.createElement('option');
-                    option.disabled = true;
-                    option.textContent = "No assigned trainers for this package";
-                    select.appendChild(option);
-                }
             }
+        } else {
+            console.error('Trainers API error:', data.message);
         }
     } catch (error) {
         console.error('Error loading trainers:', error);
@@ -447,11 +469,11 @@ function viewBooking(id) {
         const assignedValue = document.getElementById('modalAssignedTrainer');
         const trainerSelect = document.getElementById('modalTrainerSelect');
         
-        if (booking.status === 'pending' && booking.is_trainer_assisted) {
+        if (booking.status === 'pending') {
             assignmentGroup.style.display = 'block';
             assignedGroup.style.display = 'none';
             trainerSelect.value = '';
-            // Load filtered trainers for this package
+            // Load trainers — filter to package-assigned ones if available, else show all
             loadTrainers(booking.package_trainer_ids);
         } else if (booking.trainer_name) {
             assignmentGroup.style.display = 'none';
@@ -507,6 +529,19 @@ function viewBooking(id) {
             receiptImg.onclick = () => window.open(fixedUrl, '_blank');
         } else {
             receiptSection.style.display = 'none';
+        }
+
+        // Show student ID if available
+        const studentIdSection = document.getElementById('studentIdSection');
+        const studentIdImg     = document.getElementById('modalStudentId');
+        const studentIdUrl     = booking.student_id_full_url || booking.student_id_url;
+        if (studentIdUrl && studentIdSection && studentIdImg) {
+            const fixedStudentUrl = fixReceiptUrl(studentIdUrl);
+            studentIdImg.src   = fixedStudentUrl;
+            studentIdImg.onclick = () => window.open(fixedStudentUrl, '_blank');
+            studentIdSection.style.display = 'block';
+        } else if (studentIdSection) {
+            studentIdSection.style.display = 'none';
         }
         
         // Update action buttons based on status

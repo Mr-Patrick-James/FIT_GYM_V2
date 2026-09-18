@@ -1,10 +1,10 @@
 <?php
 header('Content-Type: application/json');
 require_once '../config.php';
+require_once '../session.php';
 
 // Check if user is logged in as admin
-session_start();
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
+if (!isAdmin()) {
     http_response_code(403);
     echo json_encode(['success' => false, 'message' => 'Unauthorized access. Admin privileges required.']);
     exit();

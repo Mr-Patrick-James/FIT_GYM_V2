@@ -754,6 +754,48 @@ header {
     box-shadow: 0 10px 25px rgba(255, 255, 255, 0.3);
 }
 
+@media (max-width: 768px) {
+    .hero {
+        min-height: 70vh;
+        padding: 40px 20px;
+    }
+
+    .main-cta {
+        width: auto;
+        padding: 14px 28px;
+        font-size: 0.95rem;
+        gap: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero {
+        min-height: 60vh;
+        padding: 30px 16px;
+    }
+
+    .main-cta {
+        width: 100%;
+        max-width: 320px;
+        padding: 14px 20px;
+        justify-content: center;
+    }
+
+    .main-cta .icon-circle {
+        width: 28px;
+        height: 28px;
+        font-size: 0.75rem;
+    }
+
+    .big-text {
+        font-size: clamp(2rem, 12vw, 4rem);
+    }
+
+    .script-text {
+        font-size: clamp(1.5rem, 10vw, 3.5rem);
+    }
+}
+
 .floating-socials {
     position: fixed;
     right: 40px;

@@ -17,7 +17,7 @@ $user = getCurrentUser();
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Dashboard Styles -->
-    <link rel="stylesheet" href="../../assets/css/dashboard.css?v=1.6">
+    <link rel="stylesheet" href="../../assets/css/dashboard.css?v=3.0">
     
     <!-- Apply theme immediately before page renders to prevent flash -->
     <script>
@@ -37,11 +37,13 @@ $user = getCurrentUser();
         })();
     </script>
 </head>
-<body>
+<body class="role-<?php echo $user['role']; ?>">
     <!-- Mobile Menu Toggle Button -->
     <button class="mobile-menu-btn" id="mobileMenuToggle">
         <i class="fas fa-bars"></i>
     </button>
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
     
     <!-- Sidebar -->
     <aside class="sidebar">
@@ -59,6 +61,10 @@ $user = getCurrentUser();
                 <li><a href="exercises.php"><i class="fas fa-running"></i> Exercises</a></li>
                 <li><a href="bookings.php"><i class="fas fa-calendar-check"></i> Bookings</a></li>
                 <li><a href="walkin-bookings.php" class="active"><i class="fas fa-walking"></i> Walk-ins</a></li>
+                <li><a href="report.php"><i class="fas fa-file-invoice-dollar"></i> Reports</a></li>
+                <?php if (isAdmin()): ?>
+                <li><a href="settings.php"><i class="fas fa-cog"></i> Settings</a></li>
+                <?php endif; ?>
                 <li><a href="../user/dashboard.php"><i class="fas fa-home"></i> User View</a></li>
             </ul>
         </nav>
@@ -286,5 +292,7 @@ $user = getCurrentUser();
     </div>
     
     <script src="../../assets/js/walkin-bookings.js"></script>
+    <script src="../../assets/js/mobile-menu.js"></script>
+ <script src="../../assets/js/role-restrictions.js"></script>
 </body>
 </html>

@@ -20,7 +20,7 @@ $user = getCurrentUser();
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <!-- Dashboard Styles -->
-    <link rel="stylesheet" href="../../assets/css/dashboard.css?v=1.6">
+    <link rel="stylesheet" href="../../assets/css/dashboard.css?v=3.0">
     
     <!-- Apply theme immediately before page renders to prevent flash -->
     <script>
@@ -40,11 +40,13 @@ $user = getCurrentUser();
         })();
     </script>
 </head>
-<body>
+<body class="role-<?php echo $user['role']; ?>">
     <!-- Mobile Menu Toggle Button -->
     <button class="mobile-menu-btn" id="mobileMenuToggle">
         <i class="fas fa-bars"></i>
     </button>
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
     
     <!-- Sidebar -->
     <aside class="sidebar">
@@ -63,7 +65,9 @@ $user = getCurrentUser();
             <li><a href="equipment.php"><i class="fas fa-tools"></i> <span>Equipment</span></a></li>
             <li><a href="exercises.php"><i class="fas fa-running"></i> <span>Exercises</span></a></li>
             <li><a href="report.php"><i class="fas fa-file-invoice-dollar"></i> <span>Reports</span></a></li>
+            <?php if (isAdmin()): ?>
             <li><a href="settings.php"><i class="fas fa-cog"></i> <span>Settings</span></a></li>
+            <?php endif; ?>
         </ul>
         
         <div class="admin-profile">
@@ -136,10 +140,12 @@ $user = getCurrentUser();
             <div class="card-header">
                 <h3>Filter & Sort</h3>
                 <div class="card-actions">
+                    <?php if (hasPermission('export_data')): ?>
                     <button class="card-btn" onclick="exportPayments()">
                         <i class="fas fa-download"></i>
                         <span>Export CSV</span>
                     </button>
+                    <?php endif; ?>
                     <button class="card-btn primary" onclick="refreshPayments()">
                         <i class="fas fa-sync-alt"></i>
                         <span>Refresh</span>
@@ -221,7 +227,7 @@ $user = getCurrentUser();
         <div class="footer">
             <p>
                 <i class="fas fa-heart" style="color: var(--primary);"></i>
-                © <?php echo date('Y'); ?> Martinez Fitness Gym • FitPay Management System v2.0
+                Â© <?php echo date('Y'); ?> Martinez Fitness Gym â€¢ FitPay Management System v2.0
                 <i class="fas fa-bolt" style="color: var(--primary);"></i>
             </p>
         </div>
@@ -298,5 +304,7 @@ $user = getCurrentUser();
     <script src="../../assets/js/theme.js"></script>
     <!-- Payments Scripts -->
     <script src="../../assets/js/payments.js"></script>
+    <script src="../../assets/js/mobile-menu.js"></script>
+ <script src="../../assets/js/role-restrictions.js"></script>
 </body>
 </html>
