@@ -298,6 +298,11 @@ function checkStepValid() {
 }
 
 async function checkSurveyStatus() {
+    const userRole = localStorage.getItem('userRole') || 'user';
+    if (userRole !== 'user') {
+        return;
+    }
+
     try {
         const response = await fetch(getApiUrl('users/get-questionnaire.php'), {
             credentials: 'include'
@@ -4132,6 +4137,15 @@ function skipSurvey() {
 }
 
 async function finishSurvey() {
+    const userRole = localStorage.getItem('userRole') || 'user';
+    if (userRole !== 'user') {
+        const surveyModal = document.getElementById('surveyModal');
+        if (surveyModal) {
+            surveyModal.classList.remove('active');
+        }
+        return;
+    }
+
     try {
         // Prepare focus areas as string
         const focusAreasString = Array.isArray(surveyData.focus_areas) ? surveyData.focus_areas.join(', ') : surveyData.focus_areas;
