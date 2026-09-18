@@ -207,11 +207,11 @@ async function initDashboard() {
         // Update Coach Hub Indicator
         updateCoachHubIndicator();
         
-        // Set today as minimum date for booking
-        const today = new Date().toISOString().split('T')[0];
+        // Allow backdated booking dates when needed; do not restrict the user to today or later.
         const bookingDateInput = document.getElementById('bookingDate');
         if (bookingDateInput) {
-            bookingDateInput.setAttribute('min', today);
+            bookingDateInput.removeAttribute('min');
+            bookingDateInput.removeAttribute('max');
         }
         
         // Update booking package select on initial load

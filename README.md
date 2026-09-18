@@ -204,6 +204,168 @@ Configure via Admin Dashboard:
 | `email_configs` | SMTP configuration |
 | `gym_settings` | System settings (key-value) |
 
+## Appendix F – Program Listing (Essential Components)
+
+This appendix lists the most important program modules and core functions used by the system. It focuses only on the critical application logic, not every page or utility script.
+
+### 1. Application Entry and Startup
+- [index.php](index.php)
+  - getSetting($key, $default = '', $settings = [])
+  - Loads active package data from the database
+  - Loads gym settings from `gym_settings`
+  - Checks if a user is already logged in and redirects to the appropriate dashboard
+  - Auto-creates the WHO Health & Fitness Plan if missing
+
+### 2. Core Configuration and Database Access
+- [api/config.php](api/config.php)
+  - getEnvVar($key, $default = '')
+  - getDBConnection()
+  - createNotification($userId, $title, $message, $type = 'info')
+  - sendResponse($success, $message, $data = null, $statusCode = 200)
+  - getRequestData()
+  - Handles database connection setup, JSON responses, and automatic expiry checks
+
+### 3. Session, Authentication, and Access Control
+- [api/session.php](api/session.php)
+  - isLoggedIn()
+  - isAdmin()
+  - isManager()
+  - isTrainer()
+  - validateSession()
+  - getCurrentUser()
+  - canAccessResource($resourceType, $resourceId = null)
+  - requireLogin()
+  - requireAdmin()
+  - setUserSession($user)
+  - clearUserSession()
+
+- [api/access-control.php](api/access-control.php)
+  - hasPermission($permission, $userRole = null)
+  - hasRoleLevel($requiredLevel, $userRole = null)
+  - requirePermission($permission)
+  - requireRoleLevel($role)
+  - getAccessibleRoles($userRole = null)
+  - canManageUser($targetUserId, $currentUserId = null, $currentUserRole = null)
+  - sendAccessDenied($message = 'Access denied')
+
+### 4. Authentication Modules
+- [api/auth/login.php](api/auth/login.php)
+- [api/auth/signup.php](api/auth/signup.php)
+- [api/auth/verify-otp.php](api/auth/verify-otp.php)
+- [api/auth/resend-otp.php](api/auth/resend-otp.php)
+- [api/auth/logout.php](api/auth/logout.php)
+
+Core functions and responsibilities:
+- User login verification
+- User registration and OTP email flow
+- Account verification with OTP code
+- Resending OTP codes
+- Logout and session clearing
+
+### 5. Booking Management
+- [api/bookings/create.php](api/bookings/create.php)
+- [api/bookings/get-all.php](api/bookings/get-all.php)
+- [api/bookings/update.php](api/bookings/update.php)
+- [api/bookings/check-status.php](api/bookings/check-status.php)
+- [api/bookings/change-plan.php](api/bookings/change-plan.php)
+- [api/bookings/upgrade.php](api/bookings/upgrade.php)
+
+Core logic:
+- Create and update bookings
+- Fetch member bookings
+- Check payment or package status
+- Upgrade membership plans
+- Validate booking data before saving
+
+### 6. Package and Exercise Management
+- [api/packages/create.php](api/packages/create.php)
+- [api/packages/get-all.php](api/packages/get-all.php)
+- [api/packages/update.php](api/packages/update.php)
+- [api/packages/delete.php](api/packages/delete.php)
+- [api/packages/get-exercises.php](api/packages/get-exercises.php)
+- [api/packages/add-exercise.php](api/packages/add-exercise.php)
+- [api/packages/remove-exercise.php](api/packages/remove-exercise.php)
+
+- [api/exercises/create.php](api/exercises/create.php)
+- [api/exercises/get-all.php](api/exercises/get-all.php)
+- [api/exercises/update.php](api/exercises/update.php)
+- [api/exercises/delete.php](api/exercises/delete.php)
+
+Core logic:
+- Create and manage membership packages
+- Link exercises to packages
+- Delete or update package records
+- Maintain the exercise library used by training plans
+
+### 7. Trainer and Client Functional Modules
+- [api/trainers/get-clients.php](api/trainers/get-clients.php)
+- [api/trainers/get-member-plan.php](api/trainers/get-member-plan.php)
+- [api/trainers/save-member-plan.php](api/trainers/save-member-plan.php)
+- [api/trainers/get-sessions.php](api/trainers/get-sessions.php)
+- [api/trainers/save-session.php](api/trainers/save-session.php)
+- [api/trainers/log-progress.php](api/trainers/log-progress.php)
+- [api/trainers/get-progress-history.php](api/trainers/get-progress-history.php)
+
+Core logic:
+- Retrieve assigned clients for trainers
+- Load member training plans
+- Save workout plans
+- Add training sessions
+- Track progress and history
+
+### 8. Payments, Reports, and Notifications
+- [api/payments/get-all.php](api/payments/get-all.php)
+- [api/reports/get-sales.php](api/reports/get-sales.php)
+- [api/notifications/get-all.php](api/notifications/get-all.php)
+- [api/notifications/mark-as-read.php](api/notifications/mark-as-read.php)
+
+Core logic:
+- Retrieve payment records
+- Generate sales or reporting data
+- Manage notification records
+- Mark notifications as read by users
+
+### 9. Email and Receipt Generation
+- [api/email.php](api/email.php)
+  - getEmailConfig()
+  - sendOTPEmailSimple()
+  - sendOTPEmail()
+  - sendBookingNotificationEmail()
+  - sendBookingVerificationEmail()
+  - sendBookingRejectionEmail()
+  - sendBookingExpiryEmail()
+  - sendTrainerNewBookingEmail()
+  - processExpiringBookings()
+
+- [api/receipt/generate-walkin.php](api/receipt/generate-walkin.php)
+  - generateWalkinReceiptHTML($booking, $payment)
+
+Core logic:
+- Send OTP and booking emails
+- Notify users and trainers regarding bookings
+- Generate receipts and expiry notifications
+
+### 10. Upload and File Handling
+- [api/upload/receipt.php](api/upload/receipt.php)
+- [api/upload/progress-photo.php](api/upload/progress-photo.php)
+- [api/upload/trainer-photo.php](api/upload/trainer-photo.php)
+
+Core logic:
+- Validate uploads
+- Save receipts and progress images
+- Store profile or trainer photo files
+
+### 11. Essential System Flow
+1. User registers or logs in.
+2. Session and role permissions are verified.
+3. Member creates a booking and uploads a payment receipt.
+4. Admin verifies the payment and activates the booking.
+5. Trainer manages assigned members and training plans.
+6. Progress, sessions, and notifications are recorded.
+7. Reports and email notifications are generated automatically.
+
+This appendix captures the most important modules and functions in the system. It is intended to provide a clear overview of the core program structure without listing every utility script in the project.
+
 ## 🔄 Workflow
 
 ### Member Registration

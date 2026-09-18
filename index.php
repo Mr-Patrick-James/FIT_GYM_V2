@@ -8,7 +8,7 @@ $settings = [];
 $activeMemberCount = 0;
 try {
     $conn = getDBConnection();
-    
+
     // Fetch packages
     $result = $conn->query("SELECT * FROM packages WHERE is_active = 1 ORDER BY price ASC");
     if ($result) {
@@ -16,7 +16,7 @@ try {
             $packages[] = $row;
         }
     }
-    
+
     // Fetch gym settings
     $result = $conn->query("SELECT setting_key, setting_value FROM gym_settings");
     if ($result) {
@@ -44,20 +44,20 @@ try {
         $who_price = 450.00;
         $who_tag = "Health Standard";
         $who_desc = "Scientifically designed plan based on WHO (World Health Organization) physical activity guidelines for adults. Focuses on 150-300 minutes of moderate aerobic activity and 2+ days of strength training per week.";
-        
+
         $stmt = $conn->prepare("INSERT INTO packages (name, duration, price, tag, description, is_active) VALUES (?, ?, ?, ?, ?, 1)");
         $stmt->bind_param("ssdss", $who_name, $who_duration, $who_price, $who_tag, $who_desc);
         $stmt->execute();
         $whoId = $conn->insert_id;
-        
+
         if ($whoId) {
             // Get exercise IDs
             $ex_ids = [];
             $res = $conn->query("SELECT id, name FROM exercises");
-            while($row = $res->fetch_assoc()) {
+            while ($row = $res->fetch_assoc()) {
                 $ex_ids[$row['name']] = $row['id'];
             }
-            
+
             // WHO-compliant assignments
             $assignments = [
                 ['Treadmill Jogging', 1, '30 mins (Aerobic)'],
@@ -68,7 +68,7 @@ try {
                 ['Hanging Leg Raise', 3, '15-20 (Core)'],
                 ['Kettlebell Swing', 3, '20 (Full Body)']
             ];
-            
+
             $stmt_ex = $conn->prepare("INSERT INTO package_exercises (package_id, exercise_id, sets, reps, notes) VALUES (?, ?, ?, ?, 'WHO Standard')");
             foreach ($assignments as $a) {
                 if (isset($ex_ids[$a[0]])) {
@@ -88,7 +88,8 @@ try {
 }
 
 // Helper to get setting with fallback
-function getSetting($key, $default = '', $settings = []) {
+function getSetting($key, $default = '', $settings = [])
+{
     return $settings[$key] ?? $default;
 }
 
@@ -102,26 +103,31 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Martinez Fitness | Local Gym</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Montserrat:wght@300;400;700;900&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Montserrat:wght@300;400;700;900&display=swap"
+        rel="stylesheet">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="assets/css/style.css?v=1.4">
 </head>
+
 <body>
 
     <header>
         <div class="logo-circle">
-            <?php 
+            <?php
             $gymName = getSetting('gym_name', 'MARTINEZ GYM', $settings);
             $nameParts = explode(' ', $gymName);
             echo htmlspecialchars($nameParts[0]);
-            if (isset($nameParts[1])) echo '<br>' . htmlspecialchars($nameParts[1]);
+            if (isset($nameParts[1]))
+                echo '<br>' . htmlspecialchars($nameParts[1]);
             ?>
         </div>
         <div class="nav-group">
@@ -139,25 +145,26 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
 
     <section class="hero" id="home">
         <div class="hero-slider">
-            <?php 
+            <?php
             // Load images from assets/uploads/gym/ directory
             $gymImageDir = 'assets/uploads/gym/';
             $heroImages = [];
-            
+
             if (is_dir($gymImageDir)) {
                 $files = scandir($gymImageDir);
                 $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-                
+
                 foreach ($files as $file) {
-                    if ($file === '.' || $file === '..') continue;
-                    
+                    if ($file === '.' || $file === '..')
+                        continue;
+
                     $extension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
                     if (in_array($extension, $imageExtensions)) {
                         $heroImages[] = $gymImageDir . $file;
                     }
                 }
             }
-            
+
             // Display slide images
             if (!empty($heroImages)) {
                 foreach ($heroImages as $index => $image) {
@@ -169,16 +176,16 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
         </div>
         <div class="hero-overlay"></div>
         <div class="hero-content">
-            <?php 
+            <?php
             $gymName = getSetting('gym_name', 'MARTINEZ Fitness GYM', $settings);
             $nameParts = explode(' ', $gymName);
             ?>
             <h1 class="big-text"><?php echo htmlspecialchars($nameParts[0] ?? 'MARTINEZ'); ?></h1>
             <div class="script-text"><?php echo htmlspecialchars($nameParts[1] ?? 'Fitness'); ?></div>
             <h1 class="big-text"><?php echo htmlspecialchars($nameParts[2] ?? ($nameParts[1] ?? 'GYM')); ?></h1>
-            
+
             <button class="main-cta" onclick="openModal('signup')">
-                Join Now 
+                Join Now
                 <div class="icon-circle"><i class="fa-solid fa-arrow-right"></i></div>
             </button>
         </div>
@@ -210,7 +217,7 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
                                 <span class="duration">/ <?php echo htmlspecialchars($package['duration']); ?></span>
                             </div>
                             <ul class="package-features">
-                                <?php 
+                                <?php
                                 $description = $package['description'] ?? '';
                                 if (!empty($description)) {
                                     // Split by newline and filter out empty lines
@@ -246,30 +253,20 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
         <div class="container">
             <div class="about-content">
                 <div class="about-text">
-                    <h2 class="section-title">About <?php echo htmlspecialchars(getSetting('gym_name', 'Martinez Fitness', $settings)); ?></h2>
-                    <p><?php echo htmlspecialchars(getSetting('about_text', 'Martinez Fitness Gym is more than just a place to work out. We are a community dedicated to helping you reach your peak physical condition through elite training, state-of-the-art equipment, and a supportive environment.', $settings)); ?></p>
-                    <p><?php echo htmlspecialchars(getSetting('mission_text', 'Founded with the mission to provide high-quality fitness access to everyone, we offer flexible membership plans and expert guidance to ensure you get the most out of every session.', $settings)); ?></p>
-                    
-                    <div class="stats-mini">
-                        <div class="stat-item">
-                            <h4><?php echo htmlspecialchars(getSetting('years_experience', '10+', $settings)); ?></h4>
-                            <p>Years Experience</p>
-                        </div>
-                        <div class="stat-item">
-                            <h4><?php echo number_format($activeMemberCount); ?>+</h4>
-                            <p>Active Members</p>
-                        </div>
-                        <div class="stat-item">
-                            <h4>24/7</h4>
-                            <p>Support</p>
-                        </div>
-                    </div>
+                    <h2 class="section-title">About
+                        <?php echo htmlspecialchars(getSetting('gym_name', 'Martinez Fitness', $settings)); ?></h2>
+                    <p><?php echo htmlspecialchars(getSetting('about_text', 'Martinez Fitness Gym is more than just a place to work out. We are a community dedicated to helping you reach your peak physical condition through elite training, state-of-the-art equipment, and a supportive environment.', $settings)); ?>
+                    </p>
+                    <p><?php echo htmlspecialchars(getSetting('mission_text', 'Founded with the mission to provide high-quality fitness access to everyone, we offer flexible membership plans and expert guidance to ensure you get the most out of every session.', $settings)); ?>
+                    </p>
+
+
                 </div>
                 <div class="about-image">
-                    <?php 
+                    <?php
                     $galleryJson = getSetting('about_images', '[]', $settings);
                     $gallery = json_decode($galleryJson, true);
-                    
+
                     if (empty($gallery)) {
                         $gallery = [
                             'assets/uploads/gym/IMG_20230402_094207.webp',
@@ -291,12 +288,15 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
                             </div>
                         <?php endforeach; ?>
 
-                        <button class="slider-btn prev" onclick="changeSlide(-1)"><i class="fas fa-chevron-left"></i></button>
-                        <button class="slider-btn next" onclick="changeSlide(1)"><i class="fas fa-chevron-right"></i></button>
+                        <button class="slider-btn prev" onclick="changeSlide(-1)"><i
+                                class="fas fa-chevron-left"></i></button>
+                        <button class="slider-btn next" onclick="changeSlide(1)"><i
+                                class="fas fa-chevron-right"></i></button>
 
                         <div class="slider-nav">
                             <?php foreach ($gallery as $index => $imagePath): ?>
-                                <div class="slider-dot <?php echo $index === 0 ? 'active' : ''; ?>" onclick="goToSlide(<?php echo $index; ?>)"></div>
+                                <div class="slider-dot <?php echo $index === 0 ? 'active' : ''; ?>"
+                                    onclick="goToSlide(<?php echo $index; ?>)"></div>
                             <?php endforeach; ?>
                         </div>
 
@@ -316,7 +316,8 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
                 <div class="why-text">
                     <span class="section-eyebrow">Why Choose Us</span>
                     <h2 class="section-title">Built to Push<br>You Further</h2>
-                    <p class="section-subtitle">More than a gym — a community where every rep counts and every goal matters.</p>
+                    <p class="section-subtitle">More than a gym — a community where every rep counts and every goal
+                        matters.</p>
                     <button class="main-cta" style="margin-top:36px;" onclick="openModal('signup')">
                         Start Today <div class="icon-circle"><i class="fa-solid fa-arrow-right"></i></div>
                     </button>
@@ -326,14 +327,16 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
                         <div class="why-icon"><i class="fas fa-dumbbell"></i></div>
                         <div>
                             <h4>Complete Equipment</h4>
-                            <p>Free weights, machines, cardio — everything you need under one roof in Naujan, Oriental Mindoro.</p>
+                            <p>Free weights, machines, cardio — everything you need under one roof in Naujan, Oriental
+                                Mindoro.</p>
                         </div>
                     </div>
                     <div class="why-item">
                         <div class="why-icon"><i class="fas fa-user-tie"></i></div>
                         <div>
                             <h4>Expert Trainers</h4>
-                            <p>Our certified coaches build personalized programs tailored to your body and your goals.</p>
+                            <p>Our certified coaches build personalized programs tailored to your body and your goals.
+                            </p>
                         </div>
                     </div>
                     <div class="why-item">
@@ -378,50 +381,66 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
             </div>
             <div class="testimonials-grid" id="testimonialsGrid">
                 <div class="testimonial-card">
-                    <div class="stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
-                    <p>"What I like about this gym is mura sya unlike other gyms na 50, 60 minsan nga 100, sa gym ng Martinez kasi 35 lang which is so okay para sakin and sa mga beginners also. Sa mga equipment, goods denn, malinis and quality din. Hoping na mag dadagdag kayu ng equipments para mas mapaganda yung gym."</p>
+                    <div class="stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i
+                            class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+                    <p>"What I like about this gym is mura sya unlike other gyms na 50, 60 minsan nga 100, sa gym ng
+                        Martinez kasi 35 lang which is so okay para sakin and sa mga beginners also. Sa mga equipment,
+                        goods denn, malinis and quality din. Hoping na mag dadagdag kayu ng equipments para mas
+                        mapaganda yung gym."</p>
                     <div class="testimonial-author">
-                        <div class="author-avatar"><img src="assets/testimonies/img1.jpg" alt="Jeux Burn Martinez" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"></div>
+                        <div class="author-avatar"><img src="assets/testimonies/img1.jpg" alt="Jeux Burn Martinez"
+                                style="width:100%;height:100%;object-fit:cover;border-radius:50%;"></div>
                         <div>
                             <strong>alden andino</strong>
                             <span>Gym Member</span>
-                            <span><a href="mailto:andinoalden10@gmail.com" style="color:#aaa;font-size:0.78rem;text-decoration:none;">andinoalden10@gmail.com</a></span>
+                            <span><a href="mailto:andinoalden10@gmail.com"
+                                    style="color:#aaa;font-size:0.78rem;text-decoration:none;">andinoalden10@gmail.com</a></span>
                         </div>
                     </div>
                 </div>
                 <div class="testimonial-card">
-                    <div class="stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
-                    <p>"What I observed in this gym is it is beginner friendly, affordable, and clean and organized, and im terms of equipment, they have the basic needs of a client, whether a beginner or a intermediate lifter, But I would like to suggest some equipments to add like, leg extensions and leg curl machine and heavier dumbells. Overall I rate this gym a solid 10/10."</p>
+                    <div class="stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i
+                            class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+                    <p>"What I observed in this gym is it is beginner friendly, affordable, and clean and organized, and
+                        im terms of equipment, they have the basic needs of a client, whether a beginner or a
+                        intermediate lifter, But I would like to suggest some equipments to add like, leg extensions and
+                        leg curl machine and heavier dumbells. Overall I rate this gym a solid 10/10."</p>
                     <div class="testimonial-author">
-                        <div class="author-avatar"><img src="assets/testimonies/img2.jpg" alt="Jayven Aguilar Mendoza" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"></div>
+                        <div class="author-avatar"><img src="assets/testimonies/img2.jpg" alt="Jayven Aguilar Mendoza"
+                                style="width:100%;height:100%;object-fit:cover;border-radius:50%;"></div>
                         <div>
                             <strong>Jayven Aguilar Mendoza</strong>
                             <span>Gym Member</span>
-                            <span><a href="mailto:mendozajayvenm@gmail.com" style="color:#aaa;font-size:0.78rem;text-decoration:none;">mendozajayvenm@gmail.com</a></span>
+                            <span><a href="mailto:mendozajayvenm@gmail.com"
+                                    style="color:#aaa;font-size:0.78rem;text-decoration:none;">mendozajayvenm@gmail.com</a></span>
                         </div>
                     </div>
                 </div>
                 <div class="testimonial-card">
-                    <div class="stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+                    <div class="stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i
+                            class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
                     <p>"Sulit maganda 10/10 keep up the good work"</p>
                     <div class="testimonial-author">
                         <div class="testimonial-author">
-                        <div class="author-avatar"><img src="assets/testimonies/img3.png" alt="Jayven Aguilar Mendoza" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"></div>
-                        <div>
-                            <strong>jervv adalia</strong>
-                            <span>Gym Member</span>
-                             <span><a href="mailto:jerrvmark15@gmail.com" style="color:#aaa;font-size:0.78rem;text-decoration:none;">jerrvmark15@gmail.com</a></span>
+                            <div class="author-avatar"><img src="assets/testimonies/img3.png"
+                                    alt="Jayven Aguilar Mendoza"
+                                    style="width:100%;height:100%;object-fit:cover;border-radius:50%;"></div>
+                            <div>
+                                <strong>jervv adalia</strong>
+                                <span>Gym Member</span>
+                                <span><a href="mailto:jerrvmark15@gmail.com"
+                                        style="color:#aaa;font-size:0.78rem;text-decoration:none;">jerrvmark15@gmail.com</a></span>
+                            </div>
                         </div>
                     </div>
+                    <!-- Hidden extra cards — shown when "See All Reviews" is clicked -->
                 </div>
-                <!-- Hidden extra cards — shown when "See All Reviews" is clicked -->
+                <div class="reviews-btn-wrap">
+                    <button class="directions-btn" id="seeAllReviewsBtn" onclick="toggleAllReviews()">
+                        See All Reviews
+                    </button>
+                </div>
             </div>
-            <div class="reviews-btn-wrap">
-                <button class="directions-btn" id="seeAllReviewsBtn" onclick="toggleAllReviews()">
-                                                      See All Reviews
-                </button>
-            </div>
-        </div>
     </section>
 
     <!-- Location & Contact Section -->
@@ -439,7 +458,7 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
                                 <p>Apitong Proper B, Naujan,<br>5204 Oriental Mindoro</p>
                             </div>
                         </div>
-                    
+
                         <div class="contact-item">
                             <div class="contact-icon"><i class="fas fa-clock"></i></div>
                             <div>
@@ -476,13 +495,15 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
             <div class="footer-grid">
                 <div class="footer-brand">
                     <div class="logo-circle">
-                        <?php 
+                        <?php
                         $nameParts = explode(' ', getSetting('gym_name', 'MARTINEZ GYM', $settings));
                         echo htmlspecialchars($nameParts[0]);
-                        if (isset($nameParts[1])) echo '<br>' . htmlspecialchars($nameParts[1]);
+                        if (isset($nameParts[1]))
+                            echo '<br>' . htmlspecialchars($nameParts[1]);
                         ?>
                     </div>
-                    <p><?php echo htmlspecialchars(getSetting('footer_tagline', 'Pushing your limits since 2014. Join the elite fitness community today.', $settings)); ?></p>
+                    <p><?php echo htmlspecialchars(getSetting('footer_tagline', 'Pushing your limits since 2014. Join the elite fitness community today.', $settings)); ?>
+                    </p>
                 </div>
                 <div class="footer-links">
                     <h4>Quick Links</h4>
@@ -496,22 +517,33 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
                 <div class="footer-contact">
                     <h4>Contact Us</h4>
                     <ul>
-                        <li><i class="fas fa-location-dot"></i> <?php echo htmlspecialchars(getSetting('gym_address', '123 Fitness Ave, Metro Manila', $settings)); ?></li>
-                        <li><i class="fas fa-phone"></i> <?php echo htmlspecialchars(getSetting('gym_contact', '+63 917 123 4567', $settings)); ?></li>
-                        <li><i class="fas fa-envelope"></i> <?php echo htmlspecialchars(getSetting('gym_email', 'info@martinezfitness.com', $settings)); ?></li>
+                        <li><i class="fas fa-location-dot"></i>
+                            <?php echo htmlspecialchars(getSetting('gym_address', '123 Fitness Ave, Metro Manila', $settings)); ?>
+                        </li>
+                        <li><i class="fas fa-phone"></i>
+                            <?php echo htmlspecialchars(getSetting('gym_contact', '+63 917 123 4567', $settings)); ?>
+                        </li>
+                        <li><i class="fas fa-envelope"></i>
+                            <?php echo htmlspecialchars(getSetting('gym_email', 'info@martinezfitness.com', $settings)); ?>
+                        </li>
                     </ul>
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; <?php echo date('Y'); ?> <?php echo htmlspecialchars(getSetting('gym_name', 'Martinez Fitness Gym', $settings)); ?>. All rights reserved.</p>
+                <p>&copy; <?php echo date('Y'); ?>
+                    <?php echo htmlspecialchars(getSetting('gym_name', 'Martinez Fitness Gym', $settings)); ?>. All
+                    rights reserved.</p>
             </div>
         </div>
     </footer>
 
     <div class="floating-socials">
-        <a href="mailto:<?php echo htmlspecialchars(getSetting('gym_email', 'info@martinezfitness.com', $settings)); ?>" class="social-icon" title="Email Us"><i class="fa-solid fa-envelope"></i></a>
-        <a href="https://maps.google.com/?q=<?php echo urlencode(getSetting('gym_address', '123 Fitness Ave, Metro Manila', $settings)); ?>" target="_blank" class="social-icon" title="Our Location"><i class="fa-solid fa-location-dot"></i></a>
-        <a href="tel:<?php echo htmlspecialchars(getSetting('gym_contact', '0917-123-4567', $settings)); ?>" class="social-icon" title="Call Us"><i class="fa-solid fa-phone"></i></a>
+        <a href="mailto:<?php echo htmlspecialchars(getSetting('gym_email', 'info@martinezfitness.com', $settings)); ?>"
+            class="social-icon" title="Email Us"><i class="fa-solid fa-envelope"></i></a>
+        <a href="https://maps.google.com/?q=<?php echo urlencode(getSetting('gym_address', '123 Fitness Ave, Metro Manila', $settings)); ?>"
+            target="_blank" class="social-icon" title="Our Location"><i class="fa-solid fa-location-dot"></i></a>
+        <a href="tel:<?php echo htmlspecialchars(getSetting('gym_contact', '0917-123-4567', $settings)); ?>"
+            class="social-icon" title="Call Us"><i class="fa-solid fa-phone"></i></a>
     </div>
 
     <div class="modal-overlay" id="authModal">
@@ -529,14 +561,17 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
                         <label>Email Address</label>
                     </div>
                     <div class="input-group">
-                                           <input type="password" id="loginPassword" name="password" required autocomplete="current-password">
+                        <input type="password" id="loginPassword" name="password" required
+                            autocomplete="current-password">
                         <label>Password</label>
                         <span class="toggle-password" data-target="loginPassword">
                             <i class="fa-regular fa-eye"></i>
                         </span>
                     </div>
                     <div style="text-align: right; margin-bottom: 15px;">
-                        <a href="#" id="forgotPasswordLink" style="color: #888; font-size: 0.85rem; text-decoration: none;" onclick="showForgotPassword(); return false;">
+                        <a href="#" id="forgotPasswordLink"
+                            style="color: #888; font-size: 0.85rem; text-decoration: none;"
+                            onclick="showForgotPassword(); return false;">
                             Forgot Password?
                         </a>
                     </div>
@@ -574,7 +609,8 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
                         </span>
                     </div>
                     <div class="input-group">
-                        <input type="password" id="signupConfirmPassword" name="confirm_password" required autocomplete="new-password">
+                        <input type="password" id="signupConfirmPassword" name="confirm_password" required
+                            autocomplete="new-password">
                         <label>Confirm Password</label>
                         <span class="toggle-password" data-target="signupConfirmPassword">
                             <i class="fa-regular fa-eye"></i>
@@ -609,7 +645,8 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
                     <button type="submit" class="auth-btn">Verify Code</button>
                 </form>
                 <div class="resend-otp">
-                    Didn't receive code? <span id="resendOtp" onclick="resendOTP()">Resend</span> <span id="resendCooldown"></span>
+                    Didn't receive code? <span id="resendOtp" onclick="resendOTP()">Resend</span> <span
+                        id="resendCooldown"></span>
                     <p id="otpTimer" style="display: none; font-size: 0.8rem; color: #888; margin-top: 5px;"></p>
                 </div>
             </div>
@@ -638,4 +675,5 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
     </script>
 
 </body>
+
 </html>
