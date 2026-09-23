@@ -24,6 +24,9 @@ try {
     $receipt_url = $input['receipt'] ?? null;
     $payment_method = $input['payment_method'] ?? 'cash'; // Default payment method for walk-ins
     
+    // Log the received payment method for debugging
+    error_log("Walk-in booking payment_method received: " . $payment_method);
+    
     // Validate required fields
     if (!$customer_name || !$customer_email || !$customer_contact || !$package_name) {
         sendResponse(false, 'Missing required fields: customer_name, customer_email, customer_contact, package', null, 400);
@@ -124,6 +127,9 @@ try {
     $paymentStatus = 'completed'; // Walk-ins typically pay immediately
     $paymentNotes = "Walk-in customer payment via " . $payment_method;
     
+    // Log before binding for debugging
+    error_log("Payment record being created - Method: $payment_method, Status: $paymentStatus, Amount: " . $package['price']);
+    
     $paymentStmt->bind_param("iidsssss", 
         $nullUserId,
         $booking_id,
@@ -140,6 +146,8 @@ try {
     if (!$paymentResult) {
         error_log("Warning: Failed to create payment record for walk-in booking $booking_id: " . $conn->error);
         // Don't fail the whole operation if payment record fails
+    } else {
+        error_log("Payment record created successfully for booking $booking_id with payment_method: $payment_method");
     }
     
     // Send email notification to admin for walk-in booking

@@ -415,6 +415,10 @@ class WalkinBookingsManager {
         const formData = new FormData(e.target);
         const data = Object.fromEntries(formData.entries());
         
+        // Debug log to verify payment_method is being captured
+        console.log('Walk-in booking data being sent:', data);
+        console.log('Payment method:', data.payment_method);
+        
         try {
             this.showLoading();
             
