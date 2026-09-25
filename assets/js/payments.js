@@ -188,17 +188,27 @@ function populatePaymentsTable() {
     filteredPayments.forEach(payment => {
         const row = document.createElement('tr');
         const displayDate = payment.date_formatted || formatDateForDisplay(payment.created_at);
-        const amount = payment.amount_formatted || ('₱' + parseFloat(payment.amount).toFixed(2));
+        
+        // Safely handle amount display
+        let amount = 'N/A';
+        if (payment.amount_formatted) {
+            amount = payment.amount_formatted;
+        } else if (payment.amount && !isNaN(parseFloat(payment.amount))) {
+            amount = '₱' + parseFloat(payment.amount).toFixed(2);
+        }
+        
+        // Safely handle contact display
+        const contact = payment.contact || payment.user_contact || 'N/A';
         
         row.innerHTML = `
             <td data-label="Client">
                 <div style="font-weight: 700; color: var(--primary);">${payment.user_name || payment.name || 'Unknown User'}</div>
-                <div style="font-size: 0.9rem; color: var(--dark-text-secondary);">${payment.email || 'No email'}</div>
+                <div style="font-size: 0.9rem; color: var(--dark-text-secondary);">${payment.email || payment.user_email || 'No email'}</div>
             </td>
             <td data-label="Package">${payment.package_name || payment.package || 'N/A'}</td>
             <td data-label="Date">${displayDate}</td>
             <td data-label="Amount" style="font-weight: 800; color: var(--success);">${amount}</td>
-            <td data-label="Contact">${payment.contact || 'N/A'}</td>
+            <td data-label="Contact">${contact}</td>
             <td data-label="Status"><span class="status-badge status-verified">Verified</span></td>
             <td data-label="Actions">
                 <div class="table-actions">

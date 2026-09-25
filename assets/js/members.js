@@ -33,6 +33,11 @@ async function loadAllMembers() {
                     const verifiedBookings = userBookings.filter(b => b.status === 'verified');
                     const totalSpent = verifiedBookings.reduce((sum, b) => sum + (parseFloat(b.amount) || 0), 0);
                     
+                    // Debug log for members with ₱0 total
+                    if (totalSpent === 0 && verifiedBookings.length > 0) {
+                        console.warn(`Member ${user.name} has ${verifiedBookings.length} verified bookings but ₱0 total:`, verifiedBookings);
+                    }
+                    
                     return {
                         id: 'user_' + user.id,
                         real_id: user.id,
