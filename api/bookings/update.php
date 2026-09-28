@@ -65,8 +65,10 @@ try {
         $booking = $bookingResult->fetch_assoc();
         
         if ($booking) {
-            // Subscription starts NOW (at verification)
-            $startDate = date('Y-m-d H:i:s');
+            // Calculate expiry based on ORIGINAL booking_date (not verification date!)
+            // Use the user's chosen booking_date as the membership start date
+            $originalBookingDate = $booking['booking_date'] ?? date('Y-m-d');
+            $startDate = date('Y-m-d H:i:s', strtotime($originalBookingDate)); // Convert to full timestamp
             $duration = $booking['duration'];
             
             // Basic duration parsing
@@ -83,10 +85,11 @@ try {
             
             if ($days > 0) {
                 $expiresAt = date('Y-m-d H:i:s', strtotime($startDate . " + $days days"));
-                // Update both booking_date (as start date) and expires_at in bookings table
-                $expirySql = "UPDATE bookings SET booking_date = ?, expires_at = ? WHERE id = ?";
+                // IMPORTANT: Only update expires_at, NOT booking_date!
+                // booking_date should remain as the user's original chosen date
+                $expirySql = "UPDATE bookings SET expires_at = ? WHERE id = ?";
                 $expiryStmt = $conn->prepare($expirySql);
-                $expiryStmt->bind_param("ssi", $startDate, $expiresAt, $bookingId);
+                $expiryStmt->bind_param("si", $expiresAt, $bookingId);
                 $expiryStmt->execute();
             }
 

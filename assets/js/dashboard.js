@@ -287,7 +287,10 @@ function populateBookingsTable() {
         return;
     }
     
-    allBookings.forEach(booking => {
+    // Limit to 5 most recent bookings for dashboard display
+    const recentBookings = allBookings.slice(0, 5);
+    
+    recentBookings.forEach(booking => {
         const row = document.createElement('tr');
         const displayDate = booking.date_formatted || formatDateForDisplay(booking.booking_date || booking.created_at);
         const amount = booking.amount_formatted || ('₱' + parseFloat(booking.amount).toFixed(2));

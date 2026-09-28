@@ -120,6 +120,18 @@ try {
         // Identify walk-in bookings (user_id is NULL)
         $booking['is_walkin'] = is_null($booking['user_id']);
         
+        // Fetch payment information for this booking
+        $paymentSql = "SELECT payment_method, status FROM payments WHERE booking_id = ? ORDER BY id DESC LIMIT 1";
+        $paymentStmt = $conn->prepare($paymentSql);
+        $paymentStmt->bind_param("i", $booking['id']);
+        $paymentStmt->execute();
+        $paymentResult = $paymentStmt->get_result();
+        $payment = $paymentResult->fetch_assoc();
+        $paymentStmt->close();
+        
+        $booking['payment_method'] = $payment['payment_method'] ?? 'cash';
+        $booking['payment_status'] = $payment['status'] ?? 'pending';
+        
         // Fetch linked trainers for the package if applicable
         $booking['package_trainer_ids'] = [];
         if ($booking['is_trainer_assisted'] && $booking['package_id']) {

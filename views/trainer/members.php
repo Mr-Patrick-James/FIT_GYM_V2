@@ -1643,11 +1643,24 @@ $conn->close();
                             <i class="fas fa-${member.is_expired ? 'times-circle' : 'check-circle'}"></i>
                             ${member.is_expired ? 'Expired' : 'Active'}
                         </div>
+                        
+                        ${member.is_walkin ? `
+                            <div class="status-pill" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; margin-left: 8px;">
+                                <i class="fas fa-person-walking"></i>
+                                Walk-in
+                            </div>
+                        ` : ''}
 
                         ${member.upcoming_count > 0 ? `
                             <div class="session-indicator" title="${member.upcoming_count} Upcoming Session(s)">
                                 <i class="fas fa-dumbbell"></i>
                                 ${member.upcoming_count} Session${member.upcoming_count > 1 ? 's' : ''} Scheduled
+                            </div>
+                        ` : ''}
+                        
+                        ${member.status_warning ? `
+                            <div style="background: rgba(251, 191, 36, 0.1); color: #f59e0b; padding: 8px 12px; border-radius: 8px; font-size: 0.75rem; margin-top: 10px;">
+                                <i class="fas fa-exclamation-triangle"></i> ${member.status_warning}
                             </div>
                         ` : ''}
                         

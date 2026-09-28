@@ -17,7 +17,7 @@ global $phpmailerInstalled;
 $config = getEmailConfig();
 
 $result = [
-    'phpmailer_installed' => $phpmailerInstalled,
+    'phpmailer_installed' => $phpmailerInstalled,1
     'smtp_host'     => $config['smtp_host'],
     'smtp_port'     => $config['smtp_port'],
     'smtp_username' => $config['smtp_username'],
