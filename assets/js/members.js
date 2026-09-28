@@ -31,12 +31,10 @@ async function loadAllMembers() {
                 .map(user => {
                     const userBookings = allBookings.filter(b => String(b.user_id) === String(user.id));
                     const verifiedBookings = userBookings.filter(b => b.status === 'verified');
-                    const totalSpent = verifiedBookings.reduce((sum, b) => sum + (parseFloat(b.amount) || 0), 0);
-                    
-                    // Debug log for members with ₱0 total
-                    if (totalSpent === 0 && verifiedBookings.length > 0) {
-                        console.warn(`Member ${user.name} has ${verifiedBookings.length} verified bookings but ₱0 total:`, verifiedBookings);
-                    }
+                    const totalSpent = verifiedBookings.reduce((sum, b) => {
+                        const amt = Number(b.amount) || parseFloat(String(b.amount).replace(/[₱,]/g, '')) || 0;
+                        return sum + amt;
+                    }, 0);
                     
                     return {
                         id: 'user_' + user.id,
@@ -81,7 +79,7 @@ async function loadAllMembers() {
                 const member = walkinMap.get(email);
                 member.bookings.push(walkin);
                 member.verifiedBookings.push(walkin);
-                member.totalSpent += parseFloat(walkin.amount) || 0;
+                member.totalSpent += Number(walkin.amount) || parseFloat(String(walkin.amount).replace(/[₱,]/g, '')) || 0;
                 
                 // Keep the earliest created_at as joinedDate
                 if (new Date(walkin.created_at) < new Date(member.joinedDate)) {

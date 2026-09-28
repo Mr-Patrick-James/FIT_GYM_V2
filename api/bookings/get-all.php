@@ -112,8 +112,9 @@ try {
     
     // Format the bookings data
     foreach ($bookings as &$booking) {
-        // Ensure numeric amount
+        // Ensure numeric amount — cast to float so JSON encodes as number, not string
         $amt = (float)($booking['amount'] ?? 0);
+        $booking['amount'] = $amt;
         $booking['amount_formatted'] = '₱' . number_format($amt, 2);
         $booking['date_formatted'] = date('M j, Y', strtotime($booking['booking_date'] ?? $booking['created_at']));
         
