@@ -4184,10 +4184,10 @@ async function finishSurvey() {
         
         let result;
         try {
-            result = await response.json();
+            const rawText = await response.text();
+            result = JSON.parse(rawText);
         } catch (parseError) {
-            const text = await response.text();
-            console.error('Invalid JSON response from save-questionnaire.php:', text);
+            console.error('Invalid JSON response from save-questionnaire.php:', parseError);
             showNotification('Error saving profile: server returned invalid response', 'warning');
             return;
         }
