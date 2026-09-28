@@ -41,7 +41,7 @@ try {
     // Build SQL based on user role
     if ($isAdmin || $isManager) {
         // Admin or Manager - can see all bookings
-        $sql = "SELECT b.*, b.package_name as booking_package_name, u.name as user_name, p.name as pkg_name, p.duration, p.is_trainer_assisted, b.expires_at, t.name as trainer_name 
+        $sql = "SELECT b.*, b.package_name as booking_package_name, u.name as user_name, p.name as pkg_name, p.duration, p.price as pkg_price, p.is_trainer_assisted, b.expires_at, t.name as trainer_name 
                 FROM bookings b 
                 LEFT JOIN users u ON b.user_id = u.id 
                 LEFT JOIN packages p ON b.package_id = p.id 
@@ -51,7 +51,7 @@ try {
         $types = "";
     } else {
         // Regular user - only show their own bookings
-        $sql = "SELECT b.*, b.package_name as booking_package_name, u.name as user_name, p.name as pkg_name, p.duration, p.is_trainer_assisted, b.expires_at, t.name as trainer_name 
+        $sql = "SELECT b.*, b.package_name as booking_package_name, u.name as user_name, p.name as pkg_name, p.duration, p.price as pkg_price, p.is_trainer_assisted, b.expires_at, t.name as trainer_name 
                 FROM bookings b 
                 LEFT JOIN users u ON b.user_id = u.id 
                 LEFT JOIN packages p ON b.package_id = p.id 
@@ -112,8 +112,9 @@ try {
     
     // Format the bookings data
     foreach ($bookings as &$booking) {
-        // Ensure numeric amount — cast to float so JSON encodes as number, not string
-        $amt = (float)($booking['amount'] ?? 0);
+        // Use the package's current price as the authoritative amount.
+        // Fall back to the stored booking amount only if the package no longer exists.
+        $amt = (float)($booking['pkg_price'] ?? $booking['amount'] ?? 0);
         $booking['amount'] = $amt;
         $booking['amount_formatted'] = '₱' . number_format($amt, 2);
         $booking['date_formatted'] = date('M j, Y', strtotime($booking['booking_date'] ?? $booking['created_at']));

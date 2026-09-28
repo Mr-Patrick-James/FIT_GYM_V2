@@ -12,43 +12,28 @@ function getInitials(name) {
 // Load all members from database
 async function loadAllMembers() {
     try {
-        const [usersRes, bookingsRes, walkinsRes, paymentsRes] = await Promise.all([
+        const [usersRes, bookingsRes, walkinsRes] = await Promise.all([
             fetch('../../api/users/get-all.php?role=user'),
             fetch('../../api/bookings/get-all.php'),
-            fetch('../../api/walkin/get-all.php'),
-            fetch('../../api/payments/get-all.php')
+            fetch('../../api/walkin/get-all.php')
         ]);
 
         const usersData = await usersRes.json();
         const bookingsData = await bookingsRes.json();
         const walkinsData = await walkinsRes.json();
-        const paymentsData = await paymentsRes.json();
 
         if (usersData.success) {
             const allBookings = bookingsData.success ? bookingsData.data : [];
             const allWalkins = walkinsData.success ? walkinsData.data : [];
-            const allPayments = paymentsData.success ? paymentsData.data : [];
 
-            // Build a map of user_id → total paid from the payments table (source of truth)
-            const spentByUserId = {};
-            allPayments.forEach(p => {
-                if (!p.user_id) return;
-                const uid = String(p.user_id);
-                spentByUserId[uid] = (spentByUserId[uid] || 0) + (Number(p.amount) || 0);
-            });
-            
             // 1. Process regular registered users
             const registeredMembers = usersData.data
                 .map(user => {
                     const uid = String(user.id);
                     const userBookings = allBookings.filter(b => String(b.user_id) === uid);
-                    const verifiedBookings = userBookings.filter(b => b.status === 'verified');
-                    // Use payments table amount; fall back to summing booking amounts if no payment record
-                    const totalSpent = spentByUserId[uid]
-                        ?? verifiedBookings.reduce((sum, b) => {
-                            const amt = Number(b.amount) || parseFloat(String(b.amount).replace(/[₱,]/g, '')) || 0;
-                            return sum + amt;
-                        }, 0);
+                    const verifiedBookings = userBookings.filter(b => b.status === 'verified' || b.status === 'expired');
+                    // amount is now always the package price (set server-side)
+                    const totalSpent = verifiedBookings.reduce((sum, b) => sum + (Number(b.amount) || 0), 0);
                     
                     return {
                         id: 'user_' + user.id,
@@ -65,14 +50,6 @@ async function loadAllMembers() {
                         joinedDate: user.created_at
                     };
                 });
-
-            // Build a map of booking_id → payment amount (for walk-ins who have no user_id)
-            const spentByBookingId = {};
-            allPayments.forEach(p => {
-                if (!p.booking_id) return;
-                const bid = String(p.booking_id);
-                spentByBookingId[bid] = (spentByBookingId[bid] || 0) + (Number(p.amount) || 0);
-            });
 
             // 2. Process walk-in customers as members if they have verified bookings
             // Group walk-ins by email to avoid duplicates
@@ -101,12 +78,8 @@ async function loadAllMembers() {
                 const member = walkinMap.get(email);
                 member.bookings.push(walkin);
                 member.verifiedBookings.push(walkin);
-                // Use payment record amount; fall back to booking amount
-                const walkinAmt = spentByBookingId[String(walkin.id)]
-                    ?? Number(walkin.amount)
-                    ?? parseFloat(String(walkin.amount).replace(/[₱,]/g, '')) 
-                    ?? 0;
-                member.totalSpent += walkinAmt;
+                // amount is always the package price (set server-side)
+                member.totalSpent += Number(walkin.amount) || 0;
                 
                 // Keep the earliest created_at as joinedDate
                 if (new Date(walkin.created_at) < new Date(member.joinedDate)) {
