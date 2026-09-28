@@ -39,9 +39,16 @@ try {
     }
     
     // Update the booking
-    $sql = "UPDATE bookings SET status = ?, notes = ?, trainer_id = ? WHERE id = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ssii", $status, $notes, $trainerId, $bookingId);
+    if ($trainerId !== null) {
+        $sql = "UPDATE bookings SET status = ?, notes = ?, trainer_id = ? WHERE id = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("ssii", $status, $notes, $trainerId, $bookingId);
+    } else {
+        // Don't overwrite trainer_id with NULL if none was passed
+        $sql = "UPDATE bookings SET status = ?, notes = ? WHERE id = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("ssi", $status, $notes, $bookingId);
+    }
     $result = $stmt->execute();
     
     if (!$result) {
