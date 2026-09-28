@@ -591,50 +591,58 @@ async function verifyBooking(id, event) {
         }
         
         if (booking.status === 'pending') {
-            // If trainer assisted, open modal instead of direct verification
+            // If trainer assisted but no trainer assigned yet, warn but still allow verification
             if (booking.is_trainer_assisted) {
-                viewBooking(id);
-                showNotification('This package requires trainer assignment. Please assign one in the details view.', 'info');
-                return;
+                const trainerAssigned = booking.trainer_id || booking.trainer_name;
+                if (!trainerAssigned) {
+                    const proceed = confirm(
+                        `⚠️ This package requires a trainer, but none has been assigned yet.\n\n` +
+                        `You can still verify the payment now and assign a trainer later.\n\n` +
+                        `Verify payment for ${booking.name || 'this user'} without a trainer?`
+                    );
+                    if (!proceed) return;
+                } else {
+                    if (!confirm(`Verify payment for ${booking.name || 'this user'}?`)) return;
+                }
+            } else {
+                if (!confirm(`Verify payment for ${booking.name || 'this user'}?`)) return;
             }
 
-            if (confirm(`Verify payment for ${booking.name || 'this user'}?`)) {
-                // Show loading state
-                if (btn) {
-                    btn.disabled = true;
-                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            // Show loading state
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            }
+
+            // Update booking status via API
+            const response = await fetch(`../../api/bookings/update.php?id=${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    status: 'verified',
+                    notes: booking.notes || ''
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showNotification(`Payment for ${booking.name || 'user'} has been verified!`, 'success');
+
+                // Refresh bookings
+                await loadAllBookings();
+                await applyFilters();
+
+                if (currentViewingBooking && String(currentViewingBooking.id) === String(id)) {
+                    closeModal();
                 }
-                
-                // Update booking status via API
-                const response = await fetch(`../../api/bookings/update.php?id=${id}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        status: 'verified',
-                        notes: booking.notes || ''
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    showNotification(`Payment for ${booking.name || 'user'} has been verified!`, 'success');
-                    
-                    // Refresh bookings
-                    await loadAllBookings();
-                    await applyFilters();
-                    
-                    if (currentViewingBooking && String(currentViewingBooking.id) === String(id)) {
-                        closeModal();
-                    }
-                } else {
-                    showNotification('Error verifying booking: ' + data.message, 'warning');
-                    if (btn) {
-                        btn.disabled = false;
-                        btn.innerHTML = originalContent;
-                    }
+            } else {
+                showNotification('Error verifying booking: ' + data.message, 'warning');
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = originalContent;
                 }
             }
         } else {
@@ -770,36 +778,40 @@ async function verifyPayment() {
         if (booking.status === 'pending') {
             const trainerId = document.getElementById('modalTrainerSelect')?.value;
             
-            // Validate trainer selection if package is trainer-assisted
+            // Warn if trainer-assisted but no trainer selected/assigned, but still allow
             if (booking.is_trainer_assisted && !trainerId) {
-                showNotification('Please assign a trainer for this package', 'warning');
-                return;
+                const proceed = confirm(
+                    `⚠️ This package requires a trainer, but none has been assigned yet.\n\n` +
+                    `You can verify the payment now and assign a trainer later from the bookings list.\n\n` +
+                    `Verify payment for ${booking.name || 'this user'} without a trainer?`
+                );
+                if (!proceed) return;
+            } else {
+                if (!confirm(`Verify payment for ${booking.name || 'this user'}?`)) return;
             }
 
-            if (confirm(`Verify payment for ${booking.name || 'this user'}?`)) {
-                // Show loading state
-                verifyBtn.disabled = true;
-                verifyBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
-                
-                // Update booking status via API
-                const response = await fetch(`../../api/bookings/update.php?id=${booking.id}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        status: 'verified',
-                        notes: booking.notes || '',
-                        trainer_id: trainerId || null
-                    })
-                });
-                
-                // Always treat as success — booking is verified on the server
-                showNotification(`Payment for ${booking.name || 'user'} has been verified!`, 'success');
-                closeModal();
-                try { await loadAllBookings(); } catch(e) {}
-                try { await applyFilters(); } catch(e) {}
-            }
+            // Show loading state
+            verifyBtn.disabled = true;
+            verifyBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
+
+            // Update booking status via API
+            const response = await fetch(`../../api/bookings/update.php?id=${booking.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    status: 'verified',
+                    notes: booking.notes || '',
+                    trainer_id: trainerId || null
+                })
+            });
+
+            // Always treat as success — booking is verified on the server
+            showNotification(`Payment for ${booking.name || 'user'} has been verified!`, 'success');
+            closeModal();
+            try { await loadAllBookings(); } catch(e) {}
+            try { await applyFilters(); } catch(e) {}
         } else {
             showNotification('This booking has already been processed', 'info');
         }
