@@ -585,9 +585,10 @@ try {
                     </label>
                     <select id="modalTrainerSelect" class="form-control" style="width: 100%; padding: 10px; border-radius: 6px; background: var(--dark-card-bg); color: white; border: 1px solid var(--dark-border);">
                         <option value="">Select Trainer...</option>
+                        <option value="none">— No Trainer —</option>
                     </select>
                     <p style="font-size: 0.75rem; color: var(--dark-text-secondary); margin-top: 8px;">
-                        This package is <strong>Trainer Assisted</strong>. Please assign a trainer to guide this member.
+                        This package is <strong>Trainer Assisted</strong>. You may assign a trainer or select <em>No Trainer</em> to verify without one.
                     </p>
                 </div>
 

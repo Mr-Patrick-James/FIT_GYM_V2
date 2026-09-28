@@ -42,7 +42,8 @@ async function loadTrainers(allowedIds = null) {
             const select = document.getElementById('modalTrainerSelect');
             if (!select) return;
 
-            select.innerHTML = '<option value="">Select Trainer...</option>';
+            select.innerHTML = '<option value="">Select Trainer...</option>' +
+                              '<option value="none">— No Trainer —</option>';
 
             // If allowedIds non-empty → filter to package-assigned trainers only
             // If allowedIds empty/null → show all active trainers
@@ -777,9 +778,10 @@ async function verifyPayment() {
         const booking = currentViewingBooking;
         if (booking.status === 'pending') {
             const trainerId = document.getElementById('modalTrainerSelect')?.value;
+            const resolvedTrainerId = (trainerId && trainerId !== 'none') ? trainerId : null;
             
             // Warn if trainer-assisted but no trainer selected/assigned, but still allow
-            if (booking.is_trainer_assisted && !trainerId) {
+            if (booking.is_trainer_assisted && !resolvedTrainerId) {
                 const proceed = confirm(
                     `⚠️ This package requires a trainer, but none has been assigned yet.\n\n` +
                     `You can verify the payment now and assign a trainer later from the bookings list.\n\n` +
@@ -803,7 +805,7 @@ async function verifyPayment() {
                 body: JSON.stringify({
                     status: 'verified',
                     notes: booking.notes || '',
-                    trainer_id: trainerId || null
+                    trainer_id: resolvedTrainerId
                 })
             });
 
