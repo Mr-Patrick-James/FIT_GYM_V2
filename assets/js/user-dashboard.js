@@ -4185,6 +4185,7 @@ async function finishSurvey() {
         let result;
         try {
             const rawText = await response.text();
+            console.log('save-questionnaire raw response:', rawText);
             result = JSON.parse(rawText);
         } catch (parseError) {
             console.error('Invalid JSON response from save-questionnaire.php:', parseError);
