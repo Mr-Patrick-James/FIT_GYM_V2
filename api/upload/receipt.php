@@ -82,19 +82,8 @@ try {
     
     // Move uploaded file
     if (!move_uploaded_file($file['tmp_name'], $filepath)) {
-        $diagInfo = [
-            'tmp_name'      => $file['tmp_name'],
-            'tmp_exists'    => file_exists($file['tmp_name']),
-            'is_uploaded'   => is_uploaded_file($file['tmp_name']),
-            'upload_dir'    => $uploadDir,
-            'dir_exists'    => is_dir($uploadDir),
-            'dir_writable'  => is_writable($uploadDir),
-            'filepath'      => $filepath,
-            'php_user'      => function_exists('posix_getpwuid') ? posix_getpwuid(posix_geteuid())['name'] : get_current_user(),
-            'last_error'    => error_get_last(),
-        ];
-        error_log('move_uploaded_file failed: ' . json_encode($diagInfo));
-        sendResponse(false, 'Failed to save the uploaded file. Details: ' . json_encode($diagInfo), null, 500);
+        error_log('move_uploaded_file failed: tmp=' . $file['tmp_name'] . ' dest=' . $filepath . ' writable=' . (is_writable($uploadDir) ? 'yes' : 'no'));
+        sendResponse(false, 'Failed to save the uploaded file. Please try again.', null, 500);
     }
     
     // Return the file path (relative to project root)
