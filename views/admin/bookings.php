@@ -689,7 +689,7 @@ try {
     </script>
 
     <!-- Bookings Scripts -->
-    <script src="../../assets/js/bookings.js"></script>
+    <script src="../../assets/js/bookings.js?v=<?= time() ?>"></script>
     <script src="../../assets/js/mobile-menu.js"></script>
  <script src="../../assets/js/role-restrictions.js"></script>
 
