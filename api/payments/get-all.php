@@ -23,9 +23,9 @@ try {
     $sort = $_GET['sort'] ?? 'date-desc';
     
     $sql = "SELECT p.*, 
-                   COALESCE(u.name, b.name) as user_name, 
-                   COALESCE(u.email, b.email) as user_email,
-                   COALESCE(u.contact, b.contact) as user_contact,
+                   COALESCE(NULLIF(u.name, ''), b.name) as user_name, 
+                   COALESCE(NULLIF(u.email, ''), b.email) as user_email,
+                   COALESCE(NULLIF(b.contact, ''), NULLIF(u.contact, '')) as user_contact,
                    b.package_name, b.receipt_url as booking_receipt 
             FROM payments p 
             LEFT JOIN users u ON p.user_id = u.id 
