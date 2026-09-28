@@ -123,7 +123,8 @@ try {
     }
 
     if ($days > 0) {
-        $expiresAt = date('Y-m-d H:i:s', strtotime($booking_date . " + $days days"));
+        // Subtract 1 because the booking date itself counts as day 1
+        $expiresAt = date('Y-m-d 23:59:59', strtotime($booking_date . ' +' . ($days - 1) . ' days'));
     }
 
     // No discount — student must just upload ID as proof, full price applies

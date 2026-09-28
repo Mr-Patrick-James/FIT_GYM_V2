@@ -103,7 +103,8 @@ try {
         }
 
         if ($days > 0) {
-            $expiresAt = date('Y-m-d H:i:s', strtotime($startDate . " + $days days"));
+            // Subtract 1 because the start date itself counts as day 1
+            $expiresAt = date('Y-m-d 23:59:59', strtotime($startDate . ' +' . ($days - 1) . ' days'));
             $updateSql = "UPDATE bookings SET booking_date = ?, expires_at = ? WHERE id = ?";
             $updateStmt = $conn->prepare($updateSql);
             $updateStmt->bind_param("ssi", $startDate, $expiresAt, $booking_id);

@@ -111,7 +111,8 @@ try {
     // New expiry date starts from now with target package duration
     $newExpiresAt = null;
     if ($targetDays > 0) {
-        $newExpiresAt = date('Y-m-d H:i:s', strtotime(date('Y-m-d H:i:s') . " + $targetDays days"));
+        // Subtract 1 because today itself counts as day 1
+        $newExpiresAt = date('Y-m-d 23:59:59', strtotime('today +' . ($targetDays - 1) . ' days'));
     }
     
     // Start transaction

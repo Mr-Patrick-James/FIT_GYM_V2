@@ -91,7 +91,8 @@ try {
             }
             
             if ($days > 0) {
-                $expiresAt = date('Y-m-d H:i:s', strtotime($startDate . " + $days days"));
+                // Subtract 1 because the booking date itself counts as day 1
+                $expiresAt = date('Y-m-d 23:59:59', strtotime($originalBookingDate . ' +' . ($days - 1) . ' days'));
                 // IMPORTANT: Only update expires_at, NOT booking_date!
                 // booking_date should remain as the user's original chosen date
                 $expirySql = "UPDATE bookings SET expires_at = ? WHERE id = ?";
