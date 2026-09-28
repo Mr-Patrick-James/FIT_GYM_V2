@@ -1,11 +1,11 @@
 <?php
-require_once '../config.php';
-require_once '../session.php';
-
 ini_set('display_errors', '0');
 ini_set('display_startup_errors', '0');
-error_reporting(E_ALL);
 ini_set('log_errors', '1');
+error_reporting(E_ALL);
+
+require_once '../config.php';
+require_once '../session.php';
 
 file_put_contents(__DIR__ . '/save-questionnaire-debug.log', date('c') . " START\nSCRIPT=" . basename(__FILE__) . "\nREQUEST_METHOD=" . ($_SERVER['REQUEST_METHOD'] ?? '') . "\nSESSION=" . var_export($_SESSION, true) . "\n\n", FILE_APPEND);
 
