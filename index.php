@@ -649,12 +649,89 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
                         id="resendCooldown"></span>
                     <p id="otpTimer" style="display: none; font-size: 0.8rem; color: #888; margin-top: 5px;"></p>
                 </div>
+
+            <!-- Forgot Password - Step 1: Email Entry -->
+            <div id="forgotPasswordForm" class="form-box">
+                <div class="auth-header">
+                    <h2>Reset Password</h2>
+                    <p>Enter your email and we'll send you a reset code</p>
+                </div>
+                <form id="forgotPasswordFormElement">
+                    <div class="input-group">
+                        <input type="email" id="forgotEmail" name="email" required autocomplete="email">
+                        <label>Email Address</label>
+                    </div>
+                    <button type="submit" class="auth-btn" id="forgotSubmitBtn">
+                        <span id="forgotBtnText">Send Reset Code</span>
+                        <span id="forgotBtnLoader" style="display: none;">
+                            <i class="fas fa-spinner fa-spin"></i> Sending...
+                        </span>
+                    </button>
+                </form>
+                <div class="switch-auth">
+                    Remember it? <span onclick="switchForm('login')">Log In</span>
+                </div>
+            </div>
+
+            <!-- Forgot Password - Step 2: OTP Verification -->
+            <div id="forgotOtpForm" class="form-box">
+                <div class="auth-header">
+                    <h2>Enter Reset Code</h2>
+                    <p>We've sent a 6-digit code to <strong id="forgotOtpEmailDisplay"></strong></p>
+                </div>
+                <form id="forgotOtpFormElement">
+                    <div class="otp-input-group">
+                        <input type="text" maxlength="1" id="forgotOtpInput1">
+                        <input type="text" maxlength="1" id="forgotOtpInput2">
+                        <input type="text" maxlength="1" id="forgotOtpInput3">
+                        <input type="text" maxlength="1" id="forgotOtpInput4">
+                        <input type="text" maxlength="1" id="forgotOtpInput5">
+                        <input type="text" maxlength="1" id="forgotOtpInput6">
+                    </div>
+                    <button type="submit" class="auth-btn">Verify Code</button>
+                </form>
+                <div class="resend-otp">
+                    Didn't receive code? <span id="forgotResendOtp" onclick="resendForgotOTP()">Resend</span>
+                    <span id="forgotResendCooldown"></span>
+                    <p id="forgotOtpTimer" style="display: none; font-size: 0.8rem; color: #888; margin-top: 5px;"></p>
+                </div>
+            </div>
+
+            <!-- Forgot Password - Step 3: New Password -->
+            <div id="newPasswordForm" class="form-box">
+                <div class="auth-header">
+                    <h2>Set New Password</h2>
+                    <p>Choose a new password for your account</p>
+                </div>
+                <form id="newPasswordFormElement">
+                    <div class="input-group">
+                        <input type="password" id="newPassword" name="password" required autocomplete="new-password">
+                        <label>New Password</label>
+                        <span class="toggle-password" data-target="newPassword">
+                            <i class="fa-regular fa-eye"></i>
+                        </span>
+                    </div>
+                    <div class="input-group">
+                        <input type="password" id="newPasswordConfirm" name="confirm_password" required autocomplete="new-password">
+                        <label>Confirm New Password</label>
+                        <span class="toggle-password" data-target="newPasswordConfirm">
+                            <i class="fa-regular fa-eye"></i>
+                        </span>
+                    </div>
+                    <button type="submit" class="auth-btn" id="newPasswordSubmitBtn">
+                        <span id="newPasswordBtnText">Reset Password</span>
+                        <span id="newPasswordBtnLoader" style="display: none;">
+                            <i class="fas fa-spinner fa-spin"></i> Resetting...
+                        </span>
+                    </button>
+                </form>
+            </div>
             </div>
         </div>
     </div>
 
 
-    <script src="assets/js/main.js?v=1.2"></script>
+    <script src="assets/js/main.js?v=1.3"></script>
     <script>
         function toggleAllReviews() {
             const grid = document.getElementById('testimonialsGrid');

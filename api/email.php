@@ -948,5 +948,100 @@ function sendTrainerNewClientEmail($trainerEmail, $trainerName, $clientName, $pa
          return false;
      }
  }
- 
-  ?>
+/**
+ * Send password reset OTP email
+ */
+function sendPasswordResetEmail($email, $otp, $name = '') {
+    global $phpmailerInstalled;
+
+    if ($phpmailerInstalled) {
+        try {
+            $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
+            $config = getEmailConfig();
+
+            if (!empty($config['smtp_username']) && !empty($config['smtp_password'])) {
+                error_log("Attempting password reset email to: $email");
+
+                $mail->isSMTP();
+                $mail->Host       = $config['smtp_host'];
+                $mail->SMTPAuth   = true;
+                $mail->Username   = $config['smtp_username'];
+                $mail->Password   = $config['smtp_password'];
+                $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+                $mail->Port       = $config['smtp_port'];
+                $mail->CharSet    = 'UTF-8';
+                $mail->SMTPOptions = [
+                    'ssl' => [
+                        'verify_peer'       => false,
+                        'verify_peer_name'  => false,
+                        'allow_self_signed' => true
+                    ]
+                ];
+
+                $mail->setFrom($config['from_email'], $config['from_name']);
+                $mail->addAddress($email, $name);
+                $mail->isHTML(true);
+                $mail->Subject = 'Password Reset Code - Martinez Fitness';
+
+                $greeting = $name ? ' ' . htmlspecialchars($name) : '';
+                $mail->Body = '
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <style>
+                        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                        .header { background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+                        .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
+                        .otp-box { background: white; border: 2px dashed #dc2626; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0; }
+                        .otp-code { font-size: 32px; font-weight: bold; color: #dc2626; letter-spacing: 8px; font-family: monospace; }
+                        .footer { text-align: center; margin-top: 20px; color: #6b7280; font-size: 12px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="header">
+                            <h1>MARTINEZ FITNESS</h1>
+                            <p>Password Reset</p>
+                        </div>
+                        <div class="content">
+                            <h2>Hello' . $greeting . '!</h2>
+                            <p>We received a request to reset your password. Use the code below to set a new password:</p>
+                            <div class="otp-box">
+                                <p style="margin: 0 0 10px 0; color: #6b7280; font-size: 14px;">Your reset code:</p>
+                                <div class="otp-code">' . $otp . '</div>
+                            </div>
+                            <p>This code will expire in <strong>5 minutes</strong>.</p>
+                            <p>If you did not request a password reset, you can safely ignore this email.</p>
+                        </div>
+                        <div class="footer">
+                            <p>&copy; ' . date('Y') . ' Martinez Fitness Gym. All rights reserved.</p>
+                            <p>This is an automated email, please do not reply.</p>
+                        </div>
+                    </div>
+                </body>
+                </html>';
+
+                $mail->AltBody = "Hello$greeting!\n\nYour password reset code is: $otp\n\nThis code expires in 5 minutes.\n\nIf you did not request this, ignore this email.";
+
+                $mail->send();
+                error_log("Password reset email sent successfully to: $email");
+                return true;
+            }
+        } catch (\PHPMailer\PHPMailer\Exception $e) {
+            error_log("PHPMailer failed for password reset: " . $mail->ErrorInfo);
+        } catch (Exception $e) {
+            error_log("Password reset email error: " . $e->getMessage());
+        }
+    }
+
+    // Fallback to simple mail()
+    $subject  = 'Password Reset Code - Martinez Fitness';
+    $headers  = "MIME-Version: 1.0\r\n";
+    $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
+    $headers .= "From: Martinez Fitness <noreply@martinezfitness.com>\r\n";
+    $body = "<p>Your password reset code is: <strong>$otp</strong></p><p>This code expires in 5 minutes.</p>";
+    return mail($email, $subject, $body, $headers);
+}
+
+?>
