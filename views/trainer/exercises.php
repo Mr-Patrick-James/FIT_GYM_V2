@@ -254,6 +254,26 @@ $user = getCurrentUser();
                 gap: 12px;
             }
         }
+
+        .eq-picker-wrap { border: 1.5px solid var(--dark-border); border-radius: 12px; overflow: hidden; }
+        .eq-search-bar { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--dark-border); background: var(--dark-bg); }
+        .eq-search-bar input { background: transparent; border: none; outline: none; color: var(--dark-text); font-size: 0.88rem; flex: 1; font-family: 'Inter', sans-serif; }
+        .eq-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; padding: 12px; max-height: 240px; overflow-y: auto; }
+        .eq-none-opt { padding: 10px 12px; border-radius: 10px; border: 1.5px solid var(--dark-border); cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: var(--dark-text-secondary); transition: all 0.18s; }
+        .eq-none-opt:hover, .eq-none-opt.selected { border-color: var(--primary); color: var(--primary); background: rgba(212,175,55,0.07); }
+        .eq-item { border: 1.5px solid var(--dark-border); border-radius: 10px; cursor: pointer; overflow: hidden; transition: all 0.18s; display: flex; flex-direction: column; }
+        .eq-item:hover { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(212,175,55,0.15); }
+        .eq-item.selected { border-color: var(--primary); background: rgba(212,175,55,0.07); box-shadow: 0 0 0 2px rgba(212,175,55,0.25); }
+        .eq-item img { width: 100%; height: 70px; object-fit: cover; }
+        .eq-item-no-img { width: 100%; height: 70px; display: flex; align-items: center; justify-content: center; background: rgba(212,175,55,0.05); color: var(--primary); font-size: 1.5rem; }
+        .eq-item-label { padding: 6px 8px; font-size: 0.75rem; font-weight: 600; color: var(--dark-text); text-align: center; line-height: 1.2; }
+        .eq-item.selected .eq-item-label { color: var(--primary); }
+        .eq-selected-badge { margin-top: 8px; font-size: 0.82rem; color: var(--primary); font-weight: 600; display: flex; align-items: center; gap: 6px; }
+        .eq-grid::-webkit-scrollbar { width: 5px; }
+        .eq-grid::-webkit-scrollbar-track { background: transparent; }
+        .eq-grid::-webkit-scrollbar-thumb { background: var(--dark-border); border-radius: 3px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        @media (max-width: 520px) { .form-row { grid-template-columns: 1fr; } }
     </style>
     
     <script>
@@ -403,69 +423,94 @@ $user = getCurrentUser();
 
     <!-- Add/Edit Exercise Modal -->
     <div class="modal-overlay" id="exerciseModal">
-        <div class="modal" style="max-width: 600px;">
-            <div class="modal-header">
-                <h3 id="exerciseModalTitle">Add New Exercise</h3>
+        <div class="modal" style="max-width: 680px; max-height: 92vh; overflow-y: auto;">
+            <div class="modal-header" style="position: sticky; top: 0; z-index: 10; background: var(--dark-card);">
+                <h3 id="exerciseModalTitle">
+                    <i class="fas fa-plus-circle" style="color: var(--primary); margin-right: 8px;"></i>Add New Exercise
+                </h3>
                 <button class="close-modal" onclick="closeExerciseModal()">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             
             <div class="modal-body">
-                <form id="exerciseForm" onsubmit="saveExercise(event)">
+                <form id="exerciseForm" onsubmit="saveExercise(event)" enctype="multipart/form-data">
                     <input type="hidden" id="exerciseId">
-                    <div class="form-group">
-                        <label>Exercise Name <span style="color: var(--warning);">*</span></label>
-                        <input type="text" id="exerciseName" required placeholder="e.g., Bench Press">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Category</label>
-                        <select id="exerciseCategory">
-                            <option value="Chest">Chest</option>
-                            <option value="Back">Back</option>
-                            <option value="Legs">Legs</option>
-                            <option value="Shoulders">Shoulders</option>
-                            <option value="Arms">Arms</option>
-                            <option value="Core">Core</option>
-                            <option value="Cardio">Cardio</option>
-                            <option value="Full Body">Full Body</option>
-                        </select>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Exercise Name <span style="color: var(--warning);">*</span></label>
+                            <input type="text" id="exerciseName" required placeholder="e.g., Bench Press" autocomplete="off">
+                        </div>
+                        <div class="form-group">
+                            <label>Category <span style="color: var(--warning);">*</span></label>
+                            <select id="exerciseCategory">
+                                <option value="Chest">Chest</option>
+                                <option value="Back">Back</option>
+                                <option value="Legs">Legs</option>
+                                <option value="Shoulders">Shoulders</option>
+                                <option value="Arms">Arms</option>
+                                <option value="Core">Core</option>
+                                <option value="Cardio">Cardio</option>
+                                <option value="Full Body">Full Body</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div class="form-group">
-                        <label>Equipment</label>
-                        <select id="equipmentSelect">
-                            <option value="">No specific equipment</option>
-                            <!-- Populated by JS -->
-                        </select>
+                        <label><i class="fas fa-tools" style="color: var(--primary); margin-right: 6px;"></i>Equipment Used</label>
+                        <input type="hidden" id="selectedEquipmentId" value="">
+                        <div class="eq-picker-wrap">
+                            <div class="eq-search-bar">
+                                <i class="fas fa-search" style="color: var(--dark-text-secondary); font-size: 0.85rem;"></i>
+                                <input type="text" id="eqSearchInput" placeholder="Search equipment..." oninput="filterEquipmentPicker()" autocomplete="off">
+                                <span id="eqResultCount" style="font-size: 0.75rem; color: var(--dark-text-secondary); white-space: nowrap;"></span>
+                            </div>
+                            <div class="eq-grid" id="equipmentPickerGrid">
+                            </div>
+                        </div>
+                        <div id="eqSelectedBadge" class="eq-selected-badge" style="display: none;">
+                            <i class="fas fa-check-circle"></i>
+                            <span id="eqSelectedName"></span>
+                            <button type="button" onclick="clearEquipmentSelection()" style="background: none; border: none; color: var(--dark-text-secondary); cursor: pointer; font-size: 0.75rem; margin-left: 4px;">
+                                <i class="fas fa-times"></i> Clear
+                            </button>
+                        </div>
                     </div>
-                    
+
                     <div class="form-group">
-                        <label>Exercise Image</label>
-                        <div id="imageUploadArea" class="file-upload-area" style="padding: 20px; border: 2px dashed var(--dark-border); border-radius: 12px; text-align: center; cursor: pointer; transition: all 0.3s;" onclick="document.getElementById('exerciseImageFile').click()">
-                            <i class="fas fa-cloud-upload-alt" style="font-size: 2rem; color: var(--primary); margin-bottom: 10px;"></i>
-                            <p style="font-size: 0.9rem; margin-bottom: 5px;">Click to upload exercise image</p>
-                            <span style="font-size: 0.75rem; color: var(--dark-text-secondary);">JPG, PNG or WebP</span>
+                        <label><i class="fas fa-image" style="color: var(--primary); margin-right: 6px;"></i>Exercise Image</label>
+                        <div id="imageUploadArea" class="file-upload-area" style="padding: 24px; border: 2px dashed var(--dark-border); border-radius: 12px; text-align: center; cursor: pointer; transition: all 0.3s;" onclick="document.getElementById('exerciseImageFile').click()" ondragover="event.preventDefault(); this.style.borderColor='var(--primary)'" ondragleave="this.style.borderColor='var(--dark-border)'" ondrop="handleImageDrop(event)">
+                            <i class="fas fa-cloud-upload-alt" style="font-size: 2rem; color: var(--primary); margin-bottom: 10px; display: block;"></i>
+                            <p style="font-size: 0.9rem; margin-bottom: 4px; font-weight: 600;">Click or drag to upload</p>
+                            <span style="font-size: 0.75rem; color: var(--dark-text-secondary);">JPG, PNG or WebP • Max 5MB</span>
                             <input type="file" id="exerciseImageFile" accept="image/*" style="display: none;" onchange="handleImagePreview(event)">
                         </div>
-                        <div id="imagePreviewContainer" style="display: none; margin-top: 15px; position: relative;">
-                            <img id="imagePreview" src="" style="width: 100%; height: 180px; object-fit: cover; border-radius: 12px; border: 1px solid var(--dark-border);">
-                            <button type="button" onclick="removeImagePreview()" style="position: absolute; top: 10px; right: 10px; background: rgba(239, 68, 68, 0.9); color: white; border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer;">
+                        <div id="imagePreviewContainer" style="display: none; margin-top: 12px; position: relative;">
+                            <img id="imagePreview" src="" style="width: 100%; height: 200px; object-fit: cover; border-radius: 12px; border: 1px solid var(--dark-border);">
+                            <button type="button" onclick="removeImagePreview()" style="position: absolute; top: 10px; right: 10px; background: rgba(239,68,68,0.9); color: white; border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;">
                                 <i class="fas fa-times"></i>
                             </button>
                         </div>
                         <input type="hidden" id="exerciseImageUrl">
                     </div>
-                    
+
+                    <div class="form-group">
+                        <label><i class="fas fa-align-left" style="color: var(--primary); margin-right: 6px;"></i>Description</label>
+                        <textarea id="exerciseDescription" rows="2" placeholder="Briefly describe what this exercise targets..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label><i class="fas fa-list-ol" style="color: var(--primary); margin-right: 6px;"></i>Instructions</label>
+                        <textarea id="exerciseInstructions" rows="4" placeholder="Step 1: ...&#10;Step 2: ...&#10;Step 3: ..."></textarea>
+                    </div>
+
                     <div class="modal-actions">
                         <button type="button" class="btn btn-secondary" onclick="closeExerciseModal()">
-                            <i class="fas fa-times"></i>
-                            Cancel
+                            <i class="fas fa-times"></i> Cancel
                         </button>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save"></i>
-                            Save Exercise
+                        <button type="submit" class="btn btn-primary" id="saveExerciseBtn">
+                            <i class="fas fa-save"></i> Save Exercise
                         </button>
                     </div>
                 </form>
@@ -497,7 +542,7 @@ $user = getCurrentUser();
     </div>
 
     <!-- Scripts -->
-    <script src="../../assets/js/exercises.js"></script>
+    <script src="../../assets/js/exercises.js?v=2.1"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             loadTrainerNotifications();
