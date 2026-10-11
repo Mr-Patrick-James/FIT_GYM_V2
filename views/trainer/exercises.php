@@ -193,6 +193,67 @@ $user = getCurrentUser();
             50% { transform: scale(1.1); }
             100% { transform: scale(1); }
         }
+
+        /* ── Exercise Cards ── */
+        .exercise-card {
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+            border-radius: 16px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .exercise-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+        }
+        .exercise-card-img {
+            width: 100%;
+            height: 160px;
+            object-fit: cover;
+            background: var(--dark-bg);
+        }
+        .exercise-card-img-placeholder {
+            width: 100%;
+            height: 160px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--glass);
+            color: var(--dark-text-secondary);
+            font-size: 2.5rem;
+        }
+        .exercise-card-body { padding: 16px; flex: 1; display: flex; flex-direction: column; }
+        .exercise-card-title { font-size: 1rem; font-weight: 700; color: var(--dark-text); margin-bottom: 6px; }
+        .exercise-card-meta { font-size: 0.78rem; color: var(--dark-text-secondary); margin-bottom: 10px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .exercise-card-desc { font-size: 0.82rem; color: var(--dark-text-secondary); line-height: 1.5; margin-bottom: 12px; flex: 1; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .exercise-card-actions { display: flex; gap: 8px; margin-top: auto; }
+        .exercise-card-actions .btn { flex: 1; padding: 8px 10px; font-size: 0.8rem; border-radius: 10px; justify-content: center; }
+
+        /* ── Exercises grid responsive ── */
+        .exercises-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+        @media (max-width: 768px) {
+            .exercises-grid {
+                grid-template-columns: 1fr;
+                gap: 14px;
+                padding: 16px;
+            }
+            .exercise-card-actions {
+                flex-direction: row;
+            }
+        }
+        @media (max-width: 480px) {
+            .exercises-grid {
+                padding: 12px;
+                gap: 12px;
+            }
+        }
     </style>
     
     <script>
@@ -283,7 +344,7 @@ $user = getCurrentUser();
                 </div>
             </div>
             
-            <div id="exercisesGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; padding: 20px;">
+            <div id="exercisesGrid" class="exercises-grid">
                 <!-- Populated by JavaScript -->
             </div>
             

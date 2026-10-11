@@ -796,6 +796,86 @@ $conn->close();
             color: var(--premium-text);
             background: transparent;
         }
+
+        /* ── Members grid ── */
+        .members-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+            gap: 24px;
+            padding: 24px;
+        }
+
+        @media (max-width: 900px) {
+            .members-grid {
+                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+                gap: 16px;
+                padding: 16px;
+            }
+        }
+
+        @media (max-width: 680px) {
+            .members-grid {
+                grid-template-columns: 1fr;
+                gap: 14px;
+                padding: 14px;
+            }
+
+            .member-info-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .member-actions {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 420px) {
+            .members-grid {
+                padding: 12px;
+                gap: 12px;
+            }
+
+            .member-card {
+                padding: 20px !important;
+                border-radius: 20px !important;
+            }
+
+            .member-info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .member-actions {
+                grid-template-columns: 1fr;
+            }
+
+            .manage-btn {
+                grid-column: span 1;
+            }
+
+            .member-avatar {
+                width: 52px;
+                height: 52px;
+                font-size: 1rem;
+            }
+
+            .status-pill {
+                top: 20px;
+                right: 20px;
+                font-size: 0.65rem;
+                padding: 4px 8px;
+            }
+        }
+
+        /* ── Top-bar search on mobile ── */
+        @media (max-width: 600px) {
+            .top-bar .search-box {
+                width: 100%;
+            }
+            .top-bar .search-box input {
+                width: 100%;
+                max-width: 100%;
+            }
+        }
     </style>
 
     <script>
@@ -877,7 +957,7 @@ $conn->close();
                 <h3>Assigned Members</h3>
             </div>
             
-            <div id="membersGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 24px; padding: 24px;">
+            <div id="membersGrid" class="members-grid">
                 <div style="grid-column: 1/-1; text-align: center; padding: 40px;">
                     <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--primary-color);"></i>
                     <p style="margin-top: 10px;">Loading assigned clients...</p>
@@ -1630,7 +1710,7 @@ $conn->close();
                 noMsg.style.display = 'block';
                 return;
             }
-            grid.style.display = 'grid';
+            grid.style.display = '';   // let .members-grid CSS class control layout
             noMsg.style.display = 'none';
             
             grid.innerHTML = clients.map(member => {

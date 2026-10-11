@@ -4211,3 +4211,211 @@ body.light-mode .theme-option.active {
         z-index: 1 !important;
     }
 }
+
+
+/* ============================================================
+   TRAINER VIEWS — RESPONSIVE FIXES
+   Scoped overrides for trainer-specific layouts & inline grids
+   ============================================================ */
+
+/* --- Trainer top-bar: primary button + icon buttons row --- */
+@media (max-width: 992px) {
+    /* On mobile, header-actions wraps naturally; primary btn takes available space */
+    .header-actions .action-btn.primary {
+        flex: 1 1 auto;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
+
+@media (max-width: 600px) {
+    /* Stack primary button above icon buttons */
+    .header-actions {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .header-actions .action-btn.primary {
+        order: -1;           /* primary button first */
+        width: 100%;
+        justify-content: center;
+        font-size: 0.8rem;
+        padding: 10px 16px;
+    }
+
+    /* Icon-only buttons cluster at the end */
+    .header-actions .action-btn:not(.primary) {
+        width: 40px;
+        height: 40px;
+        flex-shrink: 0;
+    }
+
+    /* Notification FAB: lift above bottom nav bar on phones */
+    .trainer-notif-float {
+        bottom: 80px !important;
+        right: 16px !important;
+        width: 44px !important;
+        height: 44px !important;
+        border-radius: 14px !important;
+        font-size: 1rem !important;
+    }
+}
+
+/* --- Exercise Library page: card grid --- */
+@media (max-width: 768px) {
+    /* exercisesGrid inline style uses minmax(280px,1fr) — override to 1 col */
+    #exercisesGrid {
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+        padding: 16px !important;
+    }
+
+    /* Exercise card action buttons */
+    #exercisesGrid .btn {
+        flex: 1;
+        justify-content: center;
+        min-width: 0;
+    }
+}
+
+@media (max-width: 480px) {
+    #exercisesGrid {
+        padding: 12px !important;
+        gap: 12px !important;
+    }
+}
+
+/* --- Dashboard page: two-column grid (Recent Progress / Assigned Packages) --- */
+/* The dashboard uses an inline style="display:grid;grid-template-columns:1fr 1fr"
+   We override it here for small screens. */
+@media (max-width: 768px) {
+    /* Target the inline-styled wrapper div inside main-content on dashboard */
+    .main-content > div[style*="grid-template-columns: 1fr 1fr"],
+    .main-content > div[style*="grid-template-columns:1fr 1fr"] {
+        grid-template-columns: 1fr !important;
+        gap: 20px !important;
+    }
+}
+
+/* --- Members page: member cards grid --- */
+@media (max-width: 768px) {
+    /* membersGrid inline minmax(360px,1fr) → single column */
+    #membersGrid {
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+        padding: 16px !important;
+    }
+
+    /* Member card internal info grid — stack on very small screens */
+    .member-info-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+
+    /* Member action buttons — stack to single column on narrow phones */
+    .member-actions {
+        grid-template-columns: 1fr !important;
+        gap: 8px !important;
+    }
+
+    .manage-btn {
+        grid-column: span 1 !important;
+    }
+}
+
+@media (max-width: 480px) {
+    #membersGrid {
+        padding: 12px !important;
+        gap: 12px !important;
+    }
+
+    .member-card {
+        padding: 20px !important;
+        border-radius: 20px !important;
+    }
+
+    .member-avatar {
+        width: 52px !important;
+        height: 52px !important;
+        font-size: 1rem !important;
+    }
+}
+
+/* --- Packages page: exercise modal two-column grid --- */
+@media (max-width: 768px) {
+    /* packagesGrid inline minmax(300px,1fr) → single column */
+    #packagesGrid {
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+        padding: 16px !important;
+    }
+
+    /* Exercise modal body — stack the two columns */
+    #exercisesTabContent {
+        grid-template-columns: 1fr !important;
+        gap: 20px !important;
+        padding: 0 16px 24px !important;
+    }
+
+    /* Sets/Reps inline grid inside add-exercise form */
+    #addExerciseForm > div[style*="grid-template-columns"] {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+
+    /* Modal max-width override so it doesn't overflow */
+    #exerciseModal .modal {
+        max-width: 100% !important;
+        width: 100% !important;
+        border-radius: 20px !important;
+        max-height: 95vh !important;
+    }
+
+    /* Notification modal */
+    #notificationsModal .modal {
+        max-width: 100% !important;
+        width: 100% !important;
+        border-radius: 20px !important;
+    }
+
+    /* Notif modal tabs padding */
+    #notificationsModal .notif-tabs {
+        padding: 0 16px 16px !important;
+    }
+
+    #notificationsModal .modal-header {
+        padding: 20px 16px 12px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    #packagesGrid {
+        padding: 12px !important;
+        gap: 12px !important;
+    }
+
+    /* Exercise card modal — remove left/right padding */
+    #exercisesTabContent {
+        padding: 0 12px 20px !important;
+    }
+}
+
+/* --- Profile page responsive --- */
+@media (max-width: 768px) {
+    /* Any two-column form-rows in profile */
+    .profile-form-row,
+    .form-row {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+}
+
+/* --- Trainer notification FAB: avoid overlap with modals and nav --- */
+@media (max-width: 992px) {
+    .trainer-notif-float {
+        bottom: 24px;
+        right: 20px;
+    }
+}

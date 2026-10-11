@@ -221,6 +221,22 @@ if ($trainerId) {
             50% { transform: scale(1.1); }
             100% { transform: scale(1); }
         }
+
+        /* ── Two-column grid: Recent Progress + Assigned Packages ── */
+        .trainer-dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+            margin-top: 32px;
+        }
+
+        @media (max-width: 900px) {
+            .trainer-dashboard-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+                margin-top: 20px;
+            }
+        }
     </style>
     
     <script>
@@ -326,7 +342,7 @@ if ($trainerId) {
             </div>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-top: 32px;">
+        <div class="trainer-dashboard-grid">
             <!-- Recent Client Progress -->
             <div class="content-card" style="margin-top: 0;">
                 <div class="card-header">
@@ -353,7 +369,7 @@ if ($trainerId) {
                     
                     if (empty($recentActivity)): ?>
                         <div style="padding: 20px; text-align: center; color: var(--dark-text-secondary);">
-                            <i class="fas fa-history" style="font-size: 3rem; margin-bottom: 166px; opacity: 0.3;"></i>
+                            <i class="fas fa-history" style="font-size: 3rem; margin-bottom: 16px; opacity: 0.3;"></i>
                             <p>No recent activity recorded.</p>
                         </div>
                     <?php else: ?>

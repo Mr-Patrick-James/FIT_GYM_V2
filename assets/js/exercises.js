@@ -39,7 +39,7 @@ function showLoading(state) {
     const loading = document.getElementById('exercisesLoading');
     const grid    = document.getElementById('exercisesGrid');
     if (loading) loading.style.display = state ? 'grid' : 'none';
-    if (grid)    grid.style.display    = state ? 'none' : 'grid';
+    if (grid)    grid.style.display    = state ? 'none' : '';   // empty = use CSS class
 }
 
 // ─────────────────────────────────────────────
@@ -89,7 +89,7 @@ function renderExercisesGrid() {
         return;
     }
 
-    grid.style.display = 'grid';
+    grid.style.display = '';   // let CSS class handle it
     noMsg.style.display = 'none';
 
     list.forEach(ex => {
