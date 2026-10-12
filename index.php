@@ -326,45 +326,43 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
                     <div class="why-item">
                         <div class="why-icon"><i class="fas fa-dumbbell"></i></div>
                         <div>
-                            <h4>Complete Equipment</h4>
-                            <p>Free weights, machines, cardio — everything you need under one roof in Naujan, Oriental
-                                Mindoro.</p>
+                            <h4><?php echo htmlspecialchars(getSetting('why_title_1', 'Complete Equipment', $settings)); ?></h4>
+                            <p><?php echo htmlspecialchars(getSetting('why_desc_1', 'Free weights, machines, cardio — everything you need under one roof in Naujan, Oriental Mindoro.', $settings)); ?></p>
                         </div>
                     </div>
                     <div class="why-item">
                         <div class="why-icon"><i class="fas fa-user-tie"></i></div>
                         <div>
-                            <h4>Expert Trainers</h4>
-                            <p>Our certified coaches build personalized programs tailored to your body and your goals.
-                            </p>
+                            <h4><?php echo htmlspecialchars(getSetting('why_title_2', 'Be a Trainer', $settings)); ?></h4>
+                            <p><?php echo htmlspecialchars(getSetting('why_desc_2', 'Our certified coaches build personalized programs tailored to your body and your goals.', $settings)); ?></p>
                         </div>
                     </div>
                     <div class="why-item">
                         <div class="why-icon"><i class="fas fa-star"></i></div>
                         <div>
-                            <h4>5-Star Rated</h4>
-                            <p>Consistently rated 5 stars by our members on Google. Real results, real community.</p>
+                            <h4><?php echo htmlspecialchars(getSetting('why_title_3', '5-Star Rated', $settings)); ?></h4>
+                            <p><?php echo htmlspecialchars(getSetting('why_desc_3', 'Consistently rated 5 stars by our members on Google. Real results, real community.', $settings)); ?></p>
                         </div>
                     </div>
                     <div class="why-item">
                         <div class="why-icon"><i class="fas fa-clock"></i></div>
                         <div>
-                            <h4>Open Daily</h4>
-                            <p>We're open every day so your schedule never gets in the way of your progress.</p>
+                            <h4><?php echo htmlspecialchars(getSetting('why_title_4', 'Open Daily', $settings)); ?></h4>
+                            <p><?php echo htmlspecialchars(getSetting('why_desc_4', "We're open every day so your schedule never gets in the way of your progress.", $settings)); ?></p>
                         </div>
                     </div>
                     <div class="why-item">
                         <div class="why-icon"><i class="fas fa-mobile-alt"></i></div>
                         <div>
-                            <h4>Online Booking</h4>
-                            <p>Book sessions, track progress, and manage your membership right from this platform.</p>
+                            <h4><?php echo htmlspecialchars(getSetting('why_title_5', 'Online Booking', $settings)); ?></h4>
+                            <p><?php echo htmlspecialchars(getSetting('why_desc_5', 'Book sessions, track progress, and manage your membership right from this platform.', $settings)); ?></p>
                         </div>
                     </div>
                     <div class="why-item">
                         <div class="why-icon"><i class="fas fa-heart"></i></div>
                         <div>
-                            <h4>Supportive Community</h4>
-                            <p>A welcoming environment for all fitness levels — beginners to advanced athletes.</p>
+                            <h4><?php echo htmlspecialchars(getSetting('why_title_6', 'Supportive Community', $settings)); ?></h4>
+                            <p><?php echo htmlspecialchars(getSetting('why_desc_6', 'A welcoming environment for all fitness levels — beginners to advanced athletes.', $settings)); ?></p>
                         </div>
                     </div>
                 </div>

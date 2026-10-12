@@ -395,6 +395,40 @@ $user = getCurrentUser();
                                 </div>
                                 <input type="text" id="footerTagline" class="settings-input" placeholder="Pushing your limits since 2014..." <?php echo !isAdmin() ? 'disabled' : ''; ?>>
                             </div>
+
+                            <!-- Why Join / Features items -->
+                            <div class="settings-subsection" style="margin-top: 28px; padding-top: 24px; border-top: 1px solid var(--dark-border);">
+                                <h3 style="margin-bottom: 4px;">Why Join Features</h3>
+                                <p class="settings-hint" style="margin-bottom: 20px;">Edit the six feature highlights shown in the "Why Join" section of the landing page</p>
+
+                                <?php
+                                $whyDefaults = [
+                                    1 => ['title' => 'Complete Equipment',  'desc' => 'Free weights, machines, cardio — everything you need under one roof in Naujan, Oriental Mindoro.'],
+                                    2 => ['title' => 'Be a Trainer',        'desc' => 'Our certified coaches build personalized programs tailored to your body and your goals.'],
+                                    3 => ['title' => '5-Star Rated',        'desc' => 'Consistently rated 5 stars by our members on Google. Real results, real community.'],
+                                    4 => ['title' => 'Open Daily',          'desc' => "We're open every day so your schedule never gets in the way of your progress."],
+                                    5 => ['title' => 'Online Booking',      'desc' => 'Book sessions, track progress, and manage your membership right from this platform.'],
+                                    6 => ['title' => 'Supportive Community','desc' => 'A welcoming environment for all fitness levels — beginners to advanced athletes.'],
+                                ];
+                                foreach ($whyDefaults as $n => $def): ?>
+                                <div style="background: var(--glass); border: 1px solid var(--dark-border); border-radius: 12px; padding: 16px; margin-bottom: 12px;">
+                                    <p style="font-size: 0.7rem; font-weight: 700; color: var(--dark-text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">Feature <?php echo $n; ?></p>
+                                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                                        <input type="text"
+                                               id="whyTitle<?php echo $n; ?>"
+                                               class="settings-input"
+                                               placeholder="<?php echo htmlspecialchars($def['title']); ?>"
+                                               <?php echo !isAdmin() ? 'disabled' : ''; ?>>
+                                        <textarea id="whyDesc<?php echo $n; ?>"
+                                                  class="settings-input"
+                                                  rows="2"
+                                                  placeholder="<?php echo htmlspecialchars($def['desc']); ?>"
+                                                  style="resize: vertical;"
+                                                  <?php echo !isAdmin() ? 'disabled' : ''; ?>></textarea>
+                                    </div>
+                                </div>
+                                <?php endforeach; ?>
+                            </div>
                         </div>
 
                         <?php if (isAdmin()): ?>
@@ -644,30 +678,30 @@ $user = getCurrentUser();
                             </button>
                         </div>
 
+                        <!-- Manage Gym Managers Section (inside Account tab, admin-only) -->
+                        <?php if (isAdmin()): ?>
+                        <div class="settings-subsection" style="margin-top: 48px; border-top: 1px solid var(--dark-border); padding-top: 32px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px;">
+                                <div>
+                                    <h3 style="margin-bottom: 4px;">Manage Gym Managers</h3>
+                                    <p class="settings-hint">Add gym managers who can oversee trainers and members but cannot access admin-only settings</p>
+                                </div>
+                                <button class="btn btn-primary" onclick="openAddManagerModal()">
+                                    <i class="fas fa-user-tie"></i> Add Manager
+                                </button>
+                            </div>
+
+                            <div id="managers-list" class="admins-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+                                <div style="grid-column: 1/-1; text-align: center; padding: 40px; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px dashed var(--dark-border);">
+                                    <i class="fas fa-user-tie" style="font-size: 2.5rem; color: var(--dark-text-secondary); opacity: 0.2; margin-bottom: 16px; display: block;"></i>
+                                    <p style="color: var(--dark-text-secondary);">Loading managers...</p>
+                                </div>
+                            </div>
+                        </div>
+                        <?php endif; ?>
+
                     </div>
                 </div>
-
-                <!-- Manage Trainer Managers Section -->
-                <?php if (isAdmin()): ?>
-                <div class="settings-subsection" style="margin-top: 48px; border-top: 1px solid var(--premium-border); padding-top: 32px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-                        <div>
-                            <h3 style="margin-bottom: 4px;">Manage Trainer Managers</h3>
-                            <p class="settings-hint">Add trainer managers who can oversee trainers and members but cannot access admin-only settings</p>
-                        </div>
-                        <button class="btn btn-primary" onclick="openAddManagerModal()">
-                            <i class="fas fa-user-tie"></i> Add Manager
-                        </button>
-                    </div>
-
-                    <div id="managers-list" class="admins-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
-                        <div style="grid-column: 1/-1; text-align: center; padding: 40px; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px dashed var(--premium-border);">
-                            <i class="fas fa-user-tie" style="font-size: 2.5rem; color: var(--premium-text-muted); opacity: 0.2; margin-bottom: 16px; display: block;"></i>
-                            <p style="color: var(--premium-text-muted);">Loading managers...</p>
-                        </div>
-                    </div>
-                </div>
-                <?php endif; ?>
 
                 <!-- Backup Settings -->
                 <?php if (isAdmin()): ?>
@@ -774,9 +808,9 @@ $user = getCurrentUser();
                         <div style="width: 28px; height: 28px; background: var(--primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff;">
                             <i class="fas fa-user-tie" style="font-size: 0.8rem;"></i>
                         </div>
-                        <h3 style="font-size: 1.25rem; font-weight: 800; color: #fff; letter-spacing: -0.8px;">Add Trainer Manager</h3>
+                        <h3 style="font-size: 1.25rem; font-weight: 800; color: #fff; letter-spacing: -0.8px;">Add Gym Manager</h3>
                     </div>
-                    <p style="color: var(--premium-text-muted); font-size: 0.8rem; font-weight: 500;">Create a new trainer manager account</p>
+                    <p style="color: var(--premium-text-muted); font-size: 0.8rem; font-weight: 500;">Create a new gym manager account</p>
                 </div>
                 <button class="close-modal" onclick="closeAddManagerModal()" style="background: var(--premium-input-bg); border: 1px solid var(--premium-border); width: 36px; height: 36px; border-radius: 12px; color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer;">
                     <i class="fas fa-times"></i>

@@ -322,6 +322,66 @@ $user = getCurrentUser();
             50% { transform: scale(1.1); }
             100% { transform: scale(1); }
         }
+
+        /* ── Packages grid ── */
+        .packages-grid-responsive {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 24px;
+            padding: 24px;
+        }
+
+        /* ── Exercise modal: two-column layout ── */
+        #exercisesTabContent {
+            grid-template-columns: 1.2fr 1fr;
+        }
+
+        /* ── Sets/Reps row inside add-exercise form ── */
+        .sets-reps-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        /* ── Responsive overrides ── */
+        @media (max-width: 900px) {
+            #exercisesTabContent {
+                grid-template-columns: 1fr !important;
+                padding: 0 20px 24px !important;
+                gap: 20px !important;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .packages-grid-responsive {
+                grid-template-columns: 1fr;
+                gap: 16px;
+                padding: 16px;
+            }
+
+            #exercisesTabContent {
+                padding: 0 16px 20px !important;
+            }
+
+            .sets-reps-row {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            /* Exercise modal width */
+            #exerciseModal .modal {
+                max-width: 100% !important;
+                width: 100% !important;
+                border-radius: 20px !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .packages-grid-responsive {
+                padding: 12px;
+                gap: 12px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -389,7 +449,7 @@ $user = getCurrentUser();
                 </div>
             </div>
             
-            <div id="packagesGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px; padding: 24px;">
+            <div id="packagesGrid" class="packages-grid-responsive">
                 <!-- Populated by JS -->
                 <div style="grid-column: 1/-1; text-align: center; padding: 40px;">
                     <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--primary);"></i>
@@ -464,7 +524,7 @@ $user = getCurrentUser();
                 <button class="notif-tab-btn" onclick="switchPackageTab('guidance')" id="pkgTabGuidance">Tips & Guidance</button>
             </div>
             
-            <div class="modal-body" id="exercisesTabContent" style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 32px; padding: 0 32px 32px;">
+            <div class="modal-body" id="exercisesTabContent" style="display: grid; gap: 32px; padding: 0 32px 32px;">
                 <!-- Current Plan List (Left) -->
                 <div>
                     <h4 style="font-size: 0.95rem; font-weight: 800; color: #fff; margin-bottom: 8px;">Current Package Plan</h4>
@@ -486,7 +546,7 @@ $user = getCurrentUser();
                                 <option value="">Choose an exercise...</option>
                             </select>
                         </div>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div class="sets-reps-row">
                             <div class="form-group">
                                 <label>Sets</label>
                                 <input type="number" id="exerciseSets" value="3" min="1" class="modern-input">
@@ -769,7 +829,7 @@ $user = getCurrentUser();
             document.getElementById('pkgTabGuidance').classList.toggle('active', tab === 'guidance');
             
             // Update content
-            document.getElementById('exercisesTabContent').style.display = tab === 'exercises' ? 'grid' : 'none';
+            document.getElementById('exercisesTabContent').style.display = tab === 'exercises' ? '' : 'none';
             document.getElementById('dietTabContent').style.display = tab === 'diet' ? 'block' : 'none';
             document.getElementById('guidanceTabContent').style.display = tab === 'guidance' ? 'block' : 'none';
         }

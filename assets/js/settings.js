@@ -234,7 +234,19 @@ async function loadSettings() {
                 yearsExperience: data.years_experience || '',
                 gallery: JSON.parse(data.about_images || '[]'),
                 heroImages: JSON.parse(data.hero_images || '[]'),
-                footerTagline: data.footer_tagline || ''
+                footerTagline: data.footer_tagline || '',
+                whyTitle1: data.why_title_1 || '',
+                whyDesc1:  data.why_desc_1  || '',
+                whyTitle2: data.why_title_2 || '',
+                whyDesc2:  data.why_desc_2  || '',
+                whyTitle3: data.why_title_3 || '',
+                whyDesc3:  data.why_desc_3  || '',
+                whyTitle4: data.why_title_4 || '',
+                whyDesc4:  data.why_desc_4  || '',
+                whyTitle5: data.why_title_5 || '',
+                whyDesc5:  data.why_desc_5  || '',
+                whyTitle6: data.why_title_6 || '',
+                whyDesc6:  data.why_desc_6  || ''
             };
             settingsData.account = {
                 adminName: data.admin_name || '',
@@ -296,6 +308,14 @@ function populateSettings() {
     if (yearsExperienceEl) yearsExperienceEl.value = settingsData.landing.yearsExperience;
     const footerTaglineEl = document.getElementById('footerTagline');
     if (footerTaglineEl) footerTaglineEl.value = settingsData.landing.footerTagline;
+
+    // Why-Join feature items
+    for (let n = 1; n <= 6; n++) {
+        const titleEl = document.getElementById('whyTitle' + n);
+        const descEl  = document.getElementById('whyDesc'  + n);
+        if (titleEl) titleEl.value = settingsData.landing['whyTitle' + n] || '';
+        if (descEl)  descEl.value  = settingsData.landing['whyDesc'  + n] || '';
+    }
 
     // Account settings
     const adminNameEl = document.getElementById('adminName');
@@ -402,6 +422,14 @@ function saveGeneralSettings() {
     formData.append('mission_text', document.getElementById('missionText').value.trim());
     formData.append('years_experience', document.getElementById('yearsExperience').value.trim());
     formData.append('footer_tagline', document.getElementById('footerTagline').value.trim());
+
+    // Why-Join feature items
+    for (let n = 1; n <= 6; n++) {
+        const titleEl = document.getElementById('whyTitle' + n);
+        const descEl  = document.getElementById('whyDesc'  + n);
+        if (titleEl) formData.append('why_title_' + n, titleEl.value.trim());
+        if (descEl)  formData.append('why_desc_'  + n, descEl.value.trim());
+    }
     
     // Send existing gallery paths as JSON
     formData.append('existing_gallery', JSON.stringify(settingsData.landing.gallery));
@@ -670,7 +698,7 @@ async function removeAdmin(id, name) {
 }
 
 // ============================================================
-// Manage Trainer Managers logic
+// Manage Gym Managers logic
 // ============================================================
 async function loadManagers() {
     const list = document.getElementById('managers-list');
@@ -685,7 +713,7 @@ async function loadManagers() {
                 list.innerHTML = `
                     <div style="grid-column: 1/-1; text-align: center; padding: 40px; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px dashed var(--premium-border);">
                         <i class="fas fa-user-tie" style="font-size: 2.5rem; color: var(--premium-text-muted); opacity: 0.2; margin-bottom: 16px; display: block;"></i>
-                        <p style="color: var(--premium-text-muted);">No trainer managers yet. Add one to help oversee the gym.</p>
+                        <p style="color: var(--premium-text-muted);">No gym managers yet. Add one to help oversee the gym.</p>
                     </div>
                 `;
                 return;
@@ -701,7 +729,7 @@ async function loadManagers() {
                             <div class="admin-item-name">${mgr.name}</div>
                             <div class="admin-item-email">${mgr.email}</div>
                             ${contact}
-                            <div class="admin-item-badge" style="background: rgba(243,156,18,0.15); color: #f39c12; border: 1px solid rgba(243,156,18,0.3);">Trainer Manager</div>
+                            <div class="admin-item-badge" style="background: rgba(243,156,18,0.15); color: #f39c12; border: 1px solid rgba(243,156,18,0.3);">Gym Manager</div>
                         </div>
                         <div class="admin-item-actions">
                             <button class="admin-action-btn" onclick="removeManager(${mgr.id}, '${mgr.name.replace(/'/g, "\\'")}')" title="Remove Manager">
@@ -751,7 +779,7 @@ async function handleAddManager(e) {
 
         const result = await response.json();
         if (result.success) {
-            showNotification('Trainer manager account created successfully!', 'success');
+            showNotification('Gym manager account created successfully!', 'success');
             closeAddManagerModal();
             loadManagers();
         } else {
@@ -767,7 +795,7 @@ async function handleAddManager(e) {
 }
 
 async function removeManager(id, name) {
-    if (!confirm(`Are you sure you want to remove ${name} as a trainer manager? They will lose manager access immediately.`)) return;
+    if (!confirm(`Are you sure you want to remove ${name} as a gym manager? They will lose manager access immediately.`)) return;
 
     try {
         const response = await fetch('../../api/settings/manage-managers.php', {
