@@ -256,6 +256,62 @@ function requireAdmin() {
     }
 }
 
+// ─── Admin-only guard (managers are NOT allowed) ───────────────────────────
+// Use this on: dashboard, trainers, packages, exercises, reports, walk-ins
+function requireAdminOnly() {
+    requireLogin();
+    if (!isAdmin()) {
+        if (isApiRequest()) {
+            if (!headers_sent()) header("Content-Type: application/json");
+            http_response_code(403);
+            echo json_encode([
+                'success' => false,
+                'message' => 'Administrator privileges required.',
+                'error_code' => 'FORBIDDEN'
+            ]);
+            exit();
+        }
+        $currentPath = $_SERVER['PHP_SELF'];
+        // Managers go to their allowed landing page (bookings)
+        if (isManager()) {
+            $redirectUrl = (strpos($currentPath, '/views/admin/') !== false) ? 'bookings.php' : 'views/admin/bookings.php';
+        } elseif (isTrainer()) {
+            $redirectUrl = (strpos($currentPath, '/views/admin/') !== false) ? '../trainer/dashboard.php' : 'views/trainer/dashboard.php';
+        } else {
+            $redirectUrl = (strpos($currentPath, '/views/admin/') !== false) ? '../user/dashboard.php' : 'views/user/dashboard.php';
+        }
+        header("Location: $redirectUrl");
+        exit();
+    }
+}
+
+// ─── Manager-accessible page guard ────────────────────────────────────────
+// Use this on: bookings, payments, members, equipment
+// Allows admin + manager; blocks trainers and plain users
+function requireManagerAccess() {
+    requireLogin();
+    if (!isAdmin() && !isManager()) {
+        if (isApiRequest()) {
+            if (!headers_sent()) header("Content-Type: application/json");
+            http_response_code(403);
+            echo json_encode([
+                'success' => false,
+                'message' => 'Manager or Admin privileges required.',
+                'error_code' => 'FORBIDDEN'
+            ]);
+            exit();
+        }
+        $currentPath = $_SERVER['PHP_SELF'];
+        if (isTrainer()) {
+            $redirectUrl = (strpos($currentPath, '/views/admin/') !== false) ? '../trainer/dashboard.php' : 'views/trainer/dashboard.php';
+        } else {
+            $redirectUrl = (strpos($currentPath, '/views/admin/') !== false) ? '../user/dashboard.php' : 'views/user/dashboard.php';
+        }
+        header("Location: $redirectUrl");
+        exit();
+    }
+}
+
 // Require trainer - redirect to user dashboard if not trainer, manager, or admin
 function requireTrainer() {
     requireLogin();

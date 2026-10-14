@@ -1,6 +1,6 @@
 <?php
 require_once '../../api/session.php';
-requireAdmin();
+requireAdminOnly();
 $user = getCurrentUser();
 ?>
 <!DOCTYPE html>

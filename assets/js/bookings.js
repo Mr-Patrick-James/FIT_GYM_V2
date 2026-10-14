@@ -506,6 +506,12 @@ function viewBooking(id) {
         } else {
             document.getElementById('notesGroup').style.display = 'none';
         }
+
+        // Pre-fill / clear the editable notes textarea
+        const notesTextarea = document.getElementById('modalTrainerNotes');
+        if (notesTextarea) {
+            notesTextarea.value = booking.status === 'pending' ? (booking.notes || '') : '';
+        }
         
         // Handle rejection reason input visibility
         const rejectionGroup = document.getElementById('rejectionReasonGroup');
@@ -779,6 +785,9 @@ async function verifyPayment() {
         if (booking.status === 'pending') {
             const trainerId = document.getElementById('modalTrainerSelect')?.value;
             const resolvedTrainerId = (trainerId && trainerId !== 'none') ? trainerId : null;
+            // Read notes from the textarea (if shown) or fall back to existing notes
+            const notesInput = document.getElementById('modalTrainerNotes');
+            const notesValue = (notesInput && notesInput.value.trim()) ? notesInput.value.trim() : (currentViewingBooking.notes || '');
             
             // Warn if trainer-assisted but no trainer selected/assigned, but still allow
             if (booking.is_trainer_assisted && !resolvedTrainerId) {
@@ -804,7 +813,7 @@ async function verifyPayment() {
                 },
                 body: JSON.stringify({
                     status: 'verified',
-                    notes: booking.notes || '',
+                    notes: notesValue,
                     trainer_id: resolvedTrainerId
                 })
             });

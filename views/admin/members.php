@@ -1,6 +1,6 @@
 <?php
 require_once '../../api/session.php';
-requireAdmin();
+requireManagerAccess();
 $user = getCurrentUser();
 ?>
 <!DOCTYPE html>
@@ -53,16 +53,20 @@ $user = getCurrentUser();
         </div>
         
         <ul class="nav-links">
+            <?php if (isAdmin()): ?>
             <li><a href="dashboard.php"><i class="fas fa-chart-line"></i> <span>Dashboard</span></a></li>
+            <?php endif; ?>
             <li><a href="bookings.php"><i class="fas fa-calendar-check"></i> <span>Bookings</span> <span class="badge" id="bookingsBadge">0</span></a></li>
             <li><a href="payments.php"><i class="fas fa-money-check"></i> <span>Payments</span></a></li>
             <li><a href="members.php" class="active"><i class="fas fa-users"></i> <span>Members</span></a></li>
+            <?php if (isAdmin()): ?>
             <li><a href="trainers.php"><i class="fas fa-user-tie"></i> <span>Trainers</span></a></li>
             <li><a href="packages.php"><i class="fas fa-dumbbell"></i> <span>Packages</span></a></li>
+            <?php endif; ?>
             <li><a href="equipment.php"><i class="fas fa-tools"></i> <span>Equipment</span></a></li>
+            <?php if (isAdmin()): ?>
             <li><a href="exercises.php"><i class="fas fa-running"></i> <span>Exercises</span></a></li>
             <li><a href="report.php"><i class="fas fa-file-invoice-dollar"></i> <span>Reports</span></a></li>
-            <?php if (isAdmin()): ?>
             <li><a href="settings.php"><i class="fas fa-cog"></i> <span>Settings</span></a></li>
             <?php endif; ?>
         </ul>

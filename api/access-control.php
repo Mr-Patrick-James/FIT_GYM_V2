@@ -39,20 +39,10 @@ define('ROLE_PERMISSIONS', [
         'view_own_profile',
         'view_own_bookings',
         'view_own_payments',
-        'manage_own_progress',
-        'view_trainer_info',
-        'manage_assigned_clients',
-        'view_client_progress',
-        'create_training_plans',
-        'manage_client_sessions',
         'manage_members',
-        'manage_trainers',
         'manage_bookings',
         'manage_payments',
-        'view_reports',
         'manage_inventory',
-        'manage_exercises',
-        'delete_records'
     ],
     'admin' => [
         'all_permissions', // Admin has access to everything

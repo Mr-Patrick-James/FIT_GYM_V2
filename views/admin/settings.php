@@ -1,8 +1,9 @@
 <?php
 require_once '../../api/session.php';
-requireAdmin();
+requireAdminOnly();
+// Double-guard: settings is strictly admin-only
 if (!isAdmin()) {
-    header('Location: dashboard.php');
+    header('Location: bookings.php');
     exit;
 }
 $user = getCurrentUser();

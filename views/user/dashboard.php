@@ -920,6 +920,24 @@ function getSetting($key, $default = '', $settings = [])
             backdrop-filter: blur(4px);
         }
 
+        /* Booking events on calendar */
+        .event-booking-start {
+            border-radius: 6px !important;
+            font-size: 0.72rem !important;
+            font-weight: 700 !important;
+            padding: 2px 6px !important;
+            border: none !important;
+        }
+
+        .event-booking-expiry {
+            border-radius: 6px !important;
+            font-size: 0.72rem !important;
+            font-weight: 700 !important;
+            padding: 2px 6px !important;
+            border: none !important;
+            opacity: 0.85;
+        }
+
         /* Floating Coach Corner Icon */
         .coach-corner-float {
             position: fixed;

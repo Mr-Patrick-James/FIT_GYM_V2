@@ -1,7 +1,7 @@
 <?php
 require_once '../../api/session.php';
 require_once '../../api/config.php';
-requireAdmin();
+requireManagerAccess();
 $user = getCurrentUser();
 
 // Load trainers directly via PHP — no fetch needed
@@ -283,16 +283,20 @@ try {
         </div>
         
         <ul class="nav-links">
+            <?php if (isAdmin()): ?>
             <li><a href="dashboard.php"><i class="fas fa-chart-line"></i> <span>Dashboard</span></a></li>
+            <?php endif; ?>
             <li><a href="bookings.php" class="active"><i class="fas fa-calendar-check"></i> <span>Bookings</span> <span class="badge" id="bookingsBadge">0</span></a></li>
             <li><a href="payments.php"><i class="fas fa-money-check"></i> <span>Payments</span></a></li>
             <li><a href="members.php"><i class="fas fa-users"></i> <span>Members</span></a></li>
+            <?php if (isAdmin()): ?>
             <li><a href="trainers.php"><i class="fas fa-user-tie"></i> <span>Trainers</span></a></li>
             <li><a href="packages.php"><i class="fas fa-dumbbell"></i> <span>Packages</span></a></li>
+            <?php endif; ?>
             <li><a href="equipment.php"><i class="fas fa-tools"></i> <span>Equipment</span></a></li>
+            <?php if (isAdmin()): ?>
             <li><a href="exercises.php"><i class="fas fa-running"></i> <span>Exercises</span></a></li>
             <li><a href="report.php"><i class="fas fa-file-invoice-dollar"></i> <span>Reports</span></a></li>
-            <?php if (isAdmin()): ?>
             <li><a href="settings.php"><i class="fas fa-cog"></i> <span>Settings</span></a></li>
             <?php endif; ?>
         </ul>
@@ -590,6 +594,13 @@ try {
                     <p style="font-size: 0.75rem; color: var(--dark-text-secondary); margin-top: 8px;">
                         This package is <strong>Trainer Assisted</strong>. You may assign a trainer or select <em>No Trainer</em> to verify without one.
                     </p>
+                    <!-- Notes for this assignment -->
+                    <label style="color: var(--primary-color); font-weight: 700; margin-top: 12px; margin-bottom: 6px; display: block;">
+                        <i class="fas fa-sticky-note"></i> Notes <span style="font-weight: 400; color: var(--dark-text-secondary);">(optional)</span>
+                    </label>
+                    <textarea id="modalTrainerNotes" rows="3"
+                        placeholder="Add any notes for this booking or trainer assignment..."
+                        style="width: 100%; padding: 10px; border-radius: 6px; background: var(--dark-card-bg); color: white; border: 1px solid var(--dark-border); resize: vertical; font-family: inherit; font-size: 0.85rem; line-height: 1.5;"></textarea>
                 </div>
 
                 <div class="detail-group" id="assignedTrainerGroup" style="display: none;">

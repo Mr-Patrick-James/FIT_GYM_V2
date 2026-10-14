@@ -762,13 +762,13 @@ body.light-mode select {
 
 .control-bar {
     display: flex;
-    flex-wrap: wrap; /* Allow tabs to wrap on smaller screens */
+    flex-wrap: nowrap; /* horizontal scroll on mobile; wrapping handled per-breakpoint above */
     gap: 10px;
     background: rgba(255, 255, 255, 0.03);
     padding: 8px;
     border-radius: 20px;
     border: 1px solid var(--dark-border);
-    width: 100%; /* Take full width to allow wrapping */
+    width: 100%;
 }
 
 .control-tab {
@@ -4417,5 +4417,77 @@ body.light-mode .theme-option.active {
     .trainer-notif-float {
         bottom: 24px;
         right: 20px;
+    }
+}
+
+
+/* ============================================================
+   CONTROL BAR — HORIZONTAL SCROLL ON MOBILE (final override)
+   Overrides all earlier wrap/stack rules so tabs never go
+   vertical on small screens. They scroll horizontally instead,
+   just like YouTube / Twitter chip bars.
+   ============================================================ */
+@media (max-width: 992px) {
+    .control-bar-container {
+        /* allow negative bleed so the bar touches screen edges */
+        margin-left: -20px;
+        margin-right: -20px;
+        padding-left: 20px;
+        padding-right: 20px;
+        overflow: hidden; /* clip the outer border-radius area */
+    }
+
+    .control-bar {
+        flex-wrap: nowrap !important;          /* never wrap to a new row */
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        scrollbar-width: none !important;      /* Firefox */
+        border-radius: 14px !important;
+        padding: 6px !important;
+        gap: 6px !important;
+        /* fade hint on right edge to indicate more tabs */
+        -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);
+        mask-image:         linear-gradient(to right, black 85%, transparent 100%);
+    }
+
+    .control-bar::-webkit-scrollbar {
+        display: none !important;              /* Chrome/Safari */
+    }
+
+    .control-tab {
+        flex: 0 0 auto !important;             /* fixed size, don't grow/shrink */
+        min-width: unset !important;
+        width: auto !important;
+        white-space: nowrap !important;
+        padding: 10px 16px !important;
+        font-size: 0.78rem !important;
+        border-radius: 10px !important;
+    }
+
+    .control-tab i {
+        font-size: 0.82rem !important;
+    }
+}
+
+@media (max-width: 600px) {
+    .control-tab {
+        padding: 9px 14px !important;
+        font-size: 0.75rem !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .control-bar-container {
+        margin-left: -12px;
+        margin-right: -12px;
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .control-tab {
+        padding: 8px 12px !important;
+        font-size: 0.72rem !important;
+        gap: 5px !important;
     }
 }

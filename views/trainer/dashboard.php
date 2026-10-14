@@ -20,7 +20,7 @@ $stmt->close();
 // Stats for trainer
 $totalMembers = 0;
 if ($trainerId) {
-    $res = $conn->query("SELECT COUNT(*) as count FROM bookings WHERE trainer_id = $trainerId AND status = 'verified'");
+    $res = $conn->query("SELECT COUNT(*) as count FROM bookings WHERE trainer_id = $trainerId AND status IN ('verified', 'expired')");
     if ($res) $totalMembers = $res->fetch_assoc()['count'];
 }
 

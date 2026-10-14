@@ -476,8 +476,51 @@ function formatDateISO(date) {
 
 async function getUserCalendarEvents() {
     const events = [];
-    
-    // 1. Add Trainer Workout Plans/Sessions for each booking
+
+    // 1. Add each booking as calendar events
+    for (const b of userBookings) {
+        const pkgName = b.package_name || b.pkg_name || 'Booking';
+        const statusColor = b.status === 'verified' ? '#22c55e'
+                          : b.status === 'expired'  ? '#6b7280'
+                          : '#f59e0b'; // pending
+
+        // Booking start date (created_at / paid date)
+        if (b.created_at) {
+            const startDate = b.created_at.split(' ')[0]; // YYYY-MM-DD
+            events.push({
+                id: `booking-start-${b.id}`,
+                title: `📋 ${pkgName}`,
+                start: startDate,
+                allDay: true,
+                backgroundColor: statusColor,
+                borderColor: statusColor,
+                textColor: '#fff',
+                classNames: ['event-booking-start'],
+                extendedProps: { type: 'booking_start', booking: b }
+            });
+        }
+
+        // Expiry date marker (only if different from start and booking is verified/expired)
+        if (b.expires_at && (b.status === 'verified' || b.status === 'expired')) {
+            const expiryDate = b.expires_at.split(' ')[0];
+            const startDate  = b.created_at ? b.created_at.split(' ')[0] : null;
+            if (expiryDate !== startDate) {
+                events.push({
+                    id: `booking-expiry-${b.id}`,
+                    title: `⏰ ${pkgName} expires`,
+                    start: expiryDate,
+                    allDay: true,
+                    backgroundColor: b.status === 'expired' ? '#ef4444' : '#f59e0b',
+                    borderColor:     b.status === 'expired' ? '#ef4444' : '#f59e0b',
+                    textColor: '#fff',
+                    classNames: ['event-booking-expiry'],
+                    extendedProps: { type: 'booking_expiry', booking: b }
+                });
+            }
+        }
+    }
+
+    // 2. Add Trainer Workout Plans/Sessions for each booking
     for (const b of userBookings) {
         if (b.status !== 'verified') continue;
         
@@ -2202,7 +2245,7 @@ function closeBookingModal() {
     const studentSection = document.getElementById('studentSection');
     if (studentSection) studentSection.style.display = 'none';
     const studentCheckboxRow = document.getElementById('studentCheckboxRow');
-    if (studentCheckboxRow) studentCheckboxRow.style.display = 'block';
+    if (studentCheckboxRow) studentCheckboxRow.style.display = 'none';  // hidden until a student package is selected
     const studentAutoNotice = document.getElementById('studentAutoNotice');
     if (studentAutoNotice) studentAutoNotice.style.display = 'none';
     removeStudentId();
@@ -2272,8 +2315,8 @@ function handlePackageSelectChange() {
         if (studentSection) studentSection.style.display = 'block';
         if (studentAutoNotice) studentAutoNotice.style.display = 'flex';
     } else if (packageName) {
-        // A non-student package is selected: show the optional checkbox, hide auto stuff
-        if (studentCheckboxRow) studentCheckboxRow.style.display = 'block';
+        // A non-student package: hide checkbox and student section entirely
+        if (studentCheckboxRow) studentCheckboxRow.style.display = 'none';
         if (studentAutoNotice) studentAutoNotice.style.display = 'none';
         if (isStudentCb) isStudentCb.checked = false;
         if (studentSection) studentSection.style.display = 'none';

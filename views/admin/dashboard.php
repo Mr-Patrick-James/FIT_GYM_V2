@@ -1,7 +1,7 @@
 <?php
 require_once '../../api/session.php';
 require_once '../../api/config.php';
-requireAdmin();
+requireAdminOnly();
 $user = getCurrentUser();
 
 // Fetch gym settings
@@ -40,7 +40,7 @@ function getSetting($key, $default = '', $settings = []) {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <!-- Dashboard Styles -->
-    <link rel="stylesheet" href="../../assets/css/dashboard.css?v=3.0">
+    <link rel="stylesheet" href="../../assets/css/dashboard.css?v=3.1">
     
     <!-- Apply theme immediately before page renders to prevent flash -->
     <script>
