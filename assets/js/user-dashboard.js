@@ -515,9 +515,9 @@ async function getUserCalendarEvents() {
                           : b.status === 'expired'  ? '#6b7280'
                           : '#f59e0b'; // pending
 
-        // Booking start date (created_at / paid date)
-        if (b.created_at) {
-            const startDate = b.created_at.split(' ')[0]; // YYYY-MM-DD
+        // Show the selected subscription start, not when payment was recorded.
+        const startDate = getBookingStartDate(b);
+        if (startDate) {
             events.push({
                 id: `booking-start-${b.id}`,
                 title: `📋 ${pkgName}`,
@@ -531,10 +531,10 @@ async function getUserCalendarEvents() {
             });
         }
 
-        // Expiry date marker (only if different from start and booking is verified/expired)
-        if (b.expires_at && (b.status === 'verified' || b.status === 'expired')) {
-            const expiryDate = b.expires_at.split(' ')[0];
-            const startDate  = b.created_at ? b.created_at.split(' ')[0] : null;
+        // Preserve stored expiry; calculate only when the recorded duration is valid.
+        const expiry = PackageDates.expiry(b);
+        if (expiry && (b.status === 'verified' || b.status === 'expired')) {
+            const expiryDate = PackageDates.today(expiry);
             if (expiryDate !== startDate) {
                 events.push({
                     id: `booking-expiry-${b.id}`,
@@ -776,20 +776,20 @@ function populatePackages() {
         
         let expiryDisplay = '';
         if (isActive) {
-            const expiryDate = activeBooking.expires_at ? new Date(activeBooking.expires_at) : new Date(new Date(activeBooking.booking_date || activeBooking.created_at).getTime() + parseDurationToDays(activeBooking.duration) * 86400000);
-            const diffTime = expiryDate.getTime() - new Date().getTime();
+            const expiryDate = PackageDates.expiry(activeBooking);
+            const diffTime = expiryDate ? expiryDate.getTime() - Date.now() : NaN;
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
             
-            let timeRemaining = '';
+            let timeRemaining = 'Expiry unavailable';
             if (diffDays > 0) timeRemaining = `${diffDays}d left`;
             else if (diffDays === 0) timeRemaining = `Expires today`;
-            else timeRemaining = 'Expired';
+            else if (diffDays < 0) timeRemaining = 'Expired';
 
             expiryDisplay = `
                 <div style="margin-top: 12px; padding: 10px; background: rgba(255,255,255,0.02); border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
                     <div style="display: flex; flex-direction: column; gap: 2px;">
                         <span style="font-size: 0.6rem; color: var(--dark-text-secondary); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Expires on</span>
-                        <span style="font-size: 0.75rem; color: #fff; font-weight: 700;">${formatDate(expiryDate)}</span>
+                        <span style="font-size: 0.75rem; color: #fff; font-weight: 700;">${PackageDates.displayDate(expiryDate)}</span>
                     </div>
                     <span style="font-size: 0.65rem; padding: 4px 8px; background: ${diffDays <= 7 ? 'rgba(245, 158, 11, 0.1)' : 'rgba(34, 197, 94, 0.1)'}; color: ${diffDays <= 7 ? 'var(--warning)' : '#22c55e'}; border-radius: 6px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">
                         ${timeRemaining}
@@ -954,6 +954,7 @@ function openEditBookingModal(bookingId) {
         packagesData.forEach(pkg => {
             const opt = document.createElement('option');
             opt.value = pkg.name;
+            opt.dataset.duration = pkg.duration || '';
             opt.textContent = `${pkg.name} - ₱${pkg.price} (${pkg.duration})`;
             if (pkg.name === (booking.package_name || booking.package)) {
                 opt.selected = true;
@@ -965,9 +966,9 @@ function openEditBookingModal(bookingId) {
     // Populate Date
     const dateInput = document.getElementById('editBookingDate');
     if (dateInput) {
-        dateInput.value = booking.booking_date || booking.created_at ? 
-            (booking.booking_date || booking.created_at).split(' ')[0] : '';
+        dateInput.value = getBookingStartDate(booking) || PackageDates.today();
     }
+    updateBookingDatePreview('editBooking');
 
     // Populate Contact
     const contactInput = document.getElementById('editBookingContact');
@@ -1688,18 +1689,17 @@ async function updateBookingPackageSelect() {
     }
     handlePackageSelectChange();
     updateBookingPriceSummary();
+    updateBookingDatePreview('editBooking');
 }
 
-// Select package for booking
-function selectPackageForBooking(packageName) {
+// Select package for booking after the dropdown has finished loading.
+async function selectPackageForBooking(packageName) {
     showSection('bookings');
-    updateBookingPackageSelect();
-    
-    // Wait for the UI to update before opening the modal
-    setTimeout(() => {
-        openBookingModal();
-        document.getElementById('bookingPackage').value = packageName;
-    }, 100);
+    await updateBookingPackageSelect();
+    document.getElementById('bookingPackage').value = packageName;
+    handlePackageSelectChange();
+    updateBookingPriceSummary();
+    openBookingModal();
 }
 
 // Populate bookings table
@@ -1779,13 +1779,10 @@ function createBookingRow(booking, includeExpiry = false) {
     let expiryDateDisplay = '-';
     let remainingDaysDisplay = '';
     if (booking.status === 'verified' || booking.status === 'pending' || booking.status === 'expired') {
-        const rawDate = booking.booking_date || booking.created_at || booking.date;
-        const dateObj = booking.expires_at ? new Date(booking.expires_at) : new Date(new Date(rawDate).getTime() + parseDurationToDays(booking.duration) * 86400000);
-        if (!isNaN(dateObj.getTime())) {
-            expiryDateDisplay = formatDate(dateObj);
-        }
+        const dateObj = PackageDates.expiry(booking);
+        expiryDateDisplay = PackageDates.displayDate(dateObj);
         
-        if (isActive) {
+        if (isActive && dateObj) {
             const diffTime = dateObj.getTime() - new Date().getTime();
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
             if (diffDays > 0) {
@@ -1828,7 +1825,7 @@ function createBookingRow(booking, includeExpiry = false) {
                 <div style="font-weight: 700;">${booking.package_name || booking.package}</div>
               
             </td>
-            <td data-label="Date">${formatDate(booking.booking_date || booking.date || booking.createdAt)}</td>
+            <td data-label="Date">${PackageDates.displayDate(getBookingStartDate(booking))}</td>
             <td data-label="Expiry Date">
                 <div style="font-weight: 600; color: ${isActive ? '#22c55e' : 'var(--dark-text-secondary)'};">
                     ${expiryDateDisplay}
@@ -1851,7 +1848,7 @@ function createBookingRow(booking, includeExpiry = false) {
                     </div>
                 ` : ''}
             </td>
-            <td data-label="Date">${formatDate(booking.booking_date || booking.date || booking.createdAt)}</td>
+            <td data-label="Date">${PackageDates.displayDate(getBookingStartDate(booking))}</td>
             <td data-label="Amount" style="font-weight: 800; color: var(--primary);">₱${parseFloat(booking.amount).toFixed(2)}</td>
             <td data-label="Status">${statusDisplay}</td>
             <td data-label="Actions">${commonActions}</td>
@@ -1883,7 +1880,7 @@ function populatePayments() {
         row.innerHTML = `
             <td data-label="Transaction ID">#${String(booking.id).padStart(6, '0')}</td>
             <td data-label="Package">${booking.package_name || booking.package}</td>
-            <td data-label="Date">${formatDate(booking.booking_date || booking.date || booking.createdAt)}</td>
+            <td data-label="Date">${PackageDates.displayDate(getBookingStartDate(booking))}</td>
             <td data-label="Amount" style="font-weight: 800;">₱${parseFloat(booking.amount).toFixed(2)}</td>
             <td data-label="Status"><span class="status-badge status-${booking.status}">${booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}</span></td>
         `;
@@ -1891,53 +1888,48 @@ function populatePayments() {
     });
 }
 
-// Update stats
-// Parse duration string (e.g., "30 Days", "1 Year") to number of days
+// Parse package duration using the shared inclusive calendar-day rules.
 function parseDurationToDays(durationStr) {
-    if (!durationStr) return 0;
-
-    // Examples in this project: "30 Day", "30 Days", "7 Days", "6 months", "1  month", "1 Year"
-    const str = String(durationStr).toLowerCase().trim();
-    const match = str.match(/(\d+)\s*([a-z]+)/i);
-    if (!match) return 0;
-
-    const value = parseInt(match[1], 10);
-    const unit = match[2] ? String(match[2]).toLowerCase() : '';
-
-    if (isNaN(value)) return 0;
-
-    if (unit.startsWith('day')) return value;
-    if (unit.startsWith('week')) return value * 7;
-    if (unit.startsWith('month')) return value * 30;
-    if (unit.startsWith('year')) return value * 365;
-
-    // Fallback (best-effort): treat unknown unit as "days"
-    return value;
+    return PackageDates.durationDays(durationStr);
 }
 
-// Check if a specific booking is currently active (not expired)
-function isBookingActive(booking) {
-    // 'expired' is now set explicitly by the backend
-    if (booking.status === 'expired') return false;
-    if (booking.status !== 'verified') return false;
-    
-    const now = new Date();
-    
-    // If backend already provided an expiry date, use it
-    if (booking.expires_at) {
-        return now <= new Date(booking.expires_at);
+// Subscription dates are recorded booking dates, not payment/creation timestamps.
+function getBookingStartDate(booking) {
+    const date = String(booking.booking_date || booking.date || '').slice(0, 10);
+    return PackageDates.calendarDate(date) ? date : null;
+}
+
+function getPackageMilestoneEvents(booking) {
+    const expiryDate = PackageDates.expiry(booking);
+    if (!expiryDate) return [];
+
+    const milestones = [{
+        title: 'Expiry',
+        start: PackageDates.today(expiryDate),
+        allDay: true,
+        color: '#ef4444',
+        classNames: ['event-milestone-expiry'],
+        extendedProps: { ...booking, type: 'expiry' }
+    }];
+    const start = getBookingStartDate(booking);
+    const end = PackageDates.calendarEnd(booking);
+    if (start && end && start < end) {
+        milestones.push({
+            start,
+            end,
+            display: 'background',
+            color: 'rgba(34, 197, 94, 0.08)',
+            allDay: true
+        });
     }
-    
-    // Fallback to client-side calculation
-    const bookingDate = new Date(booking.booking_date || booking.created_at);
-    const days = parseDurationToDays(booking.duration);
-    
-    if (days === 0) return false;
-    
-    const expiryDate = new Date(bookingDate);
-    expiryDate.setDate(expiryDate.getDate() + days);
-    
-    return now <= expiryDate;
+    return milestones;
+}
+
+// Check if a specific booking is currently active (not expired).
+function isBookingActive(booking) {
+    if (booking.status !== 'verified') return false;
+    const expiryDate = PackageDates.expiry(booking);
+    return expiryDate !== null && new Date() <= expiryDate;
 }
 
 // Check if a booking can be upgraded
@@ -1987,10 +1979,10 @@ function canRenewBooking(booking) {
     if (booking.status !== 'verified') return false;
     
     const now = new Date();
-    const expiryDate = booking.expires_at ? new Date(booking.expires_at) : new Date(new Date(booking.booking_date || booking.created_at).getTime() + parseDurationToDays(booking.duration) * 86400000);
+    const expiryDate = PackageDates.expiry(booking);
     
-    // Already expired — must buy a new package
-    if (now > expiryDate) return false;
+    // Unknown expiry is not renewable; already expired must buy a new package.
+    if (!expiryDate || now > expiryDate) return false;
     
     // Only allow renew if 7 days or less remain
     const diffTime = expiryDate.getTime() - now.getTime();
@@ -2042,8 +2034,8 @@ function updateStats() {
     if (activeVerifiedBookings.length > 0) {
         // Find the booking with the latest expiry date
         const latestActive = [...activeVerifiedBookings].sort((a, b) => {
-            const expA = a.expires_at ? new Date(a.expires_at).getTime() : (new Date(a.booking_date || a.created_at).getTime() + parseDurationToDays(a.duration) * 86400000);
-            const expB = b.expires_at ? new Date(b.expires_at).getTime() : (new Date(b.booking_date || b.created_at).getTime() + parseDurationToDays(b.duration) * 86400000);
+            const expA = PackageDates.expiry(a).getTime();
+            const expB = PackageDates.expiry(b).getTime();
             return expB - expA;
         })[0];
 
@@ -2067,10 +2059,10 @@ function updateStats() {
         if (membershipExpiry && membershipExpiryDate) {
             membershipExpiry.style.display = 'flex';
             if (membershipStartDate) {
-                membershipStartDate.textContent = formatDate(latestActive.booking_date || latestActive.created_at);
+                membershipStartDate.textContent = PackageDates.displayDate(getBookingStartDate(latestActive));
             }
-            const expiryDate = latestActive.expires_at ? new Date(latestActive.expires_at) : new Date(new Date(latestActive.booking_date || latestActive.created_at).getTime() + parseDurationToDays(latestActive.duration) * 86400000);
-            membershipExpiryDate.textContent = formatDate(expiryDate);
+            const expiryDate = PackageDates.expiry(latestActive);
+            membershipExpiryDate.textContent = PackageDates.displayDate(expiryDate);
             
             // Handle Dash Quick Actions
             const dashRenewBtn = document.getElementById('dashRenewBtn');
@@ -2155,10 +2147,10 @@ function updateStats() {
                 profileMembershipExpiryRow.style.display = 'flex';
                 const profileMembershipStartDate = document.getElementById('profileMembershipStartDate');
                 if (profileMembershipStartDate) {
-                    profileMembershipStartDate.textContent = formatDate(latestActive.booking_date || latestActive.created_at);
+                    profileMembershipStartDate.textContent = PackageDates.displayDate(getBookingStartDate(latestActive));
                 }
-                const expiryDate = latestActive.expires_at ? new Date(latestActive.expires_at) : new Date(new Date(latestActive.booking_date || latestActive.created_at).getTime() + parseDurationToDays(latestActive.duration) * 86400000);
-                profileMembershipExpiryDate.textContent = formatDate(expiryDate);
+                const expiryDate = PackageDates.expiry(latestActive);
+                profileMembershipExpiryDate.textContent = PackageDates.displayDate(expiryDate);
             }
         }
     } else {
@@ -2258,8 +2250,35 @@ async function saveInitialMeasurements(weight, height) {
     }
 }
 
+// Read-only preview; dates are never submitted or written back to historical bookings.
+function updateBookingDatePreview(prefix = 'booking') {
+    const packageSelect = document.getElementById(`${prefix}Package`);
+    const dateInput = document.getElementById(`${prefix}Date`);
+    const endInput = document.getElementById(`${prefix}EndDate`);
+    const daysInput = document.getElementById(`${prefix}DurationDays`);
+    const notice = document.getElementById(`${prefix}DateNotice`);
+    if (!packageSelect || !dateInput || !endInput || !daysInput) return;
+
+    const selectedPackage = packagesData.find(pkg => pkg.name === packageSelect.value);
+    const duration = selectedPackage ? selectedPackage.duration : packageSelect.selectedOptions[0]?.dataset.duration;
+    const dates = PackageDates.range(dateInput.value, duration);
+    endInput.value = dates ? dates.end_date : '';
+    daysInput.value = dates ? String(dates.duration_days) : '';
+    if (notice) {
+        notice.textContent = dates
+            ? 'Ends at 23:59:59 (Asia/Manila), including the booking date. Preview only; final expiry is confirmed by the server.'
+            : (packageSelect.value && dateInput.value
+                ? 'End date unavailable: the package duration or booking date is invalid.'
+                : 'Select a package and booking date to preview the inclusive end date.');
+    }
+}
+
 // Open booking modal
 function openBookingModal() {
+    const dateInput = document.getElementById('bookingDate');
+    if (dateInput && !dateInput.value) dateInput.value = PackageDates.today();
+    handlePackageSelectChange();
+    updateBookingPriceSummary();
     document.getElementById('bookingModal').classList.add('active');
     document.body.style.overflow = 'hidden';
 }
@@ -2280,6 +2299,8 @@ function closeBookingModal() {
     const studentAutoNotice = document.getElementById('studentAutoNotice');
     if (studentAutoNotice) studentAutoNotice.style.display = 'none';
     removeStudentId();
+    updateBookingDatePreview();
+    updateBookingPriceSummary();
 }
 
 // Handle file select
@@ -2333,6 +2354,7 @@ function isStudentPackage(packageName) {
 // Called every time the package dropdown changes.
 // Auto-shows / hides the student ID section and checkbox row.
 function handlePackageSelectChange() {
+    updateBookingDatePreview();
     const packageName = document.getElementById('bookingPackage')?.value || '';
     const studentCheckboxRow = document.getElementById('studentCheckboxRow');
     const studentSection     = document.getElementById('studentSection');
@@ -2671,7 +2693,7 @@ async function initTrainingCalendar(bookingId) {
                 events: [
                     {
                         title: '⭐ Subscription Started',
-                        start: (userBookings.find(b => b.id == bookingId)?.booking_date || userBookings.find(b => b.id == bookingId)?.date || userBookings.find(b => b.id == bookingId)?.created_at || '').split(' ')[0],
+                        start: getBookingStartDate(userBookings.find(b => b.id == bookingId) || {}),
                         allDay: true,
                         color: '#f59e0b',
                         display: 'block',
@@ -2800,37 +2822,7 @@ async function initModalCalendar(bookingId) {
                 const b = userBookings.find(b => b.id == bookingId);
                 if (!b) return successCallback([]);
                 
-                const milestones = [];
-                const startStr = b.booking_date || b.date || b.created_at;
-                
-                // Expiry Milestone
-                if (b.duration) {
-                    const days = parseDurationToDays(b.duration);
-                    if (days > 1) {
-                        const parts = startStr.split('-');
-                        const startDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-                        const endDate = new Date(startDate);
-                        endDate.setDate(endDate.getDate() + days);
-                        
-                        milestones.push({
-                            title: `Expiry`,
-                            start: formatDateISO(endDate),
-                            allDay: true,
-                            color: '#ef4444',
-                            classNames: ['event-milestone-expiry'],
-                            extendedProps: { type: 'expiry', ...b }
-                        });
-
-                        milestones.push({
-                            start: startStr,
-                            end: formatDateISO(new Date(endDate.getTime() + 86400000)),
-                            display: 'background',
-                            color: 'rgba(34, 197, 94, 0.08)',
-                            allDay: true
-                        });
-                    }
-                }
-                successCallback(milestones);
+                successCallback(getPackageMilestoneEvents(b));
             }
         ],
         eventClick: function(info) {
@@ -3031,10 +3023,10 @@ async function openCoachHub() {
     
     if (hubDatesRow && hubStart && hubExpiry) {
         hubDatesRow.style.display = 'flex';
-        hubStart.textContent = formatDate(activeWithTrainer.booking_date || activeWithTrainer.date || activeWithTrainer.created_at);
+        hubStart.textContent = PackageDates.displayDate(getBookingStartDate(activeWithTrainer));
         
-        const expDate = activeWithTrainer.expires_at ? new Date(activeWithTrainer.expires_at) : new Date(new Date(activeWithTrainer.booking_date || activeWithTrainer.created_at).getTime() + parseDurationToDays(activeWithTrainer.duration) * 86400000);
-        hubExpiry.textContent = formatDate(expDate);
+        const expDate = PackageDates.expiry(activeWithTrainer);
+        hubExpiry.textContent = PackageDates.displayDate(expDate);
     }
 
     // Initial Load
@@ -3116,38 +3108,7 @@ async function initCoachCalendar(bookingId) {
                 const b = userBookings.find(b => b.id == bookingId);
                 if (!b) return successCallback([]);
                 
-                const milestones = [];
-                const startStr = b.booking_date || b.date || b.created_at;
-                const pkgName = b.package_name || b.package || 'Plan';
-                
-                 // Expiry Milestone
-                 if (b.duration) {
-                     const days = parseDurationToDays(b.duration);
-                     if (days > 1) {
-                         const parts = startStr.split('-');
-                         const startDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-                         const endDate = new Date(startDate);
-                         endDate.setDate(endDate.getDate() + days);
-                         
-                         milestones.push({
-                             title: `Expiry`,
-                             start: formatDateISO(endDate),
-                             allDay: true,
-                             color: '#ef4444',
-                             classNames: ['event-milestone-expiry'],
-                             extendedProps: { type: 'expiry', ...b }
-                         });
-
-                        milestones.push({
-                            start: startStr,
-                            end: formatDateISO(new Date(endDate.getTime() + 86400000)),
-                            display: 'background',
-                            color: 'rgba(34, 197, 94, 0.08)',
-                            allDay: true
-                        });
-                    }
-                }
-                successCallback(milestones);
+                successCallback(getPackageMilestoneEvents(b));
             }
         ],
         eventClick: (info) => {
@@ -3332,7 +3293,7 @@ async function showBookingSummary(bookingId) {
                         </div>
                         <div style="padding: 16px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
                             <div style="font-size: 0.8rem; color: var(--dark-text-secondary); margin-bottom: 4px;">Booking Date</div>
-                            <div style="color: #fff; font-weight: 700;">${formatDate(booking.booking_date || booking.date || booking.createdAt)}</div>
+                            <div style="color: #fff; font-weight: 700;">${PackageDates.displayDate(getBookingStartDate(booking))}</div>
                         </div>
                         <div style="padding: 16px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
                             <div style="font-size: 0.8rem; color: var(--dark-text-secondary); margin-bottom: 4px;">Status</div>
@@ -3662,7 +3623,7 @@ function printBookingSummary(bookingId) {
         </div>
         <div class="info-box">
             <div class="info-label">Booking Date</div>
-            <div class="info-value">${formatDate(booking.booking_date || booking.date || booking.createdAt)}</div>
+            <div class="info-value">${PackageDates.displayDate(getBookingStartDate(booking))}</div>
         </div>
         <div class="info-box">
             <div class="info-label">Status</div>
@@ -3747,7 +3708,7 @@ function viewBookingDetails(bookingId) {
     // Update basic info
     document.getElementById('detailRef').textContent = `REF: #${String(booking.id).padStart(6, '0')}`;
     document.getElementById('detailPackage').querySelector('span').textContent = booking.package_name || booking.package;
-    document.getElementById('detailDate').querySelector('span').textContent = formatDate(booking.booking_date || booking.date || booking.createdAt);
+    document.getElementById('detailDate').querySelector('span').textContent = PackageDates.displayDate(getBookingStartDate(booking));
     document.getElementById('detailAmount').querySelector('span').textContent = '₱' + parseFloat(booking.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     document.getElementById('detailContact').querySelector('span').textContent = booking.contact || 'No contact provided';
     
@@ -3761,10 +3722,10 @@ function viewBookingDetails(bookingId) {
     // Handle Expiry
     const expiryContainer = document.getElementById('detailExpiryContainer');
     const expiryValue = document.getElementById('detailExpiry').querySelector('span');
-    if ((booking.status === 'verified' || booking.status === 'pending') && booking.duration) {
+    const expiryDate = PackageDates.expiry(booking);
+    if (booking.status === 'verified' || booking.status === 'pending' || booking.status === 'expired') {
         expiryContainer.style.display = 'block';
-        const expiryDate = booking.expires_at ? new Date(booking.expires_at) : new Date(new Date(booking.booking_date || booking.created_at).getTime() + parseDurationToDays(booking.duration) * 86400000);
-        expiryValue.textContent = formatDate(expiryDate);
+        expiryValue.textContent = PackageDates.displayDate(expiryDate);
         
         // Add remaining days indicator if active
         const isActive = isBookingActive(booking);
@@ -4445,6 +4406,22 @@ function showNotification(message, type = 'info') {
 
 // Setup event listeners
 function setupEventListeners() {
+    // Refresh package-date previews for date edits, pending-plan changes and resets.
+    ['booking', 'editBooking'].forEach(prefix => {
+        const dateInput = document.getElementById(`${prefix}Date`);
+        ['input', 'change'].forEach(type => {
+            dateInput?.addEventListener(type, () => updateBookingDatePreview(prefix));
+        });
+        if (prefix === 'editBooking') {
+            document.getElementById(`${prefix}Package`)?.addEventListener('change', () => updateBookingDatePreview(prefix));
+        }
+        document.getElementById(`${prefix}Form`)?.addEventListener('reset', () => {
+            // Reset values become available after the native reset event completes.
+            queueMicrotask(() => updateBookingDatePreview(prefix));
+        });
+        updateBookingDatePreview(prefix);
+    });
+
     // Mobile menu toggle
     const toggleBtn = document.getElementById('mobileMenuToggle');
     const sidebar = document.getElementById('sidebar');
@@ -4740,9 +4717,7 @@ async function loadTrainerSection() {
         document.getElementById('trainerEmailVal').textContent = t.trainer_email || 'N/A';
         document.getElementById('trainerClientsVal').textContent = t.total_clients || 0;
         document.getElementById('trainerPackageName').textContent = t.package_name || 'N/A';
-        document.getElementById('trainerExpiry').textContent = t.expires_at
-            ? new Date(t.expires_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
-            : 'No expiry';
+        document.getElementById('trainerExpiry').textContent = PackageDates.displayDate(t.expires_at);
 
         // Availability
         const availEl = document.getElementById('trainerAvailability');

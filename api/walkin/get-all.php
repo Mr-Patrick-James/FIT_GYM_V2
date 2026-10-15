@@ -1,6 +1,7 @@
 <?php
 require_once '../config.php';
 require_once '../session.php';
+require_once __DIR__ . '/../package-dates.php';
 requireManagerAccess();
 
 // Allow GET requests
@@ -77,6 +78,13 @@ try {
             break;
     }
     
+    // Keep the dedicated Walk-in list consistent even when Bookings has not been opened.
+    $gymTimestamp = packageGymNow()->format('Y-m-d H:i:s');
+    $expireStmt = $conn->prepare("UPDATE bookings SET status = 'expired' WHERE user_id IS NULL AND status = 'verified' AND expires_at IS NOT NULL AND expires_at < ?");
+    $expireStmt->bind_param('s', $gymTimestamp);
+    $expireStmt->execute();
+    $expireStmt->close();
+
     $stmt = $conn->prepare($sql);
     if (!empty($params)) {
         $stmt->bind_param($types, ...$params);

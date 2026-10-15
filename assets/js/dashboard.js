@@ -1041,8 +1041,8 @@ async function updateStats() {
                 // Active members = only currently verified (not expired)
                 let isActive = false;
                 if (booking.expires_at) {
-                    const exp = parseDatabaseDate(booking.expires_at);
-                    if (!isNaN(exp.getTime())) isActive = now <= exp;
+                    const exp = PackageDates.parseGymTimestamp(booking.expires_at);
+                    if (exp) isActive = now <= exp;
                 } else {
                     isActive = true; // no expiry = always active
                 }

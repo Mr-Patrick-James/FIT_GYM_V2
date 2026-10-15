@@ -2475,6 +2475,16 @@ function getSetting($key, $default = '', $settings = [])
                             </div>
 
                             <div class="form-group">
+                                <label for="bookingEndDate">Computed End Date (inclusive)</label>
+                                <input type="date" id="bookingEndDate" readonly aria-describedby="bookingDateNotice">
+                            </div>
+                            <div class="form-group">
+                                <label for="bookingDurationDays">Package Duration (calendar days)</label>
+                                <input type="text" id="bookingDurationDays" readonly aria-describedby="bookingDateNotice">
+                                <small id="bookingDateNotice" aria-live="polite" style="color: var(--dark-text-secondary); font-size: 0.75rem; margin-top: 4px; display: block;">Select a package and booking date to preview the inclusive end date.</small>
+                            </div>
+
+                            <div class="form-group">
                                 <label>Contact Number <span style="color: var(--warning);">*</span></label>
                                 <input type="tel" id="bookingContact" placeholder="09171234567" maxlength="11"
                                     pattern="[0-9]{11}" title="Please enter exactly 11 digits" required>
@@ -2627,6 +2637,16 @@ function getSetting($key, $default = '', $settings = [])
                             <div class="form-group">
                                 <label>Booking Date <span style="color: var(--warning);">*</span></label>
                                 <input type="date" id="editBookingDate" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="editBookingEndDate">Computed End Date (inclusive)</label>
+                                <input type="date" id="editBookingEndDate" readonly aria-describedby="editBookingDateNotice">
+                            </div>
+                            <div class="form-group">
+                                <label for="editBookingDurationDays">Package Duration (calendar days)</label>
+                                <input type="text" id="editBookingDurationDays" readonly aria-describedby="editBookingDateNotice">
+                                <small id="editBookingDateNotice" aria-live="polite" style="color: var(--dark-text-secondary); font-size: 0.75rem; margin-top: 4px; display: block;">Select a package and booking date to preview the inclusive end date.</small>
                             </div>
 
                             <div class="form-group">
@@ -3345,6 +3365,7 @@ function getSetting($key, $default = '', $settings = [])
     </div>
 
     <!-- Core App Logic -->
+    <script src="../../assets/js/package-dates.js?v=<?= time() ?>"></script>
     <script src="../../assets/js/user-dashboard.js?v=<?= time() ?>"></script>
     <script src="../../assets/js/theme.js"></script>
     <script src="../../assets/js/mobile-menu.js"></script>

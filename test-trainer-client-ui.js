@@ -7,6 +7,7 @@ const vm = require('node:vm');
 const { execFileSync } = require('node:child_process');
 const root = __dirname;
 const dateSource = fs.readFileSync(path.join(root, 'assets/js/trainer-dates.js'), 'utf8');
+const packageDateSource = fs.readFileSync(path.join(root, 'assets/js/package-dates.js'), 'utf8');
 const details = fs.readFileSync(path.join(root, 'views/trainer/client-details.php'), 'utf8');
 const members = fs.readFileSync(path.join(root, 'views/trainer/members.php'), 'utf8');
 
@@ -84,7 +85,7 @@ function fixture(view = 'details', canManage = true) {
     const marker = view === 'details' ? 'const bookingId' : 'let allClients';
     const source = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)]
         .find(match => match[1].includes(marker))[1];
-    vm.runInContext(dateSource + '\n' + renderFixturePhp(source).replace(
+    vm.runInContext(packageDateSource + '\n' + dateSource + '\n' + renderFixturePhp(source).replace(
         'const canManageBooking = true;', `const canManageBooking = ${canManage};`), context);
     context.showNotification = (message, type) => notifications.push({ message, type });
     for (const loader of ['loadTips', 'loadFood', 'loadProgress', 'loadSessions']) context[loader] = () => {};
@@ -311,5 +312,32 @@ function fixture(view = 'details', canManage = true) {
     assert.equal(edit.requests[0].data.booking_id, 31);
     assert.equal(edit.requests[0].data.member_id, 42);
     assert.equal(edit.requests[0].data.tip_id, 7);
-    console.log('PASS: trainer UI history visibility/grouping, renewal priority/selection, read-only controls, exact IDs, stale-plan isolation, successful saves, visible failures, retained inputs, dropdown and Manila date boundaries. Offline fixtures only.');
+
+    // Execute the actual trainer calendar loader, including its deferred fetches.
+    const milestonesFixture = fixture('members');
+    const timers = [];
+    const configs = [];
+    milestonesFixture.context.setTimeout = callback => timers.push(callback);
+    milestonesFixture.context.FullCalendar = { Calendar: class {
+        constructor(el, config) { configs.push(config); }
+        render() {} destroy() {} updateSize() {}
+    } };
+    milestonesFixture.context.fetch = async url => ({ json: async () =>
+        url.includes('get-progress-history') ? { success: true, data: [] } : [] });
+    for (const [duration, storedExpiry, end] of [
+        ['Daily', null, '2026-10-16'], ['Weekly', null, '2026-10-22'],
+        ['2 Years', '2026-10-19 23:59:59', '2026-10-19']
+    ]) {
+        vm.runInContext(`activeBookingId = 31; allClients = [{ booking_id: 31,
+            booking_date: '2026-10-16', created_at: '2026-10-01 10:00:00',
+            verified_at: '2026-10-02 11:00:00', duration: ${JSON.stringify(duration)},
+            expires_at: ${JSON.stringify(storedExpiry)} }];`, milestonesFixture.context);
+        await milestonesFixture.context.initProgressCalendar();
+        while (timers.length) await timers.shift()();
+        const events = configs.at(-1).events;
+        assert.equal(events.find(e => e.title === 'Paid').start, '2026-10-02', 'Payment milestone remains payment date');
+        assert.equal(events.find(e => e.title === 'Expiry').start, end, 'Daily/Weekly expiry uses selected start or purchased expiry');
+    }
+    assert.ok(members.indexOf('assets/js/package-dates.js') < members.indexOf('let allClients'));
+    console.log('PASS: trainer UI history, renewal/save access, dropdowns, Manila dates and purchased Daily/Weekly expiry milestones. Offline fixtures only.');
 })().catch(error => { console.error(error); process.exitCode = 1; });

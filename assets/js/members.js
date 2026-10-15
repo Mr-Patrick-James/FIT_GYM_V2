@@ -99,41 +99,16 @@ async function loadAllMembers() {
     return allMembers;
 }
 
-// Format date for display
+// Display the Philippine calendar date without browser-local shifts.
 function formatDateForDisplay(dateString) {
     if (!dateString) return 'N/A';
-    
-    try {
-        const date = new Date(dateString);
-        if (isNaN(date.getTime())) {
-            return dateString;
-        }
-        return date.toLocaleDateString('en-US', { 
-            year: 'numeric', 
-            month: 'short', 
-            day: 'numeric' 
-        });
-    } catch (e) {
-        return dateString;
-    }
+    const date = PackageDates.parseGymTimestamp(dateString);
+    return date ? PackageDates.displayDate(date) : dateString;
 }
 
 // Parse duration string (e.g., "30 Days", "1 Year") to number of days
 function parseDurationToDays(durationStr) {
-    if (!durationStr) return 0;
-    
-    const parts = durationStr.toLowerCase().split(' ');
-    const value = parseInt(parts[0]);
-    const unit = parts[1];
-    
-    if (isNaN(value)) return 0;
-    
-    if (unit.includes('day')) return value;
-    if (unit.includes('week')) return value * 7;
-    if (unit.includes('month')) return value * 30;
-    if (unit.includes('year')) return value * 365;
-    
-    return value;
+    return PackageDates.durationDays(durationStr) || 0;
 }
 
 // Check if member is active (has verified bookings that haven't expired)
@@ -144,9 +119,11 @@ function isMemberActive(member) {
     
     return member.verifiedBookings.some(booking => {
         if (booking.status !== 'verified') return false;
+        // Preserve legacy no-expiry member counts, matching Dashboard and trainer access.
+        // New bookings always receive a validated, finite expiry from the server.
         if (!booking.expires_at) return true;
-        const expiryDate = new Date(String(booking.expires_at).replace(' ', 'T'));
-        return !isNaN(expiryDate.getTime()) && now <= expiryDate;
+        const expiryDate = PackageDates.expiry(booking);
+        return expiryDate !== null && now <= expiryDate;
     });
 }
 
@@ -310,9 +287,9 @@ function switchTab(tab) {
     if (tab === 'calendar') renderCalendar();
 }
 
-// Calendar state
-let calendarYear = new Date().getFullYear();
-let calendarMonth = new Date().getMonth();
+// Calendar state follows the gym's calendar, not the viewer's timezone.
+let calendarYear = Number(PackageDates.today().slice(0, 4));
+let calendarMonth = Number(PackageDates.today().slice(5, 7)) - 1;
 
 function changeCalendarMonth(dir) {
     calendarMonth += dir;
@@ -331,17 +308,18 @@ function renderCalendar() {
     const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
     label.textContent = `${monthNames[calendarMonth]} ${calendarYear}`;
 
-    // Build a map of date → status
+    // Booking markers use the selected package start date, never a payment date.
     const dateMap = {};
     member.bookings.forEach(b => {
-        const d = new Date(b.booking_date || b.created_at);
-        const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-        dateMap[key] = b.status || 'pending';
+        const writtenDate = String(b.booking_date || b.date || '').slice(0, 10);
+        if (!PackageDates.calendarDate(writtenDate)) return;
+        const [year, month, day] = writtenDate.split('-').map(Number);
+        dateMap[`${year}-${month - 1}-${day}`] = b.status || 'pending';
     });
 
     const firstDay = new Date(calendarYear, calendarMonth, 1).getDay();
     const daysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate();
-    const today = new Date();
+    const [todayYear, todayMonth, todayDay] = PackageDates.today().split('-').map(Number);
 
     let html = '<div class="cal-grid">';
     ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d => {
@@ -353,7 +331,7 @@ function renderCalendar() {
     for (let d = 1; d <= daysInMonth; d++) {
         const key = `${calendarYear}-${calendarMonth}-${d}`;
         const status = dateMap[key];
-        const isToday = today.getFullYear() === calendarYear && today.getMonth() === calendarMonth && today.getDate() === d;
+        const isToday = todayYear === calendarYear && todayMonth - 1 === calendarMonth && todayDay === d;
         html += `<div class="cal-cell ${status ? 'has-booking ' + status : ''} ${isToday ? 'today' : ''}">
             <span>${d}</span>
             ${status ? `<div class="cal-dot ${status}"></div>` : ''}
@@ -397,14 +375,11 @@ function viewMember(memberId) {
         const pkgName = latestVerified.package_name || latestVerified.package || '—';
         document.getElementById('modalCurrentPackage').textContent = pkgName;
 
-        // Calculate expiry
-        const bookingDate = new Date(latestVerified.booking_date || latestVerified.created_at);
-        const days = parseDurationToDays(latestVerified.duration);
-        if (days > 0) {
-            const expiry = new Date(bookingDate);
-            expiry.setDate(expiry.getDate() + days);
+        // The purchased expiry is authoritative; don't recompute from verification.
+        const expiry = PackageDates.expiry(latestVerified);
+        if (expiry) {
             const expired = new Date() > expiry;
-            document.getElementById('modalPackageExpiry').textContent = formatDateForDisplay(expiry);
+            document.getElementById('modalPackageExpiry').textContent = PackageDates.displayDate(expiry);
             document.getElementById('modalPackageExpiry').style.color = expired ? 'var(--danger, #ef4444)' : 'var(--success)';
         } else {
             document.getElementById('modalPackageExpiry').textContent = '—';
@@ -443,9 +418,9 @@ function viewMember(memberId) {
     // Reset to overview tab
     switchTab('overview');
 
-    // Reset calendar to current month
-    calendarYear = new Date().getFullYear();
-    calendarMonth = new Date().getMonth();
+    // Reset calendar to the current Philippine month.
+    calendarYear = Number(PackageDates.today().slice(0, 4));
+    calendarMonth = Number(PackageDates.today().slice(5, 7)) - 1;
 
     document.getElementById('memberModal').classList.add('active');
 }

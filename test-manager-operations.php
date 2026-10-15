@@ -142,7 +142,7 @@ function tmBootstrap(array $statement): bool
     }
     $rest = tmJoin(array_slice($statement, 1));
     if (!preg_match('~^(?:__DIR__\.)?([\'"])([^\'"]+)\1;$~', $rest, $match)
-        || !in_array(basename(str_replace('\\', '/', $match[2])), ['session.php', 'config.php', 'email.php'], true)) {
+        || !in_array(basename(str_replace('\\', '/', $match[2])), ['session.php', 'config.php', 'email.php', 'package-dates.php'], true)) {
         throw new RuntimeException('Refusing unknown bootstrap include: ' . $rest);
     }
     return true;

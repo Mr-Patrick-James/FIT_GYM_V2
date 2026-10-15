@@ -99,6 +99,7 @@ class WalkinBookingsManager {
         
         // Package selection
         document.getElementById('packageSelect').addEventListener('change', () => this.updatePackageInfo());
+        document.getElementById('bookingDate').addEventListener('change', () => this.updatePackageInfo());
         
         // Payment method change
         document.getElementById('paymentMethod').addEventListener('change', (e) => this.handlePaymentMethodChange(e.target.value));
@@ -114,9 +115,8 @@ class WalkinBookingsManager {
     }
     
     setDefaultDate() {
-        const now = new Date();
-        const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-        document.getElementById('bookingDate').value = today;
+        document.getElementById('bookingDate').value = PackageDates.today();
+        this.updatePackageInfo();
     }
     
     async loadPackages() {
@@ -133,8 +133,10 @@ class WalkinBookingsManager {
                     option.value = pkg.name;
                     option.textContent = `${pkg.name} - ₱${parseFloat(pkg.price).toFixed(2)}`;
                     option.dataset.price = pkg.price;
+                    option.dataset.duration = pkg.duration;
                     packageSelect.appendChild(option);
                 });
+                this.updatePackageInfo();
             }
         } catch (error) {
             console.error('Error loading packages:', error);
@@ -254,48 +256,15 @@ class WalkinBookingsManager {
     
     // Parse duration string (e.g., "30 Days", "1 Year") to number of days
     parseDurationToDays(durationStr) {
-        if (!durationStr) return 0;
-
-        // Examples in this project: "30 Day", "30 Days", "7 Days", "6 months", "1  month"
-        const str = String(durationStr).toLowerCase().trim();
-        const match = str.match(/(\d+)\s*([a-z]+)/i);
-        if (!match) return 0;
-
-        const value = parseInt(match[1], 10);
-        const unit = match[2] ? String(match[2]).toLowerCase() : '';
-
-        if (isNaN(value)) return 0;
-
-        if (unit.startsWith('day')) return value;
-        if (unit.startsWith('week')) return value * 7;
-        if (unit.startsWith('month')) return value * 30;
-        if (unit.startsWith('year')) return value * 365;
-
-        // Fallback (best-effort)
-        return value;
+        return PackageDates.durationDays(durationStr) || 0;
     }
 
     // Check if a specific booking is currently active (not expired)
     isBookingActive(booking) {
         if (booking.status !== 'verified') return false;
         
-        const now = new Date();
-        
-        // If backend already provided an expiry date, use it
-        if (booking.expires_at) {
-            return now <= new Date(booking.expires_at);
-        }
-        
-        // Fallback to client-side calculation
-        const bookingDate = new Date(booking.booking_date || booking.created_at);
-        const days = this.parseDurationToDays(booking.duration);
-        
-        if (days === 0) return false;
-        
-        const expiryDate = new Date(bookingDate);
-        expiryDate.setDate(expiryDate.getDate() + days);
-        
-        return now <= expiryDate;
+        const expiryDate = PackageDates.expiry(booking);
+        return expiryDate !== null && new Date() <= expiryDate;
     }
 
     renderTable() {
@@ -494,7 +463,9 @@ class WalkinBookingsManager {
     updatePackageInfo() {
         const packageSelect = document.getElementById('packageSelect');
         const selectedOption = packageSelect.options[packageSelect.selectedIndex];
-        const price = selectedOption.dataset.price;
+        const price = selectedOption?.dataset.price;
+        const preview = document.getElementById('packageDatePreview');
+        if (preview) preview.textContent = PackageDates.previewText(document.getElementById('bookingDate').value, selectedOption?.dataset.duration);
         
         if (price) {
             // You can display the price somewhere if needed

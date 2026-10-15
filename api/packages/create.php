@@ -3,6 +3,7 @@ ob_start();
 require_once '../config.php';
 require_once '../session.php';
 require_once '../email.php';
+require_once __DIR__ . '/../package-dates.php';
 ob_end_clean();
 
 requireLogin();
@@ -30,6 +31,10 @@ $trainerIds = $data['trainer_ids'] ?? [];
 // Validation
 if (empty($name) || empty($duration) || empty($price)) {
     sendResponse(false, 'Package name, duration, and price are required', null, 400);
+}
+
+if (packageDurationDays($duration) === null) {
+    sendResponse(false, 'Invalid duration. Use Daily, Weekly, or a positive number of Days, Weeks, Months, or Years.', null, 400);
 }
 
 // Validate and clean price (remove ₱ symbol and commas)

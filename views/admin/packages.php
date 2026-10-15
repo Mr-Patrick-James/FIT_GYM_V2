@@ -238,7 +238,8 @@ $user = getCurrentUser();
                     
                     <div class="form-group">
                         <label>Duration <span style="color: var(--warning);">*</span></label>
-                        <input type="text" id="packageDuration" required placeholder="e.g., 30 Days">
+                        <input type="text" id="packageDuration" required placeholder="e.g., Daily, Weekly, 30 Days">
+                        <p style="font-size: 0.8rem; color: var(--dark-text-secondary); margin-top: 8px;">Daily = 1 day; Weekly = 7 days. The start date counts as day 1, ending at 11:59 PM Philippine time.</p>
                     </div>
                     
                     <div class="form-group">

@@ -1,6 +1,7 @@
 <?php
 require_once '../config.php';
 require_once '../session.php';
+require_once __DIR__ . '/../package-dates.php';
 
 // Allow POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -78,8 +79,16 @@ try {
         sendResponse(false, 'Missing required fields', null, 400);
     }
 
-    // First, auto-expire any verified bookings for this user that have already passed their expiry date
-    $conn->query("UPDATE bookings SET status = 'expired' WHERE user_id = $user_id AND status = 'verified' AND expires_at IS NOT NULL AND expires_at < NOW()");
+    // Derive expiry only from the selected package and the chosen gym-local start day.
+    $dates = requirePackageBookingDates($booking_date, $package['duration'] ?? '');
+    $booking_date = $dates['booking_date'];
+    $expiresAt = $dates['expires_at'];
+    $gymTimestamp = packageGymNow()->format('Y-m-d H:i:s');
+
+    // First, auto-expire this user's past bookings using the same gym-local clock.
+    $expireStmt = $conn->prepare("UPDATE bookings SET status = 'expired' WHERE user_id = ? AND status = 'verified' AND expires_at IS NOT NULL AND expires_at < ?");
+    $expireStmt->bind_param('is', $user_id, $gymTimestamp);
+    $expireStmt->execute();
 
     // Check if user already has an active (non-expired) verified or pending booking
     $existingBookingQuery = "SELECT id, package_name, status, expires_at FROM bookings 
@@ -94,7 +103,7 @@ try {
     if ($existingBooking) {
         // If user has a still-active verified booking (not expired)
         if ($existingBooking['status'] === 'verified') {
-            if (!$existingBooking['expires_at'] || $existingBooking['expires_at'] > date('Y-m-d H:i:s')) {
+            if (!$existingBooking['expires_at'] || $existingBooking['expires_at'] >= $gymTimestamp) {
                 sendResponse(false, 'You already have an active booking. Please wait for it to expire or upgrade to a higher package.', null, 409);
             }
         }
@@ -103,28 +112,6 @@ try {
         if ($existingBooking['status'] === 'pending') {
             sendResponse(false, 'You already have a pending booking. Please wait for it to be verified or rejected.', null, 409);
         }
-    }
-
-    // Compute expiry date immediately (so user/admin views can show it even before verification)
-    $expiresAt = null;
-    $duration = $package['duration'] ?? '';
-    $days = 0;
-    if (stripos($duration, 'Day') !== false) {
-        $days = (int)$duration;
-    } elseif (stripos($duration, 'Week') !== false) {
-        $days = (int)$duration * 7;
-    } elseif (stripos($duration, 'Month') !== false) {
-        $days = (int)$duration * 30;
-    } elseif (stripos($duration, 'Year') !== false) {
-        $days = (int)$duration * 365;
-    } else {
-        // Best-effort fallback: if duration begins with a number, treat as days
-        $days = (int) $duration;
-    }
-
-    if ($days > 0) {
-        // Subtract 1 because the booking date itself counts as day 1
-        $expiresAt = date('Y-m-d 23:59:59', strtotime($booking_date . ' +' . ($days - 1) . ' days'));
     }
 
     // No discount — student must just upload ID as proof, full price applies

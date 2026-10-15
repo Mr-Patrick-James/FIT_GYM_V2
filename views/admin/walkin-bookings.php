@@ -213,8 +213,9 @@ $user = getCurrentUser();
                 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="bookingDate">Booking Date</label>
-                        <input type="date" id="bookingDate" name="date">
+                        <label for="bookingDate">Package Start Date (Philippine time)</label>
+                        <input type="date" id="bookingDate" name="date" required>
+                        <p id="packageDatePreview" role="status" style="font-size: 0.8rem; color: var(--dark-text-secondary); margin-top: 8px;">Choose a package and start date to see its end date.</p>
                     </div>
                     <div class="form-group">
                         <label for="paymentMethod">Payment Method</label>
@@ -293,7 +294,8 @@ $user = getCurrentUser();
         </div>
     </div>
     
-    <script src="../../assets/js/walkin-bookings.js?v=2"></script>
+    <script src="../../assets/js/package-dates.js?v=1"></script>
+    <script src="../../assets/js/walkin-bookings.js?v=3"></script>
     <script src="../../assets/js/mobile-menu.js"></script>
  <script src="../../assets/js/role-restrictions.js?v=2"></script>
 </body>

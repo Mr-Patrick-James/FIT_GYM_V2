@@ -1,6 +1,7 @@
 <?php
 require_once '../config.php';
 require_once '../session.php';
+require_once __DIR__ . '/../package-dates.php';
 
 // Allow GET requests
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
@@ -51,10 +52,10 @@ try {
             $response['reason'] = 'pending_booking';
         }
         
-        // If user has a verified booking that hasn't expired
-        if ($currentBooking['status'] === 'verified' && $currentBooking['expires_at']) {
-            $currentTime = date('Y-m-d H:i:s');
-            if ($currentBooking['expires_at'] > $currentTime) {
+        // Match creation's active-booking rule, including legacy no-expiry bookings.
+        if ($currentBooking['status'] === 'verified') {
+            $currentTime = packageGymNow()->format('Y-m-d H:i:s');
+            if (!$currentBooking['expires_at'] || $currentBooking['expires_at'] >= $currentTime) {
                 $response['can_book'] = false;
                 $response['reason'] = 'active_booking';
                 

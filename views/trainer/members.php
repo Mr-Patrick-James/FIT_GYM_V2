@@ -1245,6 +1245,7 @@ $conn->close();
         </div>
     </div>
 
+    <script src="../../assets/js/package-dates.js?v=1"></script>
     <script src="../../assets/js/trainer-dates.js?v=1"></script>
     <script>
         let allClients = [];
@@ -1626,25 +1627,20 @@ $conn->close();
                         extendedProps: { type: 'milestone', category: 'paid', member: member }
                     });
 
-                    // Expiry Milestone
-                    if (member.duration) {
-                        const days = parseDurationToDays(member.duration);
-                        if (days > 1) {
-                            const parts = startStr.split('-');
-                            const startDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-                            const endDate = new Date(startDate);
-                            endDate.setDate(endDate.getDate() + days);
-                            
-                            milestones.push({
-                                id: `expiry-${activeBookingId}`,
-                                title: `Expiry`,
-                                start: formatDateISO(endDate),
-                                allDay: true,
-                                classNames: ['event-milestone-expiry'],
-                                extendedProps: { type: 'milestone', category: 'expiry', member: member }
-                            });
-                        }
-                    }
+                }
+
+                // Membership expiry comes from the purchased range, not the payment date.
+                // Daily passes also have an expiry milestone on their one gym day.
+                const expiry = PackageDates.expiry(member);
+                if (expiry) {
+                    milestones.push({
+                        id: `expiry-${activeBookingId}`,
+                        title: 'Expiry',
+                        start: PackageDates.today(expiry),
+                        allDay: true,
+                        classNames: ['event-milestone-expiry'],
+                        extendedProps: { type: 'milestone', category: 'expiry', member: member }
+                    });
                 }
 
                 // 4. Combine all events

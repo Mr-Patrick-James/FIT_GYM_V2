@@ -140,23 +140,11 @@ async function loadAllBookings() {
     return allBookings;
 }
 
-// Format date for display
+// Keep stored Philippine dates on the same calendar day in every browser timezone.
 function formatDateForDisplay(dateString) {
     if (!dateString) return 'N/A';
-    
-    try {
-        const date = new Date(dateString);
-        if (isNaN(date.getTime())) {
-            return dateString;
-        }
-        return date.toLocaleDateString('en-US', { 
-            year: 'numeric', 
-            month: 'short', 
-            day: 'numeric' 
-        });
-    } catch (e) {
-        return dateString;
-    }
+    const date = PackageDates.parseGymTimestamp(dateString);
+    return date ? PackageDates.displayDate(date) : dateString;
 }
 
 // Format date for filtering
@@ -267,42 +255,15 @@ async function applyFilters() {
 
 // Parse duration string (e.g., "30 Days", "1 Year") to number of days
 function parseDurationToDays(durationStr) {
-    if (!durationStr) return 0;
-    
-    const parts = durationStr.toLowerCase().split(' ');
-    const value = parseInt(parts[0]);
-    const unit = parts[1];
-    
-    if (isNaN(value)) return 0;
-    
-    if (unit.includes('day')) return value;
-    if (unit.includes('week')) return value * 7;
-    if (unit.includes('month')) return value * 30;
-    if (unit.includes('year')) return value * 365;
-    
-    return value;
+    return PackageDates.durationDays(durationStr) || 0;
 }
 
 // Check if a specific booking is currently active (not expired)
 function isBookingActive(booking) {
     if (booking.status !== 'verified') return false;
     
-    const now = new Date();
-    
-    // If backend already provided an expiry date, use it
-    if (booking.expires_at) {
-        return now <= new Date(booking.expires_at);
-    }
-    
-    const bookingDate = new Date(booking.booking_date || booking.createdAt);
-    const days = parseDurationToDays(booking.duration);
-    
-    if (days === 0) return false; // Or handle based on your business logic
-    
-    const expiryDate = new Date(bookingDate);
-    expiryDate.setDate(expiryDate.getDate() + days);
-    
-    return now <= expiryDate;
+    const expiryDate = PackageDates.expiry(booking);
+    return expiryDate !== null && new Date() <= expiryDate;
 }
 
 // Populate bookings table
@@ -1283,10 +1244,17 @@ function resetWalkinForm() {
     document.getElementById('walkinForm').reset();
 }
 
+function updateWalkinPackageDates() {
+    const preview = document.getElementById('packageDatePreview');
+    if (!preview) return;
+    const selectedName = document.getElementById('packageSelect').value;
+    const selectedPackage = packages.find(pkg => pkg.name === selectedName);
+    preview.textContent = PackageDates.previewText(document.getElementById('bookingDate').value, selectedPackage?.duration);
+}
+
 function setDefaultDate() {
-    const now = new Date();
-    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-    document.getElementById('bookingDate').value = today;
+    document.getElementById('bookingDate').value = PackageDates.today();
+    updateWalkinPackageDates();
 }
 
 async function loadPackages() {
@@ -1306,6 +1274,7 @@ async function loadPackages() {
                 option.dataset.price = pkg.price;
                 packageSelect.appendChild(option);
             });
+            updateWalkinPackageDates();
         }
     } catch (error) {
         console.error('Error loading packages:', error);
@@ -1329,6 +1298,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const walkinForm = document.getElementById('walkinForm');
     if (walkinForm) {
+        document.getElementById('packageSelect').addEventListener('change', updateWalkinPackageDates);
+        document.getElementById('bookingDate').addEventListener('change', updateWalkinPackageDates);
         walkinForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             

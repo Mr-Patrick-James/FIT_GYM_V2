@@ -1,6 +1,7 @@
 <?php
 require_once '../config.php';
 require_once '../session.php';
+require_once __DIR__ . '/../package-dates.php';
 
 ob_start();
 
@@ -58,16 +59,10 @@ try {
         sendResponse(false, 'Package not found or inactive', null, 404);
     }
 
-    // Pre-compute expiry based on booking_date + new duration
-    $days = 0;
-    $dur  = $package['duration'];
-    if (stripos($dur, 'Year')  !== false) $days = (int)$dur * 365;
-    elseif (stripos($dur, 'Month') !== false) $days = (int)$dur * 30;
-    elseif (stripos($dur, 'Week')  !== false) $days = (int)$dur * 7;
-    elseif (stripos($dur, 'Day')   !== false) $days = (int)$dur;
-    else $days = (int)$dur;
-
-    $expiresAt = $days > 0 ? date('Y-m-d H:i:s', strtotime($newDate . " + $days days")) : null;
+    // Editing a pending booking uses the same inclusive calendar-day range as creation.
+    $dates = requirePackageBookingDates($newDate, $package['duration'] ?? '');
+    $newDate = $dates['booking_date'];
+    $expiresAt = $dates['expires_at'];
     
     // Determine the receipt to use
     $finalReceipt = !empty($newReceipt) ? $newReceipt : $booking['receipt_url'];

@@ -3,6 +3,7 @@
 ob_start();
 require_once '../config.php';
 require_once '../session.php';
+require_once __DIR__ . '/../package-dates.php';
 
 // Clean any accidental output from config/session
 if (ob_get_length()) ob_clean();
@@ -99,8 +100,12 @@ try {
             break;
     }
     
-    // Auto-expire: update any verified bookings that have passed their expiry date
-    $conn->query("UPDATE bookings SET status = 'expired' WHERE status = 'verified' AND expires_at IS NOT NULL AND expires_at < NOW()");
+    // expires_at is a Manila-local DATETIME, independent of the DB session timezone.
+    $gymTimestamp = packageGymNow()->format('Y-m-d H:i:s');
+    $expireStmt = $conn->prepare("UPDATE bookings SET status = 'expired' WHERE status = 'verified' AND expires_at IS NOT NULL AND expires_at < ?");
+    $expireStmt->bind_param('s', $gymTimestamp);
+    $expireStmt->execute();
+    $expireStmt->close();
 
     $stmt = $conn->prepare($sql);
     if (!empty($params)) {

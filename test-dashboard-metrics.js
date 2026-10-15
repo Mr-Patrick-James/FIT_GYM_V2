@@ -53,6 +53,7 @@ const context = vm.createContext({
         return { ok: true, json: async () => ({ success: true, data: fixture[key] || [] }) };
     }
 });
+vm.runInContext(fs.readFileSync('assets/js/package-dates.js', 'utf8'), context);
 vm.runInContext(fs.readFileSync('assets/js/dashboard.js', 'utf8'), context);
 const run = code => vm.runInContext(code, context);
 const stats = (category, id) => run(`dashboardStats.${category}.find(s => s.id === '${id}').value`);
@@ -152,19 +153,22 @@ const stats = (category, id) => run(`dashboardStats.${category}.find(s => s.id =
         document: { title: 'Bookings fixture', addEventListener: (type, fn) => { if (type === 'DOMContentLoaded') bookingCallbacks.push(fn); }, getElementById: walkinElement, querySelector: () => null, querySelectorAll: () => [], createElement: () => walkinElement('option') },
         fetch: async url => { walkinRequests.push(url); return { ok: true, json: async () => ({ success: true, data: [{ id: 1, name: 'Fixture Package', price: 100 }] }) }; }
     });
+    vm.runInContext(fs.readFileSync('assets/js/package-dates.js', 'utf8'), bc);
+    const gymDay = vm.runInContext('PackageDates.today()', bc);
     vm.runInContext(fs.readFileSync('assets/js/bookings.js', 'utf8'), bc);
     bc.initPage = () => {}; // Isolate the real action=walkin callback from unrelated calendar setup.
     bookingCallbacks.forEach(fn => fn());
     await Promise.resolve();
     assert.ok(walkinElement('walkinModal').classList.contains('active'), 'Dashboard Walk-in URL must open the integrated modal');
-    assert.equal(walkinElement('bookingDate').value, day, 'Form reset must not clear the default local Walk-in date');
+    assert.equal(walkinElement('bookingDate').value, gymDay, 'Form reset must not clear the default Philippine Walk-in date');
     assert.ok(walkinRequests.includes('../../api/packages/get-all.php'));
     bc.closeWalkinModal();
     assert.equal(walkinElement('walkinModal').classList.contains('active'), false);
     bc.openWalkinModal();
     assert.ok(walkinElement('walkinModal').classList.contains('active'), 'Bookings New Walk-in button handler must reopen the modal');
-    assert.equal(walkinElement('bookingDate').value, day);
+    assert.equal(walkinElement('bookingDate').value, gymDay);
 
+    vm.runInContext(fs.readFileSync('assets/js/package-dates.js', 'utf8'), context);
     vm.runInContext(fs.readFileSync('assets/js/members.js', 'utf8'), context);
     assert.equal(context.isMemberActive({ verifiedBookings: [{ status: 'expired', expires_at: future }] }), false);
     assert.equal(context.isMemberActive({ verifiedBookings: [{ status: 'verified', expires_at: future }] }), true);

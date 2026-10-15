@@ -1,6 +1,7 @@
 <?php
 require_once '../config.php';
 require_once '../session.php';
+require_once __DIR__ . '/../package-dates.php';
 
 // Allow POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -46,10 +47,11 @@ try {
         sendResponse(false, 'No active booking found for upgrade', null, 404);
     }
     
-    // Check if current booking is still valid (not expired)
+    // Compare calendar-day expiry against the same Philippine clock used for new bookings.
+    $gymNow = packageGymNow();
     if ($currentBooking['expires_at']) {
-        $currentTime = date('Y-m-d H:i:s');
-        if ($currentBooking['expires_at'] <= $currentTime) {
+        $currentTime = $gymNow->format('Y-m-d H:i:s');
+        if ($currentBooking['expires_at'] < $currentTime) {
             sendResponse(false, 'Current booking has expired. Please create a new booking.', null, 400);
         }
     }
@@ -86,34 +88,10 @@ try {
     // Calculate upgrade price and new expiry date
     $upgradePrice = $targetPackage['price'] - $currentBooking['current_price'];
     
-    // Calculate remaining days from current booking
-    $remainingDays = 0;
-    if ($currentBooking['expires_at']) {
-        $currentTime = new DateTime();
-        $expiryTime = new DateTime($currentBooking['expires_at']);
-        $interval = $currentTime->diff($expiryTime);
-        $remainingDays = $interval->days;
-    }
-    
-    // Calculate new duration for target package
-    $targetDuration = $targetPackage['duration'] ?? '';
-    $targetDays = 0;
-    if (stripos($targetDuration, 'Day') !== false) {
-        $targetDays = (int)$targetDuration;
-    } elseif (stripos($targetDuration, 'Week') !== false) {
-        $targetDays = (int)$targetDuration * 7;
-    } elseif (stripos($targetDuration, 'Month') !== false) {
-        $targetDays = (int)$targetDuration * 30;
-    } elseif (stripos($targetDuration, 'Year') !== false) {
-        $targetDays = (int)$targetDuration * 365;
-    }
-    
-    // New expiry date starts from now with target package duration
-    $newExpiresAt = null;
-    if ($targetDays > 0) {
-        // Subtract 1 because today itself counts as day 1
-        $newExpiresAt = date('Y-m-d 23:59:59', strtotime('today +' . ($targetDays - 1) . ' days'));
-    }
+    // Preserve the existing upgrade policy: the new package starts today, without carryover.
+    $dates = requirePackageBookingDates($gymNow->format('Y-m-d'), $targetPackage['duration'] ?? '');
+    $upgradeBookingDate = $dates['booking_date'];
+    $newExpiresAt = $dates['expires_at'];
     
     // Start transaction
     $conn->begin_transaction();
@@ -140,7 +118,7 @@ try {
             $targetPackage['id'],
             $targetPackage['name'],
             $upgradePrice,
-            date('Y-m-d H:i:s'),
+            $upgradeBookingDate,
             $newExpiresAt,
             $upgradeNotes,
             $receipt_url

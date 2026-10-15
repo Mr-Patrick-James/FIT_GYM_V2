@@ -1,6 +1,7 @@
 <?php
 require_once '../config.php';
 require_once '../session.php';
+require_once __DIR__ . '/../package-dates.php';
 
 // Allow POST or PUT requests
 if ($_SERVER['REQUEST_METHOD'] !== 'POST' && $_SERVER['REQUEST_METHOD'] !== 'PUT') {
@@ -19,7 +20,7 @@ try {
     $input = json_decode(file_get_contents('php://input'), true);
     
     // Get the booking ID from the URL or JSON body
-    $bookingId = $_GET['id'] ?? ($input['id'] ?? null);
+    $bookingId = (int)($_GET['id'] ?? ($input['id'] ?? 0));
     
     if (!$input) {
         sendResponse(false, 'Invalid request data', null, 400);
@@ -38,6 +39,28 @@ try {
         sendResponse(false, 'Invalid status', null, 400);
     }
     
+    if ($bookingId <= 0) sendResponse(false, 'A valid booking ID is required.', null, 400);
+
+    // Validate before changing status. Keep the expiry purchased at booking time even
+    // if the package duration is edited later; only backfill a missing expiry.
+    $verificationExpiry = null;
+    if ($status === 'verified') {
+        $dateStmt = $conn->prepare("SELECT b.*, p.duration, p.name as package_name FROM bookings b
+            LEFT JOIN packages p ON b.package_id = p.id WHERE b.id = ?");
+        $dateStmt->bind_param('i', $bookingId);
+        $dateStmt->execute();
+        $dateBooking = $dateStmt->get_result()->fetch_assoc();
+        if (!$dateBooking) sendResponse(false, 'Booking not found.', null, 404);
+        if (!packageCalendarDate($dateBooking['booking_date'] ?? null)) {
+            sendResponse(false, 'The booking has an invalid start date. Please correct it before verification.', null, 400);
+        }
+        $verificationExpiry = $dateBooking['expires_at'];
+        if ($verificationExpiry === null) {
+            $dates = requirePackageBookingDates($dateBooking['booking_date'], $dateBooking['duration'] ?? '');
+            $verificationExpiry = $dates['expires_at'];
+        }
+    }
+
     // Update the booking
     if ($trainerId !== null) {
         $sql = "UPDATE bookings SET status = ?, notes = ?, trainer_id = ? WHERE id = ?";
@@ -57,9 +80,11 @@ try {
     
     // If status is verified, also add to payments and set expiry date
     if ($status === 'verified') {
-        // Set verification timestamp
-        $verifiedAt = date('Y-m-d H:i:s');
-        $conn->query("UPDATE bookings SET verified_at = '$verifiedAt' WHERE id = $bookingId");
+        // verified_at is a TIMESTAMP: let the DB store the actual instant, just like
+        // created_at. A Manila wall-clock literal would shift it on UTC DB sessions.
+        $verifiedStmt = $conn->prepare('UPDATE bookings SET verified_at = CURRENT_TIMESTAMP WHERE id = ?');
+        $verifiedStmt->bind_param('i', $bookingId);
+        $verifiedStmt->execute();
 
         // Get booking details to add to payments
         $sql = "SELECT b.*, p.duration, p.name as package_name FROM bookings b 
@@ -72,32 +97,11 @@ try {
         $booking = $bookingResult->fetch_assoc();
         
         if ($booking) {
-            // Calculate expiry based on ORIGINAL booking_date (not verification date!)
-            // Use the user's chosen booking_date as the membership start date
-            $originalBookingDate = $booking['booking_date'] ?? date('Y-m-d');
-            $startDate = date('Y-m-d H:i:s', strtotime($originalBookingDate)); // Convert to full timestamp
-            $duration = $booking['duration'];
-            
-            // Basic duration parsing
-            $days = 0;
-            if (stripos($duration, 'Day') !== false) {
-                $days = (int)$duration;
-            } elseif (stripos($duration, 'Week') !== false) {
-                $days = (int)$duration * 7;
-            } elseif (stripos($duration, 'Month') !== false) {
-                $days = (int)$duration * 30;
-            } elseif (stripos($duration, 'Year') !== false) {
-                $days = (int)$duration * 365;
-            }
-            
-            if ($days > 0) {
-                // Subtract 1 because the booking date itself counts as day 1
-                $expiresAt = date('Y-m-d 23:59:59', strtotime($originalBookingDate . ' +' . ($days - 1) . ' days'));
-                // IMPORTANT: Only update expires_at, NOT booking_date!
-                // booking_date should remain as the user's original chosen date
-                $expirySql = "UPDATE bookings SET expires_at = ? WHERE id = ?";
-                $expiryStmt = $conn->prepare($expirySql);
-                $expiryStmt->bind_param("si", $expiresAt, $bookingId);
+            $expiresAt = $verificationExpiry;
+            if ($booking['expires_at'] === null) {
+                // Never reset the start day or extend the purchased range on verification.
+                $expiryStmt = $conn->prepare('UPDATE bookings SET expires_at = ? WHERE id = ? AND expires_at IS NULL');
+                $expiryStmt->bind_param('si', $expiresAt, $bookingId);
                 $expiryStmt->execute();
             }
 

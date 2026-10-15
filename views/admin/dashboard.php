@@ -423,6 +423,7 @@ function getSetting($key, $default = '', $settings = []) {
     <!-- Theme Script -->
     <script src="../../assets/js/theme.js"></script>
     <!-- Dashboard Scripts -->
+    <script src="../../assets/js/package-dates.js?v=1"></script>
     <script src="../../assets/js/dashboard.js?v=<?= time() ?>"></script>
     <script src="../../assets/js/mobile-menu.js"></script>
  <script src="../../assets/js/role-restrictions.js?v=2"></script>

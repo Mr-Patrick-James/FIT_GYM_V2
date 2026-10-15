@@ -1,6 +1,7 @@
 <?php
 require_once '../config.php';
 require_once '../session.php';
+require_once __DIR__ . '/../package-dates.php';
 requireManagerAccess();
 
 // Allow POST requests
@@ -21,7 +22,7 @@ try {
     $customer_email = $input['customer_email'] ?? null;
     $customer_contact = $input['customer_contact'] ?? null;
     $package_name = $input['package'] ?? null;
-    $booking_date = $input['date'] ?? date('Y-m-d'); // Default to today if not provided
+    $booking_date = $input['date'] ?? packageGymNow()->format('Y-m-d');
     $notes = $input['notes'] ?? null;
     $receipt_url = $input['receipt'] ?? null;
     $payment_method = $input['payment_method'] ?? 'cash'; // Default payment method for walk-ins
@@ -40,7 +41,7 @@ try {
     }
     
     // Get package info
-    $packageQuery = "SELECT id, price FROM packages WHERE name = ? AND is_active = 1";
+    $packageQuery = "SELECT id, price, duration FROM packages WHERE name = ? AND is_active = 1";
     $packageStmt = $conn->prepare($packageQuery);
     $packageStmt->bind_param("s", $package_name);
     $packageStmt->execute();
@@ -51,14 +52,17 @@ try {
         sendResponse(false, 'Package not found or inactive', null, 404);
     }
     
-    // Insert walk-in booking into database (user_id will be NULL)
-    // Note: 'status' defaults to 'pending' in schema, but walk-ins should be 'verified'
-    $sql = "INSERT INTO bookings (user_id, name, email, contact, package_id, package_name, amount, booking_date, notes, receipt_url, status) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'verified')";
+    $dates = requirePackageBookingDates($booking_date, $package['duration'] ?? '');
+    $booking_date = $dates['booking_date'];
+    $expiresAt = $dates['expires_at'];
+
+    // Store the chosen start day and computed expiry together; never replace it with today.
+    $sql = "INSERT INTO bookings (user_id, name, email, contact, package_id, package_name, amount, booking_date, notes, receipt_url, expires_at, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'verified')";
     
     $stmt = $conn->prepare($sql);
     $nullUserId = null; // This makes user_id NULL for walk-in customers
-    $stmt->bind_param("isssisdsss", 
+    $stmt->bind_param("isssisdssss",
         $nullUserId,
         $customer_name,
         $customer_email,
@@ -68,7 +72,8 @@ try {
         $package['price'],
         $booking_date,
         $notes,
-        $receipt_url
+        $receipt_url,
+        $expiresAt
     );
     
     $result = $stmt->execute();
@@ -79,40 +84,6 @@ try {
     
     // Get the ID of the newly created booking
     $booking_id = $conn->insert_id;
-
-    // Set expiry date for walk-in booking immediately since it's verified/completed
-    $duration = null;
-    $durationQuery = "SELECT duration FROM packages WHERE id = ?";
-    $durationStmt = $conn->prepare($durationQuery);
-    $durationStmt->bind_param("i", $package['id']);
-    $durationStmt->execute();
-    $durationResult = $durationStmt->get_result();
-    if ($row = $durationResult->fetch_assoc()) {
-        $duration = $row['duration'];
-    }
-
-    if ($duration) {
-        $startDate = date('Y-m-d H:i:s');
-        $days = 0;
-        if (stripos($duration, 'Day') !== false) {
-            $days = (int)$duration;
-        } elseif (stripos($duration, 'Week') !== false) {
-            $days = (int)$duration * 7;
-        } elseif (stripos($duration, 'Month') !== false) {
-            $days = (int)$duration * 30;
-        } elseif (stripos($duration, 'Year') !== false) {
-            $days = (int)$duration * 365;
-        }
-
-        if ($days > 0) {
-            // Subtract 1 because the start date itself counts as day 1
-            $expiresAt = date('Y-m-d 23:59:59', strtotime($startDate . ' +' . ($days - 1) . ' days'));
-            $updateSql = "UPDATE bookings SET booking_date = ?, expires_at = ? WHERE id = ?";
-            $updateStmt = $conn->prepare($updateSql);
-            $updateStmt->bind_param("ssi", $startDate, $expiresAt, $booking_id);
-            $updateStmt->execute();
-        }
-    }
 
     // Create payment record for walk-in transaction
     // Use transaction_id to ensure uniqueness
@@ -162,7 +133,7 @@ try {
             'contact' => $customer_contact ?: 'N/A',
             'package_name' => $package_name,
             'amount' => $package['price'],
-            'booking_date' => date('Y-m-d'), // Walk-in is today
+            'booking_date' => $booking_date,
             'notes' => $notes ?: 'Walk-in booking'
         ]);
     } catch (Exception $e) {

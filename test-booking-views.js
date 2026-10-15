@@ -191,6 +191,7 @@ function fixture(role, failure = null) {
         }
     });
     if (failure !== 'cdn') context.FullCalendar = { Calendar };
+    vm.runInContext(fs.readFileSync(path.join(__dirname, 'assets/js/package-dates.js'), 'utf8'), context);
     vm.runInContext(script, context, { filename: path.join(__dirname, 'assets/js/bookings.js') });
     const run = code => vm.runInContext(code, context);
     const rows = () => el('bookingsTable').children.map(row => Number(row.innerHTML.match(/viewBooking\('([^']+)'\)/)[1]));
