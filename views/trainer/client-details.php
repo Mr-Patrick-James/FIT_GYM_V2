@@ -215,6 +215,19 @@ $questionnaire = $q_stmt->get_result()->fetch_assoc();
             outline: none !important;
         }
 
+        /* Fix select arrow — prevent native arrow + CSS arrow stacking */
+        select.form-control, select.modern-input {
+            appearance: none !important;
+            -webkit-appearance: none !important;
+            -moz-appearance: none !important;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Cpath fill='%23ffffff' fill-opacity='0.7' d='M7 10L2 5h10z'/%3E%3C/svg%3E") !important;
+            background-repeat: no-repeat !important;
+            background-position: right 14px center !important;
+            background-size: 14px !important;
+            padding-right: 40px !important;
+            cursor: pointer !important;
+        }
+
         .form-control:focus, .modern-input:focus {
             background: var(--premium-input-hover) !important;
             border-color: rgba(125, 125, 125, 0.2) !important;
