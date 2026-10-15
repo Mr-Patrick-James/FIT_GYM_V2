@@ -55,6 +55,8 @@ $user = getCurrentUser();
         <ul class="nav-links">
             <?php if (isAdmin()): ?>
             <li><a href="dashboard.php"><i class="fas fa-chart-line"></i> <span>Dashboard</span></a></li>
+            <?php else: ?>
+            <li><a href="manager-dashboard.php"><i class="fas fa-chart-line"></i> <span>Dashboard</span></a></li>
             <?php endif; ?>
             <li><a href="bookings.php"><i class="fas fa-calendar-check"></i> <span>Bookings</span> <span class="badge" id="bookingsBadge">0</span></a></li>
             <li><a href="payments.php"><i class="fas fa-money-check"></i> <span>Payments</span></a></li>

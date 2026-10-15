@@ -222,6 +222,27 @@ async function initDashboard() {
         
         // Update Coach Hub Indicator
         updateCoachHubIndicator();
+
+        // Load notification badge immediately on page load
+        try {
+            const resp = await fetch(getApiUrl('notifications/get-all.php'), { credentials: 'include' });
+            const data = await resp.json();
+            if (data.success) {
+                const unreadCount = data.data.filter(n => !n.is_read).length;
+                window._lastNotifIds = new Set(data.data.filter(n => !n.is_read).map(n => n.id));
+
+                const notifBadge = document.getElementById('notifBadge');
+                if (notifBadge) {
+                    notifBadge.textContent = unreadCount > 0 ? unreadCount : '0';
+                    notifBadge.style.display = unreadCount > 0 ? 'flex' : 'none';
+                }
+                const bookingsBadge = document.getElementById('bookingsBadge');
+                if (bookingsBadge) {
+                    bookingsBadge.textContent = unreadCount > 0 ? unreadCount : '0';
+                    bookingsBadge.style.display = unreadCount > 0 ? 'flex' : 'none';
+                }
+            }
+        } catch(e) { /* silent */ }
         
         // Allow backdated booking dates when needed; do not restrict the user to today or later.
         const bookingDateInput = document.getElementById('bookingDate');
@@ -4528,7 +4549,7 @@ function setupEventListeners() {
         }
     });
     
-    // Update data every few seconds
+    // Poll for real-time updates every 10 seconds
     setInterval(async () => {
         await loadUserBookings(); // Refresh bookings from database
         
@@ -4538,15 +4559,38 @@ function setupEventListeners() {
         populatePayments();
         updateUserCalendarEvents();
         updateCoachHubIndicator();
-        
-        // Update notification count
-        const notifBadge = document.getElementById('notifBadge');
-        const pendingCount = userBookings.filter(b => b.status === 'pending').length;
-        if (notifBadge) notifBadge.textContent = pendingCount || '0';
-        
-        const bookingsBadge = document.getElementById('bookingsBadge');
-        if (bookingsBadge) bookingsBadge.textContent = pendingCount || '0';
-    }, 3000); // 3 seconds interval is better for performance than 1 second
+
+        // Fetch real unread notification count from API
+        try {
+            const resp = await fetch(getApiUrl('notifications/get-all.php'), { credentials: 'include' });
+            const data = await resp.json();
+            if (data.success) {
+                const unreadCount = data.data.filter(n => !n.is_read).length;
+
+                const notifBadge = document.getElementById('notifBadge');
+                if (notifBadge) {
+                    notifBadge.textContent = unreadCount > 0 ? unreadCount : '0';
+                    notifBadge.style.display = unreadCount > 0 ? 'flex' : 'none';
+                }
+
+                const bookingsBadge = document.getElementById('bookingsBadge');
+                if (bookingsBadge) {
+                    bookingsBadge.textContent = unreadCount > 0 ? unreadCount : '0';
+                    bookingsBadge.style.display = unreadCount > 0 ? 'flex' : 'none';
+                }
+
+                // Pop a toast for any newly-arrived unread notification
+                // (compare against last known set so we only alert on new ones)
+                if (!window._lastNotifIds) window._lastNotifIds = new Set();
+                data.data.filter(n => !n.is_read).forEach(n => {
+                    if (!window._lastNotifIds.has(n.id)) {
+                        window._lastNotifIds.add(n.id);
+                        showNotification(`🔔 ${n.title}: ${n.message}`, 'info');
+                    }
+                });
+            }
+        } catch (e) { /* silent — don't break the poll */ }
+    }, 10000); // poll every 10 seconds
 
     // View toggle buttons
     const userTableBtn = document.getElementById('userTableViewBtn');

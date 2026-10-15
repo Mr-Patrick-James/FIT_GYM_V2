@@ -86,7 +86,7 @@ error_log("Session user_id: " . ($_SESSION['user_id'] ?? 'NOT SET'));
 if ($user['role'] === 'admin') {
     $redirect = 'views/admin/dashboard.php';
 } elseif ($user['role'] === 'manager') {
-    $redirect = 'views/admin/bookings.php'; // Managers land on bookings (their allowed entry point)
+    $redirect = 'views/admin/manager-dashboard.php'; // Managers get their own dashboard
 } elseif ($user['role'] === 'trainer') {
     $redirect = 'views/trainer/dashboard.php';
 } else {

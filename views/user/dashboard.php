@@ -105,11 +105,9 @@ function getSetting($key, $default = '', $settings = [])
         .survey-body,
         .recommendation-body {
             padding: 0 32px 24px;
-            /* Fill remaining space between header and footer; scroll when needed */
             flex: 1 1 auto;
             overflow-y: auto;
             overflow-x: hidden;
-            /* min-height prevents collapse on short steps */
             min-height: 0;
         }
 
@@ -522,18 +520,21 @@ function getSetting($key, $default = '', $settings = [])
         /* User Calendar View */
         .user-view-toggle {
             display: flex;
+        .user-view-toggle {
+            display: flex;
             background: var(--dark-card);
             padding: 4px;
             border-radius: var(--radius-md);
             border: 1px solid var(--dark-border);
             margin-left: auto;
-            gap: 6px;
-            flex-wrap: wrap;
-            justify-content: flex-end;
+            gap: 4px;
+            flex-wrap: nowrap; /* never wrap — stays as a single row */
         }
 
         .user-view-btn {
-            padding: 8px 14px;
+            padding: 10px 16px;
+            min-height: 44px;  /* minimum touch target */
+            min-width: 44px;
             border-radius: var(--radius-sm);
             border: none;
             background: transparent;
@@ -543,17 +544,18 @@ function getSetting($key, $default = '', $settings = [])
             cursor: pointer;
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 8px;
             transition: all 0.2s;
             white-space: nowrap;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
         }
 
         .user-view-btn.active {
             background: var(--primary);
             color: var(--dark-bg);
-        }
-
-        #userCalendarView {
+        }userCalendarView {
             display: none;
             margin: 16px 24px 24px;
             background: var(--dark-card);
@@ -574,13 +576,14 @@ function getSetting($key, $default = '', $settings = [])
             }
 
             .user-view-toggle {
-                width: 100%;
-                justify-content: stretch;
+                width: auto;
+                flex-wrap: nowrap;
             }
 
             .user-view-btn {
-                flex: 1 1 calc(50% - 6px);
-                min-width: 140px;
+                flex: 0 0 auto;
+                min-width: 44px;
+                padding: 10px 12px;
                 justify-content: center;
                 text-align: center;
             }
@@ -2098,11 +2101,11 @@ function getSetting($key, $default = '', $settings = [])
                     <h3>Booking History</h3>
                     <div style="display: flex; align-items: center; gap: 12px;">
                         <div class="user-view-toggle">
-                            <button class="user-view-btn active" id="userTableViewBtn" title="Table View">
+                            <button class="user-view-btn active" id="userTableViewBtn" title="Table View" onclick="toggleUserView('table')">
                                 <i class="fas fa-table"></i>
                                 <span>Table</span>
                             </button>
-                            <button class="user-view-btn" id="userCalendarViewBtn" title="Calendar View">
+                            <button class="user-view-btn" id="userCalendarViewBtn" title="Calendar View" onclick="toggleUserView('calendar')">
                                 <i class="fas fa-calendar-alt"></i>
                                 <span>Calendar</span>
                             </button>
@@ -2435,35 +2438,6 @@ function getSetting($key, $default = '', $settings = [])
                                 </button>
                             </form>
                         </div>
-                    </div>
-
-                    <div class="content-card">
-                        <div class="card-header">
-                            <h3><i class="fas fa-qrcode" style="margin-right: 12px; color: var(--primary);"></i>GCash
-                                Payment</h3>
-                        </div>
-                        <div class="gcash-info">
-                            <div class="qr-container">
-                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=GCash:09171234567"
-                                    alt="GCash QR Code" style="width: 100%; height: 100%; object-fit: contain;">
-                            </div>
-                            <div class="qr-info">
-                                <div class="payment-detail-item">
-                                    <span class="detail-label">ACCOUNT NAME</span>
-                                    <span class="detail-value">Martinez Fitness</span>
-                                </div>
-                                <div class="payment-detail-item">
-                                    <span class="detail-label">GCASH NUMBER</span>
-                                    <span class="detail-value">0917-123-4567</span>
-                                </div>
-                                <p
-                                    style="margin-top: 20px; font-size: 0.85rem; color: var(--dark-text-secondary); line-height: 1.4;">
-                                    Scan to pay for bookings. Don't forget to save your receipt for verification!
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     </main>

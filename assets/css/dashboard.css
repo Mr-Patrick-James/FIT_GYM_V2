@@ -1662,13 +1662,13 @@ tr:hover td {
 }
 
 .status-expired {
-    background: rgba(255, 255, 255, 0.1);
-    color: var(--primary);
-    border: 2px solid var(--glass-border);
+    background: rgba(239, 68, 68, 0.12);
+    color: #ef4444;
+    border: 2px solid rgba(239, 68, 68, 0.35);
 }
 
 .status-expired::before {
-    background: var(--primary);
+    background: #ef4444;
     animation: none;
 }
 

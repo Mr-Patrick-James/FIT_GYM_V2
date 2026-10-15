@@ -272,9 +272,9 @@ function requireAdminOnly() {
             exit();
         }
         $currentPath = $_SERVER['PHP_SELF'];
-        // Managers go to their allowed landing page (bookings)
+        // Managers go to their own dashboard
         if (isManager()) {
-            $redirectUrl = (strpos($currentPath, '/views/admin/') !== false) ? 'bookings.php' : 'views/admin/bookings.php';
+            $redirectUrl = (strpos($currentPath, '/views/admin/') !== false) ? 'manager-dashboard.php' : 'views/admin/manager-dashboard.php';
         } elseif (isTrainer()) {
             $redirectUrl = (strpos($currentPath, '/views/admin/') !== false) ? '../trainer/dashboard.php' : 'views/trainer/dashboard.php';
         } else {
