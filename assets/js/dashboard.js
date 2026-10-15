@@ -380,7 +380,7 @@ async function initializeChart(months = 6) {
     }
 
     allBookings
-        .filter(b => b.status === 'verified')
+        .filter(b => b.status === 'verified' || b.status === 'expired')
         .forEach(b => {
             const date = new Date(b.booking_date || b.created_at);
             const key = date.toLocaleDateString('en-US', { month: 'short' });
@@ -516,7 +516,7 @@ async function initializePackageStatsChart(startDate = null, endDate = null) {
     }
     
     allBookings
-        .filter(b => b.status === 'verified')
+        .filter(b => b.status === 'verified' || b.status === 'expired')
         .forEach(b => {
             const date = new Date(b.booking_date || b.created_at);
             if (date >= start && date <= end) {
@@ -690,7 +690,7 @@ function updatePackageSummaryCards(packageStats, selectedPkgName) {
         end.setHours(23, 59, 59, 999);
         
         allBookings
-            .filter(b => b.status === 'verified')
+            .filter(b => b.status === 'verified' || b.status === 'expired')
             .forEach(b => {
                 const date = new Date(b.booking_date || b.created_at);
                 if (date >= start && date <= end) {
@@ -982,14 +982,21 @@ async function updateStats() {
         const currentYear = now.getFullYear();
 
         // --- CALCULATION HELPERS ---
+        // NOTE: 'expired' bookings were once 'verified' — payment was collected for both.
+        // Revenue calculations must include expired bookings.
         const isVerified = (b) => b.status === 'verified';
-        const isPending = (b) => b.status === 'pending';
+        const isPaid     = (b) => b.status === 'verified' || b.status === 'expired';
+        const isPending  = (b) => b.status === 'pending';
         const isToday = (dateStr) => {
+            if (!dateStr) return false;
             const d = new Date(dateStr);
+            if (isNaN(d.getTime())) return false;
             return d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
         };
         const isThisMonth = (dateStr) => {
+            if (!dateStr) return false;
             const d = new Date(dateStr);
+            if (isNaN(d.getTime())) return false;
             return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
         };
 
@@ -998,13 +1005,18 @@ async function updateStats() {
         const activeMemberIdentifiers = new Set();
         
         allBookingsData.forEach(booking => {
-            if (isVerified(booking)) {
+            if (isPaid(booking)) {
+                // Count revenue for ALL paid bookings (verified + expired)
                 totalRevenue += parseFloat(booking.amount) || 0;
-                
+            }
+            if (isVerified(booking)) {
+                // Active members = only currently verified (not expired)
                 let isActive = false;
                 if (booking.expires_at) {
                     const exp = new Date(booking.expires_at);
                     if (!isNaN(exp.getTime())) isActive = now <= exp;
+                } else {
+                    isActive = true; // no expiry = always active
                 }
                 if (isActive) activeMemberIdentifiers.add(booking.user_id || booking.email || booking.name);
             }
@@ -1020,7 +1032,8 @@ async function updateStats() {
         // --- CATEGORY: BOOKINGS ---
         const totalBookings = allBookingsData.length;
         const pendingCount = allBookingsData.filter(isPending).length;
-        const verifiedToday = allBookingsData.filter(b => isVerified(b) && isToday(b.verified_at || b.updated_at)).length;
+        // "Verified today" = paid (verified or expired) bookings where payment date is today
+        const verifiedToday = allBookingsData.filter(b => isPaid(b) && isToday(b.verified_at || b.booking_date || b.created_at)).length;
         const rejectedCount = allBookingsData.filter(b => b.status === 'rejected').length;
         const rejectionRate = totalBookings > 0 ? Math.round((rejectedCount / totalBookings) * 100) : 0;
 
@@ -1037,15 +1050,17 @@ async function updateStats() {
         let pendingRev = 0;
         allBookingsData.forEach(b => {
             const amt = parseFloat(b.amount) || 0;
-            if (isVerified(b)) {
-                if (isThisMonth(b.verified_at || b.updated_at)) monthlyRev += amt;
-                if (isToday(b.verified_at || b.updated_at)) todayRev += amt;
+            if (isPaid(b)) {
+                // Use verified_at first, fall back to booking_date then created_at
+                const dateStr = b.verified_at || b.booking_date || b.created_at;
+                if (dateStr && isThisMonth(dateStr)) monthlyRev += amt;
+                if (dateStr && isToday(dateStr)) todayRev += amt;
             } else if (isPending(b)) {
                 pendingRev += amt;
             }
         });
-        const verifiedCount = allBookingsData.filter(isVerified).length;
-        const avgPayment = verifiedCount > 0 ? totalRevenue / verifiedCount : 0;
+        const paidCount = allBookingsData.filter(isPaid).length;
+        const avgPayment = paidCount > 0 ? totalRevenue / paidCount : 0;
 
         dashboardStats.payments = [
             { id: 'monthlyRevenueStat', label: 'Monthly Revenue', value: `₱${monthlyRev.toLocaleString()}`, icon: 'calendar-day', trend: 'Target: 80%', trendDir: 'up' },
@@ -1071,9 +1086,9 @@ async function updateStats() {
         const activeTrainers = trainersList.filter(t => t.is_active).length;
         const avgLoad = activeTrainers > 0 ? (activeMemberIdentifiers.size / activeTrainers).toFixed(1) : 0;
         
-        // Find most popular trainer
+        // Find most popular trainer (count across paid bookings)
         const trainerCounts = {};
-        allBookingsData.filter(isVerified).forEach(b => {
+        allBookingsData.filter(isPaid).forEach(b => {
             if (b.trainer_id) trainerCounts[b.trainer_id] = (trainerCounts[b.trainer_id] || 0) + 1;
         });
         let topTrainerId = Object.keys(trainerCounts).reduce((a, b) => trainerCounts[a] > trainerCounts[b] ? a : b, null);
