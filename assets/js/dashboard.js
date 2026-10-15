@@ -1,3 +1,11 @@
+function getApiUrl(path) {
+    const parts = window.location.pathname.split('/views/');
+    if (parts.length >= 2) {
+        const rootPath = parts[0] || '';
+        return window.location.origin + rootPath + '/api/' + path;
+    }
+    return '../../api/' + path;
+}
 // All bookings data - loaded from localStorage
 let allBookings = [];
 let lastBookingsJSON = '';
@@ -5,10 +13,29 @@ let lastPackagesJSON = '';
 let packagesData = [];
 let currentPackageMetric = 'bookings';
 
+const isPaidBooking = booking => ['verified', 'expired', 'upgraded'].includes(booking.status);
+
+// Match the sales report's verification/creation date, not the scheduled visit date.
+function getBookingSalesDate(booking) {
+    const date = isPaidBooking(booking)
+        ? booking.verified_at || booking.created_at || booking.booking_date
+        : booking.created_at || booking.booking_date;
+    return typeof date === 'string' ? date.slice(0, 10) : '';
+}
+
+function formatLocalDate(date) {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+function parseDatabaseDate(value) {
+    if (!value) return new Date(NaN);
+    return new Date(String(value).replace(' ', 'T'));
+}
+
 // Load all bookings from database
 async function loadAllBookings() {
     try {
-        const response = await fetch('../../api/bookings/get-all.php');
+        const response = await fetch(getApiUrl('bookings/get-all.php'));
         const data = await response.json();
         
         if (data.success) {
@@ -38,7 +65,7 @@ async function loadAllBookings() {
 // Load packages data from database
 async function loadPackagesData() {
     try {
-        const response = await fetch('../../api/packages/get-all.php');
+        const response = await fetch(getApiUrl('packages/get-all.php'));
         const data = await response.json();
         
         if (data.success) {
@@ -78,19 +105,20 @@ document.addEventListener('DOMContentLoaded', async function() {
     await loadPaymentSettings(); // Load dynamic GCash settings
     populateBookingsTable();
     populatePackages();
-    await initializeChart();
-    await initializePackageStatsChart();
-    updateStats();
-    setupEventListeners();
-    await loadAdminNotifications(); // Preload so notification badge is accurate
-    
-    // Set default dates for statistics filter
+
+    // Initialize controls before drawing so refreshes preserve the selected period.
     const now = new Date();
     const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
     const statsStartDate = document.getElementById('statsStartDate');
     const statsEndDate = document.getElementById('statsEndDate');
-    if (statsStartDate) statsStartDate.value = firstDay.toISOString().split('T')[0];
-    if (statsEndDate) statsEndDate.value = now.toISOString().split('T')[0];
+    if (statsStartDate) statsStartDate.value = formatLocalDate(firstDay);
+    if (statsEndDate) statsEndDate.value = formatLocalDate(now);
+
+    await updateStats();
+    setupEventListeners();
+    await initializeChart();
+    await initializePackageStatsChart();
+    await loadAdminNotifications(); // Preload so notification badge is accurate
     
     // Refresh bookings every 3 seconds
     setInterval(async () => {
@@ -113,8 +141,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }, 10000);
     
-    // Refresh payment settings every 30 seconds
+    // Refresh non-booking metrics even when no booking has changed.
     setInterval(async () => {
+        await updateStats();
         await loadPaymentSettings();
     }, 30000);
     
@@ -149,7 +178,7 @@ async function handleLogout() {
     }
     
     try {
-        const response = await fetch('../../api/auth/logout.php', {
+        const response = await fetch(getApiUrl('auth/logout.php'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' }
         });
@@ -171,7 +200,7 @@ async function handleLogout() {
 // Load dynamic payment settings from database
 async function loadPaymentSettings() {
     try {
-        const response = await fetch('../../api/settings/get.php');
+        const response = await fetch(getApiUrl('settings/get.php'));
         const result = await response.json();
         
         if (result.success) {
@@ -367,29 +396,26 @@ function populatePackages() {
 // Initialize revenue chart
 async function initializeChart(months = 6) {
     const canvas = document.getElementById('revenueChart');
-    if (!canvas) return;
+    if (!canvas || typeof Chart === 'undefined') return;
     const ctx = canvas.getContext('2d');
-    
-    // Group revenue by month for the specified number of months
+
+    // Include the year in the key so older years cannot leak into this chart.
     const monthlyRevenue = {};
+    const labels = [];
     const now = new Date();
     for (let i = months - 1; i >= 0; i--) {
         const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        const key = d.toLocaleDateString('en-US', { month: 'short' });
-        monthlyRevenue[key] = 0;
+        monthlyRevenue[formatLocalDate(d).slice(0, 7)] = 0;
+        labels.push(d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }));
     }
 
-    allBookings
-        .filter(b => b.status === 'verified' || b.status === 'expired')
-        .forEach(b => {
-            const date = new Date(b.booking_date || b.created_at);
-            const key = date.toLocaleDateString('en-US', { month: 'short' });
-            if (monthlyRevenue.hasOwnProperty(key)) {
-                monthlyRevenue[key] += parseFloat(b.amount) || 0;
-            }
-        });
+    allBookings.filter(isPaidBooking).forEach(b => {
+        const key = getBookingSalesDate(b).slice(0, 7);
+        if (Object.prototype.hasOwnProperty.call(monthlyRevenue, key)) {
+            monthlyRevenue[key] += parseFloat(b.amount) || 0;
+        }
+    });
 
-    const labels = Object.keys(monthlyRevenue);
     const data = Object.values(monthlyRevenue);
     
     const gradient = ctx.createLinearGradient(0, 0, 0, 400);
@@ -478,7 +504,7 @@ async function initializeChart(months = 6) {
 // Initialize package statistics chart
 async function initializePackageStatsChart(startDate = null, endDate = null) {
     const canvas = document.getElementById('packageStatsChart');
-    if (!canvas) return;
+    if (!canvas || typeof Chart === 'undefined') return;
     const ctx = canvas.getContext('2d');
     
     // Default to current month if no dates provided
@@ -491,15 +517,11 @@ async function initializePackageStatsChart(startDate = null, endDate = null) {
         if (!startDate || !endDate) {
             const now = new Date();
             const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-            startDate = firstDay.toISOString().split('T')[0];
-            endDate = now.toISOString().split('T')[0];
+            startDate = formatLocalDate(firstDay);
+            endDate = formatLocalDate(now);
         }
     }
-    
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    end.setHours(23, 59, 59, 999);
-    
+
     const packageFilter = document.getElementById('packageFilter');
     const selectedPkgName = packageFilter ? packageFilter.value : 'all';
     
@@ -515,22 +537,20 @@ async function initializePackageStatsChart(startDate = null, endDate = null) {
         packageStats[selectedPkgName] = { bookings: 0, revenue: 0 };
     }
     
-    allBookings
-        .filter(b => b.status === 'verified' || b.status === 'expired')
-        .forEach(b => {
-            const date = new Date(b.booking_date || b.created_at);
-            if (date >= start && date <= end) {
-                const pkgName = b.package_name || b.package || 'Other';
-                
-                if (selectedPkgName === 'all' || pkgName === selectedPkgName) {
-                    if (!packageStats[pkgName]) {
-                        packageStats[pkgName] = { bookings: 0, revenue: 0 };
-                    }
-                    packageStats[pkgName].bookings += 1;
-                    packageStats[pkgName].revenue += parseFloat(b.amount) || 0;
+    allBookings.forEach(b => {
+        const date = getBookingSalesDate(b);
+        if (date && date >= startDate && date <= endDate) {
+            const pkgName = b.package_name || b.package || 'Other';
+            if (selectedPkgName === 'all' || pkgName === selectedPkgName) {
+                if (!packageStats[pkgName]) {
+                    packageStats[pkgName] = { bookings: 0, revenue: 0 };
                 }
+                // Same as report total_availed: all requests, revenue only when paid.
+                packageStats[pkgName].bookings += 1;
+                if (isPaidBooking(b)) packageStats[pkgName].revenue += parseFloat(b.amount) || 0;
             }
-        });
+        }
+    });
 
     const labels = Object.keys(packageStats);
     const bookingsData = labels.map(label => packageStats[label].bookings);
@@ -685,19 +705,13 @@ function updatePackageSummaryCards(packageStats, selectedPkgName) {
         const allPackageStats = {};
         const startDate = document.getElementById('statsStartDate').value;
         const endDate = document.getElementById('statsEndDate').value;
-        const start = new Date(startDate);
-        const end = new Date(endDate);
-        end.setHours(23, 59, 59, 999);
-        
-        allBookings
-            .filter(b => b.status === 'verified' || b.status === 'expired')
-            .forEach(b => {
-                const date = new Date(b.booking_date || b.created_at);
-                if (date >= start && date <= end) {
-                    const pkgName = b.package_name || b.package || 'Other';
-                    allPackageStats[pkgName] = (allPackageStats[pkgName] || 0) + 1;
-                }
-            });
+        allBookings.forEach(b => {
+            const date = getBookingSalesDate(b);
+            if (date && date >= startDate && date <= endDate) {
+                const pkgName = b.package_name || b.package || 'Other';
+                allPackageStats[pkgName] = (allPackageStats[pkgName] || 0) + 1;
+            }
+        });
             
         Object.entries(allPackageStats).forEach(([name, count]) => {
             if (count > topPkg.bookings) {
@@ -709,7 +723,7 @@ function updatePackageSummaryCards(packageStats, selectedPkgName) {
     selectedPkgBookingsEl.textContent = totalBookings;
     selectedPkgRevenueEl.textContent = `₱${totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
     
-    if (topPkg.bookings >= 0) {
+    if (topPkg.bookings > 0) {
         topPackageNameEl.textContent = topPkg.name;
         topPackageStatEl.textContent = `${topPkg.bookings} booking${topPkg.bookings !== 1 ? 's' : ''}`;
     } else {
@@ -832,16 +846,22 @@ async function verifyBooking(id) {
     if (booking.status === 'pending') {
         if (confirm(`Verify payment for ${booking.user_name || booking.name || 'this user'}?`)) {
             try {
-                const response = await fetch('../../api/bookings/update.php', {
+                const response = await fetch(getApiUrl('bookings/update.php'), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ id: id, status: 'verified' })
                 });
                 const result = await response.json();
-                
+                if (!response.ok || !result.success) {
+                    showNotification(result.message || 'Unable to verify payment', 'warning');
+                    return;
+                }
+
                 await loadAllBookings();
                 populateBookingsTable();
-                updateStats();
+                await updateStats();
+                await initializeChart();
+                await initializePackageStatsChart();
                 showNotification(`Payment for ${booking.user_name || booking.name || 'user'} has been verified!`, 'success');
                 if (currentViewingBooking && currentViewingBooking.id === id) closeModal();
             } catch (error) {
@@ -874,7 +894,7 @@ async function rejectPayment() {
     const booking = currentViewingBooking;
     if (confirm(`Reject payment for ${booking.user_name || booking.name || 'this user'}? The client will be notified.`)) {
         try {
-            const response = await fetch('../../api/bookings/update.php', {
+            const response = await fetch(getApiUrl('bookings/update.php'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id: booking.id, status: 'rejected' })
@@ -907,8 +927,14 @@ let dashboardStats = {
     inventory: []
 };
 
+// Only the server-rendered admin dashboard can request trainer management data.
+function canViewTrainerStats() {
+    return document.body?.dataset?.canManageTrainers === 'true';
+}
+
 // Switch Control Tab
 function switchControlTab(tab) {
+    if (!(tab in dashboardStats) || (tab === 'trainers' && !canViewTrainerStats())) return;
     currentControlTab = tab;
     
     // Update active tab UI
@@ -957,25 +983,33 @@ function renderStatsGrid() {
     });
 }
 
+// A failed auxiliary API must not leave every dashboard category stuck at zero.
+async function fetchStatsData(path) {
+    try {
+        const response = await fetch(getApiUrl(path));
+        const result = await response.json();
+        if (!response.ok || !result.success || !Array.isArray(result.data)) {
+            throw new Error(result.message || 'Invalid statistics response');
+        }
+        return result;
+    } catch (error) {
+        console.error(`Unable to load ${path}:`, error);
+        return { success: false, data: [] };
+    }
+}
+
 // Update stats
 async function updateStats() {
-    // 1. Fetch all required data
     try {
-        const [usersRes, bookingsRes, trainersRes, equipRes, exercisesRes] = await Promise.all([
-            fetch('../../api/users/get-all.php?role=user'),
-            fetch('../../api/bookings/get-all.php'),
-            fetch('../../api/trainers/get-all.php'),
-            fetch('../../api/equipment/get-all.php'),
-            fetch('../../api/exercises/get-all.php')
+        const showTrainerStats = canViewTrainerStats();
+        const [usersData, bookingsData, trainersData, equipData, exercisesData] = await Promise.all([
+            fetchStatsData('users/get-all.php?role=user'),
+            fetchStatsData('bookings/get-all.php'),
+            showTrainerStats ? fetchStatsData('trainers/get-all.php') : Promise.resolve({ success: true, data: [] }),
+            fetchStatsData('equipment/get-all.php'),
+            fetchStatsData('exercises/get-all.php')
         ]);
 
-        const usersData = await usersRes.json();
-        const bookingsData = await bookingsRes.json();
-        const trainersData = await trainersRes.json();
-        const equipData = await equipRes.json();
-        const exercisesData = await exercisesRes.json();
-
-        if (!bookingsData.success) return;
         const allBookingsData = bookingsData.data;
         const now = new Date();
         const currentMonth = now.getMonth();
@@ -985,25 +1019,19 @@ async function updateStats() {
         // NOTE: 'expired' bookings were once 'verified' — payment was collected for both.
         // Revenue calculations must include expired bookings.
         const isVerified = (b) => b.status === 'verified';
-        const isPaid     = (b) => b.status === 'verified' || b.status === 'expired';
+        const isPaid     = isPaidBooking;
         const isPending  = (b) => b.status === 'pending';
-        const isToday = (dateStr) => {
-            if (!dateStr) return false;
-            const d = new Date(dateStr);
-            if (isNaN(d.getTime())) return false;
-            return d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-        };
-        const isThisMonth = (dateStr) => {
-            if (!dateStr) return false;
-            const d = new Date(dateStr);
-            if (isNaN(d.getTime())) return false;
-            return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-        };
+        const today = formatLocalDate(now);
+        const isToday = dateStr => !!dateStr && String(dateStr).slice(0, 10) === today;
+        const isThisMonth = dateStr => !!dateStr && String(dateStr).slice(0, 7) === today.slice(0, 7);
 
         // --- CATEGORY: OVERVIEW ---
         let totalRevenue = 0;
         const activeMemberIdentifiers = new Set();
-        
+        const registeredIds = new Set(usersData.data.map(user => String(user.id)));
+        const trainersList = trainersData.data;
+        const activeTrainers = trainersList.filter(t => t.is_active === true || Number(t.is_active) === 1).length;
+
         allBookingsData.forEach(booking => {
             if (isPaid(booking)) {
                 // Count revenue for ALL paid bookings (verified + expired)
@@ -1013,19 +1041,24 @@ async function updateStats() {
                 // Active members = only currently verified (not expired)
                 let isActive = false;
                 if (booking.expires_at) {
-                    const exp = new Date(booking.expires_at);
+                    const exp = parseDatabaseDate(booking.expires_at);
                     if (!isNaN(exp.getTime())) isActive = now <= exp;
                 } else {
                     isActive = true; // no expiry = always active
                 }
-                if (isActive) activeMemberIdentifiers.add(booking.user_id || booking.email || booking.name);
+                // Keep active/inactive counts within the registered-member population.
+                if (isActive && registeredIds.has(String(booking.user_id))) {
+                    activeMemberIdentifiers.add(String(booking.user_id));
+                }
             }
         });
 
         dashboardStats.overview = [
-            { id: 'totalRevenueStat', label: 'Total Revenue', value: `₱${totalRevenue.toLocaleString()}`, icon: 'money-bill-wave', trend: '15%', trendDir: 'up' },
-            { id: 'activeMembersStat', label: 'Active Members', value: activeMemberIdentifiers.size, icon: 'users', trend: '5%', trendDir: 'up' },
-            { id: 'totalTrainersStat', label: 'Active Trainers', value: trainersData.success ? trainersData.data.length : 0, icon: 'user-tie', trend: '2%', trendDir: 'up' },
+            { id: 'totalRevenueStat', label: 'Collected Revenue (All Time)', value: `₱${totalRevenue.toLocaleString()}`, icon: 'money-bill-wave' },
+            { id: 'activeMembersStat', label: 'Active Registered Members', value: activeMemberIdentifiers.size, icon: 'users' },
+            showTrainerStats
+                ? { id: 'totalTrainersStat', label: 'Active Trainers', value: activeTrainers, icon: 'user-tie' }
+                : { id: 'registeredMembersStat', label: 'Registered Members', value: usersData.data.length, icon: 'id-card' },
             { id: 'pendingOverviewStat', label: 'Pending Verification', value: allBookingsData.filter(isPending).length, icon: 'clock', trendDir: 'up' }
         ];
 
@@ -1033,14 +1066,14 @@ async function updateStats() {
         const totalBookings = allBookingsData.length;
         const pendingCount = allBookingsData.filter(isPending).length;
         // "Verified today" = paid (verified or expired) bookings where payment date is today
-        const verifiedToday = allBookingsData.filter(b => isPaid(b) && isToday(b.verified_at || b.booking_date || b.created_at)).length;
+        const verifiedToday = allBookingsData.filter(b => isPaid(b) && isToday(getBookingSalesDate(b))).length;
         const rejectedCount = allBookingsData.filter(b => b.status === 'rejected').length;
         const rejectionRate = totalBookings > 0 ? Math.round((rejectedCount / totalBookings) * 100) : 0;
 
         dashboardStats.bookings = [
             { id: 'totalBookingsStat', label: 'Total Bookings', value: totalBookings, icon: 'calendar-check' },
             { id: 'pendingBookingsStat', label: 'Pending Verification', value: pendingCount, icon: 'clock', trendDir: pendingCount > 5 ? 'down' : 'up' },
-            { id: 'verifiedTodayStat', label: 'Verified Today', value: verifiedToday, icon: 'check-circle', trend: 'Daily', trendDir: 'up' },
+            { id: 'verifiedTodayStat', label: 'Paid Today', value: verifiedToday, icon: 'check-circle' },
             { id: 'rejectionRateStat', label: 'Rejection Rate', value: `${rejectionRate}%`, icon: 'times-circle', trendDir: rejectionRate > 10 ? 'down' : 'up' }
         ];
 
@@ -1051,8 +1084,8 @@ async function updateStats() {
         allBookingsData.forEach(b => {
             const amt = parseFloat(b.amount) || 0;
             if (isPaid(b)) {
-                // Use verified_at first, fall back to booking_date then created_at
-                const dateStr = b.verified_at || b.booking_date || b.created_at;
+                // Use the same sales date as the report API and package charts.
+                const dateStr = getBookingSalesDate(b);
                 if (dateStr && isThisMonth(dateStr)) monthlyRev += amt;
                 if (dateStr && isToday(dateStr)) todayRev += amt;
             } else if (isPending(b)) {
@@ -1063,9 +1096,9 @@ async function updateStats() {
         const avgPayment = paidCount > 0 ? totalRevenue / paidCount : 0;
 
         dashboardStats.payments = [
-            { id: 'monthlyRevenueStat', label: 'Monthly Revenue', value: `₱${monthlyRev.toLocaleString()}`, icon: 'calendar-day', trend: 'Target: 80%', trendDir: 'up' },
+            { id: 'monthlyRevenueStat', label: 'Collected This Month', value: `₱${monthlyRev.toLocaleString()}`, icon: 'calendar-day' },
             { id: 'todayRevenueStat', label: 'Today\'s Revenue', value: `₱${todayRev.toLocaleString()}`, icon: 'coins' },
-            { id: 'avgPaymentStat', label: 'Average Payment', value: `₱${Math.round(avgPayment).toLocaleString()}`, icon: 'chart-line' },
+            { id: 'avgPaymentStat', label: 'Average Payment', value: `₱${avgPayment.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, icon: 'chart-line' },
             { id: 'outstandingStat', label: 'Outstanding (Pending)', value: `₱${pendingRev.toLocaleString()}`, icon: 'hand-holding-dollar', trendDir: 'down' }
         ];
 
@@ -1076,15 +1109,16 @@ async function updateStats() {
 
         dashboardStats.members = [
             { id: 'registeredMembersStat', label: 'Registered Members', value: registeredCount, icon: 'id-card' },
-            { id: 'newMembersStat', label: 'New This Month', value: newThisMonth, icon: 'user-plus', trend: '+12', trendDir: 'up' },
+            { id: 'newMembersStat', label: 'New This Month', value: newThisMonth, icon: 'user-plus' },
             { id: 'activeMembersStat', label: 'Active Members', value: activeMemberIdentifiers.size, icon: 'user-check' },
             { id: 'inactiveMembersStat', label: 'Inactive Members', value: inactiveCount, icon: 'user-slash', trendDir: 'down' }
         ];
 
         // --- CATEGORY: TRAINERS ---
-        const trainersList = trainersData.success ? trainersData.data : [];
-        const activeTrainers = trainersList.filter(t => t.is_active).length;
-        const avgLoad = activeTrainers > 0 ? (activeMemberIdentifiers.size / activeTrainers).toFixed(1) : 0;
+        const activeClientLoad = trainersList
+            .filter(t => t.is_active === true || Number(t.is_active) === 1)
+            .reduce((sum, t) => sum + (Number(t.active_client_count) || 0), 0);
+        const avgLoad = activeTrainers > 0 ? (activeClientLoad / activeTrainers).toFixed(1) : 0;
         
         // Find most popular trainer (count across paid bookings)
         const trainerCounts = {};
@@ -1098,34 +1132,62 @@ async function updateStats() {
             if (tt) topTrainerName = tt.name.split(' ')[0];
         }
 
-        dashboardStats.trainers = [
+        dashboardStats.trainers = showTrainerStats ? [
             { id: 'totalTrainersStat', label: 'Total Trainers', value: trainersList.length, icon: 'user-tie' },
             { id: 'activeTrainersStat', label: 'Active Status', value: activeTrainers, icon: 'check-double' },
             { id: 'avgLoadStat', label: 'Avg. Client Load', value: avgLoad, icon: 'users-gear' },
             { id: 'topTrainerStat', label: 'Top Performer', value: topTrainerName, icon: 'award' }
-        ];
+        ] : [];
 
         // --- CATEGORY: INVENTORY ---
         const equipmentList = equipData.success ? equipData.data : [];
         const exercisesList = exercisesData.success ? exercisesData.data : [];
         const maintenanceCount = equipmentList.filter(e => e.status === 'maintenance').length;
+        const outOfOrderCount = equipmentList.filter(e => e.status === 'out_of_order').length;
+        const inventoryStatus = equipmentList.length === 0 ? 'No Equipment'
+            : maintenanceCount + outOfOrderCount > 0 ? 'Needs Attention' : 'Healthy';
 
         dashboardStats.inventory = [
             { id: 'totalEquipmentStat', label: 'Gym Equipment', value: equipmentList.length, icon: 'dumbbell' },
             { id: 'maintenanceStat', label: 'Under Maintenance', value: maintenanceCount, icon: 'wrench', trendDir: maintenanceCount > 0 ? 'down' : 'up' },
             { id: 'totalExercisesStat', label: 'Exercise Library', value: exercisesList.length, icon: 'running' },
-            { id: 'inventoryValueStat', label: 'Inventory Status', value: 'Healthy', icon: 'check-circle' }
+            { id: 'inventoryValueStat', label: 'Inventory Status', value: inventoryStatus, icon: 'check-circle' }
         ];
+
+        // Distinguish unavailable data from a genuine zero; independent cards still load.
+        const unavailableIds = new Set();
+        if (!bookingsData.success) {
+            ['overview', 'bookings', 'payments', 'members', 'trainers'].forEach(category => {
+                dashboardStats[category].forEach(stat => {
+                    if (!['totalTrainersStat', 'activeTrainersStat', 'registeredMembersStat', 'newMembersStat', 'avgLoadStat'].includes(stat.id)) {
+                        unavailableIds.add(stat.id);
+                    }
+                });
+            });
+        }
+        if (!usersData.success) ['registeredMembersStat', 'newMembersStat', 'activeMembersStat', 'inactiveMembersStat'].forEach(id => unavailableIds.add(id));
+        if (!trainersData.success) ['totalTrainersStat', 'activeTrainersStat', 'avgLoadStat', 'topTrainerStat'].forEach(id => unavailableIds.add(id));
+        if (!equipData.success) ['totalEquipmentStat', 'maintenanceStat', 'inventoryValueStat'].forEach(id => unavailableIds.add(id));
+        if (!exercisesData.success) unavailableIds.add('totalExercisesStat');
+        Object.values(dashboardStats).flat().forEach(stat => {
+            if (unavailableIds.has(stat.id)) {
+                stat.value = 'Unavailable';
+                delete stat.trend;
+                delete stat.trendDir;
+            }
+        });
 
         // 2. Initial Render or update if same tab
         renderStatsGrid();
 
         // 3. Update Other UI elements (Badges, etc.)
         const bookingsBadge = document.getElementById('bookingsBadge');
-        if (bookingsBadge) bookingsBadge.textContent = pendingCount || '';
+        if (bookingsBadge) bookingsBadge.textContent = bookingsData.success ? pendingCount || '' : '?';
 
         const pendingText = document.getElementById('pendingVerificationsText');
-        if (pendingText) pendingText.textContent = `${pendingCount} pending verification${pendingCount !== 1 ? 's' : ''}`;
+        if (pendingText) pendingText.textContent = bookingsData.success
+            ? `${pendingCount} pending verification${pendingCount !== 1 ? 's' : ''}`
+            : 'Verification count unavailable';
 
     } catch (e) {
         console.error('Error updating dashboard stats:', e);
@@ -1215,7 +1277,7 @@ function closeNotificationsModal() {
 
 async function adminMarkNotificationAsRead(id) {
     try {
-        await fetch('../../api/notifications/mark-as-read.php', {
+        await fetch(getApiUrl('notifications/mark-as-read.php'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id })
@@ -1229,7 +1291,7 @@ async function adminMarkNotificationAsRead(id) {
 
 async function adminMarkAllNotificationsAsRead() {
     try {
-        await fetch('../../api/notifications/mark-as-read.php', {
+        await fetch(getApiUrl('notifications/mark-as-read.php'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({}) // server treats empty id as "mark all"
@@ -1254,7 +1316,7 @@ async function loadAdminNotifications() {
     `;
 
     try {
-        const response = await fetch('../../api/notifications/get-all.php');
+        const response = await fetch(getApiUrl('notifications/get-all.php'));
         if (!response.ok) throw new Error(`HTTP error ${response.status}`);
         const data = await response.json();
 
@@ -1324,7 +1386,7 @@ function setupEventListeners() {
         
         try {
             // Call logout API to clear PHP session
-            const response = await fetch('../../api/auth/logout.php', {
+            const response = await fetch(getApiUrl('auth/logout.php'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' }
             });

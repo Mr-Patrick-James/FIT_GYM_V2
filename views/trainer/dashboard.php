@@ -17,13 +17,13 @@ if ($row = $result->fetch_assoc()) {
 }
 $stmt->close();
 
-// Stats for trainer — Active Clients = currently verified only (matches get-clients.php)
+// Stats for trainer — Active Clients = currently verified + same-day expired (matches get-clients.php)
 $totalMembers = 0;
 $totalAllTime = 0;
 if ($trainerId) {
     $res = $conn->query("
         SELECT COUNT(*) as count FROM bookings b
-        WHERE b.status = 'verified'
+        WHERE (b.status = 'verified' OR (b.status = 'expired' AND DATE(b.booking_date) = CURDATE()))
           AND (
               b.trainer_id = $trainerId
               OR (b.trainer_id IS NULL AND EXISTS (

@@ -24,7 +24,7 @@ class WalkinBookingsManager {
     
     async loadPaymentSettings() {
         try {
-            const response = await fetch('../api/settings/get.php');
+            const response = await fetch('../../api/settings/get.php');
             const result = await response.json();
             
             if (result.success) {
@@ -114,13 +114,14 @@ class WalkinBookingsManager {
     }
     
     setDefaultDate() {
-        const today = new Date().toISOString().split('T')[0];
+        const now = new Date();
+        const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
         document.getElementById('bookingDate').value = today;
     }
     
     async loadPackages() {
         try {
-            const response = await fetch('../api/packages/get-all.php');
+            const response = await fetch('../../api/packages/get-all.php');
             const result = await response.json();
             
             if (result.success) {
@@ -151,7 +152,7 @@ class WalkinBookingsManager {
             if (this.currentFilters.dateFrom) params.append('date_from', this.currentFilters.dateFrom);
             if (this.currentFilters.dateTo) params.append('date_to', this.currentFilters.dateTo);
             
-            const response = await fetch(`../api/walkin/get-all.php?${params}`);
+            const response = await fetch(`../../api/walkin/get-all.php?${params}`);
             const result = await response.json();
             
             if (result.success) {
@@ -422,7 +423,7 @@ class WalkinBookingsManager {
         try {
             this.showLoading();
             
-            const response = await fetch('../api/walkin/create.php', {
+            const response = await fetch('../../api/walkin/create.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -457,7 +458,7 @@ class WalkinBookingsManager {
         try {
             this.showLoading();
             
-            const response = await fetch('../api/bookings/update.php', {
+            const response = await fetch('../../api/bookings/update.php', {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

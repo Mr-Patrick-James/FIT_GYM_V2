@@ -1,6 +1,6 @@
 <?php
 require_once '../../api/session.php';
-requireAdminOnly();
+requireManagerAccess();
 $user = getCurrentUser();
 ?>
 <!DOCTYPE html>
@@ -16,7 +16,7 @@ $user = getCurrentUser();
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <link rel="stylesheet" href="../../assets/css/dashboard.css?v=3.0">
+    <link rel="stylesheet" href="../../assets/css/dashboard.css?v=3.2">
     <style>
         /* â”€â”€ Report-specific styles â”€â”€ */
         .report-tabs { display: flex; gap: 4px; background: var(--dark-card); padding: 4px; border-radius: 12px; border: 1px solid var(--dark-border); margin-bottom: 28px; }
@@ -125,7 +125,9 @@ $user = getCurrentUser();
             <li><a href="bookings.php"><i class="fas fa-calendar-check"></i><span>Bookings</span><span class="badge" id="bookingsBadge"></span></a></li>
             <li><a href="payments.php"><i class="fas fa-money-check"></i><span>Payments</span></a></li>
             <li><a href="members.php"><i class="fas fa-users"></i><span>Members</span></a></li>
+            <?php if (isAdmin()): ?>
             <li><a href="trainers.php"><i class="fas fa-user-tie"></i><span>Trainers</span></a></li>
+            <?php endif; ?>
             <li><a href="packages.php"><i class="fas fa-dumbbell"></i><span>Packages</span></a></li>
             <li><a href="equipment.php"><i class="fas fa-tools"></i><span>Equipment</span></a></li>
             <li><a href="exercises.php"><i class="fas fa-running"></i><span>Exercises</span></a></li>
@@ -203,6 +205,7 @@ $user = getCurrentUser();
                 <input type="date" id="endDate">
             </div>
             <button class="apply-btn" onclick="loadAll()"><i class="fas fa-sync-alt"></i> Apply</button>
+            <p style="flex-basis:100%;margin:0;font-size:.72rem;color:var(--dark-text-secondary);">Collected revenue uses stored booking amounts for paid (verified + expired + upgraded); pending/rejected excluded. Dates use effective verification time for paid bookings, otherwise creation time, falling back to booking date. Exports use the last loaded period.</p>
         </div>
 
         <!-- â•â• TAB: Sales Overview â•â• -->
@@ -215,14 +218,14 @@ $user = getCurrentUser();
                     <div class="sc-sub">bookings in period</div>
                 </div>
                 <div class="summary-card">
-                    <div class="sc-label">Total Revenue</div>
+                    <div class="sc-label">Collected Revenue</div>
                     <div class="sc-value" id="s-total-rev">â€”</div>
-                    <div class="sc-sub">all bookings</div>
+                    <div class="sc-sub">verified + expired + upgraded payments</div>
                 </div>
                 <div class="summary-card">
-                    <div class="sc-label">Verified Revenue</div>
-                    <div class="sc-value" id="s-verified-rev">â€”</div>
-                    <div class="sc-sub">confirmed payments</div>
+                    <div class="sc-label">Paid Bookings</div>
+                    <div class="sc-value" id="s-paid">â€”</div>
+                    <div class="sc-sub">verified + expired + upgraded</div>
                 </div>
                 <div class="summary-card">
                     <div class="sc-label">Unique Clients</div>
@@ -248,8 +251,8 @@ $user = getCurrentUser();
                         <h3>Daily Sales</h3>
                         <div class="card-actions">
                             <select id="salesChartMode" class="card-btn" style="padding:6px 12px;cursor:pointer;" onchange="renderSalesChart()">
-                                <option value="revenue">Revenue (â‚±)</option>
-                                <option value="count">Number of Sales</option>
+                                <option value="revenue">Collected Revenue (&#8369;)</option>
+                                <option value="count">Number of Bookings</option>
                             </select>
                         </div>
                     </div>
@@ -285,7 +288,7 @@ $user = getCurrentUser();
         <div class="tab-panel" id="panel-packages">
             <div class="chart-row">
                 <div class="content-card">
-                    <div class="card-header"><h3>Package Revenue Comparison</h3></div>
+                    <div class="card-header"><h3>Package Collected Revenue</h3></div>
                     <div class="chart-container" style="height:300px;margin-top:16px;">
                         <canvas id="pkgRevenueChart"></canvas>
                     </div>
@@ -367,8 +370,8 @@ $user = getCurrentUser();
     <div class="rpt-toast" id="toastContainer"></div>
 
     <script src="../../assets/js/theme.js"></script>
-    <script src="../../assets/js/reports.js?v=2.0"></script>
+    <script src="../../assets/js/reports.js?v=2.1"></script>
     <script src="../../assets/js/mobile-menu.js"></script>
- <script src="../../assets/js/role-restrictions.js"></script>
+ <script src="../../assets/js/role-restrictions.js?v=2"></script>
 </body>
 </html>

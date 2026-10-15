@@ -101,7 +101,8 @@ let trainersList = [];
 
 async function loadTrainers() {
     try {
-        const response = await fetch('../../api/trainers/get-all.php');
+        // Package assignment needs only active trainer IDs and names, not management data.
+        const response = await fetch('../../api/trainers/get-for-assignment.php');
         const data = await response.json();
         if (data.success) {
             trainersList = data.data.filter(t => t.is_active);

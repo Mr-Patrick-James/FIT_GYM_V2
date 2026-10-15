@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 
 $conn = getDBConnection();
 
-$stmt = $conn->prepare("SELECT id, name, category, description, image_url FROM equipment ORDER BY name ASC");
+$stmt = $conn->prepare("SELECT id, name, category, status, description, image_url FROM equipment ORDER BY name ASC");
 $stmt->execute();
 $result = $stmt->get_result();
 
@@ -28,6 +28,7 @@ while ($row = $result->fetch_assoc()) {
         'id' => (int)$row['id'],
         'name' => $row['name'],
         'category' => $row['category'],
+        'status' => $row['status'],
         'description' => $row['description'],
         'image_url' => $row['image_url']
     ];

@@ -31,8 +31,8 @@ async function loadAllMembers() {
                 .map(user => {
                     const uid = String(user.id);
                     const userBookings = allBookings.filter(b => String(b.user_id) === uid);
-                    const verifiedBookings = userBookings.filter(b => b.status === 'verified' || b.status === 'expired');
-                    // amount is now always the package price (set server-side)
+                    const verifiedBookings = userBookings.filter(b => ['verified', 'expired', 'upgraded'].includes(b.status));
+                    // Use the stored amount actually charged, including discounts.
                     const totalSpent = verifiedBookings.reduce((sum, b) => sum + (Number(b.amount) || 0), 0);
                     
                     return {
@@ -55,7 +55,7 @@ async function loadAllMembers() {
             // Group walk-ins by email to avoid duplicates
             const walkinMap = new Map();
             allWalkins.forEach(walkin => {
-                if (walkin.status !== 'verified') return;
+                if (!['verified', 'expired', 'upgraded'].includes(walkin.status)) return;
 
                 const email = walkin.email.toLowerCase();
                 if (!walkinMap.has(email)) {
@@ -78,7 +78,7 @@ async function loadAllMembers() {
                 const member = walkinMap.get(email);
                 member.bookings.push(walkin);
                 member.verifiedBookings.push(walkin);
-                // amount is always the package price (set server-side)
+                // Keep historical spending even after the booking expires.
                 member.totalSpent += Number(walkin.amount) || 0;
                 
                 // Keep the earliest created_at as joinedDate
@@ -143,15 +143,10 @@ function isMemberActive(member) {
     const now = new Date();
     
     return member.verifiedBookings.some(booking => {
-        const bookingDate = new Date(booking.booking_date || booking.created_at);
-        const days = parseDurationToDays(booking.duration);
-        
-        // Calculate expiry date
-        const expiryDate = new Date(bookingDate);
-        expiryDate.setDate(expiryDate.getDate() + days);
-        
-        // User is active if current date is before or equal to expiry date
-        return now <= expiryDate;
+        if (booking.status !== 'verified') return false;
+        if (!booking.expires_at) return true;
+        const expiryDate = new Date(String(booking.expires_at).replace(' ', 'T'));
+        return !isNaN(expiryDate.getTime()) && now <= expiryDate;
     });
 }
 

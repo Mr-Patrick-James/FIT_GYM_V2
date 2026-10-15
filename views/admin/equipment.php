@@ -17,7 +17,7 @@ $user = getCurrentUser();
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Dashboard Styles -->
-    <link rel="stylesheet" href="../../assets/css/dashboard.css?v=3.0">
+    <link rel="stylesheet" href="../../assets/css/dashboard.css?v=3.2">
     
     <script>
         (function() {
@@ -54,12 +54,12 @@ $user = getCurrentUser();
             <li><a href="members.php"><i class="fas fa-users"></i> <span>Members</span></a></li>
             <?php if (isAdmin()): ?>
             <li><a href="trainers.php"><i class="fas fa-user-tie"></i> <span>Trainers</span></a></li>
-            <li><a href="packages.php"><i class="fas fa-dumbbell"></i> <span>Packages</span></a></li>
             <?php endif; ?>
+            <li><a href="packages.php"><i class="fas fa-dumbbell"></i> <span>Packages</span></a></li>
             <li><a href="equipment.php" class="active"><i class="fas fa-tools"></i> <span>Equipment</span></a></li>
-            <?php if (isAdmin()): ?>
             <li><a href="exercises.php"><i class="fas fa-running"></i> <span>Exercises</span></a></li>
             <li><a href="report.php"><i class="fas fa-file-invoice-dollar"></i> <span>Reports</span></a></li>
+            <?php if (isAdmin()): ?>
             <li><a href="settings.php"><i class="fas fa-cog"></i> <span>Settings</span></a></li>
             <?php endif; ?>
         </ul>
@@ -303,6 +303,6 @@ $user = getCurrentUser();
     </script>
     <script src="../../assets/js/theme.js"></script>
     <script src="../../assets/js/mobile-menu.js"></script>
- <script src="../../assets/js/role-restrictions.js"></script>
+ <script src="../../assets/js/role-restrictions.js?v=2"></script>
 </body>
 </html>

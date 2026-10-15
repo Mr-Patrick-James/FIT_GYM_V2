@@ -1,6 +1,6 @@
 <?php
 require_once '../../api/session.php';
-requireAdminOnly();
+requireManagerAccess();
 $user = getCurrentUser();
 ?>
 <!DOCTYPE html>
@@ -17,7 +17,7 @@ $user = getCurrentUser();
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Dashboard Styles -->
-    <link rel="stylesheet" href="../../assets/css/dashboard.css?v=3.0">
+    <link rel="stylesheet" href="../../assets/css/dashboard.css?v=3.2">
     
     <!-- Apply theme immediately before page renders to prevent flash -->
     <script>
@@ -56,7 +56,9 @@ $user = getCurrentUser();
             <ul>
                 <li><a href="dashboard.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
                 <li><a href="members.php"><i class="fas fa-users"></i> Members</a></li>
+                <?php if (isAdmin()): ?>
                 <li><a href="trainers.php"><i class="fas fa-user-tie"></i> Trainers</a></li>
+                <?php endif; ?>
                 <li><a href="packages.php"><i class="fas fa-box"></i> Packages</a></li>
                 <li><a href="exercises.php"><i class="fas fa-running"></i> Exercises</a></li>
                 <li><a href="bookings.php"><i class="fas fa-calendar-check"></i> Bookings</a></li>
@@ -74,7 +76,7 @@ $user = getCurrentUser();
                 <i class="fas fa-user-circle"></i>
                 <div>
                     <div class="user-name"><?php echo htmlspecialchars($user['name']); ?></div>
-                    <div class="user-role">Administrator</div>
+                    <div class="user-role"><?php echo isAdmin() ? 'Administrator' : 'Manager'; ?></div>
                 </div>
             </div>
             <button onclick="handleLogout()" class="logout-btn" style="width: 100%; border: none; background: none; cursor: pointer; text-align: left; padding: 0;">
@@ -291,8 +293,8 @@ $user = getCurrentUser();
         </div>
     </div>
     
-    <script src="../../assets/js/walkin-bookings.js"></script>
+    <script src="../../assets/js/walkin-bookings.js?v=2"></script>
     <script src="../../assets/js/mobile-menu.js"></script>
- <script src="../../assets/js/role-restrictions.js"></script>
+ <script src="../../assets/js/role-restrictions.js?v=2"></script>
 </body>
 </html>

@@ -1,5 +1,7 @@
 <?php
 require_once '../config.php';
+require_once '../session.php';
+requireManagerAccess();
 
 // Allow POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

@@ -112,9 +112,9 @@ try {
     
     // Format the bookings data
     foreach ($bookings as &$booking) {
-        // Use the package's current price as the authoritative amount.
-        // Fall back to the stored booking amount only if the package no longer exists.
-        $amt = (float)($booking['pkg_price'] ?? $booking['amount'] ?? 0);
+        // Preserve the amount charged at booking time, including discounts.
+        // Changing a package price must not rewrite historical sales.
+        $amt = (float)($booking['amount'] ?? 0);
         $booking['amount'] = $amt;
         $booking['amount_formatted'] = '₱' . number_format($amt, 2);
         $booking['date_formatted'] = date('M j, Y', strtotime($booking['booking_date'] ?? $booking['created_at']));

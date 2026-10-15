@@ -9,9 +9,10 @@ let pkgRevChart  = null;
 let pkgDistChart = null;
 let selectedFmt  = 'pdf';
 let activeTab    = 'sales';
+let loadRequest  = 0;
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
-function peso(v) { return '₱' + (parseFloat(v) || 0).toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 0 }); }
+function peso(v) { return '₱' + (parseFloat(v) || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 function num(v)  { return (parseInt(v) || 0).toLocaleString(); }
 
 function toast(msg, type = 'info') {
@@ -25,6 +26,10 @@ function toast(msg, type = 'info') {
     setTimeout(() => el.remove(), 4000);
 }
 
+function localDate(date) {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
 function getDateRange() {
     const preset = document.getElementById('periodPreset').value;
     if (preset === 'all') return { start: null, end: null };
@@ -36,22 +41,20 @@ function getDateRange() {
     }
     const days = parseInt(preset);
     const end  = new Date();
-    const start = new Date(end.getTime() - days * 86400000);
-    return {
-        start: start.toISOString().split('T')[0],
-        end:   end.toISOString().split('T')[0]
-    };
+    const start = new Date(end);
+    start.setDate(start.getDate() - (days - 1));
+    return { start: localDate(start), end: localDate(end) };
 }
 
 function getPeriodLabel() {
-    const preset = document.getElementById('periodPreset');
-    const v = preset.value;
-    if (v === 'custom') {
-        const s = document.getElementById('startDate').value;
-        const e = document.getElementById('endDate').value;
-        return `${s || '?'} to ${e || '?'}`;
-    }
-    return preset.selectedOptions[0]?.text || 'Selected Period';
+    const filters = salesData?.filters;
+    if (!filters) return 'No loaded period';
+    const s = filters.start_date;
+    const e = filters.end_date;
+    if (s && e) return `${s} to ${e}`;
+    if (s) return `From ${s}`;
+    if (e) return `Through ${e}`;
+    return 'All Time';
 }
 
 // ── Tab switching ─────────────────────────────────────────────────────────────
@@ -71,9 +74,9 @@ function onPresetChange() {
     if (v === 'custom') {
         cd.classList.add('visible');
         if (!document.getElementById('startDate').value) {
-            const d = new Date(); d.setDate(d.getDate() - 30);
-            document.getElementById('startDate').value = d.toISOString().split('T')[0];
-            document.getElementById('endDate').value   = new Date().toISOString().split('T')[0];
+            const d = new Date(); d.setDate(d.getDate() - 29);
+            document.getElementById('startDate').value = localDate(d);
+            document.getElementById('endDate').value   = localDate(new Date());
         }
     } else {
         cd.classList.remove('visible');
@@ -84,18 +87,24 @@ function onPresetChange() {
 // ── Load data from API ────────────────────────────────────────────────────────
 async function loadAll() {
     const { start, end } = getDateRange();
+    if (start && end && start > end) {
+        toast('Start date must not be after end date', 'error');
+        return;
+    }
+    const request = ++loadRequest;
     let url = '../../api/reports/get-sales.php?';
-    if (start) url += `start_date=${start}&`;
-    if (end)   url += `end_date=${end}&`;
+    if (start) url += `start_date=${encodeURIComponent(start)}&`;
+    if (end)   url += `end_date=${encodeURIComponent(end)}&`;
 
     try {
         const res  = await fetch(url);
         const json = await res.json();
+        if (request !== loadRequest) return;
         if (!json.success) { toast('Failed to load report data', 'error'); return; }
         salesData = json.data;
-        renderTab(activeTab);
         renderAllCharts();
     } catch (e) {
+        if (request !== loadRequest) return;
         console.error(e);
         toast('Network error loading data', 'error');
     }
@@ -119,12 +128,12 @@ function renderAllCharts() {
 function renderSummary() {
     if (!salesData) return;
     const s = salesData.summary;
-    document.getElementById('s-total-sales').textContent  = num(s.total_bookings);
-    document.getElementById('s-total-rev').textContent    = peso(s.total_revenue);
-    document.getElementById('s-verified-rev').textContent = peso(s.verified_revenue);
-    document.getElementById('s-clients').textContent      = num(s.unique_clients);
-    document.getElementById('s-walkin').textContent       = num(s.walkin_bookings);
-    document.getElementById('s-pending').textContent      = num(s.pending_bookings);
+    document.getElementById('s-total-sales').textContent = num(s.total_bookings);
+    document.getElementById('s-total-rev').textContent   = peso(s.total_revenue);
+    document.getElementById('s-paid').textContent        = num(s.paid_bookings);
+    document.getElementById('s-clients').textContent     = num(s.unique_clients);
+    document.getElementById('s-walkin').textContent      = num(s.walkin_bookings);
+    document.getElementById('s-pending').textContent     = num(s.pending_bookings);
 }
 
 // ── Sales by date table ───────────────────────────────────────────────────────
@@ -138,8 +147,9 @@ function renderSalesTable() {
         <tr>
             <td class="bold">${formatDate(r.sale_date)}</td>
             <td class="num">${num(r.total_sales)}</td>
+            <td class="num">${num(r.paid_count)}</td>
             <td class="num">${peso(r.total_revenue)}</td>
-            <td class="num">${peso(r.verified_revenue)}</td>
+            <td class="num">${peso(r.pending_revenue)}</td>
             <td class="num">${num(r.member_count)}</td>
             <td class="num">${num(r.walkin_count)}</td>
         </tr>`).join('');
@@ -147,9 +157,10 @@ function renderSalesTable() {
         <table class="data-table">
             <thead><tr>
                 <th>Date</th>
-                <th class="num">Sales</th>
-                <th class="num">Revenue</th>
-                <th class="num">Verified Rev.</th>
+                <th class="num">Bookings</th>
+                <th class="num">Paid</th>
+                <th class="num">Collected Rev.</th>
+                <th class="num">Pending Rev.</th>
                 <th class="num">Members</th>
                 <th class="num">Walk-ins</th>
             </tr></thead>
@@ -182,8 +193,12 @@ function renderPackageTable() {
             <td class="num bold">${num(p.total_availed)}</td>
             <td class="num">${num(p.unique_users)}</td>
             <td class="num">${num(p.verified_count)}</td>
+            <td class="num">${num(p.expired_count)}</td>
+            <td class="num">${num(p.upgraded_count)}</td>
             <td class="num">${num(p.pending_count)}</td>
+            <td class="num">${num(p.rejected_count)}</td>
             <td class="num">${peso(p.total_revenue)}</td>
+            <td class="num">${peso(p.pending_revenue)}</td>
             <td>
                 <div style="display:flex;align-items:center;gap:8px;">
                     <div class="prog-wrap" style="flex:1;">
@@ -203,8 +218,12 @@ function renderPackageTable() {
                 <th class="num">Total Availed</th>
                 <th class="num">Unique Users</th>
                 <th class="num">Verified</th>
+                <th class="num">Expired</th>
+                <th class="num">Upgraded</th>
                 <th class="num">Pending</th>
-                <th class="num">Revenue</th>
+                <th class="num">Rejected</th>
+                <th class="num">Collected Rev.</th>
+                <th class="num">Pending Rev.</th>
                 <th>Share</th>
             </tr></thead>
             <tbody>${rows}</tbody>
@@ -247,7 +266,7 @@ function renderSalesChart() {
         data: {
             labels,
             datasets: [{
-                label: mode === 'revenue' ? 'Revenue' : 'Sales',
+                label: mode === 'revenue' ? 'Collected Revenue' : 'Bookings',
                 data,
                 borderColor: '#fff',
                 backgroundColor: grad,
@@ -289,10 +308,10 @@ function renderStatusChart() {
     statusChart = new Chart(canvas.getContext('2d'), {
         type: 'doughnut',
         data: {
-            labels: ['Verified', 'Pending', 'Rejected'],
+            labels: ['Verified', 'Expired', 'Upgraded', 'Pending', 'Rejected'],
             datasets: [{
-                data: [s.verified_bookings, s.pending_bookings, s.rejected_bookings],
-                backgroundColor: ['rgba(34,197,94,.8)', 'rgba(245,158,11,.8)', 'rgba(239,68,68,.8)'],
+                data: [s.verified_bookings, s.expired_bookings, s.upgraded_bookings, s.pending_bookings, s.rejected_bookings],
+                backgroundColor: ['rgba(34,197,94,.8)', 'rgba(148,163,184,.8)', 'rgba(99,102,241,.8)', 'rgba(245,158,11,.8)', 'rgba(239,68,68,.8)'],
                 borderColor: '#0a0a0a',
                 borderWidth: 3
             }]
@@ -309,6 +328,8 @@ function renderStatusChart() {
 }
 
 function renderPkgCharts() {
+    if (pkgRevChart) { pkgRevChart.destroy(); pkgRevChart = null; }
+    if (pkgDistChart) { pkgDistChart.destroy(); pkgDistChart = null; }
     const pkgs = salesData?.package_sales;
     if (!pkgs || !pkgs.length) return;
 
@@ -320,13 +341,12 @@ function renderPkgCharts() {
     // Revenue bar chart
     const rc = document.getElementById('pkgRevenueChart');
     if (rc) {
-        if (pkgRevChart) pkgRevChart.destroy();
         pkgRevChart = new Chart(rc.getContext('2d'), {
             type: 'bar',
             data: {
                 labels,
                 datasets: [{
-                    label: 'Revenue',
+                    label: 'Collected Revenue',
                     data: revenues,
                     backgroundColor: colors,
                     borderRadius: 6,
@@ -350,7 +370,6 @@ function renderPkgCharts() {
     // Distribution doughnut
     const dc = document.getElementById('pkgDistChart');
     if (dc) {
-        if (pkgDistChart) pkgDistChart.destroy();
         pkgDistChart = new Chart(dc.getContext('2d'), {
             type: 'doughnut',
             data: {
@@ -377,9 +396,9 @@ function renderPkgCharts() {
 // ── CSV Exports ───────────────────────────────────────────────────────────────
 function exportSalesCsv() {
     if (!salesData?.sales_by_date.length) { toast('No data to export', 'warning'); return; }
-    let csv = 'Date,Total Sales,Revenue,Verified Revenue,Members,Walk-ins\n';
+    let csv = `Period,${getPeriodLabel()}\n\nDate,Total Bookings,Paid,Verified,Expired,Upgraded,Pending,Rejected,Collected Revenue,Pending Revenue,Members,Walk-ins\n`;
     salesData.sales_by_date.forEach(r => {
-        csv += `${r.sale_date},${r.total_sales},${r.total_revenue},${r.verified_revenue},${r.member_count},${r.walkin_count}\n`;
+        csv += `${r.sale_date},${r.total_sales},${r.paid_count},${r.verified_count},${r.expired_count},${r.upgraded_count},${r.pending_count},${r.rejected_count},${r.total_revenue},${r.pending_revenue},${r.member_count},${r.walkin_count}\n`;
     });
     downloadBlob(csv, 'text/csv', `sales_by_date_${today()}.csv`);
     toast('CSV exported', 'success');
@@ -387,9 +406,9 @@ function exportSalesCsv() {
 
 function exportPackageCsv() {
     if (!salesData?.package_sales.length) { toast('No data to export', 'warning'); return; }
-    let csv = 'Package,Tag,Total Availed,Unique Users,Verified,Pending,Rejected,Revenue\n';
+    let csv = `Period,${getPeriodLabel()}\n\nPackage,Tag,Total Availed,Unique Users,Paid,Verified,Expired,Upgraded,Pending,Rejected,Collected Revenue,Pending Revenue\n`;
     salesData.package_sales.forEach(p => {
-        csv += `"${p.package_name}","${p.package_tag || ''}",${p.total_availed},${p.unique_users},${p.verified_count},${p.pending_count},${p.rejected_count},${p.total_revenue}\n`;
+        csv += `"${p.package_name}","${p.package_tag || ''}",${p.total_availed},${p.unique_users},${p.paid_count},${p.verified_count},${p.expired_count},${p.upgraded_count},${p.pending_count},${p.rejected_count},${p.total_revenue},${p.pending_revenue}\n`;
     });
     downloadBlob(csv, 'text/csv', `package_sales_${today()}.csv`);
     toast('CSV exported', 'success');
@@ -403,7 +422,7 @@ function downloadBlob(content, type, filename) {
     setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 200);
 }
 
-function today() { return new Date().toISOString().split('T')[0]; }
+function today() { return localDate(new Date()); }
 
 // ── Report Builder ────────────────────────────────────────────────────────────
 function selectFormat(fmt) {
@@ -430,6 +449,7 @@ async function getGymSettings() {
 async function generateReport() {
     if (!salesData) { toast('Load data first by clicking Apply', 'warning'); return; }
 
+    const data       = salesData;
     const title      = document.getElementById('reportTitle').value.trim() || 'Gym Sales Report';
     const notes      = document.getElementById('reportNotes').value.trim();
     const period     = getPeriodLabel();
@@ -439,12 +459,12 @@ async function generateReport() {
     const incStatus   = document.getElementById('inc-status').checked;
     const incWalkin   = document.getElementById('inc-walkin').checked;
 
-    if (selectedFmt === 'excel') { await exportExcel(title, period, incSummary, incSales, incPackages, incStatus, incWalkin); return; }
+    if (selectedFmt === 'excel') { await exportExcel(title, period, incSummary, incSales, incPackages, incStatus, incWalkin, data); return; }
     if (selectedFmt === 'csv')   { exportSalesCsv(); exportPackageCsv(); return; }
 
     toast('Generating PDF…', 'info');
     const gym = await getGymSettings();
-    const html = buildReportHTML(gym, title, period, notes, incSummary, incSales, incPackages, incStatus, incWalkin);
+    const html = buildReportHTML(gym, title, period, notes, incSummary, incSales, incPackages, incStatus, incWalkin, data);
 
     const container = document.createElement('div');
     container.style.cssText = 'position:fixed;left:-9999px;top:0;width:210mm;';
@@ -464,23 +484,23 @@ async function generateReport() {
     });
 }
 
-async function exportExcel(title, period, incSummary, incSales, incPackages, incStatus, incWalkin) {
+async function exportExcel(title, period, incSummary, incSales, incPackages, incStatus, incWalkin, data = salesData) {
     const gym = await getGymSettings();
     const gymName    = gym.gym_name    || 'Martinez Fitness Gym';
     const gymAddress = gym.gym_address || '';
     const gymContact = gym.gym_contact || '';
     const gymEmail   = gym.gym_email   || '';
     const wb = XLSX.utils.book_new();
-    const s  = salesData.summary;
+    const s  = data.summary;
     const now = new Date().toLocaleString('en-PH');
 
     // ── Cover / Summary sheet ──────────────────────────────────────────────
     if (incSummary) {
         const totalSales   = parseInt(s.total_bookings)   || 0;
         const totalRev     = parseFloat(s.total_revenue)  || 0;
-        const verifiedRev  = parseFloat(s.verified_revenue) || 0;
-        const pendingRev   = totalRev - verifiedRev;
-        const convRate     = totalSales > 0 ? ((parseInt(s.verified_bookings) / totalSales) * 100).toFixed(1) : '0.0';
+        const pendingRev   = parseFloat(s.pending_revenue) || 0;
+        const paidCount    = parseInt(s.paid_bookings) || 0;
+        const convRate     = totalSales > 0 ? ((paidCount / totalSales) * 100).toFixed(1) : '0.0';
 
         const aoa = [
             [gymName],
@@ -497,31 +517,24 @@ async function exportExcel(title, period, incSummary, incSales, incPackages, inc
             ['─────────────────────────────────────────'],
             ['Metric', 'Value'],
             ['Total Bookings',       totalSales],
-            ['Total Revenue (PHP)',  totalRev],
-            ['Verified Revenue (PHP)', verifiedRev],
-            ['Pending Revenue (PHP)',  pendingRev],
+            ['Collected Revenue (PHP)', totalRev],
+            ['Pending Revenue (PHP)', pendingRev],
+            ['Paid Bookings',        paidCount],
             ['Unique Clients',       parseInt(s.unique_clients) || 0],
             ['Walk-in Bookings',     parseInt(s.walkin_bookings) || 0],
             ['Member Bookings',      totalSales - (parseInt(s.walkin_bookings) || 0)],
             ['Verified Bookings',    parseInt(s.verified_bookings) || 0],
+            ['Expired Bookings',     parseInt(s.expired_bookings) || 0],
+            ['Upgraded Bookings',    parseInt(s.upgraded_bookings) || 0],
             ['Pending Bookings',     parseInt(s.pending_bookings) || 0],
             ['Rejected Bookings',    parseInt(s.rejected_bookings) || 0],
-            ['Conversion Rate (%)',  convRate],
+            ['Paid / Total Bookings (%)', convRate],
             [''],
             ['─────────────────────────────────────────'],
             ['This report was generated automatically by FitPay Gym Management System.'],
-            ['All figures are based on booking records within the selected date range.'],
+            ['Collected revenue uses stored booking amounts for verified + expired + upgraded; pending/rejected excluded.'],
+            ['Dates use effective verification/creation time, falling back to booking date.'],
         ];
-
-        if (incStatus) {
-            aoa.push(['']);
-            aoa.push(['BOOKING STATUS BREAKDOWN']);
-            aoa.push(['Status', 'Count', '% of Total']);
-            const tot = totalSales || 1;
-            aoa.push(['Verified', parseInt(s.verified_bookings), ((parseInt(s.verified_bookings)/tot)*100).toFixed(1)+'%']);
-            aoa.push(['Pending',  parseInt(s.pending_bookings),  ((parseInt(s.pending_bookings)/tot)*100).toFixed(1)+'%']);
-            aoa.push(['Rejected', parseInt(s.rejected_bookings), ((parseInt(s.rejected_bookings)/tot)*100).toFixed(1)+'%']);
-        }
 
         if (incWalkin) {
             const tot = totalSales || 1;
@@ -539,74 +552,89 @@ async function exportExcel(title, period, incSummary, incSales, incPackages, inc
         XLSX.utils.book_append_sheet(wb, ws, 'Summary');
     }
 
+    if (incStatus) {
+        const tot = parseInt(s.total_bookings) || 0;
+        const rows = [
+            [gymName + ' — ' + title],
+            ['Period: ' + period + '   |   Generated: ' + now],
+            [''],
+            ['BOOKING STATUS BREAKDOWN'],
+            ['Status', 'Count', '% of Total'],
+            ...['verified', 'expired', 'upgraded', 'pending', 'rejected'].map(status => {
+                const count = parseInt(s[status + '_bookings']) || 0;
+                return [status[0].toUpperCase() + status.slice(1), count, (tot ? count / tot * 100 : 0).toFixed(1) + '%'];
+            })
+        ];
+        const wsStatus = XLSX.utils.aoa_to_sheet(rows);
+        wsStatus['!cols'] = [{ wch: 18 }, { wch: 14 }, { wch: 14 }];
+        XLSX.utils.book_append_sheet(wb, wsStatus, 'Booking Status');
+    }
+
     // ── Sales by Date sheet ────────────────────────────────────────────────
-    if (incSales && salesData.sales_by_date.length) {
+    if (incSales && data.sales_by_date.length) {
         const header = [
             [gymName + ' — ' + title],
             ['Period: ' + period + '   |   Generated: ' + now],
             [''],
             ['SALES BY DATE'],
-            ['Date', 'Total Sales', 'Revenue (PHP)', 'Verified Revenue (PHP)', 'Pending Revenue (PHP)', 'Member Bookings', 'Walk-in Bookings']
+            ['Date', 'Total Bookings', 'Paid', 'Verified', 'Expired', 'Upgraded', 'Pending', 'Rejected', 'Collected Revenue (PHP)', 'Pending Revenue (PHP)', 'Member Bookings', 'Walk-in Bookings']
         ];
-        const dataRows = salesData.sales_by_date.map(r => [
+        const dataRows = data.sales_by_date.map(r => [
             r.sale_date,
-            parseInt(r.total_sales),
-            parseFloat(r.total_revenue),
-            parseFloat(r.verified_revenue),
-            parseFloat(r.total_revenue) - parseFloat(r.verified_revenue),
-            parseInt(r.member_count),
-            parseInt(r.walkin_count)
+            parseInt(r.total_sales) || 0,
+            parseInt(r.paid_count) || 0,
+            parseInt(r.verified_count) || 0,
+            parseInt(r.expired_count) || 0,
+            parseInt(r.upgraded_count) || 0,
+            parseInt(r.pending_count) || 0,
+            parseInt(r.rejected_count) || 0,
+            parseFloat(r.total_revenue) || 0,
+            parseFloat(r.pending_revenue) || 0,
+            parseInt(r.member_count) || 0,
+            parseInt(r.walkin_count) || 0
         ]);
-        // Totals row
-        const totals = ['TOTAL',
-            dataRows.reduce((a,r) => a + r[1], 0),
-            dataRows.reduce((a,r) => a + r[2], 0),
-            dataRows.reduce((a,r) => a + r[3], 0),
-            dataRows.reduce((a,r) => a + r[4], 0),
-            dataRows.reduce((a,r) => a + r[5], 0),
-            dataRows.reduce((a,r) => a + r[6], 0)
-        ];
+        const totals = header[4].map((_, i) => i === 0 ? 'TOTAL' : dataRows.reduce((a, r) => a + r[i], 0));
         const ws2 = XLSX.utils.aoa_to_sheet([...header, ...dataRows, [''], totals]);
-        ws2['!cols'] = [{ wch: 14 }, { wch: 13 }, { wch: 18 }, { wch: 22 }, { wch: 22 }, { wch: 18 }, { wch: 18 }];
+        ws2['!cols'] = header[4].map((_, i) => ({ wch: i === 7 || i === 8 ? 24 : 16 }));
         XLSX.utils.book_append_sheet(wb, ws2, 'Sales by Date');
     }
 
     // ── Package Sales sheet ────────────────────────────────────────────────
-    if (incPackages && salesData.package_sales.length) {
-        const totalAvailed = salesData.package_sales.reduce((a, p) => a + parseInt(p.total_availed || 0), 0);
+    if (incPackages && data.package_sales.length) {
+        const totalAvailed = data.package_sales.reduce((a, p) => a + parseInt(p.total_availed || 0), 0);
         const header = [
             [gymName + ' — ' + title],
             ['Period: ' + period + '   |   Generated: ' + now],
             [''],
             ['PACKAGE SALES BREAKDOWN'],
-            ['Rank', 'Package Name', 'Tag / Category', 'Total Availed', 'Unique Users', 'Verified', 'Pending', 'Rejected', 'Revenue (PHP)', 'Share (%)']
+            ['Rank', 'Package Name', 'Tag / Category', 'Total Availed', 'Unique Users', 'Paid', 'Verified', 'Expired', 'Upgraded', 'Pending', 'Rejected', 'Collected Revenue (PHP)', 'Pending Revenue (PHP)', 'Share (%)']
         ];
-        const dataRows = salesData.package_sales.map((p, i) => {
+        const dataRows = data.package_sales.map((p, i) => {
             const pct = totalAvailed > 0 ? ((parseInt(p.total_availed) / totalAvailed) * 100).toFixed(1) : '0.0';
             return [
                 i + 1,
                 p.package_name,
                 p.package_tag || '—',
-                parseInt(p.total_availed),
-                parseInt(p.unique_users),
-                parseInt(p.verified_count),
-                parseInt(p.pending_count),
-                parseInt(p.rejected_count),
-                parseFloat(p.total_revenue),
+                parseInt(p.total_availed) || 0,
+                parseInt(p.unique_users) || 0,
+                parseInt(p.paid_count) || 0,
+                parseInt(p.verified_count) || 0,
+                parseInt(p.expired_count) || 0,
+                parseInt(p.upgraded_count) || 0,
+                parseInt(p.pending_count) || 0,
+                parseInt(p.rejected_count) || 0,
+                parseFloat(p.total_revenue) || 0,
+                parseFloat(p.pending_revenue) || 0,
                 pct + '%'
             ];
         });
-        const totals = ['TOTAL', '', '',
-            dataRows.reduce((a,r) => a + r[3], 0),
-            '',
-            dataRows.reduce((a,r) => a + r[5], 0),
-            dataRows.reduce((a,r) => a + r[6], 0),
-            dataRows.reduce((a,r) => a + r[7], 0),
-            dataRows.reduce((a,r) => a + r[8], 0),
-            '100%'
-        ];
+        const totals = header[4].map((_, i) => {
+            if (i === 0) return 'TOTAL';
+            if (i === 13) return '100%';
+            return i === 3 || (i >= 5 && i <= 12) ? dataRows.reduce((a, r) => a + r[i], 0) : '';
+        });
         const ws3 = XLSX.utils.aoa_to_sheet([...header, ...dataRows, [''], totals]);
-        ws3['!cols'] = [{ wch: 6 }, { wch: 28 }, { wch: 16 }, { wch: 14 }, { wch: 13 }, { wch: 11 }, { wch: 11 }, { wch: 11 }, { wch: 16 }, { wch: 11 }];
+        ws3['!cols'] = header[4].map((_, i) => ({ wch: i === 1 ? 28 : i === 10 || i === 11 ? 24 : 14 }));
         XLSX.utils.book_append_sheet(wb, ws3, 'Package Sales');
     }
 
@@ -653,8 +681,11 @@ body{font-family:Inter,Arial,sans-serif;color:#111;background:#fff;font-size:12p
 .doc-table tfoot tr{background:#f0f0f0;}
 .doc-table tfoot td{padding:9px 11px;font-weight:800;font-size:11px;border-top:2px solid #111;}
 .doc-table tfoot td.r{text-align:right;}
+.doc-table.compact th{padding:8px 5px;font-size:8px;letter-spacing:0;}
+.doc-table.compact td{padding:8px 5px;font-size:10px;}
 .pill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:9px;font-weight:700;text-transform:uppercase;}
 .pill-v{background:#dcfce7;color:#166534;}
+.pill-e{background:#e2e8f0;color:#475569;}
 .pill-p{background:#fef9c3;color:#854d0e;}
 .pill-r{background:#fee2e2;color:#991b1b;}
 .notes-box{background:#f9f9f9;border-left:3px solid #111;padding:12px 16px;font-size:11px;color:#555;line-height:1.6;margin-top:8px;}
@@ -666,19 +697,19 @@ body{font-family:Inter,Arial,sans-serif;color:#111;background:#fff;font-size:12p
 .page-break{page-break-before:always;}
 `;
 
-function buildReportHTML(gym, title, period, notes, incSummary, incSales, incPackages, incStatus, incWalkin) {
+function buildReportHTML(gym, title, period, notes, incSummary, incSales, incPackages, incStatus, incWalkin, data = salesData) {
     const gymName    = gym.gym_name    || 'Martinez Fitness Gym';
     const gymAddress = gym.gym_address || '';
     const gymContact = gym.gym_contact || '';
     const gymEmail   = gym.gym_email   || '';
     const now        = new Date().toLocaleString('en-PH', { dateStyle: 'long', timeStyle: 'short' });
 
-    const s          = salesData.summary;
+    const s          = data.summary;
     const totalSales = parseInt(s.total_bookings) || 0;
     const totalRev   = parseFloat(s.total_revenue) || 0;
-    const verRev     = parseFloat(s.verified_revenue) || 0;
-    const pendRev    = totalRev - verRev;
-    const convRate   = totalSales > 0 ? ((parseInt(s.verified_bookings) / totalSales) * 100).toFixed(1) : '0.0';
+    const paidCount  = parseInt(s.paid_bookings) || 0;
+    const pendRev    = parseFloat(s.pending_revenue) || 0;
+    const convRate   = totalSales > 0 ? ((paidCount / totalSales) * 100).toFixed(1) : '0.0';
     let sectionNum   = 0;
 
     function secHead(label) {
@@ -706,20 +737,21 @@ function buildReportHTML(gym, title, period, notes, incSummary, incSales, incPac
         </div>
     </div>
     <div class="doc-divider"></div>
-    <div class="doc-body">`;
+    <div class="doc-body">
+    <div class="notes-box">Collected revenue: stored booking amounts for paid (verified + expired + upgraded); pending/rejected excluded. Dates: effective verification time for paid bookings, otherwise creation time, falling back to booking date.</div>`;
 
     // ── SECTION 1: KEY METRICS ─────────────────────────────────────────────
     if (incSummary) {
         html += secHead('Key Performance Summary');
         html += `<div class="metric-grid cols-3">
             <div class="metric-box accent"><div class="m-label">Total Bookings</div><div class="m-value">${num(totalSales)}</div><div class="m-sub">in selected period</div></div>
-            <div class="metric-box accent"><div class="m-label">Total Revenue</div><div class="m-value">${peso(totalRev)}</div><div class="m-sub">all bookings</div></div>
-            <div class="metric-box accent"><div class="m-label">Verified Revenue</div><div class="m-value">${peso(verRev)}</div><div class="m-sub">confirmed payments</div></div>
+            <div class="metric-box accent"><div class="m-label">Collected Revenue</div><div class="m-value">${peso(totalRev)}</div><div class="m-sub">verified + expired + upgraded payments</div></div>
+            <div class="metric-box accent"><div class="m-label">Paid Bookings</div><div class="m-value">${num(paidCount)}</div><div class="m-sub">verified + expired + upgraded</div></div>
         </div>
         <div class="metric-grid cols-3" style="margin-top:10px;">
             <div class="metric-box"><div class="m-label">Unique Clients</div><div class="m-value">${num(s.unique_clients)}</div><div class="m-sub">members + walk-ins</div></div>
             <div class="metric-box"><div class="m-label">Pending Revenue</div><div class="m-value">${peso(pendRev)}</div><div class="m-sub">awaiting verification</div></div>
-            <div class="metric-box"><div class="m-label">Conversion Rate</div><div class="m-value">${convRate}%</div><div class="m-sub">verified / total bookings</div></div>
+            <div class="metric-box"><div class="m-label">Paid Rate</div><div class="m-value">${convRate}%</div><div class="m-sub">paid / total bookings</div></div>
         </div>`;
     }
 
@@ -727,17 +759,21 @@ function buildReportHTML(gym, title, period, notes, incSummary, incSales, incPac
     if (incStatus) {
         const tot = totalSales || 1;
         const vb  = parseInt(s.verified_bookings) || 0;
+        const eb  = parseInt(s.expired_bookings)  || 0;
+        const ub  = parseInt(s.upgraded_bookings) || 0;
         const pb  = parseInt(s.pending_bookings)  || 0;
         const rb  = parseInt(s.rejected_bookings) || 0;
         html += secHead('Booking Status Breakdown');
         html += `<table class="doc-table">
-            <thead><tr><th>Status</th><th class="r">Count</th><th class="r">% of Total</th><th class="r">Revenue (PHP)</th></tr></thead>
+            <thead><tr><th>Status</th><th class="r">Count</th><th class="r">% of Total</th></tr></thead>
             <tbody>
-                <tr><td><span class="pill pill-v">Verified</span></td><td class="r bold">${num(vb)}</td><td class="r">${((vb/tot)*100).toFixed(1)}%</td><td class="r">${peso(verRev)}</td></tr>
-                <tr><td><span class="pill pill-p">Pending</span></td><td class="r bold">${num(pb)}</td><td class="r">${((pb/tot)*100).toFixed(1)}%</td><td class="r">${peso(pendRev)}</td></tr>
-                <tr><td><span class="pill pill-r">Rejected</span></td><td class="r bold">${num(rb)}</td><td class="r">${((rb/tot)*100).toFixed(1)}%</td><td class="r">—</td></tr>
+                <tr><td><span class="pill pill-v">Verified</span></td><td class="r bold">${num(vb)}</td><td class="r">${((vb/tot)*100).toFixed(1)}%</td></tr>
+                <tr><td><span class="pill pill-e">Expired</span></td><td class="r bold">${num(eb)}</td><td class="r">${((eb/tot)*100).toFixed(1)}%</td></tr>
+                <tr><td><span class="pill pill-e">Upgraded</span></td><td class="r bold">${num(ub)}</td><td class="r">${((ub/tot)*100).toFixed(1)}%</td></tr>
+                <tr><td><span class="pill pill-p">Pending</span></td><td class="r bold">${num(pb)}</td><td class="r">${((pb/tot)*100).toFixed(1)}%</td></tr>
+                <tr><td><span class="pill pill-r">Rejected</span></td><td class="r bold">${num(rb)}</td><td class="r">${((rb/tot)*100).toFixed(1)}%</td></tr>
             </tbody>
-            <tfoot><tr><td class="bold">TOTAL</td><td class="r bold">${num(totalSales)}</td><td class="r">100%</td><td class="r bold">${peso(totalRev)}</td></tr></tfoot>
+            <tfoot><tr><td class="bold">TOTAL</td><td class="r bold">${num(totalSales)}</td><td class="r">${totalSales ? '100%' : '0%'}</td></tr></tfoot>
         </table>`;
     }
 
@@ -754,74 +790,83 @@ function buildReportHTML(gym, title, period, notes, incSummary, incSales, incPac
     }
 
     // ── SECTION 4: PACKAGE SALES ───────────────────────────────────────────
-    if (incPackages && salesData.package_sales.length) {
-        const pkgTotal = salesData.package_sales.reduce((a,p) => a + parseInt(p.total_availed||0), 0);
-        const pkgRev   = salesData.package_sales.reduce((a,p) => a + (parseFloat(p.total_revenue)||0), 0);
-        const pkgVer   = salesData.package_sales.reduce((a,p) => a + parseInt(p.verified_count||0), 0);
-        const pkgPend  = salesData.package_sales.reduce((a,p) => a + parseInt(p.pending_count||0), 0);
+    if (incPackages && data.package_sales.length) {
+        const pkgTotal = data.package_sales.reduce((a,p) => a + parseInt(p.total_availed||0), 0);
+        const pkgRev   = data.package_sales.reduce((a,p) => a + (parseFloat(p.total_revenue)||0), 0);
+        const pkgVer   = data.package_sales.reduce((a,p) => a + parseInt(p.verified_count||0), 0);
+        const pkgExp   = data.package_sales.reduce((a,p) => a + parseInt(p.expired_count||0), 0);
+        const pkgUpgraded = data.package_sales.reduce((a,p) => a + parseInt(p.upgraded_count||0), 0);
+        const pkgPend  = data.package_sales.reduce((a,p) => a + parseInt(p.pending_count||0), 0);
+        const pkgRej   = data.package_sales.reduce((a,p) => a + parseInt(p.rejected_count||0), 0);
+        const pkgPendRev = data.package_sales.reduce((a,p) => a + (parseFloat(p.pending_revenue)||0), 0);
         html += secHead('Package Sales Breakdown');
-        html += `<table class="doc-table">
+        html += `<table class="doc-table compact">
             <thead><tr>
-                <th style="width:28px;">#</th><th>Package Name</th><th>Category</th>
-                <th class="r">Availed</th><th class="r">Unique Users</th>
-                <th class="r">Verified</th><th class="r">Pending</th>
-                <th class="r">Revenue</th><th class="r">Share</th>
+                <th style="width:24px;">#</th><th>Package Name</th><th class="r">Availed</th>
+                <th class="r">Verified</th><th class="r">Expired</th><th class="r">Upgraded</th>
+                <th class="r">Pending</th><th class="r">Rejected</th>
+                <th class="r">Collected</th><th class="r">Pending Rev.</th>
             </tr></thead><tbody>`;
-        salesData.package_sales.forEach((p, i) => {
+        data.package_sales.forEach((p, i) => {
             const pct = pkgTotal > 0 ? ((parseInt(p.total_availed)/pkgTotal)*100).toFixed(1) : '0.0';
             html += `<tr>
                 <td class="bold" style="color:#888;">${i+1}</td>
-                <td class="bold">${p.package_name}</td>
-                <td>${p.package_tag ? `<span class="pill pill-v">${p.package_tag}</span>` : '—'}</td>
+                <td class="bold">${p.package_name}<br>
+                    ${p.package_tag ? `<span class="pill pill-v">${p.package_tag}</span><br>` : ''}
+                    <span style="font-size:9px;font-weight:400;color:#888;">${num(p.unique_users)} unique users &bull; ${pct}% share</span>
+                </td>
                 <td class="r bold">${num(p.total_availed)}</td>
-                <td class="r">${num(p.unique_users)}</td>
                 <td class="r">${num(p.verified_count)}</td>
+                <td class="r">${num(p.expired_count)}</td>
+                <td class="r">${num(p.upgraded_count)}</td>
                 <td class="r">${num(p.pending_count)}</td>
+                <td class="r">${num(p.rejected_count)}</td>
                 <td class="r bold">${peso(p.total_revenue)}</td>
-                <td class="r">${pct}%</td>
+                <td class="r">${peso(p.pending_revenue)}</td>
             </tr>`;
         });
         html += `</tbody><tfoot><tr>
-            <td colspan="3" class="bold">TOTAL</td>
-            <td class="r bold">${num(pkgTotal)}</td><td class="r">—</td>
-            <td class="r bold">${num(pkgVer)}</td><td class="r bold">${num(pkgPend)}</td>
-            <td class="r bold">${peso(pkgRev)}</td><td class="r">100%</td>
+            <td colspan="2" class="bold">TOTAL (100% share)</td>
+            <td class="r bold">${num(pkgTotal)}</td>
+            <td class="r bold">${num(pkgVer)}</td><td class="r bold">${num(pkgExp)}</td><td class="r bold">${num(pkgUpgraded)}</td>
+            <td class="r bold">${num(pkgPend)}</td><td class="r bold">${num(pkgRej)}</td>
+            <td class="r bold">${peso(pkgRev)}</td><td class="r bold">${peso(pkgPendRev)}</td>
         </tr></tfoot></table>`;
     }
 
     // ── SECTION 5: SALES BY DATE ───────────────────────────────────────────
-    if (incSales && salesData.sales_by_date.length) {
-        const dTotal   = salesData.sales_by_date.reduce((a,r) => a + parseInt(r.total_sales||0), 0);
-        const dRev     = salesData.sales_by_date.reduce((a,r) => a + (parseFloat(r.total_revenue)||0), 0);
-        const dVer     = salesData.sales_by_date.reduce((a,r) => a + (parseFloat(r.verified_revenue)||0), 0);
-        const dMem     = salesData.sales_by_date.reduce((a,r) => a + parseInt(r.member_count||0), 0);
-        const dWalk    = salesData.sales_by_date.reduce((a,r) => a + parseInt(r.walkin_count||0), 0);
+    if (incSales && data.sales_by_date.length) {
+        const dTotal   = data.sales_by_date.reduce((a,r) => a + parseInt(r.total_sales||0), 0);
+        const dPaid    = data.sales_by_date.reduce((a,r) => a + parseInt(r.paid_count||0), 0);
+        const dRev     = data.sales_by_date.reduce((a,r) => a + (parseFloat(r.total_revenue)||0), 0);
+        const dPend    = data.sales_by_date.reduce((a,r) => a + (parseFloat(r.pending_revenue)||0), 0);
+        const dMem     = data.sales_by_date.reduce((a,r) => a + parseInt(r.member_count||0), 0);
+        const dWalk    = data.sales_by_date.reduce((a,r) => a + parseInt(r.walkin_count||0), 0);
         html += `<div class="page-break"></div>`;
         html += secHead('Daily Sales Detail');
         html += `<table class="doc-table">
             <thead><tr>
-                <th>Date</th><th class="r">Sales</th><th class="r">Revenue</th>
-                <th class="r">Verified Rev.</th><th class="r">Pending Rev.</th>
+                <th>Date</th><th class="r">Bookings</th><th class="r">Paid</th>
+                <th class="r">Collected</th><th class="r">Pending Rev.</th>
                 <th class="r">Members</th><th class="r">Walk-ins</th>
             </tr></thead><tbody>`;
-        salesData.sales_by_date.forEach(r => {
-            const pRev = (parseFloat(r.total_revenue)||0) - (parseFloat(r.verified_revenue)||0);
+        data.sales_by_date.forEach(r => {
             html += `<tr>
                 <td class="bold">${formatDate(r.sale_date)}</td>
                 <td class="r">${num(r.total_sales)}</td>
+                <td class="r">${num(r.paid_count)}</td>
                 <td class="r">${peso(r.total_revenue)}</td>
-                <td class="r">${peso(r.verified_revenue)}</td>
-                <td class="r">${peso(pRev)}</td>
+                <td class="r">${peso(r.pending_revenue)}</td>
                 <td class="r">${num(r.member_count)}</td>
                 <td class="r">${num(r.walkin_count)}</td>
             </tr>`;
         });
         html += `</tbody><tfoot><tr>
-            <td class="bold">TOTAL (${salesData.sales_by_date.length} days)</td>
+            <td class="bold">TOTAL (${data.sales_by_date.length} days)</td>
             <td class="r bold">${num(dTotal)}</td>
+            <td class="r bold">${num(dPaid)}</td>
             <td class="r bold">${peso(dRev)}</td>
-            <td class="r bold">${peso(dVer)}</td>
-            <td class="r bold">${peso(dRev - dVer)}</td>
+            <td class="r bold">${peso(dPend)}</td>
             <td class="r bold">${num(dMem)}</td>
             <td class="r bold">${num(dWalk)}</td>
         </tr></tfoot></table>`;

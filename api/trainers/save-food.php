@@ -22,12 +22,13 @@ $trainerStmt->bind_param("i", $user['id']);
 $trainerStmt->execute();
 $trainerId = $trainerStmt->get_result()->fetch_assoc()['id'];
 
-// Check if trainer is assigned to this member's active or expired booking AND if package allows food recommendations
+// Allow trainer to save for verified bookings OR expired bookings where booking_date is today (same-day daily pass)
 $checkStmt = $conn->prepare("
-    SELECT b.id, p.is_trainer_assisted, b.expires_at
+    SELECT b.id, p.is_trainer_assisted, b.expires_at, b.booking_date
     FROM bookings b 
     JOIN packages p ON b.package_id = p.id 
-    WHERE b.user_id = ? AND b.trainer_id = ? AND b.status = 'verified'
+    WHERE b.user_id = ? AND b.trainer_id = ?
+      AND (b.status = 'verified' OR (b.status = 'expired' AND DATE(b.booking_date) = CURDATE()))
     ORDER BY b.verified_at DESC LIMIT 1
 ");
 $checkStmt->bind_param("ii", $member_id, $trainerId);
@@ -35,7 +36,7 @@ $checkStmt->execute();
 $booking = $checkStmt->get_result()->fetch_assoc();
 
 if (!$booking) {
-    sendResponse(false, 'You are not assigned to this member or they have no verified booking.');
+    sendResponse(false, 'You are not assigned to this member or they have no active/same-day booking.');
 }
 
 // Warn if booking is expired but still allow it

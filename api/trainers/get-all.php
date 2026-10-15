@@ -3,7 +3,7 @@
 ob_start();
 require_once '../config.php';
 require_once '../session.php';
-requireAdmin();
+requireAdminOnly();
 
 // Clean any accidental output from config/session
 if (ob_get_length()) ob_clean();

@@ -69,14 +69,18 @@ $sql = "SELECT b.id as booking_id,
                COALESCE(u.contact, b.contact) as contact, 
                COALESCE(u.address, 'Walk-in Customer') as address, 
                COALESCE(u.created_at, b.created_at) as created_at,
-               p.name as package_name, p.duration, p.is_trainer_assisted, b.expires_at, b.status, b.verified_at,
+               p.name as package_name, p.duration, p.is_trainer_assisted,
+               b.expires_at, b.status, b.verified_at, b.booking_date,
                uq.primary_goal, uq.exercise_history, uq.workout_days_per_week,
                CASE WHEN b.user_id IS NULL THEN 1 ELSE 0 END as is_walkin
         FROM bookings b 
         LEFT JOIN users u ON b.user_id = u.id 
         JOIN packages p ON b.package_id = p.id 
         LEFT JOIN user_questionnaire uq ON u.id = uq.user_id
-        WHERE b.status = 'verified'
+        WHERE (
+              b.status = 'verified'
+              OR (b.status = 'expired' AND DATE(b.booking_date) = CURDATE())
+          )
           AND (
               b.trainer_id = ?
               OR (b.trainer_id IS NULL AND EXISTS (
@@ -103,12 +107,15 @@ error_log("DEBUG: Found " . $result->num_rows . " clients");
 
 $clients = [];
 while ($row = $result->fetch_assoc()) {
+    // Same-day expired booking = still "active" for today's session
+    $bookingDate = $row['booking_date'] ?? null;
+    $isSameDay = $bookingDate && (date('Y-m-d', strtotime($bookingDate)) === date('Y-m-d'));
     $isExpired = $row['expires_at'] ? strtotime($row['expires_at']) < time() : false;
-    $row['is_expired'] = $isExpired;
+    $row['is_expired'] = $isExpired && !$isSameDay; // same-day expired = not expired for trainer purposes
     $row['is_walkin'] = (bool)$row['is_walkin'];
-    
+
     // Add warning messages for trainer
-    if ($isExpired) {
+    if ($isExpired && !$isSameDay) {
         $row['status_warning'] = 'Membership expired - plans can still be added but member may not have access';
     } else if ($row['is_walkin']) {
         $row['status_warning'] = 'Walk-in customer - has limited access to online features';

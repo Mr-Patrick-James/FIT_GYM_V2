@@ -23,14 +23,14 @@ $logged_at  = $data['logged_at'];
 
 $conn = getDBConnection();
 
-// Verify booking belongs to this user
-$checkStmt = $conn->prepare("SELECT id, trainer_id FROM bookings WHERE id = ? AND user_id = ? AND status = 'verified'");
+// Verify booking belongs to this user — allow verified OR same-day expired
+$checkStmt = $conn->prepare("SELECT id, trainer_id FROM bookings WHERE id = ? AND user_id = ? AND (status = 'verified' OR (status = 'expired' AND DATE(booking_date) = CURDATE()))");
 $checkStmt->bind_param("ii", $booking_id, $user['id']);
 $checkStmt->execute();
 $booking = $checkStmt->get_result()->fetch_assoc();
 
 if (!$booking) {
-    sendResponse(false, 'Booking not found or not verified', null, 403);
+    sendResponse(false, 'Booking not found, not verified, or session date has passed', null, 403);
 }
 
 $trainer_id = $booking['trainer_id'];

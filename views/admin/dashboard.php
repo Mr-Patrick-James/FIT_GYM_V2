@@ -1,8 +1,9 @@
 <?php
-require_once '../../api/session.php';
-require_once '../../api/config.php';
-requireAdminOnly();
+require_once __DIR__ . '/../../api/session.php';
+require_once __DIR__ . '/../../api/config.php';
+requireManagerAccess();
 $user = getCurrentUser();
+$dashboardUrl = isAdmin() ? 'dashboard.php' : 'manager-dashboard.php';
 
 // Fetch gym settings
 $settings = [];
@@ -28,7 +29,7 @@ function getSetting($key, $default = '', $settings = []) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FitPay Admin | <?php echo htmlspecialchars(getSetting('gym_name', 'Martinez Fitness', $settings)); ?></title>
+    <title>FitPay <?php echo isAdmin() ? 'Admin' : 'Manager'; ?> | <?php echo htmlspecialchars(getSetting('gym_name', 'Martinez Fitness', $settings)); ?></title>
     
     <!-- Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -40,7 +41,7 @@ function getSetting($key, $default = '', $settings = []) {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <!-- Dashboard Styles -->
-    <link rel="stylesheet" href="../../assets/css/dashboard.css?v=3.1">
+    <link rel="stylesheet" href="../../assets/css/dashboard.css?v=3.2">
     
     <!-- Apply theme immediately before page renders to prevent flash -->
     <script>
@@ -60,7 +61,7 @@ function getSetting($key, $default = '', $settings = []) {
         })();
     </script>
 </head>
-<body class="role-<?php echo $user['role']; ?>">
+<body class="role-<?php echo htmlspecialchars($user['role']); ?>" data-can-manage-trainers="<?php echo isAdmin() ? 'true' : 'false'; ?>">
     <!-- Mobile Menu Toggle Button -->
     <button class="mobile-menu-btn" id="mobileMenuToggle">
         <i class="fas fa-bars"></i>
@@ -77,11 +78,13 @@ function getSetting($key, $default = '', $settings = []) {
         </div>
         
         <ul class="nav-links">
-            <li><a href="dashboard.php" class="active"><i class="fas fa-chart-line"></i> <span>Dashboard</span></a></li>
+            <li><a href="<?php echo $dashboardUrl; ?>" class="active"><i class="fas fa-chart-line"></i> <span>Dashboard</span></a></li>
             <li><a href="bookings.php"><i class="fas fa-calendar-check"></i> <span>Bookings</span> <span class="badge" id="bookingsBadge">0</span></a></li>
             <li><a href="payments.php"><i class="fas fa-money-check"></i> <span>Payments</span></a></li>
             <li><a href="members.php"><i class="fas fa-users"></i> <span>Members</span></a></li>
+            <?php if (isAdmin()): ?>
             <li><a href="trainers.php"><i class="fas fa-user-tie"></i> <span>Trainers</span></a></li>
+            <?php endif; ?>
             <li><a href="packages.php"><i class="fas fa-dumbbell"></i> <span>Packages</span></a></li>
             <li><a href="equipment.php"><i class="fas fa-tools"></i> <span>Equipment</span></a></li>
             <li><a href="exercises.php"><i class="fas fa-running"></i> <span>Exercises</span></a></li>
@@ -152,9 +155,11 @@ function getSetting($key, $default = '', $settings = []) {
                 <button class="control-tab" data-tab="members" onclick="switchControlTab('members')">
                     <i class="fas fa-users"></i> Members
                 </button>
+                <?php if (isAdmin()): ?>
                 <button class="control-tab" data-tab="trainers" onclick="switchControlTab('trainers')">
                     <i class="fas fa-user-tie"></i> Trainers
                 </button>
+                <?php endif; ?>
                 <button class="control-tab" data-tab="inventory" onclick="switchControlTab('inventory')">
                     <i class="fas fa-box"></i> Inventory
                 </button>
@@ -165,6 +170,7 @@ function getSetting($key, $default = '', $settings = []) {
         <div class="stats-grid" id="dashboardStatsGrid">
             <!-- Dynamically populated based on active tab -->
         </div>
+        <p style="color: var(--dark-text-secondary); font-size: 0.8rem; margin-bottom: 16px;">Revenue includes collected payments, even after expiry; pending and rejected requests are excluded. Totals are all-time unless labeled today or this month. Active members are registered users with a valid verified booking.</p>
 
         <!-- Quick Actions -->
         <div class="content-card" style="margin-top: 24px; margin-bottom: 32px;">
@@ -244,7 +250,7 @@ function getSetting($key, $default = '', $settings = []) {
                         <div class="pkg-header-top">
                             <div class="header-main">
                                 <h3>Package Performance</h3>
-                                <p>Track how each gym plan is performing</p>
+                                <p>All booking requests and collected revenue, using the same sales dates as Reports</p>
                             </div>
                             <div class="metric-toggle">
                                 <button class="toggle-btn active" data-metric="bookings" onclick="switchPackageMetric('bookings')">Bookings</button>
@@ -348,7 +354,7 @@ function getSetting($key, $default = '', $settings = []) {
                     </div>
                     <div class="detail-group">
                         <label>Contact Number</label>
-                        <div class="value" id="modalContact">0917-123-4567</div>
+                        <div class="value" id="modalContact">-</div>
                     </div>
                     <div class="detail-group">
                         <label>Email Address</label>
@@ -419,6 +425,6 @@ function getSetting($key, $default = '', $settings = []) {
     <!-- Dashboard Scripts -->
     <script src="../../assets/js/dashboard.js?v=<?= time() ?>"></script>
     <script src="../../assets/js/mobile-menu.js"></script>
- <script src="../../assets/js/role-restrictions.js"></script>
+ <script src="../../assets/js/role-restrictions.js?v=2"></script>
 </body>
 </html>

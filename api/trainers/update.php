@@ -1,7 +1,7 @@
 <?php
 require_once '../config.php';
 require_once '../session.php';
-requireAdmin();
+requireAdminOnly();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
     sendResponse(false, 'Method not allowed', null, 405);

@@ -9,7 +9,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $data = getRequestData();
 $member_id = (int)$data['member_id'];
-$tip_text = $data['tip_text'];
+$tip_text  = trim($data['tip_text'] ?? '');
+$tip_id    = (int)($data['tip_id'] ?? 0); // present on edit
 
 $user = getCurrentUser();
 $conn = getDBConnection();
@@ -20,12 +21,34 @@ $trainerStmt->bind_param("i", $user['id']);
 $trainerStmt->execute();
 $trainerId = $trainerStmt->get_result()->fetch_assoc()['id'];
 
-// Check if trainer is assigned to this member's active booking AND if package allows tips
+// If tip_id is set → UPDATE existing tip
+if ($tip_id > 0) {
+    if (!$tip_text) sendResponse(false, 'Tip text required');
+    $stmt = $conn->prepare("UPDATE trainer_tips SET tip_text = ? WHERE id = ? AND trainer_id = ?");
+    $stmt->bind_param("sii", $tip_text, $tip_id, $trainerId);
+    if ($stmt->execute() && $stmt->affected_rows > 0) {
+        sendResponse(true, 'Tip updated');
+    } else {
+        sendResponse(false, 'Tip not found or not authorised');
+    }
+}
+
+$user = getCurrentUser();
+$conn = getDBConnection();
+
+// Get trainer ID
+$trainerStmt = $conn->prepare("SELECT id FROM trainers WHERE user_id = ?");
+$trainerStmt->bind_param("i", $user['id']);
+$trainerStmt->execute();
+$trainerId = $trainerStmt->get_result()->fetch_assoc()['id'];
+
+// Allow trainer to save for verified bookings OR expired bookings where booking_date is today (same-day daily pass)
 $checkStmt = $conn->prepare("
     SELECT b.id, p.is_trainer_assisted 
     FROM bookings b 
     JOIN packages p ON b.package_id = p.id 
-    WHERE b.user_id = ? AND b.trainer_id = ? AND b.status = 'verified' AND b.expires_at > NOW()
+    WHERE b.user_id = ? AND b.trainer_id = ?
+      AND (b.status = 'verified' OR (b.status = 'expired' AND DATE(b.booking_date) = CURDATE()))
     ORDER BY b.verified_at DESC LIMIT 1
 ");
 $checkStmt->bind_param("ii", $member_id, $trainerId);
@@ -33,7 +56,7 @@ $checkStmt->execute();
 $booking = $checkStmt->get_result()->fetch_assoc();
 
 if (!$booking) {
-    sendResponse(false, 'You are not assigned to this member or they have no active booking.');
+    sendResponse(false, 'You are not assigned to this member or they have no active/same-day booking.');
 }
 
 if (!$booking['is_trainer_assisted']) {

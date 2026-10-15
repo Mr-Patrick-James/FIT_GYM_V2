@@ -37,7 +37,7 @@ try {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Dashboard Styles -->
-    <link rel="stylesheet" href="../../assets/css/dashboard.css?v=3.0">
+    <link rel="stylesheet" href="../../assets/css/dashboard.css?v=3.2">
     
     <!-- FullCalendar CDN -->
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
@@ -293,12 +293,12 @@ try {
             <li><a href="members.php"><i class="fas fa-users"></i> <span>Members</span></a></li>
             <?php if (isAdmin()): ?>
             <li><a href="trainers.php"><i class="fas fa-user-tie"></i> <span>Trainers</span></a></li>
-            <li><a href="packages.php"><i class="fas fa-dumbbell"></i> <span>Packages</span></a></li>
             <?php endif; ?>
+            <li><a href="packages.php"><i class="fas fa-dumbbell"></i> <span>Packages</span></a></li>
             <li><a href="equipment.php"><i class="fas fa-tools"></i> <span>Equipment</span></a></li>
-            <?php if (isAdmin()): ?>
             <li><a href="exercises.php"><i class="fas fa-running"></i> <span>Exercises</span></a></li>
             <li><a href="report.php"><i class="fas fa-file-invoice-dollar"></i> <span>Reports</span></a></li>
+            <?php if (isAdmin()): ?>
             <li><a href="settings.php"><i class="fas fa-cog"></i> <span>Settings</span></a></li>
             <?php endif; ?>
         </ul>
@@ -329,6 +329,10 @@ try {
             </div>
             
             <div class="header-actions">
+                <button type="button" class="card-btn primary" onclick="openWalkinModal()">
+                    <i class="fas fa-person-walking"></i>
+                    <span>New Walk-in</span>
+                </button>
                 <div class="search-box">
                     <i class="fas fa-search"></i>
                     <input type="text" id="searchInput" placeholder="Search bookings...">
@@ -704,7 +708,7 @@ try {
     <!-- Bookings Scripts -->
     <script src="../../assets/js/bookings.js?v=<?= time() ?>"></script>
     <script src="../../assets/js/mobile-menu.js"></script>
- <script src="../../assets/js/role-restrictions.js"></script>
+ <script src="../../assets/js/role-restrictions.js?v=2"></script>
 
     <!-- Override loadTrainers to use server-injected data -->
     <script>

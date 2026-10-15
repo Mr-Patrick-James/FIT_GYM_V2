@@ -6,8 +6,8 @@ require_once '../email.php';
 ob_end_clean();
 
 requireLogin();
-if (!isAdmin()) {
-    sendResponse(false, 'Unauthorized access. Admin privileges required to manage packages.', null, 403);
+if (!isAdmin() && !isManager()) {
+    sendResponse(false, 'Unauthorized access. Admin or manager privileges required to manage packages.', null, 403);
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

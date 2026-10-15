@@ -1,10 +1,7 @@
 <?php
 require_once '../config.php';
 require_once '../session.php';
-requireLogin();
-if (!isManager()) {
-    sendResponse(false, 'Unauthorized access. Manager or Admin privileges required.', null, 403);
-}
+requireAdminOnly();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'DELETE') {
     sendResponse(false, 'Method not allowed', null, 405);

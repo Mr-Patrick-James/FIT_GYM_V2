@@ -1,6 +1,6 @@
 <?php
 require_once '../../api/session.php';
-requireAdminOnly();
+requireManagerAccess();
 $user = getCurrentUser();
 ?>
 <!DOCTYPE html>
@@ -17,7 +17,7 @@ $user = getCurrentUser();
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Dashboard Styles -->
-    <link rel="stylesheet" href="../../assets/css/dashboard.css?v=3.0">
+    <link rel="stylesheet" href="../../assets/css/dashboard.css?v=3.2">
     
     <script>
         (function() {
@@ -136,7 +136,9 @@ $user = getCurrentUser();
             <li><a href="bookings.php"><i class="fas fa-calendar-check"></i> <span>Bookings</span> <span class="badge" id="bookingsBadge">0</span></a></li>
             <li><a href="payments.php"><i class="fas fa-money-check"></i> <span>Payments</span></a></li>
             <li><a href="members.php"><i class="fas fa-users"></i> <span>Members</span></a></li>
+            <?php if (isAdmin()): ?>
             <li><a href="trainers.php"><i class="fas fa-user-tie"></i> <span>Trainers</span></a></li>
+            <?php endif; ?>
             <li><a href="packages.php"><i class="fas fa-dumbbell"></i> <span>Packages</span></a></li>
             <li><a href="equipment.php"><i class="fas fa-tools"></i> <span>Equipment</span></a></li>
             <li><a href="exercises.php" class="active"><i class="fas fa-running"></i> <span>Exercises</span></a></li>
@@ -377,6 +379,6 @@ $user = getCurrentUser();
     <script src="../../assets/js/theme.js"></script>
     <script src="../../assets/js/exercises.js?v=2.0"></script>
     <script src="../../assets/js/mobile-menu.js"></script>
- <script src="../../assets/js/role-restrictions.js"></script>
+ <script src="../../assets/js/role-restrictions.js?v=2"></script>
 </body>
 </html>

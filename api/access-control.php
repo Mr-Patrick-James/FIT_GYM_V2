@@ -43,6 +43,10 @@ define('ROLE_PERMISSIONS', [
         'manage_bookings',
         'manage_payments',
         'manage_inventory',
+        'manage_packages',
+        'manage_exercises',
+        'view_reports',
+        'export_data',
     ],
     'admin' => [
         'all_permissions', // Admin has access to everything

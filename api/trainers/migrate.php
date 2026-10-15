@@ -1,7 +1,7 @@
 <?php
 require_once '../config.php';
 require_once '../session.php';
-requireAdmin();
+requireAdminOnly();
 
 $conn = getDBConnection();
 $results = [];

@@ -26,7 +26,13 @@ try {
     $role = $_GET['role'] ?? 'all';
     $search = $_GET['search'] ?? '';
     
-    $sql = "SELECT id, name, email, role, contact, address, created_at FROM users WHERE 1=1";
+    // Prefer the saved profile number; older accounts may only have booking contacts.
+    $contactSQL = "COALESCE(NULLIF(TRIM(u.contact), ''),
+        (SELECT NULLIF(TRIM(b.contact), '') FROM bookings b
+         WHERE b.user_id = u.id AND NULLIF(TRIM(b.contact), '') IS NOT NULL
+         ORDER BY b.created_at DESC, b.id DESC LIMIT 1))";
+    $sql = "SELECT u.id, u.name, u.email, u.role, $contactSQL AS contact,
+                   u.address, u.created_at FROM users u WHERE 1=1";
     $params = [];
     $types = "";
     
@@ -37,7 +43,7 @@ try {
     }
     
     if (!empty($search)) {
-        $sql .= " AND (name LIKE ? OR email LIKE ? OR contact LIKE ?)";
+        $sql .= " AND (u.name LIKE ? OR u.email LIKE ? OR $contactSQL LIKE ?)";
         $searchParam = '%' . $search . '%';
         $params = array_merge($params, [$searchParam, $searchParam, $searchParam]);
         $types .= "sss";

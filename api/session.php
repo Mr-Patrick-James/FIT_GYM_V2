@@ -155,7 +155,7 @@ function canAccessResource($resourceType, $resourceId = null) {
             return isAdmin() || isManager(); // Both can manage users
             
         case 'trainer_management':
-            return isAdmin() || isManager(); // Both can manage trainers
+            return isAdmin(); // Trainer management is restricted to administrators
             
         case 'reports':
             return isAdmin() || isManager(); // Both can view reports
@@ -257,7 +257,7 @@ function requireAdmin() {
 }
 
 // ─── Admin-only guard (managers are NOT allowed) ───────────────────────────
-// Use this on: dashboard, trainers, packages, exercises, reports, walk-ins
+// Use this on: trainer management, admin settings, and system administration
 function requireAdminOnly() {
     requireLogin();
     if (!isAdmin()) {
@@ -286,7 +286,8 @@ function requireAdminOnly() {
 }
 
 // ─── Manager-accessible page guard ────────────────────────────────────────
-// Use this on: bookings, payments, members, equipment
+// Use this on: dashboard, walk-ins, bookings, payments, members, packages,
+// exercises, equipment, and reports
 // Allows admin + manager; blocks trainers and plain users
 function requireManagerAccess() {
     requireLogin();

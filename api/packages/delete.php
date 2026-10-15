@@ -3,8 +3,8 @@ require_once '../config.php';
 require_once '../session.php';
 
 requireLogin();
-if (!isAdmin()) {
-    sendResponse(false, 'Unauthorized access. Admin privileges required.', null, 403);
+if (!isAdmin() && !isManager()) {
+    sendResponse(false, 'Unauthorized access. Admin or manager privileges required.', null, 403);
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'DELETE') {

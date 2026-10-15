@@ -3245,7 +3245,7 @@ async function loadHubGuidance(memberId) {
 
     try {
         // Fetch Tips
-        const tipsResp = await fetch(`../../api/trainers/get-tips.php?member_id=${memberId}`);
+        const tipsResp = await fetch(getApiUrl(`trainers/get-tips.php?member_id=${memberId}`), { credentials: 'include' });
         const tipsData = await tipsResp.json();
         if (tipsData.success && tipsData.data.length > 0) {
             tipsList.innerHTML = tipsData.data.map(t => `
@@ -3259,7 +3259,7 @@ async function loadHubGuidance(memberId) {
         }
 
         // Fetch Food
-        const foodResp = await fetch(`../../api/trainers/get-food.php?member_id=${memberId}`);
+        const foodResp = await fetch(getApiUrl(`trainers/get-food.php?member_id=${memberId}`), { credentials: 'include' });
         const foodData = await foodResp.json();
         if (foodData.success && foodData.data.length > 0) {
             foodList.innerHTML = foodData.data.map(f => `
@@ -4970,4 +4970,85 @@ function openProgressPhoto(url) {
     overlay.innerHTML = `<img src="${url}" style="max-width:90vw;max-height:90vh;border-radius:12px;object-fit:contain;">`;
     overlay.onclick = () => overlay.remove();
     document.body.appendChild(overlay);
+}
+
+
+// ─── Notifications Modal ────────────────────────────────────────────────────
+
+function toggleNotifications() {
+    const modal = document.getElementById('notificationsModal');
+    if (!modal) return;
+    const isOpen = modal.classList.toggle('active');
+    if (isOpen) loadUserNotifications();
+}
+
+async function loadUserNotifications() {
+    const list = document.getElementById('notificationsList');
+    if (!list) return;
+
+    list.innerHTML = '<p style="text-align:center;padding:20px;color:var(--dark-text-secondary);"><i class="fas fa-spinner fa-spin"></i></p>';
+
+    try {
+        const resp = await fetch(getApiUrl('notifications/get-all.php'), { credentials: 'include' });
+        const data = await resp.json();
+
+        if (!data.success || data.data.length === 0) {
+            list.innerHTML = '<p style="text-align:center;padding:32px;color:var(--dark-text-secondary);">No notifications yet.</p>';
+            return;
+        }
+
+        list.innerHTML = data.data.map(n => `
+            <div onclick="markNotifRead(${n.id})" style="padding:12px 8px;border-bottom:1px solid var(--dark-border);cursor:pointer;border-radius:8px;${!n.is_read ? 'background:rgba(59,130,246,0.06);' : ''}">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
+                    <strong style="font-size:0.85rem;color:${!n.is_read ? 'var(--primary)' : 'var(--dark-text)'};">${n.title}</strong>
+                    <span style="font-size:0.7rem;color:var(--dark-text-secondary);white-space:nowrap;margin-left:8px;">${new Date(n.created_at).toLocaleDateString()}</span>
+                </div>
+                <p style="font-size:0.8rem;color:var(--dark-text-secondary);line-height:1.4;margin:0;">${n.message}</p>
+                ${!n.is_read ? '<div style="width:6px;height:6px;background:#3b82f6;border-radius:50%;margin-top:6px;"></div>' : ''}
+            </div>
+        `).join('');
+
+        // Update badge after rendering
+        const unreadCount = data.data.filter(n => !n.is_read).length;
+        const badge = document.getElementById('notifBadge');
+        if (badge) {
+            badge.textContent = unreadCount > 0 ? unreadCount : '0';
+            badge.style.display = unreadCount > 0 ? 'flex' : 'none';
+        }
+    } catch (e) {
+        list.innerHTML = '<p style="text-align:center;padding:20px;color:#ef4444;">Failed to load notifications.</p>';
+        console.error('loadUserNotifications error:', e);
+    }
+}
+
+async function markNotifRead(id) {
+    try {
+        await fetch(getApiUrl('notifications/mark-as-read.php'), {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id })
+        });
+        loadUserNotifications(); // refresh list + badge
+    } catch (e) { console.error('markNotifRead error:', e); }
+}
+
+async function markAllAsRead() {
+    try {
+        // Fetch all unread IDs then mark each
+        const resp = await fetch(getApiUrl('notifications/get-all.php'), { credentials: 'include' });
+        const data = await resp.json();
+        if (data.success) {
+            const unread = data.data.filter(n => !n.is_read);
+            await Promise.all(unread.map(n =>
+                fetch(getApiUrl('notifications/mark-as-read.php'), {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: n.id })
+                })
+            ));
+        }
+        loadUserNotifications();
+    } catch (e) { console.error('markAllAsRead error:', e); }
 }

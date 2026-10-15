@@ -1246,10 +1246,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Walk-in Booking Functions
 function openWalkinModal() {
-    document.getElementById('walkinModal').classList.add('active');
-    loadPackages();
-    setDefaultDate();
     resetWalkinForm();
+    setDefaultDate();
+    loadPackages();
+    document.getElementById('walkinModal').classList.add('active');
 }
 
 function closeWalkinModal() {
@@ -1261,7 +1261,8 @@ function resetWalkinForm() {
 }
 
 function setDefaultDate() {
-    const today = new Date().toISOString().split('T')[0];
+    const now = new Date();
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     document.getElementById('bookingDate').value = today;
 }
 

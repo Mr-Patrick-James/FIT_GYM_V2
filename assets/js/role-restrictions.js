@@ -1,6 +1,6 @@
 /**
  * role-restrictions.js
- * Hides edit and delete controls for manager-role users across all admin pages.
+ * Restricts manager UI access to trainer management and admin-only settings.
  * Loaded on every admin page after other scripts.
  */
 (function () {
@@ -11,43 +11,20 @@
     // Catches statically-rendered buttons immediately (before any JS runs).
     const style = document.createElement('style');
     style.textContent = `
-        /* Hide any button whose onclick touches edit/delete/remove actions */
-        body.role-manager [onclick*="editTrainer"],
-        body.role-manager [onclick*="deleteTrainer"],
-        body.role-manager [onclick*="editPackage"],
-        body.role-manager [onclick*="deletePackage"],
-        body.role-manager [onclick*="editExercise"],
-        body.role-manager [onclick*="deleteExercise"],
-        body.role-manager [onclick*="editEquipment"],
-        body.role-manager [onclick*="deleteEquipment"],
-        body.role-manager [onclick*="removeExerciseFromPackage"],
-        body.role-manager [onclick*="removeAdmin"],
-        body.role-manager [onclick*="removeManager"],
-        body.role-manager [onclick*="confirmDelete"],
-        body.role-manager [onclick*="confirmDeleteTrainer"],
-        body.role-manager [onclick*="confirmDeleteExercise"],
-        body.role-manager .btn-danger,
-        body.role-manager .icon-btn.danger,
-        body.role-manager .settings-danger-zone {
-            display: none !important;
-        }
-
-        /* Add new trainer / package / exercise buttons — managers cannot create */
-        body.role-manager [onclick*="openAddTrainerModal"],
-        body.role-manager [onclick*="openAddExerciseModal"],
-        body.role-manager [onclick*="openCreatePackageModal"],
-        body.role-manager [onclick*="openAddEquipmentModal"] {
-            display: none !important;
-        }
-
-        /* Bookings page — reject button hidden for managers */
-        body.role-manager #rejectPaymentBtn {
-            display: none !important;
-        }
-
-        /* Settings page — danger zone */
+        /* Trainer management and admin-only account/system controls */
+        body.role-manager [onclick*="editTrainer("],
+        body.role-manager [onclick*="deleteTrainer("],
+        body.role-manager [onclick*="confirmDeleteTrainer("],
+        body.role-manager [onclick*="openAddTrainerModal("],
+        body.role-manager [onclick*="removeAdmin("],
+        body.role-manager [onclick*="removeManager("],
+        body.role-manager [onclick*="exportDatabase("],
         body.role-manager .settings-danger-zone,
-        body.role-manager [onclick*="exportDatabase"] {
+        body.role-manager .sidebar a[href="trainers.php"],
+        body.role-manager .sidebar a[href="settings.php"],
+        body.role-manager .sidebar-nav a[href="trainers.php"],
+        body.role-manager .sidebar-nav a[href="settings.php"],
+        body.role-manager .control-tab[data-tab="trainers"] {
             display: none !important;
         }
     `;
@@ -56,17 +33,13 @@
     // ── MutationObserver: catches buttons injected by JS templates ─────────────
     // Runs every time new DOM nodes are added (e.g. when loadAllTrainers() renders cards).
     const BLOCKED_PATTERNS = [
-        /editTrainer/i, /deleteTrainer/i,
-        /editPackage/i, /deletePackage/i,
-        /editExercise/i, /deleteExercise/i,
-        /editEquipment/i, /deleteEquipment/i,
-        /removeExerciseFromPackage/i,
-        /removeAdmin/i, /removeManager/i,
-        /confirmDelete/i,
-        /openAddTrainerModal/i,
-        /openAddExerciseModal/i,
-        /openCreatePackageModal/i,
-        /openAddEquipmentModal/i,
+        /\beditTrainer\s*\(/i,
+        /\bdeleteTrainer\s*\(/i,
+        /\bconfirmDeleteTrainer\s*\(/i,
+        /\bopenAddTrainerModal\s*\(/i,
+        /\bremoveAdmin\s*\(/i,
+        /\bremoveManager\s*\(/i,
+        /\bexportDatabase\s*\(/i,
     ];
 
     function hideManagerButtons(root) {

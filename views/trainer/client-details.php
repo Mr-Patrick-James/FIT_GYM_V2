@@ -1266,6 +1266,45 @@ $questionnaire = $q_stmt->get_result()->fetch_assoc();
             }
         }
 
+        function editTip(id, text) {
+            document.getElementById('tip-view-' + id).style.display = 'none';
+            document.getElementById('tip-edit-' + id).style.display = 'block';
+        }
+
+        function cancelEditTip(id) {
+            document.getElementById('tip-view-' + id).style.display = 'block';
+            document.getElementById('tip-edit-' + id).style.display = 'none';
+        }
+
+        async function saveTipEdit(id) {
+            const newText = document.getElementById('tip-edit-text-' + id).value.trim();
+            if (!newText) { showNotification('Tip text cannot be empty', 'warning'); return; }
+            try {
+                const resp = await fetch('../../api/trainers/save-tip.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ tip_id: id, tip_text: newText, member_id: memberId, _method: 'PUT' })
+                });
+                const result = await resp.json();
+                showNotification(result.success ? 'Tip updated' : (result.message || 'Failed to update'), result.success ? 'success' : 'warning');
+                if (result.success) loadTips();
+            } catch (e) { showNotification('Error updating tip', 'warning'); }
+        }
+
+        async function deleteTip(id) {
+            if (!confirm('Delete this tip?')) return;
+            try {
+                const resp = await fetch('../../api/trainers/delete-tip.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ tip_id: id })
+                });
+                const result = await resp.json();
+                showNotification(result.success ? 'Tip deleted' : (result.message || 'Failed'), result.success ? 'success' : 'warning');
+                if (result.success) loadTips();
+            } catch (e) { showNotification('Error deleting tip', 'warning'); }
+        }
+
         async function handleTipSubmit(e) {
             e.preventDefault();
             const data = {
@@ -1343,10 +1382,38 @@ $questionnaire = $q_stmt->get_result()->fetch_assoc();
                     return;
                 }
                 list.innerHTML = data.data.map(t => `
-                    <div class="history-item" style="border-left: 4px solid var(--warning);">
-                        <p style="font-size: 0.95rem; color: white; line-height: 1.6; margin-bottom: 12px;">${t.tip_text}</p>
-                        <div style="font-size: 0.75rem; color: var(--dark-text-secondary); text-align: right; font-weight: 600;">
-                            <i class="far fa-clock"></i> ${new Date(t.created_at).toLocaleString(undefined, {month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'})}
+                    <div class="history-item" style="border-left: 4px solid var(--warning); position: relative;">
+                        <div id="tip-view-${t.id}">
+                            <p style="font-size: 0.95rem; color: white; line-height: 1.6; margin-bottom: 8px;">${t.tip_text}</p>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                                <div style="font-size: 0.75rem; color: var(--dark-text-secondary); font-weight: 600;">
+                                    <i class="far fa-clock"></i> ${new Date(t.created_at).toLocaleString(undefined, {month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'})}
+                                </div>
+                                <div style="display: flex; gap: 6px;">
+                                    <button onclick="editTip(${t.id}, \`${t.tip_text.replace(/`/g, '\\`')}\`)"
+                                        style="background: rgba(59,130,246,0.1); color: #3b82f6; border: 1px solid rgba(59,130,246,0.2); border-radius: 8px; padding: 4px 10px; font-size: 0.72rem; font-weight: 700; cursor: pointer;">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </button>
+                                    <button onclick="deleteTip(${t.id})"
+                                        style="background: rgba(239,68,68,0.1); color: #ef4444; border: 1px solid rgba(239,68,68,0.2); border-radius: 8px; padding: 4px 10px; font-size: 0.72rem; font-weight: 700; cursor: pointer;">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="tip-edit-${t.id}" style="display: none;">
+                            <textarea id="tip-edit-text-${t.id}" rows="3"
+                                style="width: 100%; background: var(--glass); border: 1px solid var(--dark-border); border-radius: 8px; padding: 10px; color: white; font-family: inherit; font-size: 0.9rem; resize: vertical; margin-bottom: 8px;">${t.tip_text}</textarea>
+                            <div style="display: flex; gap: 6px; justify-content: flex-end;">
+                                <button onclick="cancelEditTip(${t.id})"
+                                    style="background: transparent; color: var(--dark-text-secondary); border: 1px solid var(--dark-border); border-radius: 8px; padding: 4px 12px; font-size: 0.72rem; font-weight: 700; cursor: pointer;">
+                                    Cancel
+                                </button>
+                                <button onclick="saveTipEdit(${t.id})"
+                                    style="background: var(--primary); color: var(--dark-bg); border: none; border-radius: 8px; padding: 4px 12px; font-size: 0.72rem; font-weight: 700; cursor: pointer;">
+                                    <i class="fas fa-save"></i> Save
+                                </button>
+                            </div>
                         </div>
                     </div>
                 `).join('');
