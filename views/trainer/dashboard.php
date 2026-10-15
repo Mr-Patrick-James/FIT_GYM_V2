@@ -1,58 +1,58 @@
 <?php
 require_once '../../api/session.php';
 require_once '../../api/config.php';
+require_once __DIR__.'/../../api/trainers/booking-access.php';
 requireTrainer();
 $user = getCurrentUser();
 
 $conn = getDBConnection();
 
 // Fetch trainer-specific data
-$trainerId = null;
-$stmt = $conn->prepare("SELECT id FROM trainers WHERE user_id = ?");
-$stmt->bind_param("i", $user['id']);
-$stmt->execute();
-$result = $stmt->get_result();
-if ($row = $result->fetch_assoc()) {
-    $trainerId = $row['id'];
-}
-$stmt->close();
+$trainerId = requireTrainerProfileId($conn, (int)$user['id']);
+$assignmentSql = trainerBookingAssignmentSql();
+$writableSql = trainerBookingWritableSql();
+$gymNow = trainerGymNow();
+$gymTimestamp = $gymNow->format('Y-m-d H:i:s');
+$gymDate = trainerGymToday($gymNow);
 
-// Stats for trainer — Active Clients = currently verified + same-day expired (matches get-clients.php)
+// Active Clients follow the shared booking write rules in Philippine time.
 $totalMembers = 0;
 $totalAllTime = 0;
 if ($trainerId) {
-    $res = $conn->query("
+    $stmt = $conn->prepare("
         SELECT COUNT(*) as count FROM bookings b
-        WHERE (b.status = 'verified' OR (b.status = 'expired' AND DATE(b.booking_date) = CURDATE()))
-          AND (
-              b.trainer_id = $trainerId
-              OR (b.trainer_id IS NULL AND EXISTS (
-                  SELECT 1 FROM package_trainers pt
-                  WHERE pt.package_id = b.package_id AND pt.trainer_id = $trainerId
-              ))
-          )
+        WHERE $writableSql AND $assignmentSql
     ");
+    $stmt->bind_param("ssii", $gymTimestamp, $gymDate, $trainerId, $trainerId);
+    $stmt->execute();
+    $res = $stmt->get_result();
     if ($res) $totalMembers = $res->fetch_assoc()['count'];
+    $stmt->close();
 
-    $res2 = $conn->query("
+    $stmt = $conn->prepare("
         SELECT COUNT(*) as count FROM bookings b
-        WHERE b.status IN ('verified', 'expired')
-          AND (
-              b.trainer_id = $trainerId
-              OR (b.trainer_id IS NULL AND EXISTS (
-                  SELECT 1 FROM package_trainers pt
-                  WHERE pt.package_id = b.package_id AND pt.trainer_id = $trainerId
-              ))
-          )
+        WHERE b.status IN ('verified', 'expired') AND $assignmentSql
     ");
+    $stmt->bind_param("ii", $trainerId, $trainerId);
+    $stmt->execute();
+    $res2 = $stmt->get_result();
     if ($res2) $totalAllTime = $res2->fetch_assoc()['count'];
+    $stmt->close();
 }
 
-// Active Plans count
+// Active Plans count uses the same assignment and write eligibility.
 $activePlans = 0;
 if ($trainerId) {
-    $res = $conn->query("SELECT COUNT(DISTINCT booking_id) as count FROM member_exercise_plans mep JOIN bookings b ON mep.booking_id = b.id WHERE b.trainer_id = $trainerId");
+    $stmt = $conn->prepare("
+        SELECT COUNT(DISTINCT mep.booking_id) as count
+        FROM member_exercise_plans mep JOIN bookings b ON mep.booking_id = b.id
+        WHERE $writableSql AND $assignmentSql
+    ");
+    $stmt->bind_param("ssii", $gymTimestamp, $gymDate, $trainerId, $trainerId);
+    $stmt->execute();
+    $res = $stmt->get_result();
     if ($res) $activePlans = $res->fetch_assoc()['count'];
+    $stmt->close();
 }
 ?>
 <!DOCTYPE html>

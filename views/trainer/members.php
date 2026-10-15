@@ -1,6 +1,7 @@
 <?php
 require_once '../../api/session.php';
 require_once '../../api/config.php';
+require_once __DIR__ . '/../../api/trainers/booking-access.php';
 requireTrainer();
 $user = getCurrentUser();
 
@@ -1090,7 +1091,7 @@ $conn->close();
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                             <div class="form-group">
                                 <label>Session Date</label>
-                                <input type="date" id="progressDate" required value="<?php echo date('Y-m-d'); ?>" class="modern-input">
+                                <input type="date" id="progressDate" required value="<?php echo trainerGymToday(); ?>" class="modern-input">
                             </div>
                             <div class="form-group">
                                 <label>Body Weight</label>
@@ -1183,6 +1184,7 @@ $conn->close();
         </div>
     </div>
 
+    <script src="../../assets/js/trainer-dates.js?v=1"></script>
     <script>
         let allClients = [];
         let activeBookingId = null;
@@ -1567,6 +1569,7 @@ $conn->close();
 
                 progressCalendar = new FullCalendar.Calendar(calendarEl, {
                     initialView: 'dayGridMonth',
+                    initialDate: trainerGymDate(),
                     headerToolbar: {
                         left: 'prev,next today',
                         center: 'title',
@@ -1770,6 +1773,10 @@ $conn->close();
                                 <span class="info-value">${member.workout_days_per_week || 'Not set'}</span>
                             </div>
                             <div class="info-item" style="grid-column: span 2;">
+                                <span class="info-label">Gym Date (Philippine time)</span>
+                                <span class="info-value">${String(member.booking_date || '').slice(0, 10)}</span>
+                            </div>
+                            <div class="info-item" style="grid-column: span 2;">
                                 <span class="info-label">Subscription Expiry</span>
                                 <span class="info-value" style="display: flex; align-items: center; gap: 6px;">
                                     <i class="far fa-calendar-alt" style="opacity: 0.4;"></i>
@@ -1813,12 +1820,12 @@ $conn->close();
             const member = allClients.find(c => c.booking_id == bookingId);
             if (!member) return;
             activeBookingId = bookingId;
+            document.getElementById('progressForm').reset();
             document.getElementById('progressMemberName').textContent = member.name;
             document.getElementById('progressBookingId').value = bookingId;
+            document.getElementById('progressDate').value = trainerGymDate();
             document.getElementById('progressModal').classList.add('active');
             switchTab('log');
-            document.getElementById('progressForm').reset();
-            document.getElementById('progressDate').value = new Date().toISOString().split('T')[0];
         }
 
         function closeProgressModal() { document.getElementById('progressModal').classList.remove('active'); activeBookingId = null; }

@@ -3,6 +3,7 @@
 ob_start();
 require_once '../config.php';
 require_once '../session.php';
+require_once __DIR__ . '/booking-access.php';
 requireTrainer();
 
 // Clean any accidental output from config/session
@@ -60,8 +61,12 @@ $conn->query("CREATE TABLE IF NOT EXISTS `user_questionnaire` (
     UNIQUE KEY `unique_user` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;");
 
-// Get all verified bookings assigned to this trainer (including walk-ins)
-// Also picks up bookings where trainer_id is NULL but the package is assigned to this trainer
+// Use the same gym-local eligibility and assignment rules as trainer saves.
+$gymNow = trainerGymNow();
+$gymTimestamp = $gymNow->format('Y-m-d H:i:s');
+$gymDate = $gymNow->format('Y-m-d');
+$writable = trainerBookingWritableSql();
+$assignment = trainerBookingAssignmentSql();
 $sql = "SELECT b.id as booking_id, 
                COALESCE(u.id, 0) as user_id, 
                COALESCE(u.name, b.name) as name, 
@@ -77,18 +82,8 @@ $sql = "SELECT b.id as booking_id,
         LEFT JOIN users u ON b.user_id = u.id 
         JOIN packages p ON b.package_id = p.id 
         LEFT JOIN user_questionnaire uq ON u.id = uq.user_id
-        WHERE (
-              b.status = 'verified'
-              OR (b.status = 'expired' AND DATE(b.booking_date) = CURDATE())
-          )
-          AND (
-              b.trainer_id = ?
-              OR (b.trainer_id IS NULL AND EXISTS (
-                  SELECT 1 FROM package_trainers pt
-                  WHERE pt.package_id = b.package_id AND pt.trainer_id = ?
-              ))
-          )
-        ORDER BY COALESCE(b.verified_at, b.created_at) DESC";
+        WHERE $writable AND $assignment
+        ORDER BY b.booking_date DESC, COALESCE(b.verified_at, b.created_at) DESC, b.id DESC";
 
 $stmt = $conn->prepare($sql);
 if (!$stmt) {
@@ -96,7 +91,7 @@ if (!$stmt) {
     sendResponse(false, 'Database query preparation failed', null, 500);
 }
 
-$stmt->bind_param("ii", $trainerId, $trainerId);
+$stmt->bind_param('ssii', $gymTimestamp, $gymDate, $trainerId, $trainerId);
 if (!$stmt->execute()) {
     error_log("DEBUG: SQL Execute failed: " . $stmt->error);
     sendResponse(false, 'Database query execution failed', null, 500);
@@ -107,16 +102,14 @@ error_log("DEBUG: Found " . $result->num_rows . " clients");
 
 $clients = [];
 while ($row = $result->fetch_assoc()) {
-    // Same-day expired booking = still "active" for today's session
-    $bookingDate = $row['booking_date'] ?? null;
-    $isSameDay = $bookingDate && (date('Y-m-d', strtotime($bookingDate)) === date('Y-m-d'));
-    $isExpired = $row['expires_at'] ? strtotime($row['expires_at']) < time() : false;
-    $row['is_expired'] = $isExpired && !$isSameDay; // same-day expired = not expired for trainer purposes
+    $isSameDay = substr((string)$row['booking_date'], 0, 10) === $gymDate;
+    $isExpired = $row['status'] === 'expired' || ($row['expires_at'] !== null && $row['expires_at'] < $gymTimestamp);
+    $row['is_expired'] = !trainerBookingIsWritable($row, $gymNow);
+    $row['gym_date'] = $gymDate;
     $row['is_walkin'] = (bool)$row['is_walkin'];
 
-    // Add warning messages for trainer
-    if ($isExpired && !$isSameDay) {
-        $row['status_warning'] = 'Membership expired - plans can still be added but member may not have access';
+    if ($isExpired && $isSameDay) {
+        $row['status_warning'] = 'Same-day gym booking - trainer updates are available today (Philippine time)';
     } else if ($row['is_walkin']) {
         $row['status_warning'] = 'Walk-in customer - has limited access to online features';
     }

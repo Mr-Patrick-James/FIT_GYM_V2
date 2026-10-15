@@ -1,6 +1,7 @@
 <?php
 require_once '../config.php';
 require_once '../session.php';
+require_once __DIR__.'/booking-access.php';
 requireLogin();
 
 $user = getCurrentUser();
@@ -16,21 +17,14 @@ $conn = getDBConnection();
 $isTrainer = isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'trainer';
 
 if ($isTrainer) {
-    $trainerStmt = $conn->prepare("SELECT id FROM trainers WHERE user_id = ?");
-    $trainerStmt->bind_param("i", $user['id']);
-    $trainerStmt->execute();
-    $trainer = $trainerStmt->get_result()->fetch_assoc();
-    $trainerId = $trainer['id'];
-
-    $checkStmt = $conn->prepare("SELECT id FROM bookings WHERE id = ? AND trainer_id = ?");
-    $checkStmt->bind_param("ii", $booking_id, $trainerId);
+    $trainerId = requireTrainerProfileId($conn, (int)$user['id']);
+    $booking = findTrainerBooking($conn, $booking_id, $trainerId);
 } else {
     $checkStmt = $conn->prepare("SELECT id FROM bookings WHERE id = ? AND user_id = ?");
     $checkStmt->bind_param("ii", $booking_id, $user['id']);
+    $checkStmt->execute();
+    $booking = $checkStmt->get_result()->fetch_assoc();
 }
-
-$checkStmt->execute();
-$booking = $checkStmt->get_result()->fetch_assoc();
 
 if (!$booking) {
     sendResponse(false, 'Unauthorized or booking not found', null, 403);

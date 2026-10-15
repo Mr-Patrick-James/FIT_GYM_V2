@@ -1,6 +1,7 @@
 <?php
 require_once '../../api/session.php';
 require_once '../../api/config.php';
+require_once __DIR__ . '/../../api/trainers/booking-access.php';
 requireTrainer();
 $user = getCurrentUser();
 
@@ -13,13 +14,14 @@ if ($booking_id <= 0) {
 
 $conn = getDBConnection();
 
-// Get the trainer ID
-$trainerStmt = $conn->prepare("SELECT id FROM trainers WHERE user_id = ?");
-$trainerStmt->bind_param("i", $user['id']);
-$trainerStmt->execute();
-$trainer = $trainerStmt->get_result()->fetch_assoc();
-$trainerId = $trainer['id'];
+$trainerId = findTrainerProfileId($conn, (int)$user['id']);
+if (!$trainerId) {
+    header('Location: members.php');
+    exit();
+}
 
+// Match the assignment rule used by the client list and save endpoints.
+$assignment = trainerBookingAssignmentSql();
 // Get client and booking details
 $stmt = $conn->prepare("
     SELECT b.*, u.name as member_name, u.email as member_email, u.contact as member_contact, u.id as member_id, 
@@ -27,9 +29,9 @@ $stmt = $conn->prepare("
     FROM bookings b 
     JOIN users u ON b.user_id = u.id 
     JOIN packages p ON b.package_id = p.id 
-    WHERE b.id = ? AND b.trainer_id = ?
+    WHERE b.id = ? AND $assignment
 ");
-$stmt->bind_param("ii", $booking_id, $trainerId);
+$stmt->bind_param('iii', $booking_id, $trainerId, $trainerId);
 $stmt->execute();
 $client = $stmt->get_result()->fetch_assoc();
 
@@ -491,6 +493,7 @@ $questionnaire = $q_stmt->get_result()->fetch_assoc();
             <div class="page-title">
                 <h1>Managing: <?php echo htmlspecialchars($client['member_name']); ?></h1>
                 <p><?php echo htmlspecialchars($client['package_name']); ?> • Expires <?php echo date('M d, Y', strtotime($client['expires_at'])); ?></p>
+                <p>Gym date: <?php echo htmlspecialchars(substr((string)$client['booking_date'], 0, 10)); ?> (Philippine time)</p>
             </div>
             
             <div class="header-actions">
@@ -666,7 +669,7 @@ $questionnaire = $q_stmt->get_result()->fetch_assoc();
                                 </div>
                                 <div class="form-group">
                                     <label>Date</label>
-                                    <input type="date" id="sessionDate" required class="form-control" value="<?php echo date('Y-m-d'); ?>">
+                                    <input type="date" id="sessionDate" required class="form-control" value="<?php echo trainerGymToday(); ?>">
                                 </div>
                             </div>
                             <div id="timeFields" class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
@@ -750,7 +753,7 @@ $questionnaire = $q_stmt->get_result()->fetch_assoc();
                         <form id="progressForm">
                             <div class="form-group">
                                 <label>Date</label>
-                                <input type="date" id="progressDate" required class="form-control" value="<?php echo date('Y-m-d'); ?>">
+                                <input type="date" id="progressDate" required class="form-control" value="<?php echo trainerGymToday(); ?>">
                             </div>
                             <div class="form-group">
                                 <label>Weight (kg)</label>
@@ -855,6 +858,7 @@ $questionnaire = $q_stmt->get_result()->fetch_assoc();
         </div>
     </main>
 
+    <script src="../../assets/js/trainer-dates.js?v=1"></script>
     <script>
         const bookingId = <?php echo $booking_id; ?>;
         const memberId = <?php echo $memberId; ?>;
@@ -966,6 +970,7 @@ $questionnaire = $q_stmt->get_result()->fetch_assoc();
             
             calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
+                initialDate: trainerGymDate(),
                 headerToolbar: {
                     left: 'prev,next today',
                     center: 'title',
@@ -1107,14 +1112,19 @@ $questionnaire = $q_stmt->get_result()->fetch_assoc();
                     body: JSON.stringify(data)
                 });
                 const result = await response.json();
-                if (result.success) {
+                if (response.ok && result.success) {
                     showNotification('Progress logged successfully', 'success');
                     document.getElementById('progressForm').reset();
-                    document.getElementById('progressDate').value = new Date().toISOString().split('T')[0];
+                    document.getElementById('progressDate').value = trainerGymDate();
                     loadProgress();
-                    calendar.refetchEvents();
+                    if (calendar) calendar.refetchEvents();
+                } else {
+                    showNotification(result.message || 'Failed to save progress', 'warning');
                 }
-            } catch (err) { console.error(err); }
+            } catch (err) {
+                console.error(err);
+                showNotification('Error saving progress. Your entries have been kept.', 'warning');
+            }
         }
 
         async function loadProgress() {
@@ -1228,10 +1238,10 @@ $questionnaire = $q_stmt->get_result()->fetch_assoc();
                     return;
                 }
                 
-                if (result.success) {
+                if (response.ok && result.success) {
                     showNotification('Event added to calendar', 'success');
                     document.getElementById('sessionForm').reset();
-                    document.getElementById('sessionDate').value = new Date().toISOString().split('T')[0];
+                    document.getElementById('sessionDate').value = trainerGymDate();
                     loadSessions();
                     if (calendar) calendar.refetchEvents();
                 } else {
@@ -1283,7 +1293,7 @@ $questionnaire = $q_stmt->get_result()->fetch_assoc();
                 const resp = await fetch('../../api/trainers/save-tip.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ tip_id: id, tip_text: newText, member_id: memberId, _method: 'PUT' })
+                    body: JSON.stringify({ booking_id: bookingId, tip_id: id, tip_text: newText, member_id: memberId, _method: 'PUT' })
                 });
                 const result = await resp.json();
                 showNotification(result.success ? 'Tip updated' : (result.message || 'Failed to update'), result.success ? 'success' : 'warning');
@@ -1308,6 +1318,7 @@ $questionnaire = $q_stmt->get_result()->fetch_assoc();
         async function handleTipSubmit(e) {
             e.preventDefault();
             const data = {
+                booking_id: bookingId,
                 member_id: memberId,
                 tip_text: document.getElementById('tipText').value
             };
@@ -1319,17 +1330,23 @@ $questionnaire = $q_stmt->get_result()->fetch_assoc();
                     body: JSON.stringify(data)
                 });
                 const result = await response.json();
-                if (result.success) {
+                if (response.ok && result.success) {
                     showNotification('Tip sent to member', 'success');
                     document.getElementById('tipForm').reset();
                     loadTips();
+                } else {
+                    showNotification(result.message || 'Failed to save tip', 'warning');
                 }
-            } catch (err) { console.error(err); }
+            } catch (err) {
+                console.error(err);
+                showNotification('Error saving tip. Your entries have been kept.', 'warning');
+            }
         }
 
         async function handleFoodSubmit(e) {
             e.preventDefault();
             const data = {
+                booking_id: bookingId,
                 member_id: memberId,
                 meal_type: document.getElementById('mealType').value,
                 food_items: document.getElementById('foodItems').value,
@@ -1343,12 +1360,17 @@ $questionnaire = $q_stmt->get_result()->fetch_assoc();
                     body: JSON.stringify(data)
                 });
                 const result = await response.json();
-                if (result.success) {
+                if (response.ok && result.success) {
                     showNotification('Food recommendation saved', 'success');
                     document.getElementById('foodForm').reset();
                     loadFood();
+                } else {
+                    showNotification(result.message || 'Failed to save food recommendation', 'warning');
                 }
-            } catch (err) { console.error(err); }
+            } catch (err) {
+                console.error(err);
+                showNotification('Error saving food recommendation. Your entries have been kept.', 'warning');
+            }
         }
 
         async function loadSessions() {

@@ -1,6 +1,7 @@
 <?php
 require_once '../config.php';
 require_once '../session.php';
+require_once __DIR__.'/booking-access.php';
 requireTrainer();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -18,34 +19,14 @@ $exercises = $data['exercises'];
 $user = getCurrentUser();
 
 $conn = getDBConnection();
+$trainerId = requireTrainerProfileId($conn, (int)$user['id']);
+$booking = requireWritableTrainerBooking($conn, $booking_id, $trainerId);
+if (!$booking['is_trainer_assisted']) {
+    sendResponse(false, 'This package does not allow trainer-customized exercise plans.');
+}
 $conn->begin_transaction();
 
 try {
-    // Verify that the booking is assigned to this trainer
-    $trainerStmt = $conn->prepare("SELECT id FROM trainers WHERE user_id = ?");
-    $trainerStmt->bind_param("i", $user['id']);
-    $trainerStmt->execute();
-    $trainer = $trainerStmt->get_result()->fetch_assoc();
-    $trainerId = $trainer['id'];
-
-    $checkStmt = $conn->prepare("
-        SELECT b.id, p.is_trainer_assisted 
-        FROM bookings b 
-        JOIN packages p ON b.package_id = p.id 
-        WHERE b.id = ? AND b.trainer_id = ?
-    ");
-    $checkStmt->bind_param("ii", $booking_id, $trainerId);
-    $checkStmt->execute();
-    $booking = $checkStmt->get_result()->fetch_assoc();
-    
-    if (!$booking) {
-        throw new Exception('Unauthorized or booking not found');
-    }
-    
-    if (!$booking['is_trainer_assisted']) {
-        throw new Exception('This package does not allow trainer-customized exercise plans.');
-    }
-
     // Delete existing customized plan for this booking
     $conn->query("DELETE FROM member_exercise_plans WHERE booking_id = $booking_id");
 

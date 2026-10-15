@@ -1,6 +1,7 @@
 <?php
 require_once '../config.php';
 require_once '../session.php';
+require_once __DIR__ . '/booking-access.php';
 requireTrainer();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -8,53 +9,27 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 $data = getRequestData();
-$member_id = (int)$data['member_id'];
-$meal_type = $data['meal_type'];
-$food_items = $data['food_items'];
-$calories = (int)$data['calories'];
+$booking_id = (int)($data['booking_id'] ?? 0);
+$member_id = (int)($data['member_id'] ?? 0);
+$meal_type = $data['meal_type'] ?? '';
+$food_items = trim($data['food_items'] ?? '');
+$calories = (int)($data['calories'] ?? 0);
+if ($member_id <= 0 || $food_items === '' || $calories < 0 || !in_array($meal_type, ['breakfast', 'lunch', 'dinner', 'snack', 'pre-workout', 'post-workout'], true)) {
+    sendResponse(false, 'A member, valid meal type, food items and non-negative calories are required.', null, 400);
+}
 
 $user = getCurrentUser();
 $conn = getDBConnection();
-
-// Get trainer ID
-$trainerStmt = $conn->prepare("SELECT id FROM trainers WHERE user_id = ?");
-$trainerStmt->bind_param("i", $user['id']);
-$trainerStmt->execute();
-$trainerId = $trainerStmt->get_result()->fetch_assoc()['id'];
-
-// Allow trainer to save for verified bookings OR expired bookings where booking_date is today (same-day daily pass)
-$checkStmt = $conn->prepare("
-    SELECT b.id, p.is_trainer_assisted, b.expires_at, b.booking_date
-    FROM bookings b 
-    JOIN packages p ON b.package_id = p.id 
-    WHERE b.user_id = ? AND b.trainer_id = ?
-      AND (b.status = 'verified' OR (b.status = 'expired' AND DATE(b.booking_date) = CURDATE()))
-    ORDER BY b.verified_at DESC LIMIT 1
-");
-$checkStmt->bind_param("ii", $member_id, $trainerId);
-$checkStmt->execute();
-$booking = $checkStmt->get_result()->fetch_assoc();
-
-if (!$booking) {
-    sendResponse(false, 'You are not assigned to this member or they have no active/same-day booking.');
-}
-
-// Warn if booking is expired but still allow it
-$isExpired = $booking['expires_at'] && strtotime($booking['expires_at']) < time();
-$warning = $isExpired ? ' (Note: Member\'s subscription has expired)' : '';
-
+$trainerId = requireTrainerProfileId($conn, (int)$user['id']);
+$booking = requireWritableTrainerBooking($conn, $booking_id, $trainerId, $member_id);
 if (!$booking['is_trainer_assisted']) {
-    sendResponse(false, 'This member\'s package does not include food recommendations.');
+    sendResponse(false, 'This member\'s package does not include food recommendations.', null, 403);
 }
 
-$stmt = $conn->prepare("INSERT INTO food_recommendations (trainer_id, member_id, meal_type, food_items, calories) VALUES (?, ?, ?, ?, ?)");
-$stmt->bind_param("iissi", $trainerId, $member_id, $meal_type, $food_items, $calories);
-
-if ($stmt->execute()) {
-    $message = 'New Meal Plan Recommendation' . $warning;
-    createNotification($member_id, $message, "Coach " . $user['name'] . " updated your $meal_type recommendation.", 'food');
-    sendResponse(true, 'Food recommendation saved' . $warning);
-} else {
-    sendResponse(false, 'Failed to save food recommendation: ' . $stmt->error);
+$stmt = $conn->prepare('INSERT INTO food_recommendations (trainer_id, member_id, meal_type, food_items, calories) VALUES (?, ?, ?, ?, ?)');
+$stmt->bind_param('iissi', $trainerId, $member_id, $meal_type, $food_items, $calories);
+if (!$stmt->execute()) {
+    sendResponse(false, 'Failed to save food recommendation.', null, 500);
 }
-?>
+notifyTrainerMember($member_id, 'New Meal Plan Recommendation', 'Coach ' . $user['name'] . " updated your $meal_type recommendation.", 'food');
+sendResponse(true, 'Food recommendation saved');

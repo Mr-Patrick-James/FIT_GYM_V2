@@ -1,6 +1,7 @@
 <?php
 require_once '../config.php';
 require_once '../session.php';
+require_once __DIR__ . '/booking-access.php';
 
 // Set error reporting for debugging
 ini_set('display_errors', 0);
@@ -31,8 +32,8 @@ try {
     $session_date = $data['session_date'] ?? '';
     $session_time = !empty($data['session_time']) ? $data['session_time'] : '08:00:00';
     
-    if (empty($session_date)) {
-        sendResponse(false, 'Session date is required');
+    if (!trainerValidCalendarDate($session_date)) {
+        sendResponse(false, 'A valid session date is required.', null, 400);
     }
 
     // Ensure HH:MM:SS format
@@ -49,16 +50,16 @@ try {
     $user = getCurrentUser();
     $conn = getDBConnection();
 
-    // Get trainer ID
-    $trainerStmt = $conn->prepare("SELECT id FROM trainers WHERE user_id = ?");
-    $trainerStmt->bind_param("i", $user['id']);
-    $trainerStmt->execute();
-    $res = $trainerStmt->get_result()->fetch_assoc();
-
-    if (!$res) {
-        sendResponse(false, 'Trainer profile not found for user ID: ' . $user['id']);
+    $trainerId = requireTrainerProfileId($conn, (int)$user['id']);
+    $booking = requireWritableTrainerBooking($conn, $booking_id, $trainerId, $member_id);
+    if (!$booking['is_trainer_assisted']) {
+        sendResponse(false, 'This package does not include trainer-managed sessions.', null, 403);
     }
-    $trainerId = $res['id'];
+    $gymNow = trainerGymNow();
+    $expired = $booking['status'] === 'expired' || ($booking['expires_at'] !== null && $booking['expires_at'] < $gymNow->format('Y-m-d H:i:s'));
+    if ($expired && $session_date !== $gymNow->format('Y-m-d')) {
+        sendResponse(false, 'An expired same-day booking can only schedule an event on its gym date.', null, 403);
+    }
 
     // Check if table exists
     $tableCheck = $conn->query("SHOW TABLES LIKE 'trainer_sessions'");
