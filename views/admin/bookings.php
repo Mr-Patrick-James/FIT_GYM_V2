@@ -229,6 +229,8 @@ try {
         .event-status-pending { background-color: var(--warning) !important; color: #000 !important; }
         .event-status-verified { background-color: var(--success) !important; color: #fff !important; }
         .event-status-rejected { background-color: var(--danger) !important; color: #fff !important; }
+        .event-status-expired { background-color: #64748b !important; color: #fff !important; }
+        .event-status-upgraded { background-color: #3b82f6 !important; color: #fff !important; }
         
         .light-mode .fc {
             --fc-border-color: #e5e7eb;
@@ -339,11 +341,11 @@ try {
                 </div>
 
                 <div class="view-toggle">
-                    <button class="view-btn active" data-view="calendar" title="Calendar View">
-                        <i class="fas fa-calendar-alt"></i>
+                    <button id="calendarViewBtn" type="button" class="view-btn" data-view="calendar" title="Calendar View" aria-label="Calendar view" aria-controls="calendar-view" aria-pressed="false">
+                        <i class="fas fa-calendar-alt" aria-hidden="true"></i>
                     </button>
-                    <button class="view-btn" data-view="table" title="Table View">
-                        <i class="fas fa-table"></i>
+                    <button id="tableViewBtn" type="button" class="view-btn active" data-view="table" title="Table View" aria-label="Table view" aria-controls="bookings-table-container" aria-pressed="true">
+                        <i class="fas fa-table" aria-hidden="true"></i>
                     </button>
                 </div>
                 

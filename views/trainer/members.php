@@ -429,7 +429,7 @@ $conn->close();
 
         .modern-input {
             width: 100%;
-            background: var(--premium-input-bg) !important;
+            background-color: var(--premium-input-bg) !important;
             border: 1px solid var(--premium-border) !important;
             border-radius: 14px !important;
             padding: 12px !important;
@@ -441,9 +441,40 @@ $conn->close();
         }
 
         .modern-input:focus {
-            background: var(--premium-input-hover) !important;
+            background-color: var(--premium-input-hover) !important;
             border-color: rgba(125, 125, 125, 0.2) !important;
             box-shadow: 0 0 0 1px rgba(125, 125, 125, 0.1);
+        }
+
+        .form-group select.modern-input,
+        .form-group select.modern-input:focus {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Cpath fill='%23ffffff' fill-opacity='0.7' d='M7 10L2 5h10z'/%3E%3C/svg%3E") !important;
+            background-repeat: no-repeat !important;
+            background-position: right 16px center !important;
+            background-size: 14px !important;
+            padding-right: 42px !important;
+        }
+
+        .light-mode .form-group select.modern-input,
+        .light-mode .form-group select.modern-input:focus {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Cpath fill='%23000000' fill-opacity='0.6' d='M7 10L2 5h10z'/%3E%3C/svg%3E") !important;
+        }
+
+        .form-group .exercise-library-search input,
+        .form-group .exercise-library-search input:focus {
+            width: 100%;
+            max-width: 100%;
+            padding: 12px 16px 12px 44px;
+            background: transparent;
+            border: none;
+            color: var(--premium-text);
+            box-shadow: none;
+        }
+
+        .exercise-library-search i {
+            left: 16px;
+            font-size: 0.9rem;
+            pointer-events: none;
         }
 
         .save-btn {
@@ -1149,16 +1180,16 @@ $conn->close();
                             <h4 style="font-size: 0.9rem; font-weight: 800; color: #fff; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 24px;">Add Exercise to Plan</h4>
                             
                             <div class="form-group" style="margin-bottom: 20px;">
-                                <label>Search Master Library</label>
-                                <div class="search-box" style="background: var(--premium-input-bg); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px;">
-                                    <i class="fas fa-search" style="color: var(--premium-text-muted);"></i>
-                                    <input type="text" id="modalExSearch" placeholder="Filter exercises..." oninput="filterModalExercises()" style="background: transparent; border: none; color: #fff; width: 100%; padding: 12px; outline: none;">
+                                <label for="modalExSearch">Search Master Library</label>
+                                <div class="search-box exercise-library-search" style="background: var(--premium-input-bg); border: 1px solid var(--premium-border); border-radius: 14px;">
+                                    <i class="fas fa-search" style="color: var(--premium-text-muted);" aria-hidden="true"></i>
+                                    <input type="text" id="modalExSearch" placeholder="Filter exercises..." oninput="filterModalExercises()">
                                 </div>
                             </div>
 
                             <form id="addExerciseFormTab" onsubmit="event.preventDefault();" style="display: flex; flex-direction: column; gap: 20px;">
                                 <div class="form-group">
-                                    <label>Select Exercise</label>
+                                    <label for="exerciseSelectTab">Select Exercise</label>
                                     <select id="exerciseSelectTab" required class="modern-input" style="border-color: rgba(255,255,255,0.1) !important;">
                                         <option value="">Choose an exercise...</option>
                                     </select>

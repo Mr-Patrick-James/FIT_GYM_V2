@@ -10,6 +10,19 @@ const dateSource = fs.readFileSync(path.join(root, 'assets/js/trainer-dates.js')
 const details = fs.readFileSync(path.join(root, 'views/trainer/client-details.php'), 'utf8');
 const members = fs.readFileSync(path.join(root, 'views/trainer/members.php'), 'utf8');
 
+// A background shorthand on focus resets the select arrow's repeat/position/size.
+for (const selector of ['.modern-input', '.modern-input:focus']) {
+    const start = members.indexOf(`${selector} {`);
+    assert.ok(start >= 0);
+    const rule = members.slice(start, members.indexOf('}', start));
+    assert.match(rule, /background-color:/);
+    assert.doesNotMatch(rule, /\bbackground\s*:/);
+}
+assert.match(members, /select\.modern-input:focus\s*\{[^}]*background-repeat:\s*no-repeat\s*!important/s);
+assert.match(members, /\.exercise-library-search input:focus\s*\{[^}]*padding:\s*12px 16px 12px 44px/s);
+assert.ok(members.includes('label for="exerciseSelectTab"'));
+assert.ok(members.includes('label for="modalExSearch"'));
+
 function renderFixturePhp(source) {
     return source.replace(/<\?php[\s\S]*?\?>/g, expression => {
         if (expression.includes('$booking_id')) return '31';
@@ -138,6 +151,30 @@ function fixture(view = 'details') {
         assert.equal(clientList.requests.at(-1).data.booking_id, bookingId);
         assert.equal(clientList.get('submitButton').disabled, false);
     }
+    const library = fixture('members');
+    vm.runInContext("modalMasterExercises = [{id:1,name:'Barbell Squat',category:'Legs'}, {id:2,name:'Bench Press',category:'Chest'}, {id:3,name:'Seated Cable Row',category:'Back'}]", library.context);
+    library.get('modalExSearch').value = 'CHEST';
+    library.context.filterModalExercises();
+    assert.ok(library.get('exerciseSelectTab').innerHTML.includes('Bench Press (Chest)'));
+    assert.ok(!library.get('exerciseSelectTab').innerHTML.includes('Seated Cable Row'));
+    library.get('modalExSearch').value = 'no matching exercise';
+    library.context.filterModalExercises();
+    assert.equal(library.get('exerciseSelectTab').innerHTML, '<option value="">Choose an exercise...</option>');
+    library.get('modalExSearch').value = '';
+    library.context.filterModalExercises();
+    assert.ok(library.get('exerciseSelectTab').innerHTML.includes('Seated Cable Row (Back)'));
+    library.get('exerciseSelectTab').value = '2';
+    library.get('exerciseSetsTab').value = '4';
+    library.get('exerciseRepsTab').value = '8-10';
+    library.context.renderModalPlan = () => {};
+    library.context.addExerciseToTabPlan();
+    assert.equal(vm.runInContext('modalCurrentPlan[0].id', library.context), 2);
+    assert.equal(vm.runInContext('modalCurrentPlan[0].sets', library.context), '4');
+    assert.equal(library.get('exerciseSelectTab').value, '');
+    library.get('exerciseSelectTab').value = '2';
+    library.context.addExerciseToTabPlan();
+    assert.equal(vm.runInContext('modalCurrentPlan.length', library.context), 1);
+    assert.equal(library.notifications.at(-1).message, 'Exercise already in plan');
     const edit = fixture();
     edit.get('tip-edit-text-7').value = 'Updated notes';
     await edit.context.saveTipEdit(7);

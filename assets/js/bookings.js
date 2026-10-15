@@ -957,9 +957,8 @@ function exportBookings() {
     showNotification('Bookings exported successfully!', 'success');
 }
 
-// Refresh bookings
+// Refresh both views through the same filtered data and a single request.
 async function refreshBookings() {
-    await loadAllBookings();
     await applyFilters();
     showNotification('Bookings refreshed', 'success');
 }
@@ -1098,19 +1097,20 @@ async function initPage() {
         });
     }
     
-    // Refresh bookings every 3 seconds
+    // Refresh bookings every 3 seconds, sharing one request across both views.
     setInterval(async () => {
-        await loadAllBookings();
         await applyFilters();
     }, 3000);
 }
 
-// Initialize the page
 // Calendar View Functions
 function initCalendar() {
+    if (calendar) return;
     const calendarEl = document.getElementById('calendar');
-    if (!calendarEl) return;
-    
+    if (!calendarEl || typeof FullCalendar === 'undefined' || typeof FullCalendar.Calendar !== 'function') {
+        throw new Error('FullCalendar is unavailable');
+    }
+
     calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
         headerToolbar: {
@@ -1131,70 +1131,93 @@ function initCalendar() {
         noEventsContent: 'No bookings for this period',
         dayMaxEvents: true
     });
-    
-    calendar.render();
+}
+
+// Keep the written calendar day, not a UTC-converted timestamp.
+function normalizeCalendarDate(value) {
+    if (typeof value !== 'string') return null;
+    const match = value.trim().match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2})(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})?)?$/);
+    if (!match) return null;
+
+    const year = Number(match[1]);
+    const month = Number(match[2]);
+    const day = Number(match[3]);
+    const leapYear = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+    const daysInMonth = [31, leapYear ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    if (year < 1 || month < 1 || month > 12 || day < 1 || day > daysInMonth[month - 1] ||
+        Number(match[4] || 0) > 23 || Number(match[5] || 0) > 59 || Number(match[6] || 0) > 59) {
+        return null;
+    }
+    return `${match[1]}-${match[2]}-${match[3]}`;
 }
 
 function getCalendarEvents() {
-    return filteredBookings.map(booking => {
-        // Use booking_date if available, otherwise createdAt
-        const startDate = booking.booking_date || booking.createdAt;
-        
-        return {
+    return filteredBookings.flatMap(booking => {
+        const startDate = normalizeCalendarDate(booking.booking_date || booking.createdAt);
+        if (!startDate) return [];
+
+        return [{
             id: booking.id,
             title: `${booking.name} - ${booking.package}`,
             start: startDate,
+            allDay: true,
             extendedProps: {
                 status: booking.status,
                 is_walkin: booking.is_walkin
             }
-        };
+        }];
     });
 }
 
 function updateCalendarEvents() {
     if (calendar) {
-        calendar.removeAllEvents();
+        // Replace the source, rather than accumulating sources on every refresh.
+        calendar.getEventSources().forEach(source => source.remove());
         calendar.addEventSource(getCalendarEvents());
     }
 }
 
 function toggleView(mode) {
+    if (mode !== 'table' && mode !== 'calendar') return;
+
     const tableViewBtn = document.getElementById('tableViewBtn');
     const calendarViewBtn = document.getElementById('calendarViewBtn');
     const calendarView = document.getElementById('calendar-view');
     const tableViewContainer = document.getElementById('bookings-table-container');
-    const tableFilters = document.getElementById('table-filters');
-    
+    if (!tableViewBtn || !calendarViewBtn || !calendarView || !tableViewContainer) return;
+
     viewMode = mode;
-    
-    if (mode === 'calendar') {
-        tableViewBtn.classList.remove('active');
-        calendarViewBtn.classList.add('active');
-        tableViewContainer.style.display = 'none';
-        calendarView.style.display = 'block';
-        
-        // Hide table filters as calendar has its own
-        // tableFilters.style.display = 'none';
-        
-        if (!calendar) {
-            initCalendar();
-        } else {
+    const showCalendar = mode === 'calendar';
+    tableViewBtn.classList[showCalendar ? 'remove' : 'add']('active');
+    calendarViewBtn.classList[showCalendar ? 'add' : 'remove']('active');
+    tableViewBtn.setAttribute?.('aria-pressed', String(!showCalendar));
+    calendarViewBtn.setAttribute?.('aria-pressed', String(showCalendar));
+    tableViewContainer.style.display = showCalendar ? 'none' : 'block';
+    calendarView.style.display = showCalendar ? 'block' : 'none';
+    // Filters stay visible and feed the same filteredBookings in either view.
+
+    if (showCalendar) {
+        try {
+            if (!calendar) {
+                initCalendar();
+            } else {
+                updateCalendarEvents();
+            }
+            // FullCalendar must measure its container only after it is visible.
             calendar.render();
-            updateCalendarEvents();
+            calendar.updateSize();
+        } catch (error) {
+            toggleView('table');
+            console.error('Unable to show bookings calendar:', error);
+            showNotification('Calendar unavailable. Please use Table view to manage bookings.', 'warning');
         }
     } else {
-        tableViewBtn.classList.add('active');
-        calendarViewBtn.classList.remove('active');
-        tableViewContainer.style.display = 'block';
-        calendarView.style.display = 'none';
-        
-        // tableFilters.style.display = 'block';
         populateBookingsTable();
     }
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    toggleView('table');
     initPage();
     
     // Toggle between table and calendar view
