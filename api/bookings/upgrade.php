@@ -186,7 +186,9 @@ try {
         sendResponse(true, 'Booking upgraded successfully', [
             'new_booking_id' => $newBookingId,
             'upgrade_price' => $upgradePrice,
-            'new_expiry_date' => $newExpiresAt
+            'new_expiry_date' => $newExpiresAt,
+            'booking_type' => 'online',
+            'is_walkin' => false
         ]);
         
     } catch (Exception $e) {

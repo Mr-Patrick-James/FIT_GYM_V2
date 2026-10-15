@@ -9,94 +9,101 @@ function getInitials(name) {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 }
 
-// Load all members from database
+// Rebuild categories from persisted booking ownership, not status or browser storage.
+// Walk-in saves have user_id NULL; Online saves belong to the signed-in account.
 async function loadAllMembers() {
     try {
-        const [usersRes, bookingsRes, walkinsRes] = await Promise.all([
+        const responses = await Promise.all([
             fetch('../../api/users/get-all.php?role=user'),
-            fetch('../../api/bookings/get-all.php'),
-            fetch('../../api/walkin/get-all.php')
+            fetch('../../api/bookings/get-all.php?status=all')
         ]);
+        const [usersData, bookingsData] = await Promise.all(responses.map(async response => {
+            if (!response.ok) throw new Error('Member data request failed');
+            const data = await response.json();
+            if (!data.success || !Array.isArray(data.data)) throw new Error('Member data is unavailable');
+            return data;
+        }));
+        const allBookings = bookingsData.data;
 
-        const usersData = await usersRes.json();
-        const bookingsData = await bookingsRes.json();
-        const walkinsData = await walkinsRes.json();
+        const registeredMembers = usersData.data.map(user => {
+            const uid = String(user.id);
+            const userBookings = allBookings.filter(b => b.user_id != null && String(b.user_id) === uid);
+            const verifiedBookings = userBookings.filter(b => ['verified', 'expired', 'upgraded'].includes(b.status));
+            return {
+                id: 'user_' + user.id,
+                real_id: user.id,
+                type: 'registered',
+                name: user.name,
+                email: user.email,
+                contact: user.contact || 'N/A',
+                address: user.address || 'N/A',
+                role: user.role,
+                bookings: userBookings,
+                verifiedBookings,
+                totalSpent: verifiedBookings.reduce((sum, b) => sum + (Number(b.amount) || 0), 0),
+                joinedDate: user.created_at
+            };
+        });
 
-        if (usersData.success) {
-            const allBookings = bookingsData.success ? bookingsData.data : [];
-            const allWalkins = walkinsData.success ? walkinsData.data : [];
-
-            // 1. Process regular registered users
-            const registeredMembers = usersData.data
-                .map(user => {
-                    const uid = String(user.id);
-                    const userBookings = allBookings.filter(b => String(b.user_id) === uid);
-                    const verifiedBookings = userBookings.filter(b => ['verified', 'expired', 'upgraded'].includes(b.status));
-                    // Use the stored amount actually charged, including discounts.
-                    const totalSpent = verifiedBookings.reduce((sum, b) => sum + (Number(b.amount) || 0), 0);
-                    
-                    return {
-                        id: 'user_' + user.id,
-                        real_id: user.id,
-                        type: 'registered',
-                        name: user.name,
-                        email: user.email,
-                        contact: user.contact || 'N/A',
-                        address: user.address || 'N/A',
-                        role: user.role,
-                        bookings: userBookings,
-                        verifiedBookings: verifiedBookings,
-                        totalSpent: totalSpent,
-                        joinedDate: user.created_at
-                    };
+        // One customer entry per saved email; renewals keep the original entry ID.
+        // Never merge a Walk-in with an Online account just because emails match.
+        const walkinMap = new Map();
+        const allWalkins = allBookings.filter(b => b.user_id === null)
+            .sort((a, b) => Number(a.id) - Number(b.id));
+        allWalkins.forEach(walkin => {
+            if (!['verified', 'expired', 'upgraded'].includes(walkin.status)) return;
+            const email = String(walkin.email || '').trim().toLowerCase();
+            const key = email ? 'email:' + email : 'booking:' + walkin.id;
+            if (!walkinMap.has(key)) {
+                walkinMap.set(key, {
+                    id: 'walkin_' + walkin.id,
+                    real_id: walkin.id,
+                    type: 'walkin',
+                    name: walkin.name,
+                    email: walkin.email,
+                    contact: walkin.contact || 'N/A',
+                    address: 'Walk-in Customer',
+                    role: 'user',
+                    bookings: [],
+                    verifiedBookings: [],
+                    totalSpent: 0,
+                    joinedDate: walkin.created_at
                 });
+            }
+            const member = walkinMap.get(key);
+            member.bookings.push(walkin);
+            member.verifiedBookings.push(walkin);
+            member.totalSpent += Number(walkin.amount) || 0;
+            // Later saves can update customer details without discarding purchase history.
+            if (walkin.name) member.name = walkin.name;
+            if (walkin.email) member.email = walkin.email;
+            if (String(walkin.contact || '').trim()) member.contact = walkin.contact;
+            if (new Date(walkin.created_at) < new Date(member.joinedDate)) member.joinedDate = walkin.created_at;
+        });
 
-            // 2. Process walk-in customers as members if they have verified bookings
-            // Group walk-ins by email to avoid duplicates
-            const walkinMap = new Map();
-            allWalkins.forEach(walkin => {
-                if (!['verified', 'expired', 'upgraded'].includes(walkin.status)) return;
-
-                const email = walkin.email.toLowerCase();
-                if (!walkinMap.has(email)) {
-                    walkinMap.set(email, {
-                        id: 'walkin_' + walkin.id,
-                        real_id: walkin.id,
-                        type: 'walkin',
-                        name: walkin.name,
-                        email: walkin.email,
-                        contact: walkin.contact || 'N/A',
-                        address: 'Walk-in Customer',
-                        role: 'user',
-                        bookings: [],
-                        verifiedBookings: [],
-                        totalSpent: 0,
-                        joinedDate: walkin.created_at
-                    });
-                }
-
-                const member = walkinMap.get(email);
-                member.bookings.push(walkin);
-                member.verifiedBookings.push(walkin);
-                // Keep historical spending even after the booking expires.
-                member.totalSpent += Number(walkin.amount) || 0;
-                
-                // Keep the earliest created_at as joinedDate
-                if (new Date(walkin.created_at) < new Date(member.joinedDate)) {
-                    member.joinedDate = walkin.created_at;
-                }
-            });
-
-            const walkinMembers = Array.from(walkinMap.values());
-
-            // Combine both
-            allMembers = [...registeredMembers, ...walkinMembers];
-        }
+        allMembers = [...registeredMembers, ...walkinMap.values()];
+        const notice = document.getElementById('membersLoadError');
+        if (notice) notice.hidden = true;
+        return allMembers;
     } catch (error) {
         console.error('Error loading members:', error);
+        const notice = document.getElementById('membersLoadError');
+        if (notice) {
+            notice.textContent = 'Unable to refresh member data. Any previously loaded list is unchanged. Please try Refresh.';
+            notice.hidden = false;
+        }
+        return null;
     }
-    
-    return allMembers;
+}
+
+function memberTypeLabel(member) {
+    return member.type === 'walkin' ? 'Walk-in' : 'Online';
+}
+
+function memberTypeBadge(member) {
+    return member.type === 'walkin'
+        ? '<span class="walkin-badge"><i class="fas fa-person-walking" aria-hidden="true"></i> Walk-in</span>'
+        : '<span class="regular-badge"><i class="fas fa-wifi" aria-hidden="true"></i> Online</span>';
 }
 
 // Display the Philippine calendar date without browser-local shifts.
@@ -132,9 +139,15 @@ function applyFilters() {
     const statusFilter = document.getElementById('statusFilter').value;
     const sortBy = document.getElementById('sortBy').value;
     const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-    
+    const typeFilter = document.getElementById('memberTypeFilter')?.value || 'all';
+
     filteredMembers = [...allMembers];
-    
+
+    // Booking category is independent of Active/Inactive membership status.
+    if (typeFilter !== 'all') {
+        filteredMembers = filteredMembers.filter(member => member.type === typeFilter);
+    }
+
     // Status filter
     if (statusFilter !== 'all') {
         filteredMembers = filteredMembers.filter(member => {
@@ -221,6 +234,7 @@ function populateMembersGrid() {
                 <div style="min-width:0;">
                     <div style="font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${member.name || 'Unknown'}</div>
                     <div style="font-size:0.75rem;color:var(--dark-text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${member.email || '—'}</div>
+                    <div class="member-category">${memberTypeBadge(member)}</div>
                 </div>
             </div>
             <div class="ml-col ml-package">
@@ -364,7 +378,8 @@ function viewMember(memberId) {
     document.getElementById('modalTotalBookings').textContent = member.bookings.length;
     document.getElementById('modalVerifiedPayments').textContent = member.verifiedBookings.length;
     document.getElementById('modalTotalSpent').textContent = `₱${Math.round(member.totalSpent).toLocaleString()}`;
-    document.getElementById('modalMemberType').textContent = member.type === 'walkin' ? 'Walk-in' : 'Registered';
+    document.getElementById('modalMemberType').textContent = memberTypeLabel(member);
+    document.getElementById('modalMemberType').className = member.type === 'walkin' ? 'walkin-badge' : 'regular-badge';
 
     // Current package banner
     const latestVerified = [...member.verifiedBookings].sort((a, b) =>
@@ -407,6 +422,7 @@ function viewMember(memberId) {
                 <div class="txn-info">
                     <div class="txn-pkg">${booking.package_name || booking.package || 'N/A'}</div>
                     <div class="txn-date">${formatDateForDisplay(booking.booking_date || booking.created_at)}</div>
+                    <div class="member-category">${memberTypeBadge({ type: booking.user_id === null ? 'walkin' : 'registered' })}</div>
                 </div>
                 <div class="txn-amount">₱${parseFloat(booking.amount || 0).toFixed(2)}</div>
                 <div><span class="status-badge status-${booking.status || 'pending'}">${(booking.status || 'pending').charAt(0).toUpperCase() + (booking.status || 'pending').slice(1)}</span></div>
@@ -439,7 +455,7 @@ function exportMembers() {
     }
     
     // Create CSV content
-    let csv = 'Name,Email,Contact,Address,Total Bookings,Verified Payments,Total Spent,Status\n';
+    let csv = 'Name,Email,Contact,Address,Total Bookings,Verified Payments,Total Spent,Status,Booking Category\n';
     
     filteredMembers.forEach(member => {
         const name = (member.name || 'Unknown').replace(/,/g, '');
@@ -451,7 +467,7 @@ function exportMembers() {
         const spent = Math.round(member.totalSpent);
         const status = isMemberActive(member) ? 'Active' : 'Inactive';
         
-        csv += `${name},${email},${contact},${address},${bookings},${verified},${spent},${status}\n`;
+        csv += `${name},${email},${contact},${address},${bookings},${verified},${spent},${status},${memberTypeLabel(member)}\n`;
     });
     
     // Create download link
@@ -470,7 +486,11 @@ function exportMembers() {
 
 // Refresh members
 async function refreshMembers() {
-    await loadAllMembers();
+    const members = await loadAllMembers();
+    if (members === null) {
+        showNotification('Member data could not be refreshed', 'warning');
+        return;
+    }
     applyFilters();
     showNotification('Members refreshed', 'success');
 }
@@ -588,10 +608,11 @@ if (document.readyState === 'loading') {
 
 // Initialize page
 function initializePage() {
-    loadAllMembers().then(() => applyFilters());
+    loadAllMembers().then(members => { if (members !== null) applyFilters(); });
 
     // Setup event listeners — use ?. to safely skip missing elements
     document.getElementById('statusFilter')?.addEventListener('change', applyFilters);
+    document.getElementById('memberTypeFilter')?.addEventListener('change', applyFilters);
     document.getElementById('sortBy')?.addEventListener('change', applyFilters);
     document.getElementById('searchInput')?.addEventListener('input', applyFilters);
 
@@ -615,8 +636,8 @@ function initializePage() {
 
     // Refresh members every 30 seconds
     setInterval(async () => {
-        await loadAllMembers();
-        applyFilters();
+        const members = await loadAllMembers();
+        if (members !== null) applyFilters();
     }, 30000);
 }
 

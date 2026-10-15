@@ -531,9 +531,69 @@ function tableWrites(array $result, string $table, ?string $operation = null): a
 {
     return array_values(array_filter($result['mutations'], fn($m) => $m['table'] === $table && ($operation === null || $m['operation'] === $operation)));
 }
+function responseBookingType(array $result, bool $walkin): void
+{
+    same($walkin ? 'walkin' : 'online', $result['data']['booking_type'] ?? null, 'Create/upgrade response type follows persisted ownership');
+    same($walkin, $result['data']['is_walkin'] ?? null, 'Create/upgrade response has a boolean ownership flag');
+}
 function endpointTests(): int
 {
     $cases = 0;
+    foreach (['manager', 'admin'] as $role) {
+        ++$cases;
+        test('Walk-in ' . $role . ' ignores spoofed owner/type/status', function () use ($role) {
+            $r = endpointCase('walkin/create.php', ['role' => $role,
+                'input' => ['user_id' => 202, 'booking_type' => 'online', 'is_walkin' => false, 'status' => 'pending']], true);
+            $writes = tableWrites($r, 'bookings');
+            same(1, count($writes), 'Walk-in performs exactly one booking write');
+            same('insert', $writes[0]['operation'], 'Walk-in never overwrites an existing booking');
+            same(null, $writes[0]['values']['user_id'], 'Caller owner cannot register a walk-in');
+            same('verified', $writes[0]['values']['status'], 'Walk-in is verified regardless of caller status');
+            $id = $r['data']['id'];
+            same(null, $r['bookings'][$id]['user_id'], 'Saved walk-in ownership remains NULL');
+            same('verified', $r['bookings'][$id]['status'], 'Saved walk-in status remains verified');
+            $payments = tableWrites($r, 'payments');
+            same(1, count($payments), 'Walk-in records exactly one payment');
+            same(null, $payments[0]['values']['user_id'], 'Walk-in payment ownership remains NULL');
+            same($id, $payments[0]['values']['booking_id'], 'Payment belongs to the created walk-in');
+            same(1, $r['manager_checks'], 'Both staff roles pass through the actual walk-in gate');
+            responseBookingType($r, true);
+        });
+    }
+    foreach ([null, 202] as $spoofedOwner) {
+        ++$cases;
+        test('Online create ignores spoofed owner ' . json_encode($spoofedOwner), function () use ($spoofedOwner) {
+            $r = endpointCase('bookings/create.php', ['input' => [
+                'user_id' => $spoofedOwner, 'booking_type' => 'walkin', 'is_walkin' => true]], true);
+            $writes = tableWrites($r, 'bookings', 'insert');
+            same(1, count($writes), 'Online create inserts exactly one booking');
+            same(101, $writes[0]['values']['user_id'], 'Online insert uses session owner, not caller owner');
+            same(101, $r['bookings'][$r['data']['id']]['user_id'], 'Saved online booking retains session owner');
+            same('pending', $r['bookings'][$r['data']['id']]['status'], 'Pending online booking is still online');
+            responseBookingType($r, false);
+        });
+    }
+    ++$cases;
+    test('Registered upgrade preserves online ownership and history despite spoofed type', function () {
+        $r = endpointCase('bookings/upgrade.php', ['input' => [
+            'user_id' => null, 'booking_type' => 'walkin', 'is_walkin' => true]], true);
+        $writes = tableWrites($r, 'bookings', 'insert');
+        same(1, count($writes), 'Upgrade inserts exactly one replacement booking');
+        same(101, $writes[0]['values']['user_id'], 'Upgrade insert retains session owner');
+        $id = $r['data']['new_booking_id'];
+        same(101, $r['bookings'][$id]['user_id'], 'Saved replacement retains registered owner');
+        same('pending', $r['bookings'][$id]['status'], 'Pending upgraded booking remains online');
+        same(101, $r['bookings'][501]['user_id'], 'Upgrade history retains its original owner');
+        same('upgraded', $r['bookings'][501]['status'], 'Original booking remains upgraded history');
+        foreach (tableWrites($r, 'bookings', 'update') as $write) {
+            check(!array_key_exists('user_id', $write['values']), 'History update never writes ownership');
+        }
+        $payments = tableWrites($r, 'payments');
+        same(1, count($payments), 'Upgrade records exactly one payment');
+        same(101, $payments[0]['values']['user_id'], 'Upgrade payment retains registered owner');
+        same($id, $payments[0]['values']['booking_id'], 'Upgrade payment belongs to the replacement');
+        responseBookingType($r, false);
+    });
     foreach (['bookings/create.php', 'bookings/change-plan.php', 'walkin/create.php', 'bookings/upgrade.php'] as $endpoint) {
         foreach (['Daily' => '2024-02-28 23:59:59', 'Weekly (WHO Standard)' => '2024-03-05 23:59:59'] as $duration => $expiry) {
             $zones = $endpoint === 'bookings/upgrade.php' ? ['UTC', 'America/Los_Angeles', 'Pacific/Kiritimati'] : ['UTC'];
@@ -559,6 +619,11 @@ function endpointTests(): int
                     if ($upgrade) {
                         same('pending', $b['status'], 'Upgrade receipt remains pending');
                         same('upgraded', $r['bookings'][501]['status'], 'Old booking preserved as upgraded');
+                        same(101, $r['bookings'][501]['user_id'], 'Upgrade preserves history owner across dates/timezones');
+                    }
+                    if ($endpoint !== 'bookings/change-plan.php') {
+                        same($endpoint === 'walkin/create.php' ? null : 101, $b['user_id'], 'Insert ownership follows endpoint/session, not status');
+                        responseBookingType($r, $endpoint === 'walkin/create.php');
                     }
                 });
             }

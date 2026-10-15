@@ -98,8 +98,9 @@ try {
         $booking['amount_formatted'] = '₱' . number_format($booking['amount'], 2);
         $booking['date_formatted'] = date('M j, Y', strtotime($booking['booking_date'] ?? $booking['created_at']));
         $booking['time_formatted'] = date('h:i A', strtotime($booking['created_at']));
-        $booking['is_walkin'] = true; // Flag to identify walk-in bookings
-        
+        $booking['is_walkin'] = true; // WHERE user_id IS NULL is the persisted source.
+        $booking['booking_type'] = 'walkin';
+
         // Use the package name from the booking record if available, otherwise from the packages table
         $booking['package_name'] = $booking['package_name'] ?: $booking['package_name'];
         

@@ -209,7 +209,11 @@ try {
         error_log("Failed to notify admins about new booking: " . $e->getMessage());
     }
     
-    sendResponse(true, 'Booking created successfully', ['id' => $booking_id]);
+    sendResponse(true, 'Booking created successfully', [
+        'id' => $booking_id,
+        'booking_type' => 'online',
+        'is_walkin' => false
+    ]);
 
 } catch (Exception $e) {
     error_log("Error creating booking: " . $e->getMessage());

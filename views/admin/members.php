@@ -17,7 +17,7 @@ $user = getCurrentUser();
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Dashboard Styles -->
-    <link rel="stylesheet" href="../../assets/css/dashboard.css?v=3.2">
+    <link rel="stylesheet" href="../../assets/css/dashboard.css?v=3.3">
     
     <!-- Apply theme immediately before page renders to prevent flash -->
     <script>
@@ -148,6 +148,15 @@ $user = getCurrentUser();
                 </div>
                 
                 <div style="flex: 1; min-width: 200px;">
+                    <label for="memberTypeFilter" style="display: block; margin-bottom: 8px; color: var(--dark-text-secondary); font-size: 0.75rem; font-weight: 600;">Booking Category</label>
+                    <select id="memberTypeFilter" class="card-btn" style="width: 100%; padding: 8px 12px; cursor: pointer;">
+                        <option value="all">All Categories</option>
+                        <option value="walkin">Walk-in</option>
+                        <option value="registered">Online</option>
+                    </select>
+                </div>
+
+                <div style="flex: 1; min-width: 200px;">
                     <label style="display: block; margin-bottom: 8px; color: var(--dark-text-secondary); font-size: 0.75rem; font-weight: 600;">Sort By</label>
                     <select id="sortBy" class="card-btn" style="width: 100%; padding: 8px 12px; cursor: pointer;">
                         <option value="name-asc">Name (A-Z)</option>
@@ -173,6 +182,13 @@ $user = getCurrentUser();
                 </div>
             </div>
 
+            <div class="member-category-legend" aria-label="Booking categories">
+                <span class="walkin-badge"><i class="fas fa-person-walking" aria-hidden="true"></i> Walk-in</span>
+                <span class="regular-badge"><i class="fas fa-wifi" aria-hidden="true"></i> Online</span>
+                <span>Automatically based on saved bookings; separate from membership status.</span>
+            </div>
+            <p id="membersLoadError" role="alert" hidden style="padding: 12px 24px; color: var(--warning);"></p>
+
             <!-- Table Header -->
             <div class="members-list-header">
                 <div class="ml-col ml-name">Member</div>
@@ -191,7 +207,7 @@ $user = getCurrentUser();
             <div id="noMembersMessage" style="display: none; text-align: center; padding: 60px 20px; color: var(--dark-text-secondary);">
                 <i class="fas fa-users-slash" style="font-size: 3rem; margin-bottom: 16px; opacity: 0.5;"></i>
                 <h3 style="margin-bottom: 8px;">No members found</h3>
-                <p>Members will appear here once they register and make bookings.</p>
+                <p>Online members appear when they register. Walk-in customers appear automatically after staff save their booking.</p>
             </div>
         </div>
         
@@ -273,8 +289,8 @@ $user = getCurrentUser();
                             <div class="value" id="modalTotalSpent" style="font-weight:800;color:var(--success);">â‚±0</div>
                         </div>
                         <div class="detail-group">
-                            <label>Member Type</label>
-                            <div class="value" id="modalMemberType">-</div>
+                            <label>Booking Category</label>
+                            <div class="value"><span id="modalMemberType">-</span></div>
                         </div>
                     </div>
                 </div>

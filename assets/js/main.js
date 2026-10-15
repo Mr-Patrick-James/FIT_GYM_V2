@@ -76,7 +76,8 @@ function openModal(type) {
 
 function closeModal() {
     modal.classList.remove('active');
-    
+    resetForgotPasswordFlow();
+
     // Reset all form states when closing modal
     // Reset signup button
     const signupBtn = document.getElementById('signupSubmitBtn');
@@ -106,25 +107,21 @@ modal.addEventListener('click', (event) => {
 });
 
 function switchForm(type) {
-    // Remove any error messages
+    const forms = {
+        login: loginForm, signup: signupForm, otp: otpVerificationForm,
+        forgotPassword: forgotPasswordFormBox, forgotOtp: forgotOtpFormBox, newPassword: newPasswordFormBox
+    };
+    if (!forms[type]) return;
     const existingError = document.querySelector('.error-message');
-    if (existingError) {
-        existingError.remove();
-    }
-    
+    if (existingError) existingError.remove();
+    Object.values(forms).forEach(form => form?.classList.remove('active'));
+    forms[type].classList.add('active');
+
+    if (!['forgotPassword', 'forgotOtp', 'newPassword'].includes(type)) resetForgotPasswordFlow();
     if (type === 'login') {
-        loginForm.classList.add('active');
-        signupForm.classList.remove('active');
-        otpVerificationForm.classList.remove('active');
-        // Reset login form
         document.getElementById('loginFormElement').reset();
     } else if (type === 'signup') {
-        signupForm.classList.add('active');
-        loginForm.classList.remove('active');
-        otpVerificationForm.classList.remove('active');
-        // Reset signup form
         document.querySelector('#signupForm form').reset();
-        // Reset signup button state (in case it was stuck in loading)
         const signupBtn = document.getElementById('signupSubmitBtn');
         const signupBtnText = document.getElementById('signupBtnText');
         const signupBtnLoader = document.getElementById('signupBtnLoader');
@@ -134,10 +131,6 @@ function switchForm(type) {
             if (signupBtnLoader) signupBtnLoader.style.display = 'none';
         }
     } else if (type === 'otp') {
-        otpVerificationForm.classList.add('active');
-        signupForm.classList.remove('active');
-        loginForm.classList.remove('active');
-        // Clear OTP inputs
         for (let i = 1; i <= 6; i++) {
             const input = document.getElementById(`otpInput${i}`);
             if (input) input.value = '';
@@ -768,137 +761,186 @@ document.getElementById('loginFormElement').addEventListener('submit', function(
     handleLogin(email, password);
 });
 
-// Forgot password function (placeholder for future implementation)
 // ============================================
 // FORGOT PASSWORD FLOW
 // ============================================
 
-let forgotPasswordData = { email: '', otpExpiry: null, otpTimerInterval: null };
+let forgotPasswordData = { email: '', otp: '', otpExpiry: null, otpTimerInterval: null };
+let forgotFlowVersion = 0;
+let forgotPasswordBusy = false;
+
+function clearForgotOtpInputs() {
+    for (let i = 1; i <= 6; i++) document.getElementById(`forgotOtpInput${i}`).value = '';
+}
+
+function setForgotPasswordBusy(busy, action = '') {
+    forgotPasswordBusy = busy;
+    const buttons = [
+        ['forgotSubmitBtn', 'forgotBtnText', 'forgotBtnLoader', 'request'],
+        ['forgotVerifyBtn', 'forgotVerifyText', 'forgotVerifyLoader', 'verify'],
+        ['newPasswordSubmitBtn', 'newPasswordBtnText', 'newPasswordBtnLoader', 'reset']
+    ];
+    buttons.forEach(([id, text, loader, step]) => {
+        const button = document.getElementById(id);
+        const loading = busy && action === step;
+        if (button) button.disabled = busy;
+        if (document.getElementById(text)) document.getElementById(text).style.display = loading ? 'none' : 'inline';
+        if (document.getElementById(loader)) document.getElementById(loader).style.display = loading ? 'inline' : 'none';
+    });
+    const resend = document.getElementById('forgotResendOtp');
+    if (resend) {
+        resend.disabled = busy;
+        resend.textContent = busy && action === 'resend' ? 'Sending...' : 'Resend';
+    }
+}
+
+function resetForgotPasswordFlow() {
+    clearForgotOtpTimer();
+    forgotFlowVersion++;
+    forgotPasswordData = { email: '', otp: '', otpExpiry: null, otpTimerInterval: null };
+    clearForgotOtpInputs();
+    document.getElementById('newPassword').value = '';
+    document.getElementById('newPasswordConfirm').value = '';
+    setForgotPasswordBusy(false);
+}
 
 function showForgotPassword() {
-    // Pre-fill email from login form if present
     const loginEmail = document.getElementById('loginEmail').value.trim();
-    if (loginEmail) {
-        document.getElementById('forgotEmail').value = loginEmail;
-    }
+    resetForgotPasswordFlow();
+    document.getElementById('forgotEmail').value = loginEmail;
     switchForm('forgotPassword');
 }
 
-// Step 1 — Send reset code
+function showForgotCodeForm(force = false) {
+    if (forgotPasswordBusy && !force) return;
+    forgotPasswordData.otp = '';
+    switchForm('forgotOtp');
+    startForgotOtpTimer();
+}
+
+async function readForgotPasswordResponse(response, fallback) {
+    let data;
+    try { data = await response.json(); } catch (error) { throw new Error(fallback); }
+    if (!data || typeof data !== 'object' || !response.ok || data.success !== true) {
+        const error = new Error(data?.message || fallback);
+        error.reason = data?.data?.reason;
+        throw error;
+    }
+    return data;
+}
+
+function setForgotOtpExpiry(data) {
+    const timestamp = Number(data.data?.expires_at_timestamp);
+    forgotPasswordData.otpExpiry = Number.isFinite(timestamp) && timestamp > 0
+        ? timestamp * 1000 : Date.now() + 5 * 60 * 1000;
+    startForgotOtpTimer();
+}
+
+// Step 1 ï¿½ Send reset code
 document.getElementById('forgotPasswordFormElement').addEventListener('submit', async function(e) {
     e.preventDefault();
+    if (forgotPasswordBusy) return;
     const email = document.getElementById('forgotEmail').value.trim().toLowerCase();
     if (!email) { showError('Please enter your email address.', this); return; }
-
-    const btn     = document.getElementById('forgotSubmitBtn');
-    const btnText = document.getElementById('forgotBtnText');
-    const btnLoad = document.getElementById('forgotBtnLoader');
-    btn.disabled  = true;
-    btnText.style.display = 'none';
-    btnLoad.style.display = 'inline';
-
+    const version = forgotFlowVersion;
+    setForgotPasswordBusy(true, 'request');
     try {
-        const res  = await fetch('api/auth/forgot-password.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+        const res = await fetch('api/auth/forgot-password.php', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email })
         });
-        const data = await res.json();
-
-        if (data.success) {
-            forgotPasswordData.email = email;
-            document.getElementById('forgotOtpEmailDisplay').textContent = email;
-            switchForm('forgotOtp');
-
-            // Start timer
-            if (data.data && data.data.expires_at_timestamp) {
-                forgotPasswordData.otpExpiry = data.data.expires_at_timestamp * 1000;
-            } else {
-                forgotPasswordData.otpExpiry = Date.now() + 5 * 60 * 1000;
-            }
-            startForgotOtpTimer();
-            setTimeout(() => document.getElementById('forgotOtpInput1').focus(), 100);
-        } else {
-            showError(data.message || 'Something went wrong. Please try again.', this);
-        }
+        const data = await readForgotPasswordResponse(res, 'Unable to request a reset code. Please try again.');
+        if (version !== forgotFlowVersion) return;
+        forgotPasswordData.email = email;
+        forgotPasswordData.otp = '';
+        clearForgotOtpInputs();
+        document.getElementById('forgotOtpEmailDisplay').textContent = email;
+        switchForm('forgotOtp');
+        setForgotOtpExpiry(data);
+        document.getElementById('forgotOtpInput1').focus();
     } catch (err) {
-        showError('Network error. Please try again.', this);
+        if (version === forgotFlowVersion) showError(err.message || 'Network error. Please try again.', this);
     } finally {
-        btn.disabled  = false;
-        btnText.style.display = 'inline';
-        btnLoad.style.display = 'none';
+        if (version === forgotFlowVersion) setForgotPasswordBusy(false);
     }
 });
 
-// Step 2 — Verify OTP
+// Step 2 ï¿½ Verify OTP
 document.getElementById('forgotOtpFormElement').addEventListener('submit', async function(e) {
     e.preventDefault();
+    if (forgotPasswordBusy) return;
     const otp = ['forgotOtpInput1','forgotOtpInput2','forgotOtpInput3',
                   'forgotOtpInput4','forgotOtpInput5','forgotOtpInput6']
                   .map(id => document.getElementById(id).value).join('');
-
-    if (otp.length !== 6) { showError('Please enter all 6 digits.', this); return; }
-
+    if (!/^\d{6}$/.test(otp)) { showError('Please enter all 6 digits.', this); return; }
+    if (!forgotPasswordData.email) { showForgotPassword(); return; }
+    const version = forgotFlowVersion;
+    setForgotPasswordBusy(true, 'verify');
     try {
-        const res  = await fetch('api/auth/reset-password.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: forgotPasswordData.email, otp, password: '__VERIFY_ONLY__', _step: 'verify' })
+        const res = await fetch('api/auth/reset-password.php', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: forgotPasswordData.email, otp, _step: 'verify' })
         });
-        // We just need OTP validated — move to new password step
-        // Actually validate OTP + set password in one step (Step 3 submit does the real call)
+        const data = await readForgotPasswordResponse(res, 'Unable to verify reset code. Please try again.');
+        if (version !== forgotFlowVersion) return;
+        if (data.data?.verified !== true) throw new Error('Reset code could not be verified. Please try again.');
         forgotPasswordData.otp = otp;
-        clearForgotOtpTimer();
         switchForm('newPassword');
+        document.getElementById('newPassword').focus();
     } catch (err) {
-        showError('Network error. Please try again.', this);
+        if (version === forgotFlowVersion) {
+            forgotPasswordData.otp = '';
+            showError(err.message || 'Network error. Please try again.', this);
+        }
+    } finally {
+        if (version === forgotFlowVersion) setForgotPasswordBusy(false);
     }
 });
 
-// Step 3 — Set new password
+// Step 3 ï¿½ Set new password
 document.getElementById('newPasswordFormElement').addEventListener('submit', async function(e) {
     e.preventDefault();
-    const password        = document.getElementById('newPassword').value;
+    if (forgotPasswordBusy) return;
+    const password = document.getElementById('newPassword').value;
     const confirmPassword = document.getElementById('newPasswordConfirm').value;
-
     if (password.length < 6) { showError('Password must be at least 6 characters.', this); return; }
+    if (new TextEncoder().encode(password).length > 72) { showError('Password must not exceed 72 bytes.', this); return; }
     if (password !== confirmPassword) { showError('Passwords do not match.', this); return; }
-
-    const btn     = document.getElementById('newPasswordSubmitBtn');
-    const btnText = document.getElementById('newPasswordBtnText');
-    const btnLoad = document.getElementById('newPasswordBtnLoader');
-    btn.disabled  = true;
-    btnText.style.display = 'none';
-    btnLoad.style.display = 'inline';
-
+    if (!forgotPasswordData.email || !forgotPasswordData.otp) {
+        showForgotCodeForm();
+        showError('Please verify your reset code first.', document.getElementById('forgotOtpFormElement'));
+        return;
+    }
+    const version = forgotFlowVersion;
+    setForgotPasswordBusy(true, 'reset');
     try {
-        const res  = await fetch('api/auth/reset-password.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: forgotPasswordData.email, otp: forgotPasswordData.otp, password })
+        const res = await fetch('api/auth/reset-password.php', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: forgotPasswordData.email, otp: forgotPasswordData.otp, password, _step: 'reset' })
         });
-        const data = await res.json();
-
-        if (data.success) {
-            // Pre-fill login email and switch to login
-            document.getElementById('loginEmail').value = forgotPasswordData.email;
-            switchForm('login');
-            showSuccess('Password reset successfully! Please log in with your new password.', document.querySelector('#loginForm form'));
-            // Clear state
-            forgotPasswordData = { email: '', otp: '', otpExpiry: null, otpTimerInterval: null };
-        } else {
-            showError(data.message || 'Failed to reset password. Please try again.', this);
-        }
+        await readForgotPasswordResponse(res, 'Unable to reset password. Please try again.');
+        if (version !== forgotFlowVersion) return;
+        const email = forgotPasswordData.email;
+        switchForm('login');
+        // switchForm resets the login form; prefill only after switching.
+        document.getElementById('loginEmail').value = email;
+        showSuccess('Password reset successfully! Please log in with your new password.', document.querySelector('#loginForm form'));
     } catch (err) {
-        showError('Network error. Please try again.', this);
+        if (version !== forgotFlowVersion) return;
+        if (['invalid_otp', 'expired_otp'].includes(err.reason)) {
+            showForgotCodeForm(true);
+            clearForgotOtpInputs();
+            showError(err.message, document.getElementById('forgotOtpFormElement'));
+        } else {
+            // Retain entered passwords when a recoverable server/network failure occurs.
+            showError(err.message || 'Network error. Please try again.', this);
+        }
     } finally {
-        btn.disabled  = false;
-        btnText.style.display = 'inline';
-        btnLoad.style.display = 'none';
+        if (version === forgotFlowVersion) setForgotPasswordBusy(false);
     }
 });
 
-// OTP inputs for forgot password — auto-advance + backspace
+// OTP inputs for forgot password ï¿½ auto-advance + backspace
 ['forgotOtpInput1','forgotOtpInput2','forgotOtpInput3',
  'forgotOtpInput4','forgotOtpInput5','forgotOtpInput6'].forEach((id, idx, arr) => {
     const input = document.getElementById(id);
@@ -924,22 +966,17 @@ document.getElementById('newPasswordFormElement').addEventListener('submit', asy
 
 function startForgotOtpTimer() {
     clearForgotOtpTimer();
-    const timerEl   = document.getElementById('forgotOtpTimer');
-    const resendEl  = document.getElementById('forgotResendOtp');
-    const cooldownEl = document.getElementById('forgotResendCooldown');
-    if (timerEl) timerEl.style.display = 'block';
-
-    forgotPasswordData.otpTimerInterval = setInterval(() => {
-        const remaining = Math.max(0, Math.floor((forgotPasswordData.otpExpiry - Date.now()) / 1000));
-        const m = Math.floor(remaining / 60);
-        const s = remaining % 60;
-        if (timerEl) timerEl.textContent = `Code expires in ${m}:${s.toString().padStart(2,'0')}`;
-        if (remaining <= 0) {
-            clearForgotOtpTimer();
-            if (timerEl) timerEl.textContent = 'Code expired. Please request a new one.';
-            if (resendEl) resendEl.style.pointerEvents = 'auto';
-        }
-    }, 1000);
+    const timers = [document.getElementById('forgotOtpTimer'), document.getElementById('newPasswordOtpTimer')];
+    function updateTimer() {
+        const remaining = Math.max(0, Math.floor(((forgotPasswordData.otpExpiry || 0) - Date.now()) / 1000));
+        const message = remaining > 0
+            ? `Code expires in ${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, '0')}`
+            : 'Code expired. Please request a new one.';
+        timers.forEach(timer => { if (timer) { timer.style.display = 'block'; timer.textContent = message; } });
+        if (remaining <= 0) clearForgotOtpTimer();
+        return remaining;
+    }
+    if (updateTimer() > 0) forgotPasswordData.otpTimerInterval = setInterval(updateTimer, 1000);
 }
 
 function clearForgotOtpTimer() {
@@ -950,35 +987,26 @@ function clearForgotOtpTimer() {
 }
 
 async function resendForgotOTP() {
-    if (!forgotPasswordData.email) return;
-    const resendEl   = document.getElementById('forgotResendOtp');
-    const cooldownEl = document.getElementById('forgotResendCooldown');
-    if (resendEl) resendEl.style.pointerEvents = 'none';
-
+    if (!forgotPasswordData.email || forgotPasswordBusy) return;
+    const version = forgotFlowVersion;
+    setForgotPasswordBusy(true, 'resend');
+    // The server invalidates old codes on a resend, even if sending later fails.
+    forgotPasswordData.otp = '';
+    clearForgotOtpInputs();
     try {
-        const res  = await fetch('api/auth/forgot-password.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+        const res = await fetch('api/auth/forgot-password.php', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email: forgotPasswordData.email })
         });
-        const data = await res.json();
-        if (data.success) {
-            if (data.data && data.data.expires_at_timestamp) {
-                forgotPasswordData.otpExpiry = data.data.expires_at_timestamp * 1000;
-            } else {
-                forgotPasswordData.otpExpiry = Date.now() + 5 * 60 * 1000;
-            }
-            startForgotOtpTimer();
-            // Clear inputs
-            ['forgotOtpInput1','forgotOtpInput2','forgotOtpInput3',
-             'forgotOtpInput4','forgotOtpInput5','forgotOtpInput6'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.value = '';
-            });
-            document.getElementById('forgotOtpInput1').focus();
-        }
+        const data = await readForgotPasswordResponse(res, 'Unable to resend reset code. Please try again.');
+        if (version !== forgotFlowVersion) return;
+        setForgotOtpExpiry(data);
+        switchForm('forgotOtp');
+        document.getElementById('forgotOtpInput1').focus();
     } catch (err) {
-        if (resendEl) resendEl.style.pointerEvents = 'auto';
+        if (version === forgotFlowVersion) showError(err.message || 'Network error. Please try again.', document.getElementById('forgotOtpFormElement'));
+    } finally {
+        if (version === forgotFlowVersion) setForgotPasswordBusy(false);
     }
 }
 // ============================================

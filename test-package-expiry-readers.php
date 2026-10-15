@@ -380,6 +380,15 @@ function states(array $r, array $expiredIds): void
 }
 function ids(array $r): array { return array_column($r['data'], 'id'); }
 function sortedIds(array $r): array { $ids = ids($r); sort($ids); return $ids; }
+function bookingTypes(array $r): void
+{
+    foreach ($r['data'] as $row) {
+        $owner = $r['db']->bookings[$row['id']]['user_id'];
+        same($owner, $row['user_id'], 'List preserves the actual saved owner');
+        same($owner === null ? 'walkin' : 'online', $row['booking_type'] ?? null, 'List type follows saved owner, independently of status');
+        same($owner === null, $row['is_walkin'] ?? null, 'List flag is boolean and follows saved owner');
+    }
+}
 function mutationBeforeRead(array $r, string $endpoint): void
 {
     $queries = $r['db']->queries;
@@ -437,6 +446,8 @@ try {
                     mutationBeforeRead($r, $endpoint);
                     foreach ($r['data'] as $b) {
                         same($b['user_id'] === null, $b['is_walkin'], 'Walk-in flag reflects ownership');
+                        same($r['db']->bookings[$b['id']]['user_id'] === null ? 'walkin' : 'online',
+                            $b['booking_type'] ?? null, 'Boundary list type follows persisted ownership, not expiry status');
                         same(80.0, $b['amount'], 'Purchased discount not overwritten by joined package price');
                     }
                     if ($endpoint === 'walkin/get-all.php') same(1, $r['manager_checks'], 'Actual manager guard invoked');
@@ -450,6 +461,7 @@ try {
                             : ($walkin ? ($after ? [3, 13, 16] : [13, 16]) : ($after ? [1, 2, 3, 12, 13, 14, 16] : [12, 13, 14, 16]));
                         same($expected, sortedIds($r), 'Status filtering observes mutated states');
                         mutationBeforeRead($r, $endpoint);
+                        bookingTypes($r);
                     });
                 }
             }
@@ -490,6 +502,7 @@ try {
                     } else {
                         same($after ? 'expired' : 'verified', $r['data'][0]['status'], 'Weekly list status');
                         mutationBeforeRead($r, $endpoint);
+                        bookingTypes($r);
                     }
                 });
             }
@@ -503,7 +516,45 @@ try {
             // This endpoint intentionally performs global maintenance for every logged-in reader;
             // owner-restricted SELECT visibility is distinct from its authorized maintenance scope.
             states($r, [12, 13, 14]);
+            bookingTypes($r);
         });
+    }
+    foreach (['manager', 'admin'] as $role) {
+        foreach (['bookings/get-all.php', 'walkin/get-all.php'] as $endpoint) {
+            test($endpoint . ' ' . $role . ' mixed saved owners across every status', function () use ($role, $endpoint) {
+                $fixtures = [];
+                $id = 0;
+                foreach (['verified', 'expired', 'upgraded', 'pending', 'rejected'] as $status) {
+                    foreach ([101, 202, null] as $owner) {
+                        ++$id;
+                        $fixtures[$id] = booking($id, $owner, $status,
+                            $status === 'verified' ? '2027-01-04 23:59:59' : '2026-12-30 23:59:59',
+                            ['name' => $owner === null ? 'Online Fixture ' . $id : 'Walk-in Fixture ' . $id]);
+                    }
+                }
+                $walkin = $endpoint === 'walkin/get-all.php';
+                $r = runEndpoint($endpoint, ['role' => $role, 'bookings' => $fixtures]);
+                success($r);
+                states($r, []);
+                same($walkin ? [3, 6, 9, 12, 15] : range(1, 15), sortedIds($r), 'Saved ownership determines visibility, not misleading names');
+                $statuses = array_values(array_unique(array_column($r['data'], 'status')));
+                sort($statuses);
+                same(['expired', 'pending', 'rejected', 'upgraded', 'verified'], $statuses, 'Mixed list covers every booking status');
+                mutationBeforeRead($r, $endpoint);
+                bookingTypes($r);
+                if ($walkin) same(1, $r['manager_checks'], 'Both staff roles use the actual walk-in list gate');
+                foreach (['verified', 'expired', 'upgraded', 'pending', 'rejected'] as $index => $status) {
+                    $filtered = runEndpoint($endpoint, ['role' => $role, 'bookings' => $fixtures, 'get' => ['status' => $status]]);
+                    success($filtered);
+                    states($filtered, []);
+                    $lastId = ($index + 1) * 3;
+                    same($walkin ? [$lastId] : [$lastId - 2, $lastId - 1, $lastId], sortedIds($filtered), 'Status filter preserves registered/NULL ownership scope');
+                    same([$status], array_values(array_unique(array_column($filtered['data'], 'status'))), 'Only requested status returned');
+                    mutationBeforeRead($filtered, $endpoint);
+                    bookingTypes($filtered);
+                }
+            });
+        }
     }
     test('Member status filter and search retain ownership', function () {
         $r = runEndpoint('bookings/get-all.php', ['get' => ['status' => 'verified', 'search' => 'Fixture', 'sort' => 'date-asc']]);

@@ -124,9 +124,10 @@ try {
         $booking['amount_formatted'] = '₱' . number_format($amt, 2);
         $booking['date_formatted'] = date('M j, Y', strtotime($booking['booking_date'] ?? $booking['created_at']));
         
-        // Identify walk-in bookings (user_id is NULL)
+        // Persisted ownership is the source, independent of package/payment/status.
         $booking['is_walkin'] = is_null($booking['user_id']);
-        
+        $booking['booking_type'] = $booking['is_walkin'] ? 'walkin' : 'online';
+
         // Fetch payment information for this booking
         $paymentSql = "SELECT payment_method, status FROM payments WHERE booking_id = ? ORDER BY id DESC LIMIT 1";
         $paymentStmt = $conn->prepare($paymentSql);

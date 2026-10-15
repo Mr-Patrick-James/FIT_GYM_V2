@@ -634,6 +634,7 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
                         id="resendCooldown"></span>
                     <p id="otpTimer" style="display: none; font-size: 0.8rem; color: #888; margin-top: 5px;"></p>
                 </div>
+            </div>
 
             <!-- Forgot Password - Step 1: Email Entry -->
             <div id="forgotPasswordForm" class="form-box">
@@ -662,23 +663,25 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
             <div id="forgotOtpForm" class="form-box">
                 <div class="auth-header">
                     <h2>Enter Reset Code</h2>
-                    <p>We've sent a 6-digit code to <strong id="forgotOtpEmailDisplay"></strong></p>
+                    <p>If <strong id="forgotOtpEmailDisplay"></strong> matches a verified account, check its inbox and spam folder for the 6-digit reset code.</p>
                 </div>
                 <form id="forgotOtpFormElement">
                     <div class="otp-input-group">
-                        <input type="text" maxlength="1" id="forgotOtpInput1">
-                        <input type="text" maxlength="1" id="forgotOtpInput2">
-                        <input type="text" maxlength="1" id="forgotOtpInput3">
-                        <input type="text" maxlength="1" id="forgotOtpInput4">
-                        <input type="text" maxlength="1" id="forgotOtpInput5">
-                        <input type="text" maxlength="1" id="forgotOtpInput6">
+                        <input type="text" inputmode="numeric" maxlength="1" id="forgotOtpInput1">
+                        <input type="text" inputmode="numeric" maxlength="1" id="forgotOtpInput2">
+                        <input type="text" inputmode="numeric" maxlength="1" id="forgotOtpInput3">
+                        <input type="text" inputmode="numeric" maxlength="1" id="forgotOtpInput4">
+                        <input type="text" inputmode="numeric" maxlength="1" id="forgotOtpInput5">
+                        <input type="text" inputmode="numeric" maxlength="1" id="forgotOtpInput6">
                     </div>
-                    <button type="submit" class="auth-btn">Verify Code</button>
+                    <button type="submit" class="auth-btn" id="forgotVerifyBtn">
+                        <span id="forgotVerifyText">Verify Code</span>
+                        <span id="forgotVerifyLoader" style="display: none;">Verifying...</span>
+                    </button>
                 </form>
                 <div class="resend-otp">
-                    Didn't receive code? <span id="forgotResendOtp" onclick="resendForgotOTP()">Resend</span>
-                    <span id="forgotResendCooldown"></span>
-                    <p id="forgotOtpTimer" style="display: none; font-size: 0.8rem; color: #888; margin-top: 5px;"></p>
+                    Didn't receive code? <button type="button" id="forgotResendOtp" onclick="resendForgotOTP()" style="background:none;border:0;color:inherit;font:inherit;text-decoration:underline;cursor:pointer;">Resend</button>
+                    <p id="forgotOtpTimer" role="status" style="display: none; font-size: 0.8rem; color: #888; margin-top: 5px;"></p>
                 </div>
             </div>
 
@@ -688,16 +691,17 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
                     <h2>Set New Password</h2>
                     <p>Choose a new password for your account</p>
                 </div>
+                <p id="newPasswordOtpTimer" role="status" style="font-size:0.8rem;color:#888;margin-bottom:12px;"></p>
                 <form id="newPasswordFormElement">
                     <div class="input-group">
-                        <input type="password" id="newPassword" name="password" required autocomplete="new-password">
+                        <input type="password" id="newPassword" name="password" required minlength="6" maxlength="72" autocomplete="new-password">
                         <label>New Password</label>
                         <span class="toggle-password" data-target="newPassword">
                             <i class="fa-regular fa-eye"></i>
                         </span>
                     </div>
                     <div class="input-group">
-                        <input type="password" id="newPasswordConfirm" name="confirm_password" required autocomplete="new-password">
+                        <input type="password" id="newPasswordConfirm" name="confirm_password" required minlength="6" maxlength="72" autocomplete="new-password">
                         <label>Confirm New Password</label>
                         <span class="toggle-password" data-target="newPasswordConfirm">
                             <i class="fa-regular fa-eye"></i>
@@ -710,13 +714,15 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
                         </span>
                     </button>
                 </form>
-            </div>
+                <div class="switch-auth">
+                    <button type="button" onclick="showForgotCodeForm()" style="background:none;border:0;color:inherit;font:inherit;text-decoration:underline;cursor:pointer;">Back to reset code / request another code</button>
+                </div>
             </div>
         </div>
     </div>
 
 
-    <script src="assets/js/main.js?v=1.3"></script>
+    <script src="assets/js/main.js?v=1.4"></script>
     <script>
         function toggleAllReviews() {
             const grid = document.getElementById('testimonialsGrid');

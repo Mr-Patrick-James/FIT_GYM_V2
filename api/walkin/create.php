@@ -146,7 +146,9 @@ try {
         'package' => $package_name,
         'amount' => $package['price'],
         'payment_method' => $payment_method,
-        'payment_status' => $paymentStatus
+        'payment_status' => $paymentStatus,
+        'booking_type' => 'walkin',
+        'is_walkin' => true
     ]);
 
 } catch (Exception $e) {

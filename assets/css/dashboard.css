@@ -3493,6 +3493,18 @@ body.light-mode .theme-option.active {
 .members-list-row:last-child { border-bottom: none; }
 .members-list-row:hover { background: var(--glass); }
 .ml-name { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.member-category { margin-top: 4px; }
+.member-category .walkin-badge,
+.member-category .regular-badge { white-space: nowrap; }
+.member-category-legend {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    padding: 12px 24px;
+    font-size: 0.75rem;
+    color: var(--dark-text-secondary);
+}
 
 .pkg-badge {
     display: inline-block;
