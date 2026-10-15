@@ -17,11 +17,35 @@ if ($row = $result->fetch_assoc()) {
 }
 $stmt->close();
 
-// Stats for trainer
+// Stats for trainer — Active Clients = currently verified only (matches get-clients.php)
 $totalMembers = 0;
+$totalAllTime = 0;
 if ($trainerId) {
-    $res = $conn->query("SELECT COUNT(*) as count FROM bookings WHERE trainer_id = $trainerId AND status IN ('verified', 'expired')");
+    $res = $conn->query("
+        SELECT COUNT(*) as count FROM bookings b
+        WHERE b.status = 'verified'
+          AND (
+              b.trainer_id = $trainerId
+              OR (b.trainer_id IS NULL AND EXISTS (
+                  SELECT 1 FROM package_trainers pt
+                  WHERE pt.package_id = b.package_id AND pt.trainer_id = $trainerId
+              ))
+          )
+    ");
     if ($res) $totalMembers = $res->fetch_assoc()['count'];
+
+    $res2 = $conn->query("
+        SELECT COUNT(*) as count FROM bookings b
+        WHERE b.status IN ('verified', 'expired')
+          AND (
+              b.trainer_id = $trainerId
+              OR (b.trainer_id IS NULL AND EXISTS (
+                  SELECT 1 FROM package_trainers pt
+                  WHERE pt.package_id = b.package_id AND pt.trainer_id = $trainerId
+              ))
+          )
+    ");
+    if ($res2) $totalAllTime = $res2->fetch_assoc()['count'];
 }
 
 // Active Plans count
@@ -319,6 +343,16 @@ if ($trainerId) {
                 </div>
                 <div class="stat-value"><?php echo $totalMembers; ?></div>
                 <div class="stat-label">Active Clients</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon" style="background: rgba(107, 114, 128, 0.15); color: #9ca3af;">
+                        <i class="fas fa-users-slash"></i>
+                    </div>
+                </div>
+                <div class="stat-value"><?php echo $totalAllTime - $totalMembers; ?></div>
+                <div class="stat-label">Expired / Past Clients</div>
             </div>
             
             <div class="stat-card">

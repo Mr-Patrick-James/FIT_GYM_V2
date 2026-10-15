@@ -134,6 +134,27 @@ try {
                 error_log("Failed to send booking verification email: " . $e->getMessage());
             }
 
+            // Auto-assign trainer from package_trainers if none was manually assigned
+            if (empty($booking['trainer_id'])) {
+                $ptQuery = $conn->prepare(
+                    "SELECT pt.trainer_id FROM package_trainers pt
+                     JOIN trainers t ON t.id = pt.trainer_id
+                     WHERE pt.package_id = ? AND t.is_active = 1
+                     ORDER BY pt.trainer_id ASC LIMIT 1"
+                );
+                if ($ptQuery) {
+                    $ptQuery->bind_param("i", $booking['package_id']);
+                    $ptQuery->execute();
+                    $ptResult = $ptQuery->get_result();
+                    if ($ptRow = $ptResult->fetch_assoc()) {
+                        $autoTrainerId = (int)$ptRow['trainer_id'];
+                        $conn->query("UPDATE bookings SET trainer_id = $autoTrainerId WHERE id = $bookingId");
+                        $booking['trainer_id'] = $autoTrainerId;
+                    }
+                    $ptQuery->close();
+                }
+            }
+
             // Notify assigned trainer about the new client
             if (!empty($booking['trainer_id'])) {
                 try {

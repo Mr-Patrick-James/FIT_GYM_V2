@@ -36,11 +36,18 @@ function fixReceiptUrl(url) {
 // Load user bookings from database
 async function loadUserBookings() {
     try {
-        const response = await fetch('../../api/bookings/get-all.php?status=all');
-        const data = await response.json();
-        
+        const response = await fetch(getApiUrl('bookings/get-all.php?status=all'), { credentials: 'include' });
+        const text = await response.text();
+        let data;
+        try {
+            data = JSON.parse(text);
+        } catch(e) {
+            console.error('loadUserBookings: non-JSON response:', text.substring(0, 200));
+            userBookings = [];
+            return;
+        }
+
         if (data.success) {
-            // Backend now auto-expires bookings in DB before returning them
             userBookings = data.data;
         } else {
             console.error('Error loading bookings:', data.message);
@@ -171,7 +178,7 @@ let packagesData = [];
 // Load packages data from database
 async function loadPackagesData() {
     try {
-        const response = await fetch('../../api/packages/get-all.php');
+        const response = await fetch(getApiUrl('packages/get-all.php'));
         const data = await response.json();
         
         if (data.success) {
@@ -382,7 +389,7 @@ async function checkSurveyStatus() {
 // Load dynamic payment settings from database
 async function loadPaymentSettings() {
     try {
-        const response = await fetch('../../api/settings/get.php');
+        const response = await fetch(getApiUrl('settings/get.php'));
         const result = await response.json();
         
         if (result.success) {
@@ -672,7 +679,7 @@ function showSection(section, event) {
         const titles = {
             'dashboard': { title: 'Dashboard', subtitle: 'Welcome back! Manage your gym membership and bookings' },
             'packages': { title: 'Packages', subtitle: 'Choose a membership plan that fits your fitness goals' },
-            'bookings': { title: 'Booking History', subtitle: 'View your complete booking history including expired packages' },
+            'bookings': { title: 'Booking Logs', subtitle: 'View your complete Booking Logs including expired packages' },
             'payments': { title: 'Payment History', subtitle: 'Track all your payment transactions' },
             'trainer': { title: 'My Trainer', subtitle: 'View your assigned trainer and session details' },
             'profile': { title: 'Profile', subtitle: 'Manage your account information and settings' }
@@ -1093,7 +1100,7 @@ async function submitEditBooking(event) {
         };
         
         // Submit edited booking to database (reusing the change-plan endpoint which handles edits now)
-        const response = await fetch('../../api/bookings/change-plan.php', {
+        const response = await fetch(getApiUrl('bookings/change-plan.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -1335,7 +1342,7 @@ async function submitUpgradeBooking(event) {
         const receiptUrl = await uploadReceipt(selectedUpgradeFile);
 
         // Call upgrade API
-        const response = await fetch('../../api/bookings/upgrade.php', {
+        const response = await fetch(getApiUrl('bookings/upgrade.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -1701,14 +1708,14 @@ function populateBookings() {
         tbody.innerHTML = `
             <tr>
                 <td colspan="6" style="text-align: center; padding: 40px; color: var(--dark-text-secondary);">
-                    No booking history yet. <a href="#" onclick="showSection('packages')" style="color: var(--primary); text-decoration: underline;">Browse packages</a> to get started!
+                    No Booking Logs yet. <a href="#" onclick="showSection('packages')" style="color: var(--primary); text-decoration: underline;">Browse packages</a> to get started!
                 </td>
             </tr>
         `;
         recentTbody.innerHTML = `
             <tr>
                 <td colspan="5" style="text-align: center; padding: 40px; color: var(--dark-text-secondary);">
-                    No booking history yet. <a href="#" onclick="showSection('packages')" style="color: var(--primary); text-decoration: underline;">Browse packages</a> to get started!
+                    No Booking Logs yet. <a href="#" onclick="showSection('packages')" style="color: var(--primary); text-decoration: underline;">Browse packages</a> to get started!
                 </td>
             </tr>
         `;
@@ -2223,7 +2230,7 @@ function formatDate(dateString) {
 // Save initial measurements from survey
 async function saveInitialMeasurements(weight, height) {
     try {
-        const response = await fetch('../../api/users/update-profile.php', {
+        const response = await fetch(getApiUrl('users/update-profile.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -2532,7 +2539,7 @@ async function submitBooking(event) {
         };
         
         // Submit booking to database
-        const response = await fetch('../../api/bookings/create.php', {
+        const response = await fetch(getApiUrl('bookings/create.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -3993,7 +4000,7 @@ async function updateProfile() {
         updateBtn.disabled = true;
         updateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
         
-        const response = await fetch('../../api/users/update-profile.php', {
+        const response = await fetch(getApiUrl('users/update-profile.php', {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
@@ -4049,7 +4056,7 @@ async function changePassword(event) {
         changeBtn.disabled = true;
         changeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Changing...';
         
-        const response = await fetch('../../api/users/change-password.php', {
+        const response = await fetch(getApiUrl('users/change-password.php', {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
@@ -4082,7 +4089,7 @@ async function logout() {
     
     try {
         // Call logout API to clear PHP session
-        const response = await fetch('../../api/auth/logout.php', {
+        const response = await fetch(getApiUrl('auth/logout.php'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' }
         });
@@ -4701,7 +4708,7 @@ async function loadTrainerSection() {
     trainerSectionLoaded = true;
 
     try {
-        const res = await fetch('../../api/trainers/get-my-trainer.php');
+        const res = await fetch(getApiUrl('trainers/get-my-trainer.php');
         const data = await res.json();
 
         if (!data.success || !data.data) {
@@ -4903,7 +4910,7 @@ async function submitUserProgress() {
         if (photoFile) {
             const formData = new FormData();
             formData.append('photo', photoFile);
-            const upRes = await fetch('../../api/upload/progress-photo.php', { method: 'POST', body: formData });
+            const upRes = await fetch(getApiUrl('upload/progress-photo.php', { method: 'POST', body: formData });
             const upData = await upRes.json();
             if (upData.success) {
                 photo_url = upData.data.url;
@@ -4914,7 +4921,7 @@ async function submitUserProgress() {
         const bookingId = window._trainerBookingId;
         if (!bookingId) { alert('No active booking found.'); return; }
 
-        const res = await fetch('../../api/trainers/log-progress-user.php', {
+        const res = await fetch(getApiUrl('trainers/log-progress-user.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

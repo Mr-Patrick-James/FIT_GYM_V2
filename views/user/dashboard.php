@@ -1920,7 +1920,7 @@ function getSetting($key, $default = '', $settings = [])
                                 </div>
                             </div>
                             <div class="stat-value" id="verifiedBookingsCount">0</div>
-                            <div class="stat-label">Booking History</div>
+                            <div class="stat-label">Booking Logs</div>
                         </div>
 
                         <div class="stat-card">
@@ -1996,8 +1996,8 @@ function getSetting($key, $default = '', $settings = [])
                             </button>
                             <button class="quick-action-card" onclick="showSection('bookings', event)">
                                 <i class="fas fa-list"></i>
-                                <h4>Booking History</h4>
-                                <p>View your complete booking history</p>
+                                <h4>Booking Logs</h4>
+                                <p>View your complete Booking Logs</p>
                             </button>
                             <button class="quick-action-card" onclick="showSection('payments', event)">
                                 <i class="fas fa-receipt"></i>
@@ -2011,10 +2011,10 @@ function getSetting($key, $default = '', $settings = [])
 
             </div>
 
-            <!-- Booking History -->
+            <!-- Booking Logs -->
             <div class="content-card" style="margin-top: 32px;">
                 <div class="card-header">
-                    <h3>Booking History</h3>
+                    <h3>Booking Logs</h3>
                     <button class="card-btn" onclick="showSection('bookings', event)">
                         <span>View All</span>
                         <i class="fas fa-arrow-right"></i>
@@ -2098,7 +2098,7 @@ function getSetting($key, $default = '', $settings = [])
         <div id="bookingsSection" class="content-section">
             <div class="content-card">
                 <div class="card-header">
-                    <h3>Booking History</h3>
+                    <h3>Booking Logs</h3>
                     <div style="display: flex; align-items: center; gap: 12px;">
                         <div class="user-view-toggle">
                             <button class="user-view-btn active" id="userTableViewBtn" title="Table View" onclick="toggleUserView('table')">

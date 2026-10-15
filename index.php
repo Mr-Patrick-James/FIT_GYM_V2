@@ -25,17 +25,12 @@ try {
         }
     }
 
-    // Fetch real active members count (users with role 'user')
     $countResult = $conn->query("SELECT COUNT(*) as total FROM users WHERE role = 'user'");
     if ($countResult) {
         $row = $countResult->fetch_assoc();
         $activeMemberCount = $row['total'];
     }
 
-    // Featured plans removed - no longer displayed on landing page
-
-    // --- AUTO-SETUP WHO PLAN ---
-    // Check if WHO plan exists, if not, create it
     $whoCheck = $conn->query("SELECT id FROM packages WHERE name = 'WHO Health & Fitness Plan'");
     if ($whoCheck && $whoCheck->num_rows === 0) {
         // Create WHO Package
@@ -51,14 +46,12 @@ try {
         $whoId = $conn->insert_id;
 
         if ($whoId) {
-            // Get exercise IDs
             $ex_ids = [];
             $res = $conn->query("SELECT id, name FROM exercises");
             while ($row = $res->fetch_assoc()) {
                 $ex_ids[$row['name']] = $row['id'];
             }
 
-            // WHO-compliant assignments
             $assignments = [
                 ['Treadmill Jogging', 1, '30 mins (Aerobic)'],
                 ['Stationary Cycling', 1, '20 mins (Aerobic)'],
@@ -378,27 +371,26 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
                 <h2 class="section-title">What Members Say</h2>
             </div>
             <div class="testimonials-grid" id="testimonialsGrid">
+                <!-- Testimonial 1 -->
                 <div class="testimonial-card">
-                    <div class="stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i
-                            class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+                    <div class="stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
                     <p>"What I like about this gym is mura sya unlike other gyms na 50, 60 minsan nga 100, sa gym ng
                         Martinez kasi 35 lang which is so okay para sakin and sa mga beginners also. Sa mga equipment,
                         goods denn, malinis and quality din. Hoping na mag dadagdag kayu ng equipments para mas
                         mapaganda yung gym."</p>
                     <div class="testimonial-author">
-                        <div class="author-avatar"><img src="assets/testimonies/img1.jpg" alt="Jeux Burn Martinez"
+                        <div class="author-avatar"><img src="assets/testimonies/img1.jpg" alt="alden andino"
                                 style="width:100%;height:100%;object-fit:cover;border-radius:50%;"></div>
                         <div>
                             <strong>alden andino</strong>
                             <span>Gym Member</span>
-                            <span><a href="mailto:andinoalden10@gmail.com"
-                                    style="color:#aaa;font-size:0.78rem;text-decoration:none;">andinoalden10@gmail.com</a></span>
                         </div>
                     </div>
                 </div>
+
+                <!-- Testimonial 2 -->
                 <div class="testimonial-card">
-                    <div class="stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i
-                            class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+                    <div class="stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
                     <p>"What I observed in this gym is it is beginner friendly, affordable, and clean and organized, and
                         im terms of equipment, they have the basic needs of a client, whether a beginner or a
                         intermediate lifter, But I would like to suggest some equipments to add like, leg extensions and
@@ -409,30 +401,25 @@ if (isLoggedIn() && !isset($_GET['auth']) && !isset($_POST['auth'])) {
                         <div>
                             <strong>Jayven Aguilar Mendoza</strong>
                             <span>Gym Member</span>
-                            <span><a href="mailto:mendozajayvenm@gmail.com"
-                                    style="color:#aaa;font-size:0.78rem;text-decoration:none;">mendozajayvenm@gmail.com</a></span>
                         </div>
                     </div>
                 </div>
+
+                <!-- Testimonial 3 -->
                 <div class="testimonial-card">
-                    <div class="stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i
-                            class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+                    <div class="stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
                     <p>"Sulit maganda 10/10 keep up the good work"</p>
                     <div class="testimonial-author">
-                        <div class="testimonial-author">
-                            <div class="author-avatar"><img src="assets/testimonies/img3.png"
-                                    alt="Jayven Aguilar Mendoza"
-                                    style="width:100%;height:100%;object-fit:cover;border-radius:50%;"></div>
-                            <div>
-                                <strong>jervv adalia</strong>
-                                <span>Gym Member</span>
-                                <span><a href="mailto:jerrvmark15@gmail.com"
-                                        style="color:#aaa;font-size:0.78rem;text-decoration:none;">jerrvmark15@gmail.com</a></span>
-                            </div>
+                        <div class="author-avatar"><img src="assets/testimonies/img3.png" alt="jervv adalia"
+                                style="width:100%;height:100%;object-fit:cover;border-radius:50%;"></div>
+                        <div>
+                            <strong>jervv adalia</strong>
+                            <span>Gym Member</span>
                         </div>
                     </div>
                     <!-- Hidden extra cards — shown when "See All Reviews" is clicked -->
                 </div>
+
                 <div class="reviews-btn-wrap">
                     <button class="directions-btn" id="seeAllReviewsBtn" onclick="toggleAllReviews()">
                         See All Reviews

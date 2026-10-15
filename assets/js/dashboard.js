@@ -1014,7 +1014,7 @@ async function updateStats() {
             { id: 'totalRevenueStat', label: 'Total Revenue', value: `₱${totalRevenue.toLocaleString()}`, icon: 'money-bill-wave', trend: '15%', trendDir: 'up' },
             { id: 'activeMembersStat', label: 'Active Members', value: activeMemberIdentifiers.size, icon: 'users', trend: '5%', trendDir: 'up' },
             { id: 'totalTrainersStat', label: 'Active Trainers', value: trainersData.success ? trainersData.data.length : 0, icon: 'user-tie', trend: '2%', trendDir: 'up' },
-            { id: 'gymCapacityStat', label: 'Gym Capacity', value: `${Math.min(100, Math.round(activeMemberIdentifiers.size / 2))}%`, icon: 'bolt', trend: 'Steady', trendDir: '' }
+            { id: 'pendingOverviewStat', label: 'Pending Verification', value: allBookingsData.filter(isPending).length, icon: 'clock', trendDir: 'up' }
         ];
 
         // --- CATEGORY: BOOKINGS ---
