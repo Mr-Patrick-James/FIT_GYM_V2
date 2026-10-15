@@ -19,6 +19,12 @@ function trainerBookingAssignmentSql(): string
     )))";
 }
 
+// Paid assigned history stays visible independently of current write eligibility.
+function trainerBookingHistorySql(): string
+{
+    return "b.status IN ('verified', 'expired', 'upgraded')";
+}
+
 // Placeholder order: gym-local timestamp, gym-local calendar date.
 function trainerBookingWritableSql(): string
 {

@@ -61,11 +61,11 @@ $conn->query("CREATE TABLE IF NOT EXISTS `user_questionnaire` (
     UNIQUE KEY `unique_user` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;");
 
-// Use the same gym-local eligibility and assignment rules as trainer saves.
+// Retain paid assigned history; expiry restricts new saves, not list visibility.
 $gymNow = trainerGymNow();
 $gymTimestamp = $gymNow->format('Y-m-d H:i:s');
 $gymDate = $gymNow->format('Y-m-d');
-$writable = trainerBookingWritableSql();
+$history = trainerBookingHistorySql();
 $assignment = trainerBookingAssignmentSql();
 $sql = "SELECT b.id as booking_id, 
                COALESCE(u.id, 0) as user_id, 
@@ -82,7 +82,7 @@ $sql = "SELECT b.id as booking_id,
         LEFT JOIN users u ON b.user_id = u.id 
         JOIN packages p ON b.package_id = p.id 
         LEFT JOIN user_questionnaire uq ON u.id = uq.user_id
-        WHERE $writable AND $assignment
+        WHERE $history AND $assignment
         ORDER BY b.booking_date DESC, COALESCE(b.verified_at, b.created_at) DESC, b.id DESC";
 
 $stmt = $conn->prepare($sql);
@@ -91,7 +91,7 @@ if (!$stmt) {
     sendResponse(false, 'Database query preparation failed', null, 500);
 }
 
-$stmt->bind_param('ssii', $gymTimestamp, $gymDate, $trainerId, $trainerId);
+$stmt->bind_param('ii', $trainerId, $trainerId);
 if (!$stmt->execute()) {
     error_log("DEBUG: SQL Execute failed: " . $stmt->error);
     sendResponse(false, 'Database query execution failed', null, 500);
@@ -104,11 +104,15 @@ $clients = [];
 while ($row = $result->fetch_assoc()) {
     $isSameDay = substr((string)$row['booking_date'], 0, 10) === $gymDate;
     $isExpired = $row['status'] === 'expired' || ($row['expires_at'] !== null && $row['expires_at'] < $gymTimestamp);
-    $row['is_expired'] = !trainerBookingIsWritable($row, $gymNow);
+    $row['is_expired'] = $isExpired;
+    $row['can_manage'] = trainerBookingIsWritable($row, $gymNow);
+    $row['membership_state'] = $row['status'] === 'upgraded' ? 'upgraded' : ($isExpired ? 'expired' : 'active');
     $row['gym_date'] = $gymDate;
     $row['is_walkin'] = (bool)$row['is_walkin'];
 
-    if ($isExpired && $isSameDay) {
+    if (!$row['can_manage']) {
+        $row['status_warning'] = 'Package history - view saved records here. New updates require an active or same-day booking assigned to you.';
+    } else if ($isExpired && $isSameDay) {
         $row['status_warning'] = 'Same-day gym booking - trainer updates are available today (Philippine time)';
     } else if ($row['is_walkin']) {
         $row['status_warning'] = 'Walk-in customer - has limited access to online features';

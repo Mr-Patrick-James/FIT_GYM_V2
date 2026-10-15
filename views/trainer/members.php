@@ -723,6 +723,35 @@ $conn->close();
             border: 1px solid rgba(239, 68, 68, 0.2);
         }
 
+        .status-pill.upgraded {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+
+        .package-history {
+            margin: 16px 0;
+        }
+
+        .package-history select {
+            width: 100%;
+            min-width: 0;
+            padding: 12px 42px 12px 12px;
+            border: 1px solid var(--premium-border);
+            border-radius: 12px;
+            color: var(--premium-text);
+            background-color: var(--premium-card);
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            background-size: 14px;
+        }
+
+        #progressModal button:disabled,
+        #progressModal input:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
         /* Session Indicator Badge */
         .session-indicator {
             position: absolute;
@@ -1109,6 +1138,7 @@ $conn->close();
             </div>
             
             <div class="modal-body" style="padding: 0 24px 24px;">
+                <p id="progressBookingNotice" style="color: var(--premium-text-muted); font-size: 0.8rem; margin-bottom: 16px;"></p>
                 <div class="tabs">
                     <button class="tab-btn active" onclick="switchTab('log')" id="tabLog">Log Session</button>
                     <button class="tab-btn" onclick="switchTab('history')" id="tabHistory">History</button>
@@ -1169,7 +1199,7 @@ $conn->close();
                                 <!-- Populated by JS -->
                             </div>
                             <div style="margin-top: 24px;">
-                                <button class="save-btn" onclick="saveModalPlan()">
+                                <button id="modalPlanSaveBtn" class="save-btn" onclick="saveModalPlan()">
                                     <i class="fas fa-save"></i> Update Client Plan
                                 </button>
                             </div>
@@ -1218,9 +1248,11 @@ $conn->close();
     <script src="../../assets/js/trainer-dates.js?v=1"></script>
     <script>
         let allClients = [];
+        const selectedClientBookings = new Map();
         let activeBookingId = null;
         let progressCalendar = null;
         let modalCurrentPlan = [];
+        let modalPlanBookingId = null;
         let modalMasterExercises = [];
 
         // Helper functions for calendar milestones
@@ -1358,7 +1390,20 @@ $conn->close();
             } catch (e) { console.error('Error marking all as read:', e); }
         }
 
+        function selectedBookingCanManage() {
+            return Boolean(allClients.find(c => c.booking_id == activeBookingId)?.can_manage);
+        }
+
+        function applyProgressAccess() {
+            const canManage = selectedBookingCanManage();
+            document.getElementById('tabLog').disabled = !canManage;
+            document.querySelectorAll('#progressForm input, #progressForm textarea, #progressForm button, #planTabContent input, #planTabContent select, #planTabContent button')
+                .forEach(control => { control.disabled = !canManage; });
+            document.getElementById('modalPlanSaveBtn').disabled = !canManage || modalPlanBookingId !== activeBookingId;
+        }
+
         function switchTab(tab) {
+            if (tab === 'log' && !selectedBookingCanManage()) tab = 'history';
             const tabs = ['log', 'history', 'calendar', 'plan'];
             tabs.forEach(t => {
                 const btn = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
@@ -1373,15 +1418,20 @@ $conn->close();
         }
 
         async function loadModalPlan() {
+            const requestedBookingId = activeBookingId;
+            modalPlanBookingId = null;
+            applyProgressAccess();
             const list = document.getElementById('modalExerciseList');
             list.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--premium-text-muted);"><i class="fas fa-spinner fa-spin" style="font-size: 1.5rem; margin-bottom: 12px;"></i><p>Retrieving routine...</p></div>';
             
             try {
                 // Load member's current plan
-                const response = await fetch(`../../api/trainers/get-member-plan.php?booking_id=${activeBookingId}`);
+                const response = await fetch(`../../api/trainers/get-member-plan.php?booking_id=${requestedBookingId}`);
                 const data = await response.json();
+                if (activeBookingId !== requestedBookingId) return;
                 if (data.success) {
                     modalCurrentPlan = data.data.exercises;
+                    modalPlanBookingId = requestedBookingId;
                     renderModalPlan();
                 }
 
@@ -1397,6 +1447,7 @@ $conn->close();
                     renderExerciseDropdown(modalMasterExercises);
                 }
             } catch (error) {
+                if (activeBookingId !== requestedBookingId) return;
                 console.error('Error loading plan:', error);
                 list.innerHTML = '<p style="color: #ef4444; text-align: center;">Failed to load plan.</p>';
             }
@@ -1419,6 +1470,7 @@ $conn->close();
         }
 
         function addExerciseToTabPlan() {
+            if (!selectedBookingCanManage()) return;
             const select = document.getElementById('exerciseSelectTab');
             const setsInput = document.getElementById('exerciseSetsTab');
             const repsInput = document.getElementById('exerciseRepsTab');
@@ -1459,6 +1511,7 @@ $conn->close();
                         <i class="fas fa-clipboard-list" style="font-size: 2.5rem; opacity: 0.1; margin-bottom: 12px; display: block;"></i>
                         <p style="font-size: 0.85rem;">No exercises assigned yet.</p>
                     </div>`;
+                applyProgressAccess();
                 return;
             }
 
@@ -1478,18 +1531,29 @@ $conn->close();
                     </button>
                 </div>
             `).join('');
+            applyProgressAccess();
         }
 
         function updateModalEx(index, field, value) {
+            if (!selectedBookingCanManage()) return;
             modalCurrentPlan[index][field] = value;
         }
 
         function removeModalEx(index) {
+            if (!selectedBookingCanManage()) return;
             modalCurrentPlan.splice(index, 1);
             renderModalPlan();
         }
 
         async function saveModalPlan() {
+            if (!selectedBookingCanManage()) {
+                showNotification('This is package history. Select an active or same-day booking for new updates.', 'warning');
+                return;
+            }
+            if (modalPlanBookingId !== activeBookingId) {
+                showNotification('Wait for the selected booking plan to finish loading.', 'warning');
+                return;
+            }
             const saveBtn = document.querySelector('#planTabContent .save-btn');
             const originalContent = saveBtn.innerHTML;
             try {
@@ -1513,8 +1577,8 @@ $conn->close();
                 console.error('Error saving plan:', error);
                 showNotification('Error updating plan', 'warning');
             } finally {
-                saveBtn.disabled = false;
                 saveBtn.innerHTML = originalContent;
+                applyProgressAccess();
             }
         }
 
@@ -1712,8 +1776,10 @@ $conn->close();
                 if (data.success) {
                     allClients = data.data;
                     
-                    // For each client, fetch their upcoming session count
+                    // Historical daily passes need no upcoming-session request.
                     for (let client of allClients) {
+                        client.upcoming_count = 0;
+                        if (!client.can_manage) continue;
                         try {
                             const sResp = await fetch(`../../api/trainers/get-sessions.php?booking_id=${client.booking_id}&upcoming=1`);
                             if (!sResp.ok) throw new Error('Session fetch failed');
@@ -1736,6 +1802,46 @@ $conn->close();
             }
         }
 
+        function escapeClientText(value) {
+            return String(value ?? '').replace(/[&<>"']/g, character => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            })[character]);
+        }
+
+        function clientGroupKey(client) {
+            return !client.is_walkin && Number(client.user_id) > 0
+                ? `member:${Number(client.user_id)}` : `booking:${Number(client.booking_id)}`;
+        }
+
+        function clientState(client) {
+            return client.status === 'upgraded' ? 'upgraded' : (client.is_expired ? 'expired' : 'active');
+        }
+
+        function clientStateLabel(client) {
+            return { active: 'Active', expired: 'Expired', upgraded: 'Upgraded' }[clientState(client)];
+        }
+
+        function groupClientBookings(clients) {
+            const sorted = [...clients].sort((a, b) =>
+                Number(Boolean(b.can_manage)) - Number(Boolean(a.can_manage)) ||
+                String(b.booking_date || '').localeCompare(String(a.booking_date || '')) ||
+                Number(b.booking_id) - Number(a.booking_id));
+            const groups = new Map();
+            for (const client of sorted) {
+                const key = clientGroupKey(client);
+                if (!groups.has(key)) groups.set(key, []);
+                groups.get(key).push(client);
+            }
+            return [...groups.values()];
+        }
+
+        function selectClientBooking(bookingId) {
+            const client = allClients.find(c => Number(c.booking_id) === Number(bookingId));
+            if (!client) return;
+            selectedClientBookings.set(clientGroupKey(client), Number(client.booking_id));
+            filterMembers();
+        }
+
         function renderClients(clients) {
             const grid = document.getElementById('membersGrid');
             const noMsg = document.getElementById('noMembersMessage');
@@ -1747,22 +1853,30 @@ $conn->close();
             grid.style.display = '';   // let .members-grid CSS class control layout
             noMsg.style.display = 'none';
             
-            grid.innerHTML = clients.map(member => {
-                const initials = member.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-                const expiryDate = new Date(member.expires_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            grid.innerHTML = groupClientBookings(clients).map(bookings => {
+                const selectedId = selectedClientBookings.get(clientGroupKey(bookings[0]));
+                const member = bookings.find(c => Number(c.booking_id) === selectedId) || bookings[0];
+                const initials = escapeClientText(String(member.name || '').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase());
+                const expiryDate = member.expires_at
+                    ? new Date(String(member.expires_at).replace(' ', 'T')).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                    : 'No expiry';
+                const state = clientState(member);
+                const historyOptions = bookings.map(booking => `
+                    <option value="${Number(booking.booking_id)}" ${booking.booking_id == member.booking_id ? 'selected' : ''}>
+                        #${Number(booking.booking_id)} · ${escapeClientText(booking.package_name)} · ${escapeClientText(String(booking.booking_date || '').slice(0, 10))} · ${clientStateLabel(booking)}
+                    </option>`).join('');
                 
                 return `
-                    <div class="member-card">
-                        <div class="status-pill ${member.is_expired ? 'expired' : 'active'}">
-                            <i class="fas fa-${member.is_expired ? 'times-circle' : 'check-circle'}"></i>
-                            ${member.is_expired ? 'Expired' : 'Active'}
+                    <div class="member-card" data-booking-id="${Number(member.booking_id)}">
+                        <div class="status-pill ${state}">
+                            <i class="fas fa-${state === 'active' ? 'check-circle' : (state === 'upgraded' ? 'exchange-alt' : 'times-circle')}"></i>
+                            ${clientStateLabel(member)}
                         </div>
                         
                         ${member.is_walkin ? `
-                            <div class="status-pill" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; margin-left: 8px;">
-                                <i class="fas fa-person-walking"></i>
-                                Walk-in
-                            </div>
+                            <span style="display: inline-block; color: #3b82f6; font-size: 0.75rem;">
+                                <i class="fas fa-person-walking"></i> Walk-in
+                            </span>
                         ` : ''}
 
                         ${member.upcoming_count > 0 ? `
@@ -1774,22 +1888,29 @@ $conn->close();
                         
                         ${member.status_warning ? `
                             <div style="background: rgba(251, 191, 36, 0.1); color: #f59e0b; padding: 8px 12px; border-radius: 8px; font-size: 0.75rem; margin-top: 10px;">
-                                <i class="fas fa-exclamation-triangle"></i> ${member.status_warning}
+                                <i class="fas fa-exclamation-triangle"></i> ${escapeClientText(member.status_warning)}
                             </div>
                         ` : ''}
                         
                         <div class="member-avatar-wrapper">
                             <div class="member-avatar">${initials}</div>
                             <div>
-                                <h3 style="font-weight: 800; color: #fff; font-size: 1.15rem; letter-spacing: -0.5px;">${member.name}</h3>
-                                <p style="color: var(--premium-text-muted); font-size: 0.8rem; font-weight: 500;">${member.email}</p>
+                                <h3 style="font-weight: 800; color: var(--premium-text); font-size: 1.15rem; letter-spacing: -0.5px;">${escapeClientText(member.name)}</h3>
+                                <p style="color: var(--premium-text-muted); font-size: 0.8rem; font-weight: 500;">${escapeClientText(member.email)}</p>
                             </div>
                         </div>
 
+                        ${bookings.length > 1 ? `
+                            <div class="package-history form-group">
+                                <label class="info-label" for="packageHistory-${Number(member.booking_id)}">Assigned Package History (${bookings.length})</label>
+                                <select class="modern-input" id="packageHistory-${Number(member.booking_id)}" onchange="selectClientBooking(this.value)">${historyOptions}</select>
+                            </div>
+                        ` : ''}
+
                         <div class="member-info-grid">
                             <div class="info-item">
-                                <span class="info-label">Current Plan</span>
-                                <span class="info-value">${member.package_name}</span>
+                                <span class="info-label">${member.can_manage ? 'Current Package' : 'Historical Package'} · #${Number(member.booking_id)}</span>
+                                <span class="info-value">${escapeClientText(member.package_name)}</span>
                             </div>
                             <div class="info-item">
                                 <span class="info-label">Goal</span>
@@ -1817,12 +1938,12 @@ $conn->close();
                         </div>
 
                         <div class="member-actions">
-                            <div class="action-btn-modern primary" onclick="viewProgress(${member.booking_id})" style="grid-column: span 2;">
-                                <i class="fas fa-chart-line"></i> Track Progress & Performance
-                            </div>
-                            <div class="action-btn-modern manage-btn" onclick="manageClient(${member.booking_id})">
-                                <i class="fas fa-user-cog"></i> Client Management
-                            </div>
+                            <button type="button" class="action-btn-modern primary" onclick="viewProgress(${Number(member.booking_id)})" style="grid-column: span 2;">
+                                <i class="fas fa-chart-line"></i> ${member.can_manage ? 'Track Progress & Performance' : 'View Progress & Plan History'}
+                            </button>
+                            <button type="button" class="action-btn-modern manage-btn" onclick="manageClient(${Number(member.booking_id)})">
+                                <i class="fas fa-user-cog"></i> ${member.can_manage ? 'Client Management' : 'View Client Records'}
+                            </button>
                         </div>
                     </div>`;
             }).join('');
@@ -1830,7 +1951,7 @@ $conn->close();
 
         function filterMembers() {
             const query = document.getElementById('memberSearch').value.toLowerCase();
-            const filtered = allClients.filter(c => c.name.toLowerCase().includes(query) || c.email.toLowerCase().includes(query));
+            const filtered = allClients.filter(c => String(c.name || '').toLowerCase().includes(query) || String(c.email || '').toLowerCase().includes(query));
             renderClients(filtered);
         }
 
@@ -1851,18 +1972,28 @@ $conn->close();
             const member = allClients.find(c => c.booking_id == bookingId);
             if (!member) return;
             activeBookingId = bookingId;
+            modalCurrentPlan = [];
+            modalPlanBookingId = null;
             document.getElementById('progressForm').reset();
             document.getElementById('progressMemberName').textContent = member.name;
             document.getElementById('progressBookingId').value = bookingId;
             document.getElementById('progressDate').value = trainerGymDate();
+            document.getElementById('progressBookingNotice').textContent =
+                `Booking #${member.booking_id} · ${member.package_name || ''} · ${String(member.booking_date || '').slice(0, 10)}` +
+                (member.can_manage ? '' : ' · History only. Select an active or same-day booking for new updates.');
+            applyProgressAccess();
             document.getElementById('progressModal').classList.add('active');
-            switchTab('log');
+            switchTab(member.can_manage ? 'log' : 'history');
         }
 
         function closeProgressModal() { document.getElementById('progressModal').classList.remove('active'); activeBookingId = null; }
 
         async function handleProgressSubmit(e) {
             e.preventDefault();
+            if (!selectedBookingCanManage()) {
+                showNotification('This is package history. Select an active or same-day booking for new updates.', 'warning');
+                return;
+            }
             const saveBtn = e.target.querySelector('button[type="submit"]');
             const originalContent = saveBtn.innerHTML;
             try {
@@ -1880,15 +2011,17 @@ $conn->close();
                 });
                 const data = await response.json();
                 if (data.success) { showNotification('Progress logged successfully!', 'success'); switchTab('history'); } else { showNotification(data.message, 'warning'); }
-            } catch (error) { console.error('Error logging progress:', error); showNotification('Error saving progress', 'warning'); } finally { saveBtn.disabled = false; saveBtn.innerHTML = originalContent; }
+            } catch (error) { console.error('Error logging progress:', error); showNotification('Error saving progress', 'warning'); } finally { saveBtn.disabled = !selectedBookingCanManage(); saveBtn.innerHTML = originalContent; }
         }
 
         async function loadProgressHistory() {
+            const requestedBookingId = activeBookingId;
             const list = document.getElementById('progressHistoryList');
             list.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--premium-text-muted);"><i class="fas fa-spinner fa-spin" style="font-size: 1.5rem; margin-bottom: 12px;"></i><p>Retrieving performance logs...</p></div>';
             try {
-                const response = await fetch(`../../api/trainers/get-progress-history.php?booking_id=${activeBookingId}`);
+                const response = await fetch(`../../api/trainers/get-progress-history.php?booking_id=${requestedBookingId}`);
                 const data = await response.json();
+                if (activeBookingId !== requestedBookingId) return;
                 if (data.success && data.data.length > 0) {
                     list.innerHTML = data.data.map(log => `
                         <div style="background: var(--premium-input-bg); border: 1px solid var(--premium-border); border-radius: 24px; padding: 24px; transition: all 0.3s ease; position: relative;" onmouseover="this.style.borderColor='rgba(255,255,255,0.2)'" onmouseout="this.style.borderColor='var(--premium-border)'">
@@ -1927,7 +2060,11 @@ $conn->close();
                             <p style="font-size: 0.9rem;">Start logging sessions to see the history here.</p>
                         </div>`; 
                 }
-            } catch (error) { console.error('Error loading history:', error); list.innerHTML = '<div style="text-align: center; padding: 20px; color: #ef4444;">Failed to load history.</div>'; }
+            } catch (error) {
+                if (activeBookingId !== requestedBookingId) return;
+                console.error('Error loading history:', error);
+                list.innerHTML = '<div style="text-align: center; padding: 20px; color: #ef4444;">Failed to load history.</div>';
+            }
         }
 
         function showNotification(message, type = 'info') {

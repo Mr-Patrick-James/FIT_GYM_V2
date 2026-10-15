@@ -29,9 +29,10 @@ if ($trainerId) {
     if ($res) $totalMembers = $res->fetch_assoc()['count'];
     $stmt->close();
 
+    $historySql = trainerBookingHistorySql();
     $stmt = $conn->prepare("
         SELECT COUNT(*) as count FROM bookings b
-        WHERE b.status IN ('verified', 'expired') AND $assignmentSql
+        WHERE $historySql AND $assignmentSql
     ");
     $stmt->bind_param("ii", $trainerId, $trainerId);
     $stmt->execute();

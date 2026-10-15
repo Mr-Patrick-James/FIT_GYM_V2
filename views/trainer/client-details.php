@@ -41,6 +41,7 @@ if (!$client) {
 }
 
 $memberId = $client['member_id'];
+$canManageBooking = trainerBookingIsWritable($client);
 
 // Get client questionnaire data
 $q_stmt = $conn->prepare("SELECT * FROM user_questionnaire WHERE user_id = ?");
@@ -491,9 +492,12 @@ $questionnaire = $q_stmt->get_result()->fetch_assoc();
     <main class="main-content">
         <div class="top-bar">
             <div class="page-title">
-                <h1>Managing: <?php echo htmlspecialchars($client['member_name']); ?></h1>
-                <p><?php echo htmlspecialchars($client['package_name']); ?> • Expires <?php echo date('M d, Y', strtotime($client['expires_at'])); ?></p>
-                <p>Gym date: <?php echo htmlspecialchars(substr((string)$client['booking_date'], 0, 10)); ?> (Philippine time)</p>
+                <h1><?php echo $canManageBooking ? 'Managing: ' : 'Client History: '; ?><?php echo htmlspecialchars($client['member_name']); ?></h1>
+                <p><?php echo htmlspecialchars($client['package_name']); ?> • <?php echo $client['expires_at'] ? 'Expires ' . date('M d, Y', strtotime($client['expires_at'])) : 'No expiry'; ?></p>
+                <p>Booking #<?php echo $booking_id; ?> • Gym date: <?php echo htmlspecialchars(substr((string)$client['booking_date'], 0, 10)); ?> (Philippine time)</p>
+                <?php if (!$canManageBooking): ?>
+                    <p>Saved records remain available. Select an active or same-day assigned booking from Assigned Members for new updates.</p>
+                <?php endif; ?>
             </div>
             
             <div class="header-actions">
@@ -863,6 +867,7 @@ $questionnaire = $q_stmt->get_result()->fetch_assoc();
         const bookingId = <?php echo $booking_id; ?>;
         const memberId = <?php echo $memberId; ?>;
         const isTrainerAssisted = <?php echo $client['is_trainer_assisted'] ? 'true' : 'false'; ?>;
+        const canManageBooking = <?php echo $canManageBooking ? 'true' : 'false'; ?>;
         let calendar = null;
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -873,7 +878,9 @@ $questionnaire = $q_stmt->get_result()->fetch_assoc();
             loadProgress();
             loadMemberPlan();
             
-            if (!isTrainerAssisted) {
+            if (!canManageBooking) {
+                disableCoachingFeatures('Package history is available to view. New updates require an active or same-day assigned booking.');
+            } else if (!isTrainerAssisted) {
                 disableCoachingFeatures();
             }
 
@@ -907,14 +914,14 @@ $questionnaire = $q_stmt->get_result()->fetch_assoc();
             
             list.innerHTML = memberPlanExercises.map(ex => `
                 <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px; cursor: pointer;">
-                    <input type="checkbox" name="session_exercises" value="${ex.id}">
+                    <input type="checkbox" name="session_exercises" value="${ex.id}" ${!canManageBooking || !isTrainerAssisted ? 'disabled' : ''}>
                     <span style="font-size: 0.9rem;">${ex.name}</span>
                 </label>
             `).join('');
         }
 
-        function disableCoachingFeatures() {
-            // Disable forms
+        function disableCoachingFeatures(message = 'This feature is restricted for basic packages.') {
+            // Leave saved history visible; only disable new-entry forms.
             const forms = ['sessionForm', 'tipForm', 'foodForm', 'progressForm'];
             forms.forEach(id => {
                 const form = document.getElementById(id);
@@ -926,7 +933,7 @@ $questionnaire = $q_stmt->get_result()->fetch_assoc();
                     form.insertAdjacentHTML('beforebegin', `
                         <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid var(--danger); color: var(--danger); padding: 12px; border-radius: 8px; margin-bottom: 16px; font-size: 0.85rem; display: flex; align-items: center; gap: 8px;">
                             <i class="fas fa-lock"></i>
-                            <span>This feature is restricted for basic packages.</span>
+                            <span>${message}</span>
                         </div>
                     `);
                 }
@@ -1097,6 +1104,10 @@ $questionnaire = $q_stmt->get_result()->fetch_assoc();
 
         async function handleProgressSubmit(e) {
             e.preventDefault();
+            if (!canManageBooking) {
+                showNotification('This is package history. Select an active or same-day booking for new updates.', 'warning');
+                return;
+            }
             const data = {
                 booking_id: bookingId,
                 logged_at: document.getElementById('progressDate').value,
@@ -1188,6 +1199,10 @@ $questionnaire = $q_stmt->get_result()->fetch_assoc();
 
         async function handleSessionSubmit(e) {
             e.preventDefault();
+            if (!canManageBooking) {
+                showNotification('This is package history. Select an active or same-day booking for new updates.', 'warning');
+                return;
+            }
             console.log("Submitting session form...");
             
             const submitBtn = e.target.querySelector('button[type="submit"]') || document.querySelector('#sessionForm button[type="submit"]');
@@ -1317,6 +1332,10 @@ $questionnaire = $q_stmt->get_result()->fetch_assoc();
 
         async function handleTipSubmit(e) {
             e.preventDefault();
+            if (!canManageBooking) {
+                showNotification('This is package history. Select an active or same-day booking for new updates.', 'warning');
+                return;
+            }
             const data = {
                 booking_id: bookingId,
                 member_id: memberId,
@@ -1345,6 +1364,10 @@ $questionnaire = $q_stmt->get_result()->fetch_assoc();
 
         async function handleFoodSubmit(e) {
             e.preventDefault();
+            if (!canManageBooking) {
+                showNotification('This is package history. Select an active or same-day booking for new updates.', 'warning');
+                return;
+            }
             const data = {
                 booking_id: bookingId,
                 member_id: memberId,

@@ -27,6 +27,7 @@ function renderFixturePhp(source) {
     return source.replace(/<\?php[\s\S]*?\?>/g, expression => {
         if (expression.includes('$booking_id')) return '31';
         if (expression.includes('$memberId')) return '42';
+        if (expression.includes('$canManageBooking')) return 'true';
         if (expression.includes('is_trainer_assisted')) return 'true';
         if (expression.includes('verified_at')) return '2026-10-16 00:00:00';
         return '0';
@@ -53,7 +54,7 @@ for (const timezone of ['UTC', 'Asia/Manila', 'America/Los_Angeles']) {
     });
 }
 
-function fixture(view = 'details') {
+function fixture(view = 'details', canManage = true) {
     const elements = new Map();
     const notifications = [];
     const requests = [];
@@ -83,7 +84,8 @@ function fixture(view = 'details') {
     const marker = view === 'details' ? 'const bookingId' : 'let allClients';
     const source = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)]
         .find(match => match[1].includes(marker))[1];
-    vm.runInContext(dateSource + '\n' + renderFixturePhp(source), context);
+    vm.runInContext(dateSource + '\n' + renderFixturePhp(source).replace(
+        'const canManageBooking = true;', `const canManageBooking = ${canManage};`), context);
     context.showNotification = (message, type) => notifications.push({ message, type });
     for (const loader of ['loadTips', 'loadFood', 'loadProgress', 'loadSessions']) context[loader] = () => {};
     get('tipText').value = 'Trainer notes';
@@ -135,7 +137,7 @@ function fixture(view = 'details') {
         }
     }
     const clientList = fixture('members');
-    vm.runInContext("allClients = [{booking_id:31,name:'Same-day client'}, {booking_id:32,name:'Renewed client'}]", clientList.context);
+    vm.runInContext("allClients = [{booking_id:31,name:'Same-day client',can_manage:true}, {booking_id:32,name:'Renewed client',can_manage:true}]", clientList.context);
     clientList.context.switchTab = () => {};
     clientList.get('progressForm').reset = function () {
         this.resets++;
@@ -152,7 +154,7 @@ function fixture(view = 'details') {
         assert.equal(clientList.get('submitButton').disabled, false);
     }
     const library = fixture('members');
-    vm.runInContext("modalMasterExercises = [{id:1,name:'Barbell Squat',category:'Legs'}, {id:2,name:'Bench Press',category:'Chest'}, {id:3,name:'Seated Cable Row',category:'Back'}]", library.context);
+    vm.runInContext("allClients = [{booking_id:31,can_manage:true}]; activeBookingId = 31; modalMasterExercises = [{id:1,name:'Barbell Squat',category:'Legs'}, {id:2,name:'Bench Press',category:'Chest'}, {id:3,name:'Seated Cable Row',category:'Back'}]", library.context);
     library.get('modalExSearch').value = 'CHEST';
     library.context.filterModalExercises();
     assert.ok(library.get('exerciseSelectTab').innerHTML.includes('Bench Press (Chest)'));
@@ -175,11 +177,139 @@ function fixture(view = 'details') {
     library.context.addExerciseToTabPlan();
     assert.equal(vm.runInContext('modalCurrentPlan.length', library.context), 1);
     assert.equal(library.notifications.at(-1).message, 'Exercise already in plan');
-    const edit = fixture();
+    const history = fixture('members');
+    const historyRows = [
+        {booking_id:31,user_id:42,name:'Renewed Member',email:'renewed@example.invalid',package_name:'Old Daily',booking_date:'2026-10-15',expires_at:'2026-10-15 23:59:59',status:'expired',is_expired:true,can_manage:false},
+        {booking_id:32,user_id:42,name:'Renewed Member',email:'renewed@example.invalid',package_name:'Active Renewal',booking_date:'2026-10-16',expires_at:null,status:'verified',is_expired:false,can_manage:true},
+        {booking_id:33,user_id:42,name:'Renewed Member',email:'renewed@example.invalid',package_name:'Upgraded Old Plan',booking_date:'2026-10-17',expires_at:'2026-11-16 23:59:59',status:'upgraded',is_expired:false,can_manage:false},
+        {booking_id:34,user_id:43,name:'Expired Member',email:null,package_name:'Expired Daily',booking_date:'2026-10-14',expires_at:'2026-10-14 23:59:59',status:'expired',is_expired:true,can_manage:false},
+        {booking_id:35,user_id:0,name:'Same Walk-in',email:null,is_walkin:true,package_name:'Walk-in',booking_date:'2026-10-14',expires_at:null,status:'expired',is_expired:true,can_manage:false},
+        {booking_id:36,user_id:0,name:'Same Walk-in',email:null,is_walkin:true,package_name:'Walk-in',booking_date:'2026-10-14',expires_at:null,status:'expired',is_expired:true,can_manage:false},
+        {booking_id:37,user_id:44,name:'Same-day Expired',email:'today@example.invalid',package_name:'Daily',booking_date:'2026-10-16',expires_at:'2026-10-16 01:00:00',status:'expired',is_expired:true,can_manage:true}
+    ];
+    vm.runInContext(`allClients = ${JSON.stringify(historyRows)};`, history.context);
+    const groups = history.context.groupClientBookings(historyRows);
+    assert.equal(groups.length, 5, 'One registered-member card; never merge same-name walk-ins');
+    assert.deepEqual(Array.from(groups.find(g => g[0].user_id === 42), c => c.booking_id), [32, 33, 31], 'Writable renewal before newer historical row');
+    history.context.renderClients(historyRows);
+    const grid = history.get('membersGrid');
+    assert.equal((grid.innerHTML.match(/class="member-card"/g) || []).length, 5);
+    assert.ok(grid.innerHTML.includes('data-booking-id="32"'));
+    assert.ok(grid.innerHTML.includes('value="31"'));
+    assert.ok(grid.innerHTML.includes('value="33"'));
+    assert.ok(grid.innerHTML.includes('Assigned Package History (3)'));
+    assert.ok(grid.innerHTML.includes('class="package-history form-group"'));
+    assert.ok(grid.innerHTML.includes('<select class="modern-input" id="packageHistory-'));
+    assert.ok(grid.innerHTML.includes('No expiry'));
+    assert.ok(!grid.innerHTML.includes('Jan 1, 1970'));
+    assert.ok(grid.innerHTML.includes('Expired Member'));
+    assert.ok(grid.innerHTML.includes('View Progress & Plan History'));
+    history.context.selectClientBooking(31);
+    assert.ok(grid.innerHTML.includes('data-booking-id="31"'));
+    assert.ok(grid.innerHTML.includes('onclick="viewProgress(31)"'));
+    assert.ok(grid.innerHTML.includes('onclick="manageClient(31)"'));
+    history.context.manageClient(31);
+    assert.equal(history.context.window.location.href, 'client-details.php?booking_id=31');
+    history.context.selectClientBooking(33);
+    assert.ok(grid.innerHTML.includes('status-pill upgraded'));
+    assert.ok(grid.innerHTML.includes('Historical Package · #33'));
+    const beforeInvalid = grid.innerHTML;
+    history.context.selectClientBooking(999);
+    assert.equal(grid.innerHTML, beforeInvalid, 'Unknown booking is not selectable');
+    history.get('memberSearch').value = 'renewed';
+    history.context.filterMembers();
+    assert.equal((grid.innerHTML.match(/class="member-card"/g) || []).length, 1);
+    assert.ok(grid.innerHTML.includes('data-booking-id="33"'), 'Search preserves history selection');
+    history.get('memberSearch').value = '';
+    history.context.selectClientBooking(32);
+    assert.ok(grid.innerHTML.includes('data-booking-id="32"'));
+    assert.equal(history.context.escapeClientText('<script>"&'), '&lt;script&gt;&quot;&amp;');
+
+    const controls = ['progressDate', 'progressRemarks', 'submitButton', 'exerciseSelectTab', 'exerciseSetsTab', 'exerciseRepsTab', 'planRemoveButton'];
+    history.context.document.querySelectorAll = () => controls.map(history.get);
+    let lastTab;
+    history.context.switchTab = tab => { lastTab = tab; };
+    await history.context.viewProgress(31);
+    assert.equal(lastTab, 'history');
+    assert.ok(history.get('progressBookingNotice').textContent.includes('Booking #31'));
+    assert.ok(history.get('progressBookingNotice').textContent.includes('History only'));
+    assert.equal(history.get('tabLog').disabled, true);
+    for (const id of controls) assert.equal(history.get(id).disabled, true);
+    const beforeHistoricalWrites = history.requests.length;
+    await history.context.handleProgressSubmit({ preventDefault() {} });
+    await history.context.saveModalPlan();
+    history.context.addExerciseToTabPlan();
+    vm.runInContext("modalCurrentPlan = [{id:1,sets:3,reps:'12'}]", history.context);
+    history.context.updateModalEx(0, 'sets', 9);
+    history.context.removeModalEx(0);
+    assert.equal(vm.runInContext('modalCurrentPlan[0].sets', history.context), 3);
+    assert.equal(history.requests.length, beforeHistoricalWrites, 'History cannot submit new writes');
+    await history.context.viewProgress(32);
+    assert.equal(lastTab, 'log');
+    assert.equal(history.get('tabLog').disabled, false);
+    for (const id of controls) assert.equal(history.get(id).disabled, false, 'Renewal restores controls');
+    assert.equal(history.get('modalPlanSaveBtn').disabled, true, 'Do not save stale/unloaded plans from another booking');
+    await history.context.viewProgress(37);
+    assert.equal(lastTab, 'log', 'Same-day expired may still save');
+    assert.equal(history.get('tabLog').disabled, false);
+
+    const load = fixture('members');
+    const loadRequests = [];
+    load.context.fetch = async url => {
+        loadRequests.push(url);
+        return { ok: true, text: async () => JSON.stringify({success:true,data:historyRows}), json: async () => [] };
+    };
+    await load.context.loadClients();
+    assert.equal(loadRequests.length, 3, 'Initial list plus only two writable booking session reads');
+    assert.ok(!loadRequests.some(url => url.includes('booking_id=31')));
+    assert.ok(load.get('membersGrid').innerHTML.includes('Expired Member'));
+
+    const race = fixture('members');
+    vm.runInContext(`allClients = ${JSON.stringify(historyRows)}; modalMasterExercises = [{id:99,name:'Library'}];`, race.context);
+    race.context.switchTab = () => {};
+    const pendingPlans = new Map();
+    race.context.fetch = url => new Promise(resolve => pendingPlans.set(Number(url.split('booking_id=')[1]), resolve));
+    await race.context.viewProgress(31);
+    const oldPlan = race.context.loadModalPlan();
+    await race.context.viewProgress(32);
+    const newPlan = race.context.loadModalPlan();
+    pendingPlans.get(32)({json:async () => ({success:true,data:{exercises:[{id:2,name:'Renewed Routine',sets:4,reps:'8'}]}})});
+    await newPlan;
+    pendingPlans.get(31)({json:async () => ({success:true,data:{exercises:[{id:1,name:'Historical Routine',sets:3,reps:'12'}]}})});
+    await oldPlan;
+    assert.equal(vm.runInContext('modalCurrentPlan[0].id', race.context), 2, 'Delayed old history cannot replace the renewal routine');
+    assert.equal(vm.runInContext('modalPlanBookingId', race.context), 32);
+    assert.equal(race.get('modalPlanSaveBtn').disabled, false);
+    race.context.document.querySelector = () => race.get('modalPlanSaveBtn');
+    race.context.fetch = async (url, options) => {
+        race.requests.push({url,data:JSON.parse(options.body)});
+        return {json:async () => ({success:true})};
+    };
+    await race.context.saveModalPlan();
+    assert.equal(race.requests[0].data.booking_id, 32);
+    assert.equal(race.requests[0].data.exercises[0].id, 2, 'Save only the exact loaded renewal routine');
+
+    for (const handler of ['handleTipSubmit','handleFoodSubmit','handleProgressSubmit','handleSessionSubmit']) {
+        const readOnly = fixture('details', false);
+        await readOnly.context[handler]({ preventDefault() {} });
+        assert.equal(readOnly.requests.length, 0, `${handler} historical details make no new write`);
+        assert.equal(readOnly.notifications.at(-1).type, 'warning');
+    }
+    const lockedDetails = fixture('details', false);
+    for (const form of ['sessionForm','tipForm','foodForm','progressForm']) {
+        lockedDetails.get(form).querySelectorAll = () => [lockedDetails.get(`${form}-input`), lockedDetails.get(`${form}-button`)];
+        lockedDetails.get(form).insertAdjacentHTML = (_, html) => { lockedDetails.get(form).notice = html; };
+    }
+    lockedDetails.context.disableCoachingFeatures('Package history is available to view.');
+    for (const form of ['sessionForm','tipForm','foodForm','progressForm']) {
+        assert.equal(lockedDetails.get(`${form}-input`).disabled, true);
+        assert.ok(lockedDetails.get(form).notice.includes('Package history'));
+    }
+    const edit = fixture('details', false);
     edit.get('tip-edit-text-7').value = 'Updated notes';
     await edit.context.saveTipEdit(7);
     assert.equal(edit.requests[0].data.booking_id, 31);
     assert.equal(edit.requests[0].data.member_id, 42);
     assert.equal(edit.requests[0].data.tip_id, 7);
-    console.log('PASS: trainer UI exact-booking payloads, successful saves, visible failures, retained inputs, Manila/UTC/year boundaries and inline script syntax. Offline fixtures only.');
+    console.log('PASS: trainer UI history visibility/grouping, renewal priority/selection, read-only controls, exact IDs, stale-plan isolation, successful saves, visible failures, retained inputs, dropdown and Manila date boundaries. Offline fixtures only.');
 })().catch(error => { console.error(error); process.exitCode = 1; });
