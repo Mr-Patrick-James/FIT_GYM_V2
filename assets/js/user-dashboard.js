@@ -238,15 +238,18 @@ async function initDashboard() {
                 const unreadCount = data.data.filter(n => !n.is_read).length;
                 window._lastNotifIds = new Set(data.data.filter(n => !n.is_read).map(n => n.id));
 
+                // Bell badge = unread notifications
                 const notifBadge = document.getElementById('notifBadge');
                 if (notifBadge) {
                     notifBadge.textContent = unreadCount > 0 ? unreadCount : '0';
                     notifBadge.style.display = unreadCount > 0 ? 'flex' : 'none';
                 }
+                // Sidebar "Booking Logs" badge = pending bookings (not notifications)
+                const pendingCount = userBookings.filter(b => b.status === 'pending').length;
                 const bookingsBadge = document.getElementById('bookingsBadge');
                 if (bookingsBadge) {
-                    bookingsBadge.textContent = unreadCount > 0 ? unreadCount : '0';
-                    bookingsBadge.style.display = unreadCount > 0 ? 'flex' : 'none';
+                    bookingsBadge.textContent = pendingCount > 0 ? pendingCount : '';
+                    bookingsBadge.style.display = pendingCount > 0 ? 'flex' : 'none';
                 }
             }
         } catch(e) { /* silent */ }
@@ -1100,7 +1103,7 @@ async function submitEditBooking(event) {
         };
         
         // Submit edited booking to database (reusing the change-plan endpoint which handles edits now)
-        const response = await fetch(getApiUrl('bookings/change-plan.php', {
+        const response = await fetch(getApiUrl('bookings/change-plan.php'), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -1342,7 +1345,7 @@ async function submitUpgradeBooking(event) {
         const receiptUrl = await uploadReceipt(selectedUpgradeFile);
 
         // Call upgrade API
-        const response = await fetch(getApiUrl('bookings/upgrade.php', {
+        const response = await fetch(getApiUrl('bookings/upgrade.php'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -2230,7 +2233,7 @@ function formatDate(dateString) {
 // Save initial measurements from survey
 async function saveInitialMeasurements(weight, height) {
     try {
-        const response = await fetch(getApiUrl('users/update-profile.php', {
+        const response = await fetch(getApiUrl('users/update-profile.php'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -2539,7 +2542,7 @@ async function submitBooking(event) {
         };
         
         // Submit booking to database
-        const response = await fetch(getApiUrl('bookings/create.php', {
+        const response = await fetch(getApiUrl('bookings/create.php'), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -4000,7 +4003,7 @@ async function updateProfile() {
         updateBtn.disabled = true;
         updateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
         
-        const response = await fetch(getApiUrl('users/update-profile.php', {
+        const response = await fetch(getApiUrl('users/update-profile.php'), {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
@@ -4056,7 +4059,7 @@ async function changePassword(event) {
         changeBtn.disabled = true;
         changeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Changing...';
         
-        const response = await fetch(getApiUrl('users/change-password.php', {
+        const response = await fetch(getApiUrl('users/change-password.php'), {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
@@ -4574,16 +4577,19 @@ function setupEventListeners() {
             if (data.success) {
                 const unreadCount = data.data.filter(n => !n.is_read).length;
 
+                // Bell badge = unread notifications
                 const notifBadge = document.getElementById('notifBadge');
                 if (notifBadge) {
                     notifBadge.textContent = unreadCount > 0 ? unreadCount : '0';
                     notifBadge.style.display = unreadCount > 0 ? 'flex' : 'none';
                 }
 
+                // Sidebar badge = pending bookings only
+                const pendingCount = userBookings.filter(b => b.status === 'pending').length;
                 const bookingsBadge = document.getElementById('bookingsBadge');
                 if (bookingsBadge) {
-                    bookingsBadge.textContent = unreadCount > 0 ? unreadCount : '0';
-                    bookingsBadge.style.display = unreadCount > 0 ? 'flex' : 'none';
+                    bookingsBadge.textContent = pendingCount > 0 ? pendingCount : '';
+                    bookingsBadge.style.display = pendingCount > 0 ? 'flex' : 'none';
                 }
 
                 // Pop a toast for any newly-arrived unread notification
@@ -4708,7 +4714,7 @@ async function loadTrainerSection() {
     trainerSectionLoaded = true;
 
     try {
-        const res = await fetch(getApiUrl('trainers/get-my-trainer.php');
+        const res = await fetch(getApiUrl('trainers/get-my-trainer.php'), { credentials: 'include' });
         const data = await res.json();
 
         if (!data.success || !data.data) {
@@ -4910,7 +4916,7 @@ async function submitUserProgress() {
         if (photoFile) {
             const formData = new FormData();
             formData.append('photo', photoFile);
-            const upRes = await fetch(getApiUrl('upload/progress-photo.php', { method: 'POST', body: formData });
+            const upRes = await fetch(getApiUrl('upload/progress-photo.php'), { method: 'POST', body: formData });
             const upData = await upRes.json();
             if (upData.success) {
                 photo_url = upData.data.url;
@@ -4921,7 +4927,7 @@ async function submitUserProgress() {
         const bookingId = window._trainerBookingId;
         if (!bookingId) { alert('No active booking found.'); return; }
 
-        const res = await fetch(getApiUrl('trainers/log-progress-user.php', {
+        const res = await fetch(getApiUrl('trainers/log-progress-user.php'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
