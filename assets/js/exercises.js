@@ -1,3 +1,12 @@
+function getApiUrl(path) {
+    const parts = window.location.pathname.split('/views/');
+    if (parts.length >= 2) {
+        const rootPath = parts[0] || '';
+        return window.location.origin + rootPath + '/api/' + path;
+    }
+    return '../../api/' + path;
+}
+
 // Exercise Management JS — v2.0
 'use strict';
 
@@ -15,8 +24,8 @@ async function loadData() {
     showLoading(true);
     try {
         const [exRes, eqRes] = await Promise.all([
-            fetch('../../api/exercises/get-all.php'),
-            fetch('../../api/equipment/get-all.php')
+            fetch(getApiUrl('exercises/get-all.php')),
+            fetch(getApiUrl('equipment/get-all.php'))
         ]);
 
         const exData = await exRes.json();
@@ -393,7 +402,7 @@ async function saveExercise(event) {
         formData.append('image_url', document.getElementById('exerciseImageUrl').value);
     }
 
-    const url = id ? '../../api/exercises/update.php' : '../../api/exercises/create.php';
+    const url = id ? getApiUrl('exercises/update.php') : getApiUrl('exercises/create.php');
 
     try {
         const res  = await fetch(url, { method: 'POST', body: formData });
@@ -433,7 +442,7 @@ async function confirmDeleteExercise() {
     formData.append('id', exerciseToDelete.id);
 
     try {
-        const res  = await fetch('../../api/exercises/delete.php', { method: 'POST', body: formData });
+        const res  = await fetch(getApiUrl('exercises/delete.php'), { method: 'POST', body: formData });
         const data = await res.json();
 
         if (data.success) {
@@ -482,7 +491,7 @@ function showNotification(message, type = 'info') {
 async function handleLogout() {
     if (!confirm('Logout from admin panel?')) return;
     try {
-        await fetch('../../api/auth/logout.php', { method: 'POST' });
+        await fetch(getApiUrl('auth/logout.php'), { method: 'POST' });
     } catch (e) {}
     localStorage.clear();
     window.location.href = '../../index.php';

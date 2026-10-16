@@ -20,17 +20,23 @@ $image_url = isset($_POST['image_url']) ? trim($_POST['image_url']) : '';
 
 // Handle Image Upload
 if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
-    $upload_dir = '../../assets/uploads/exercises/';
+    $upload_dir = __DIR__ . '/../../assets/uploads/exercises/';
     if (!is_dir($upload_dir)) {
-        mkdir($upload_dir, 0777, true);
+        mkdir($upload_dir, 0775, true);
     }
     
-    $file_extension = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
+    $file_extension = strtolower(pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION));
+    $allowed = ['jpg','jpeg','png','webp','gif'];
+    if (!in_array($file_extension, $allowed)) {
+        sendResponse(false, 'Invalid image type. Allowed: jpg, png, webp, gif', null, 400);
+    }
     $file_name = uniqid('ex_') . '.' . $file_extension;
     $target_file = $upload_dir . $file_name;
     
     if (move_uploaded_file($_FILES['image']['tmp_name'], $target_file)) {
-        $image_url = '../../assets/uploads/exercises/' . $file_name;
+        $image_url = 'assets/uploads/exercises/' . $file_name;
+    } else {
+        sendResponse(false, 'Failed to upload image. Check server permissions.', null, 500);
     }
 }
 
