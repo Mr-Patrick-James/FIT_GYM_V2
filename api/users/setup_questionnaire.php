@@ -27,6 +27,7 @@ $sql = "CREATE TABLE IF NOT EXISTS `user_questionnaire` (
     
     -- Availability & Commitment
     `workout_days_per_week` enum('1-2 days', '3-4 days', '5+ days') DEFAULT '1-2 days',
+    `preferred_package_duration` varchar(50) DEFAULT NULL,
     `preferred_workout_time` enum('Morning', 'Afternoon', 'Evening') DEFAULT 'Morning',
     
     -- Physical Condition & Limitations
@@ -48,6 +49,19 @@ $sql = "CREATE TABLE IF NOT EXISTS `user_questionnaire` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;";
 
 if ($conn->query($sql)) {
+    $columnResult = $conn->query("SHOW COLUMNS FROM `user_questionnaire` LIKE 'preferred_package_duration'");
+    if (!$columnResult) {
+        sendResponse(false, 'Error checking questionnaire schema: ' . $conn->error);
+    }
+    $column = $columnResult->fetch_assoc();
+    if ($column === null) {
+        $migration = "ALTER TABLE `user_questionnaire` ADD COLUMN `preferred_package_duration` varchar(50) DEFAULT NULL AFTER `workout_days_per_week`";
+    } elseif (strtolower($column['Type']) !== 'varchar(50)' || $column['Default'] !== null) {
+        $migration = "ALTER TABLE `user_questionnaire` MODIFY COLUMN `preferred_package_duration` varchar(50) DEFAULT NULL";
+    }
+    if (isset($migration) && !$conn->query($migration)) {
+        sendResponse(false, 'Error updating questionnaire schema: ' . $conn->error);
+    }
     sendResponse(true, 'user_questionnaire table created successfully or already exists');
 } else {
     sendResponse(false, 'Error creating table: ' . $conn->error);

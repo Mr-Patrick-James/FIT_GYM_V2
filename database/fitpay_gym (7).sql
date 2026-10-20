@@ -746,6 +746,7 @@ CREATE TABLE IF NOT EXISTS `user_questionnaire` (
   `primary_goal` enum('Lose weight','Gain muscle','Improve endurance','Stay fit / general health') DEFAULT 'Stay fit / general health',
   `goal_pace` enum('Slowly','Moderately','Intensively') DEFAULT 'Moderately',
   `workout_days_per_week` enum('1-2 days','3-4 days','5+ days') DEFAULT '1-2 days',
+  `preferred_package_duration` varchar(50) DEFAULT NULL,
   `preferred_workout_time` enum('Morning','Afternoon','Evening') DEFAULT 'Morning',
   `injuries_limitations` text,
   `focus_areas` varchar(255) DEFAULT 'Full body',

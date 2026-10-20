@@ -3138,25 +3138,11 @@ function getSetting($key, $default = '', $settings = [])
 
                 <!-- Step 3: Availability & Commitment -->
                 <div class="survey-step" data-step="3">
-                    <label class="question-label">C. Availability & Commitment</label>
+                    <label class="question-label">C. Package & Workout Preferences</label>
                     <label
-                        style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px; text-align: center;">Workout
-                        Days Per Week</label>
-                    <div class="options-grid" style="margin-bottom: 24px;">
-                        <div class="option-card"
-                            onclick="selectSurveyOption(this, 'workout_days_per_week', '1-2 days')">
-                            <i class="fas fa-calendar-day"></i>
-                            <span>1-2 Days</span>
-                        </div>
-                        <div class="option-card"
-                            onclick="selectSurveyOption(this, 'workout_days_per_week', '3-4 days')">
-                            <i class="fas fa-calendar-week"></i>
-                            <span>3-4 Days</span>
-                        </div>
-                        <div class="option-card" onclick="selectSurveyOption(this, 'workout_days_per_week', '5+ days')">
-                            <i class="fas fa-calendar-check"></i>
-                            <span>5+ Days</span>
-                        </div>
+                        style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px; text-align: center;">Preferred Package Duration</label>
+                    <div id="surveyDurationOptions" class="options-grid" style="margin-bottom: 24px;">
+                        <p style="grid-column: 1 / -1; text-align: center; color: var(--dark-text-secondary);">Loading available packages...</p>
                     </div>
                     <label
                         style="font-size: 0.75rem; color: var(--dark-text-secondary); display: block; margin-bottom: 8px; text-align: center;">Preferred

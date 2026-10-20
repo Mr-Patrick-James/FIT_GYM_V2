@@ -174,6 +174,7 @@ function getSeededWorkout(dateStr, pkgId, exercises = []) {
 
 // Package data - load from database
 let packagesData = [];
+let surveyPackages = [];
 
 // Load packages data from database
 async function loadPackagesData() {
@@ -192,16 +193,20 @@ async function loadPackagesData() {
                 tag: pkg.tag || 'Standard',
                 description: pkg.description || 'Full gym access with all facilities',
             }));
+            surveyPackages = packagesData.filter(pkg => parseDurationToDays(pkg.duration) !== null);
         } else {
             console.error('Error loading packages:', data.message);
+            surveyPackages = [];
             // Fallback to default packages
             packagesData = getDefaultPackages();
         }
     } catch (error) {
         console.error('Network error loading packages:', error);
+        surveyPackages = [];
         // Fallback to default packages
         packagesData = getDefaultPackages();
     }
+    populateSurveyPackageDurations();
 }
 
 function getDefaultPackages() {
@@ -294,7 +299,7 @@ let surveyData = {
     exercise_history: 'Beginner',
     primary_goal: 'Stay fit / general health',
     goal_pace: 'Moderately',
-    workout_days_per_week: '1-2 days',
+    preferred_package_duration: null,
     preferred_workout_time: 'Morning',
     injuries_limitations: 'None',
     focus_areas: [],
@@ -318,7 +323,8 @@ function checkStepValid() {
     } else if (currentSurveyStep === 2) {
         isValid = surveyData.primary_goal !== null && surveyData.goal_pace !== null;
     } else if (currentSurveyStep === 3) {
-        isValid = surveyData.workout_days_per_week !== null && surveyData.preferred_workout_time !== null;
+        isValid = (!surveyPackages.length || surveyData.preferred_package_duration !== null)
+            && surveyData.preferred_workout_time !== null;
     } else if (currentSurveyStep === 4) {
         isValid = surveyData.focus_areas.length > 0;
     } else if (currentSurveyStep === 5) {
@@ -326,6 +332,57 @@ function checkStepValid() {
     }
 
     nextBtn.disabled = !isValid;
+}
+
+function populateSurveyPackageDurations() {
+    const grid = document.getElementById('surveyDurationOptions');
+    if (!grid) return;
+
+    const availableDurations = [];
+    const seenDays = new Set();
+    surveyPackages
+        .map(pkg => ({ ...pkg, durationDays: parseDurationToDays(pkg.duration) }))
+        .filter(pkg => pkg.durationDays !== null)
+        .sort((a, b) => a.durationDays - b.durationDays || a.name.localeCompare(b.name))
+        .forEach(pkg => {
+            if (seenDays.has(pkg.durationDays)) return;
+            seenDays.add(pkg.durationDays);
+            availableDurations.push(pkg);
+        });
+
+    const selectedDays = parseDurationToDays(surveyData.preferred_package_duration);
+    const selectedPackage = availableDurations.find(pkg => pkg.durationDays === selectedDays);
+    surveyData.preferred_package_duration = selectedPackage?.duration ?? availableDurations[0]?.duration ?? null;
+
+    grid.innerHTML = '';
+    if (availableDurations.length === 0) {
+        const emptyMessage = document.createElement('p');
+        emptyMessage.textContent = 'No package durations are currently available.';
+        emptyMessage.style.cssText = 'grid-column: 1 / -1; text-align: center; color: var(--dark-text-secondary);';
+        grid.appendChild(emptyMessage);
+        checkStepValid();
+        return;
+    }
+
+    availableDurations.forEach(pkg => {
+        const option = document.createElement('div');
+        option.className = 'option-card';
+        if (pkg.duration === surveyData.preferred_package_duration) {
+            option.classList.add('selected');
+        }
+
+        const icon = document.createElement('i');
+        icon.className = 'fas fa-calendar-check';
+        const label = document.createElement('span');
+        label.textContent = pkg.duration;
+        option.appendChild(icon);
+        option.appendChild(label);
+        option.addEventListener('click', () => {
+            selectSurveyOption(option, 'preferred_package_duration', pkg.duration);
+        });
+        grid.appendChild(option);
+    });
+    checkStepValid();
 }
 
 async function checkSurveyStatus() {
@@ -4243,34 +4300,13 @@ async function finishSurvey() {
 }
 
 function calculateRecommendation() {
-    // Recommendation Logic based on Active Packages
-    let recommendedPackage = null;
-    
-    const getPackageByName = (name) => {
-        return packagesData.find(pkg => pkg.name.toLowerCase().includes(name.toLowerCase()));
-    };
+    const selectedDuration = parseDurationToDays(surveyData.preferred_package_duration);
+    let recommendedPackage = surveyPackages.find(
+        pkg => parseDurationToDays(pkg.duration) === selectedDuration
+    );
 
-    // Determine preferred package based on survey
-    let preferredKeyword = "";
-    
-    // Strategy:
-    // 1. If user wants a trainer and it's muscle gain/weight loss, recommend something intensive
-    // 2. Based on workout days
-    if (surveyData.primary_goal === 'Gain muscle' || surveyData.primary_goal === 'Lose weight') {
-        if (surveyData.workout_days_per_week === '5+ days') {
-            preferredKeyword = "Monthly"; // Assuming monthly is the premium/intensive one
-        } else {
-            preferredKeyword = "Weekly";
-        }
-    } else {
-        preferredKeyword = "Pass"; // General fitness
-    }
-
-    // Fallback logic
-    recommendedPackage = getPackageByName(preferredKeyword);
-    
-    if (!recommendedPackage && packagesData.length > 0) {
-        recommendedPackage = packagesData[0];
+    if (!recommendedPackage && surveyPackages.length > 0) {
+        recommendedPackage = surveyPackages[0];
     }
     
     if (recommendedPackage) {

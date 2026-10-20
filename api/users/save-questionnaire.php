@@ -6,6 +6,7 @@ error_reporting(E_ALL);
 
 require_once '../config.php';
 require_once '../session.php';
+require_once '../package-dates.php';
 
 file_put_contents(__DIR__ . '/save-questionnaire-debug.log', date('c') . " START\nSCRIPT=" . basename(__FILE__) . "\nREQUEST_METHOD=" . ($_SERVER['REQUEST_METHOD'] ?? '') . "\nSESSION=" . var_export($_SESSION, true) . "\n\n", FILE_APPEND);
 
@@ -48,6 +49,41 @@ file_put_contents(__DIR__ . '/save-questionnaire-debug.log', date('c') . " REQUE
 $conn = getDBConnection();
 file_put_contents(__DIR__ . '/save-questionnaire-debug.log', date('c') . " DB CONNECTED\n\n", FILE_APPEND);
 
+$preferred_package_duration = $data['preferred_package_duration'] ?? null;
+if ($preferred_package_duration !== null
+    && (!is_string($preferred_package_duration) || packageDurationDays(trim($preferred_package_duration)) === null)) {
+    sendResponse(false, 'Invalid preferred package duration', null, 400);
+}
+if (is_string($preferred_package_duration)) {
+    $preferred_package_duration = trim($preferred_package_duration);
+    $packageStmt = $conn->prepare('SELECT duration FROM packages WHERE is_active = TRUE AND duration = ? LIMIT 1');
+    if (!$packageStmt) {
+        sendResponse(false, 'Error validating preferred package duration: ' . $conn->error, null, 500);
+    }
+    $packageStmt->bind_param('s', $preferred_package_duration);
+    if (!$packageStmt->execute()) {
+        sendResponse(false, 'Error validating preferred package duration: ' . $packageStmt->error, null, 500);
+    }
+    if ($packageStmt->get_result()->num_rows === 0) {
+        sendResponse(false, 'The selected package duration is no longer available. Please refresh and try again.', null, 400);
+    }
+    $packageStmt->close();
+}
+
+$columnResult = $conn->query("SHOW COLUMNS FROM `user_questionnaire` LIKE 'preferred_package_duration'");
+if (!$columnResult) {
+    sendResponse(false, 'Error checking questionnaire schema: ' . $conn->error, null, 500);
+}
+$column = $columnResult->fetch_assoc();
+if ($column === null) {
+    $migration = "ALTER TABLE `user_questionnaire` ADD COLUMN `preferred_package_duration` varchar(50) DEFAULT NULL AFTER `workout_days_per_week`";
+} elseif (strtolower($column['Type']) !== 'varchar(50)' || $column['Default'] !== null) {
+    $migration = "ALTER TABLE `user_questionnaire` MODIFY COLUMN `preferred_package_duration` varchar(50) DEFAULT NULL";
+}
+if (isset($migration) && !$conn->query($migration)) {
+    sendResponse(false, 'Error updating questionnaire schema: ' . $conn->error, null, 500);
+}
+
 // Prepare the fields
 $age = isset($data['age']) ? (int)$data['age'] : null;
 $sex = isset($data['sex']) ? $conn->real_escape_string($data['sex']) : null;
@@ -60,6 +96,9 @@ $primary_goal = isset($data['primary_goal']) ? $conn->real_escape_string($data['
 $goal_pace = isset($data['goal_pace']) ? $conn->real_escape_string($data['goal_pace']) : 'Moderately';
 
 $workout_days_per_week = isset($data['workout_days_per_week']) ? $conn->real_escape_string($data['workout_days_per_week']) : '1-2 days';
+$preferred_package_duration = $preferred_package_duration === null
+    ? null
+    : $conn->real_escape_string($preferred_package_duration);
 $preferred_workout_time = isset($data['preferred_workout_time']) ? $conn->real_escape_string($data['preferred_workout_time']) : 'Morning';
 
 $injuries_limitations = isset($data['injuries_limitations']) ? $conn->real_escape_string($data['injuries_limitations']) : null;
@@ -92,7 +131,7 @@ if ($result->num_rows > 0) {
     // Update existing profile
     $sql = "UPDATE user_questionnaire SET 
             age = ?, sex = ?, height = ?, weight = ?, medical_conditions = ?, exercise_history = ?,
-            primary_goal = ?, goal_pace = ?, workout_days_per_week = ?, preferred_workout_time = ?,
+            primary_goal = ?, goal_pace = ?, workout_days_per_week = ?, preferred_package_duration = ?, preferred_workout_time = ?,
             injuries_limitations = ?, focus_areas = ?, workout_type = ?, trainer_guidance = ?,
             equipment_confidence = ?
             WHERE user_id = ?";
@@ -103,9 +142,9 @@ if ($result->num_rows > 0) {
         file_put_contents(__DIR__ . '/save-questionnaire-debug.log', date('c') . " PREPARE ERROR\n" . $prepareError . "\nSQL=" . $sql . "\n\n", FILE_APPEND);
         sendResponse(false, 'Error preparing questionnaire update: ' . $conn->error, null, 500);
     }
-    $stmt->bind_param("isddsssssssssssi", 
+    $stmt->bind_param("isddssssssssssssi",
         $age, $sex, $height, $weight, $medical_conditions, $exercise_history,
-        $primary_goal, $goal_pace, $workout_days_per_week, $preferred_workout_time,
+        $primary_goal, $goal_pace, $workout_days_per_week, $preferred_package_duration, $preferred_workout_time,
         $injuries_limitations, $focus_areas, $workout_type, $trainer_guidance,
         $equipment_confidence, $user_id
     );
@@ -113,10 +152,10 @@ if ($result->num_rows > 0) {
     // Insert new profile
     $sql = "INSERT INTO user_questionnaire (
             user_id, age, sex, height, weight, medical_conditions, exercise_history,
-            primary_goal, goal_pace, workout_days_per_week, preferred_workout_time,
+            primary_goal, goal_pace, workout_days_per_week, preferred_package_duration, preferred_workout_time,
             injuries_limitations, focus_areas, workout_type, trainer_guidance,
             equipment_confidence
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     $stmt = $conn->prepare($sql);
     if (!$stmt) {
         $prepareError = "Prepare failed on insert: (" . $conn->errno . ") " . $conn->error;
@@ -124,9 +163,9 @@ if ($result->num_rows > 0) {
         file_put_contents(__DIR__ . '/save-questionnaire-debug.log', date('c') . " PREPARE ERROR\n" . $prepareError . "\nSQL=" . $sql . "\n\n", FILE_APPEND);
         sendResponse(false, 'Error saving questionnaire: prepare failed', null, 500);
     }
-    $stmt->bind_param("iisddsssssssssss", 
+    $stmt->bind_param("iisddssssssssssss",
         $user_id, $age, $sex, $height, $weight, $medical_conditions, $exercise_history,
-        $primary_goal, $goal_pace, $workout_days_per_week, $preferred_workout_time,
+        $primary_goal, $goal_pace, $workout_days_per_week, $preferred_package_duration, $preferred_workout_time,
         $injuries_limitations, $focus_areas, $workout_type, $trainer_guidance,
         $equipment_confidence
     );

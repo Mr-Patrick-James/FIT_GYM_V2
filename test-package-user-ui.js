@@ -22,10 +22,13 @@ function element(id = '') {
         addEventListener(type, callback) { (listeners[type] ||= []).push(callback); },
         dispatch(type) { for (const callback of listeners[type] || []) callback({ target: el }); },
         appendChild(child) {
+            child.parentElement = this;
             this.children.push(child);
             if (child.selected) this.value = child.value;
         },
-        querySelectorAll() { return []; }
+        querySelectorAll(selector) {
+            return selector === '.option-card' ? this.children.filter(child => child.className === 'option-card') : [];
+        }
     };
     Object.defineProperty(el, 'innerHTML', {
         set(value) { this.html = value; this.children = []; this.value = ''; },
@@ -48,7 +51,7 @@ for (const prefix of ['booking', 'editBooking']) {
         }
     };
 }
-for (const id of ['fileUploadArea', 'bookingDetailsModal', 'isStudent', 'studentSection', 'studentCheckboxRow', 'studentAutoNotice', 'bookingPriceSummary', 'bookingPriceLabel', 'bookingStudentPrice', 'bookingStudentNotice', 'modalCalendar', 'userCoachCalendar']) {
+for (const id of ['fileUploadArea', 'bookingDetailsModal', 'isStudent', 'studentSection', 'studentCheckboxRow', 'studentAutoNotice', 'bookingPriceSummary', 'bookingPriceLabel', 'bookingStudentPrice', 'bookingStudentNotice', 'modalCalendar', 'userCoachCalendar', 'surveyDurationOptions']) {
     elements[id] = element(id);
 }
 const calendarConfigs = [];
@@ -76,6 +79,42 @@ const run = source => vm.runInContext(source, sandbox);
 const dates = sandbox.PackageDates;
 
 async function main() {
+    assert.match(viewSource, /id="surveyDurationOptions"/);
+    assert.match(viewSource, /Preferred Package Duration/);
+    assert.doesNotMatch(viewSource, /'workout_days_per_week', '(?:1-2 days|3-4 days|5\+ days)'/);
+
+    sandbox.getApiUrl = path => path;
+    sandbox.fetch = async url => {
+        assert.equal(url, 'packages/get-all.php');
+        return { json: async () => ({ success: true, data: [
+            { id: 1, name: 'Weekly Pass', duration: '7 Days', price: 500 },
+            { id: 2, name: 'Monthly Membership', duration: '30 Days', price: 1500 },
+            { id: 3, name: '3-Month Package', duration: '90 Days', price: 4000 },
+            { id: 4, name: 'Six Month Membership', duration: '6 Months', price: 7500 },
+            { id: 5, name: 'Duplicate monthly package', duration: '1 Month', price: 1600 },
+            { id: 6, name: 'Invalid package', duration: 'not a duration', price: 100 }
+        ] }) };
+    };
+    await sandbox.loadPackagesData();
+    run(`globalThis.recommendedPackageName = null;
+    showRecommendationModal = pkg => { globalThis.recommendedPackageName = pkg.name; };`);
+    assert.deepEqual(elements.surveyDurationOptions.children.map(option => option.children[1].textContent), [
+        '7 Days', '1 Month', '90 Days', '6 Months'
+    ]);
+    assert.equal(run('surveyData.preferred_package_duration'), '7 Days', 'First active package duration is the initial choice');
+    run(`surveyData.preferred_package_duration = '30 Days'; populateSurveyPackageDurations();`);
+    assert.equal(run('surveyData.preferred_package_duration'), '1 Month', 'Equivalent offered durations preserve the current selection');
+    for (const [index, expectedPackage] of [
+        [0, 'Weekly Pass'],
+        [1, 'Monthly Membership'],
+        [2, '3-Month Package'],
+        [3, 'Six Month Membership']
+    ]) {
+        elements.surveyDurationOptions.children[index].dispatch('click');
+        run('calculateRecommendation()');
+        assert.equal(sandbox.recommendedPackageName, expectedPackage, `${expectedPackage} is recommended from the selected offered duration`);
+    }
+
     for (const [duration, days, end] of [
         ['Daily', 1, '2026-10-16'], ['Weekly', 7, '2026-10-22'],
         ['2 Weeks', 14, '2026-10-29'], ['1 Month', 30, '2026-11-14'],
