@@ -18,7 +18,7 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
 $conn = null;
 try {
     $conn = getDBConnection();
-    $stmt = $conn->prepare('SELECT id, name, email_verified FROM users WHERE email = ? LIMIT 1');
+    $stmt = $conn->prepare('SELECT id, name, email_verified FROM users WHERE LOWER(email) = ? LIMIT 1');
     $stmt->bind_param('s', $email);
     if (!$stmt->execute()) throw new RuntimeException('Account lookup failed');
     $user = $stmt->get_result()->fetch_assoc();
@@ -37,7 +37,7 @@ try {
     $stmt->close();
 
     // Use the same DB clock for creation, verification and redemption.
-    $stmt = $conn->prepare('INSERT INTO otps (email, code, expires_at) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 5 MINUTE))');
+    $stmt = $conn->prepare('INSERT INTO otps (email, code, expires_at) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 15 MINUTE))');
     $stmt->bind_param('ss', $email, $otp);
     if (!$stmt->execute() || $stmt->error) throw new RuntimeException('Reset code creation failed');
     $stmt->close();
@@ -52,9 +52,17 @@ try {
     $conn = null;
 
     require_once '../email.php';
-    if (!sendPasswordResetEmail($email, $otp, $user['name'])) {
-        error_log('Password reset email delivery failed');
-        sendResponse(false, 'Unable to send a reset code right now. Please try again later.', null, 503);
+    $emailSent = sendPasswordResetEmail($email, $otp, $user['name']);
+    if (!$emailSent) {
+        // Log the OTP so admin can retrieve it if needed — never expose in response
+        error_log("Password reset OTP for $email: $otp (email delivery failed — check SMTP config)");
+        // Still return success so user knows the account exists and code was generated.
+        // They may need to contact admin if email never arrives.
+        sendResponse(true, 'Reset code generated. If you do not receive an email within a few minutes, please check your spam folder or contact the gym admin.', [
+            'email'               => $email,
+            'expires_at'          => $expiry['expires_at'],
+            'expires_at_timestamp'=> $expiry['expires_at_timestamp']
+        ]);
     }
     sendResponse(true, 'If an eligible account exists, a reset code will be sent. Please check your inbox and spam folder.', [
         'email' => $email,

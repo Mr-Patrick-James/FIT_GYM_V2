@@ -43,7 +43,7 @@ try {
     $stmt = $conn->prepare("SELECT o.id, u.id AS user_id,
             TIMESTAMPDIFF(SECOND, NOW(), o.expires_at) AS seconds_remaining
         FROM otps o INNER JOIN users u ON u.email = o.email
-        WHERE o.email = ? AND o.code = ? AND o.used = 0 AND u.email_verified = 1
+        WHERE LOWER(o.email) = ? AND o.code = ? AND o.used = 0 AND u.email_verified = 1
         ORDER BY o.created_at DESC, o.id DESC LIMIT 1");
     $stmt->bind_param('ss', $email, $otp);
     if (!$stmt->execute()) throw new RuntimeException('Reset code lookup failed');

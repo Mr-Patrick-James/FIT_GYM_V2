@@ -1841,6 +1841,7 @@ function getSetting($key, $default = '', $settings = [])
                     <span>Packages</span></a></li>
             <li><a href="#" onclick="showSection('bookings', event)"><i class="fas fa-calendar-check"></i> <span>Booking
                         History</span> <span class="badge" id="bookingsBadge">0</span></a></li>
+            <li><a href="#" onclick="showSection('plan', event)"><i class="fas fa-calendar-week"></i> <span>My Plan</span></a></li>
             <li><a href="#" onclick="showSection('payments', event)"><i class="fas fa-money-check"></i>
                     <span>Payments</span></a></li>
             <li><a href="#" onclick="showSection('trainer', event)"><i class="fas fa-user-tie"></i> <span>My
@@ -2131,6 +2132,25 @@ function getSetting($key, $default = '', $settings = [])
                             <!-- Populated by JavaScript -->
                         </tbody>
                     </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- My Plan Section -->
+        <div id="planSection" class="content-section">
+            <div class="content-card">
+                <div class="card-header">
+                    <div>
+                        <h3><i class="fas fa-calendar-week"></i> Your Weekly Workout Plan</h3>
+                        <p style="color: var(--dark-text-secondary); margin-top: 8px;">AI-generated plan based on your fitness survey</p>
+                        <p id="planGeneratedAt" style="font-size: 0.85rem; color: var(--dark-text-secondary); margin-top: 4px;"></p>
+                    </div>
+                    <button class="btn btn-primary" onclick="generateMyPlan()" id="generatePlanBtn">
+                        <i class="fas fa-magic"></i> Generate Plan
+                    </button>
+                </div>
+                <div id="planContent" style="margin-top: 24px;">
+                    <div id="weeklyPlanGrid" class="weekly-plan-grid"></div>
                 </div>
             </div>
         </div>

@@ -1,3 +1,9 @@
+/* ─── Global font scale: 10% larger across all dashboard pages ─── */
+/* The landing page uses style.css (not this file), so it is not affected. */
+html {
+    font-size: 110%;
+}
+
 :root {
     /* Landing Page Color Palette - Dark, White, Black */
     --primary: #ffffff;

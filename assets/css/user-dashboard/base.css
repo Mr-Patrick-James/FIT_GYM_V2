@@ -1,4 +1,9 @@
 /* Base User Dashboard Styles - Shared across all sections */
+/* ─── Global font scale: 10% larger across all dashboard pages ─── */
+html {
+    font-size: 110%;
+}
+
 :root {
     /* Landing Page Color Palette - Dark, White, Black */
     --primary: #ffffff;

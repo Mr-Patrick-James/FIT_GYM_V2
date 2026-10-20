@@ -669,6 +669,7 @@ function showSection(section, event) {
         'dashboard': 'dashboardSection',
         'packages': 'packagesSection',
         'bookings': 'bookingsSection',
+        'plan': 'planSection',
         'payments': 'paymentsSection',
         'trainer': 'trainerSection',
         'profile': 'profileSection'
@@ -683,6 +684,7 @@ function showSection(section, event) {
             'dashboard': { title: 'Dashboard', subtitle: 'Welcome back! Manage your gym membership and bookings' },
             'packages': { title: 'Packages', subtitle: 'Choose a membership plan that fits your fitness goals' },
             'bookings': { title: 'Booking Logs', subtitle: 'View your complete Booking Logs including expired packages' },
+            'plan': { title: 'My Workout Plan', subtitle: 'Your AI-generated weekly workout schedule' },
             'payments': { title: 'Payment History', subtitle: 'Track all your payment transactions' },
             'trainer': { title: 'My Trainer', subtitle: 'View your assigned trainer and session details' },
             'profile': { title: 'Profile', subtitle: 'Manage your account information and settings' }
@@ -714,6 +716,10 @@ function showSection(section, event) {
         if (section === 'trainer') {
             trainerSectionLoaded = false; // allow reload on nav
             loadTrainerSection();
+        }
+        
+        if (section === 'plan') {
+            loadMyPlan();
         }
     }
 }
@@ -2274,9 +2280,23 @@ function updateBookingDatePreview(prefix = 'booking') {
 }
 
 // Open booking modal
-function openBookingModal() {
+function openBookingModal(preselectedPackage = null, preselectedPrice = null) {
     const dateInput = document.getElementById('bookingDate');
     if (dateInput && !dateInput.value) dateInput.value = PackageDates.today();
+    
+    // Auto-select recommended package if provided
+    if (preselectedPackage) {
+        const packageSelect = document.getElementById('bookingPackage');
+        if (packageSelect) {
+            // Find the option that matches the package name
+            const options = Array.from(packageSelect.options);
+            const matchingOption = options.find(opt => opt.value === preselectedPackage);
+            if (matchingOption) {
+                packageSelect.value = preselectedPackage;
+            }
+        }
+    }
+    
     handlePackageSelectChange();
     updateBookingPriceSummary();
     document.getElementById('bookingModal').classList.add('active');
@@ -4231,6 +4251,9 @@ async function finishSurvey() {
         if (result.success) {
             document.getElementById('surveyModal').classList.remove('active');
             
+            // Auto-generate workout plan after questionnaire save
+            generateMyPlan();
+            
             // Calculate recommendation
             calculateRecommendation();
         } else {
@@ -5026,4 +5049,87 @@ async function markAllAsRead() {
         }
         loadUserNotifications();
     } catch (e) { console.error('markAllAsRead error:', e); }
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MY PLAN - Auto-generated weekly workout calendar
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function loadMyPlan() {
+    try {
+        const response = await fetch(getApiUrl('users/get-plan.php'), {
+            credentials: 'include'
+        });
+        const data = await response.json();
+        
+        if (data.success && data.data.plan) {
+            renderWeeklyPlan(data.data.plan, data.data.generated_at);
+        } else {
+            // No plan yet - show empty state
+            document.getElementById('weeklyPlanGrid').innerHTML = `
+                <div style="text-align: center; padding: 60px 20px; color: var(--dark-text-secondary);">
+                    <i class="fas fa-calendar-plus" style="font-size: 3rem; margin-bottom: 16px; opacity: 0.3;"></i>
+                    <p style="font-size: 1.1rem; margin-bottom: 8px;">No workout plan generated yet</p>
+                    <p style="font-size: 0.9rem;">Click "Generate Plan" above to create your personalized weekly workout schedule</p>
+                </div>
+            `;
+            document.getElementById('planGeneratedAt').textContent = '';
+        }
+    } catch (error) {
+        console.error('Error loading plan:', error);
+        showToast('Failed to load workout plan', 'error');
+    }
+}
+
+async function generateMyPlan() {
+    const btn = document.getElementById('generatePlanBtn');
+    const originalHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+    
+    try {
+        const response = await fetch(getApiUrl('users/generate-plan.php'), {
+            method: 'POST',
+            credentials: 'include'
+        });
+        const data = await response.json();
+        
+        if (data.success && data.data.plan) {
+            renderWeeklyPlan(data.data.plan, data.data.generated_at);
+            showToast('Workout plan generated successfully!', 'success');
+        } else {
+            showToast(data.message || 'Failed to generate plan. Please complete your fitness survey first.', 'error');
+        }
+    } catch (error) {
+        console.error('Error generating plan:', error);
+        showToast('Failed to generate plan', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
+    }
+}
+
+function renderWeeklyPlan(plan, generatedAt) {
+    const grid = document.getElementById('weeklyPlanGrid');
+    const timestamp = document.getElementById('planGeneratedAt');
+    
+    if (generatedAt) {
+        const date = new Date(generatedAt);
+        timestamp.textContent = `Generated: ${date.toLocaleDateString()} at ${date.toLocaleTimeString()}`;
+    }
+    
+    grid.innerHTML = plan.map(day => `
+        <div class="plan-day-card" style="border-left-color: ${day.color}">
+            <div class="plan-day-header">
+                <div class="plan-day-name">${day.day}</div>
+                <span class="plan-type-badge ${day.type}">${day.type}</span>
+            </div>
+            <div class="plan-focus">${day.focus}</div>
+            <ul class="plan-exercises">
+                ${day.exercises.map(ex => `<li>${ex}</li>`).join('')}
+            </ul>
+            <div class="plan-notes"><i class="fas fa-lightbulb"></i> ${day.notes}</div>
+        </div>
+    `).join('');
 }

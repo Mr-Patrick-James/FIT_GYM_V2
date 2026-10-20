@@ -45,7 +45,7 @@ $stmt = $conn->prepare("
     SELECT id, email, code, expires_at, used,
            TIMESTAMPDIFF(SECOND, NOW(), expires_at) AS seconds_remaining
     FROM otps
-    WHERE email = ? AND code = ? AND used = 0
+    WHERE LOWER(email) = ? AND code = ? AND used = 0
     ORDER BY created_at DESC
     LIMIT 1
 ");
@@ -83,7 +83,7 @@ $updateOtp->close();
 $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
 
 // 4) Create or update user
-$checkUser = $conn->prepare("SELECT id FROM users WHERE email = ?");
+$checkUser = $conn->prepare("SELECT id FROM users WHERE LOWER(email) = ?");
 $checkUser->bind_param("s", $email);
 $checkUser->execute();
 $userResult = $checkUser->get_result();

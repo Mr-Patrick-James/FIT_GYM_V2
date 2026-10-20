@@ -1,0 +1,9 @@
+{
+  "promptDelete": true,
+  "defaultViewMode": "source",
+  "foldIndent": true,
+  "showLineNumber": true,
+  "readableLineLength": true,
+  "strictLineBreaks": false,
+  "theme": "obsidian"
+}
