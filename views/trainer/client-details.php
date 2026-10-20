@@ -574,8 +574,8 @@ $questionnaire = $q_stmt->get_result()->fetch_assoc();
                             <h3><i class="fas fa-calendar-alt"></i> C. Availability & Commitment</h3>
                         </div>
                         <div style="padding: 24px;">
-                            <label>Workout Days Per Week</label>
-                            <div class="value"><?php echo htmlspecialchars($questionnaire['workout_days_per_week']); ?></div>
+                            <label>Preferred Package Duration</label>
+                            <div class="value"><?php echo htmlspecialchars($questionnaire['preferred_package_duration'] ?: 'Not set'); ?></div>
                             <label>Preferred Workout Time</label>
                             <div class="value"><?php echo htmlspecialchars($questionnaire['preferred_workout_time']); ?></div>
                         </div>
