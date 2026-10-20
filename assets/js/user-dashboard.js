@@ -4315,6 +4315,84 @@ function calculateRecommendation() {
         showNotification("Thanks for completing the survey! Check out our available packages.", "info");
         showSection('packages');
     }
+    if (!packagesData || packagesData.length === 0) {
+        showNotification("Thanks for completing the survey! Check out our available packages.", "info");
+        showSection('packages');
+        return;
+    }
+
+    // Score each package based on how well it matches the survey answers.
+    // Higher score = better fit. Tag tier is the primary axis; survey signals
+    // push the score up or down within/across tiers.
+
+    // Tag tiers ordered from lowest to highest commitment
+    const tagTiers = ['basic', 'popular', 'best value', 'premium', 'vip'];
+
+    // Determine a target tier from survey answers
+    let targetTier = 1; // default: Popular (index 1)
+
+    // Primary goal
+    if (surveyData.primary_goal === 'Gain muscle' || surveyData.primary_goal === 'Lose weight') {
+        targetTier = 2; // Best Value baseline for serious goals
+    } else if (surveyData.primary_goal === 'Improve endurance') {
+        targetTier = 1; // Popular
+    } else {
+        // Stay fit / general health
+        targetTier = 0; // Basic / walk-in is fine
+    }
+
+    // Workout frequency bumps commitment level
+    if (surveyData.workout_days_per_week === '5+ days') {
+        targetTier += 2;
+    } else if (surveyData.workout_days_per_week === '3-4 days') {
+        targetTier += 1;
+    }
+    // 1-2 days → no bump
+
+    // Trainer guidance preference
+    if (surveyData.trainer_guidance === 'With trainer guidance') {
+        targetTier += 1;
+    }
+
+    // Pace
+    if (surveyData.goal_pace === 'Intensively') {
+        targetTier += 1;
+    } else if (surveyData.goal_pace === 'Slowly') {
+        targetTier -= 1;
+    }
+
+    // Equipment confidence: not confident → they need longer access to learn
+    if (surveyData.equipment_confidence === 'Not confident') {
+        targetTier = Math.max(targetTier, 1); // at least Popular so they get time to learn
+    }
+
+    // Clamp to valid tier range
+    targetTier = Math.max(0, Math.min(tagTiers.length - 1, targetTier));
+
+    // Find the package whose tag is closest to the target tier.
+    // Prefer exact match; if tied, prefer the one with the higher tier (more value).
+    let bestPackage = null;
+    let bestDistance = Infinity;
+
+    packagesData.forEach(pkg => {
+        const tierIndex = tagTiers.indexOf((pkg.tag || 'basic').toLowerCase().trim());
+        if (tierIndex === -1) return; // skip unknown tags
+        const distance = Math.abs(tierIndex - targetTier);
+        if (
+            distance < bestDistance ||
+            (distance === bestDistance && tierIndex > tagTiers.indexOf((bestPackage.tag || 'basic').toLowerCase().trim()))
+        ) {
+            bestDistance = distance;
+            bestPackage = pkg;
+        }
+    });
+
+    // Final fallback: just pick the middle-tier package or first available
+    if (!bestPackage) {
+        bestPackage = packagesData[Math.floor(packagesData.length / 2)] || packagesData[0];
+    }
+
+    showRecommendationModal(bestPackage);
 }
 
 function showRecommendationModal(pkg) {
@@ -4333,7 +4411,7 @@ function showRecommendationModal(pkg) {
     if (bookBtn) {
         bookBtn.onclick = () => {
             closeRecommendationModal();
-            openBookingModal(pkg.name, pkg.price);
+            selectPackageForBooking(pkg.name);
         };
     }
 
